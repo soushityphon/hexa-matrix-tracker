@@ -52,3 +52,14 @@ export function nextCheckpoint(levels, mode) {
   const index = steps.findIndex(step => (levels[step.skill] || 0) < step.level);
   return { steps, index: index < 0 ? steps.length : index, next: index < 0 ? null : steps[index] };
 }
+
+export function priorityRows(levels, mode) {
+  const previous = { ...levels };
+  return PRIORITIES[mode].map((step, index) => {
+    const from = previous[step.skill] || 0;
+    const done = (levels[step.skill] || 0) >= step.level;
+    const cost = step.skill.startsWith('HEXA Stat') ? null : rangeCost(step.skill, Math.min(from, step.level), step.level);
+    previous[step.skill] = Math.max(from, step.level);
+    return { ...step, index: index + 1, from, done, cost };
+  });
+}
