@@ -1,5 +1,5 @@
 import { NODES, STAT_ICONS } from './data.js';
-import { activeNodes, matrixTotals, nextCheckpoint, priorityRows, rangeCost, taotieCatchUp } from './planner.js';
+import { activeNodes, displayPriorityRows, matrixTotals, nextCheckpoint, rangeCost, taotieCatchUp } from './planner.js';
 import { fetchSharedPreview, previewCatalog } from './preview-priorities.js';
 
 const $ = selector => document.querySelector(selector);
@@ -114,13 +114,13 @@ function render() {
   $('#next-upgrade').innerHTML = `${next ? `<div class="metric"><small>Next Upgrade</small><strong>${next.skill} → ${nextLevel}</strong>${levelCost ? materials(levelCost, days(levelCost)) : note}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
   if (catchUp) $('#next-upgrade').insertAdjacentHTML('beforeend', `<div class="metric catch-up"><small>Taotie catch-up</small><strong>Taotie → ${catchUp.target}</strong>${materials(catchUp.cost, days(catchUp.cost))}</div>`);
   let remainingIndex = 0;
-  $('#priority').innerHTML = priorityRows(current, sourceMode, order).map(row => {
+  $('#priority').innerHTML = displayPriorityRows(current, sourceMode, order).map((row, rowIndex) => {
     const cost = row.cost;
     const number = value => value === 0 ? '<span class="zero">0</span>' : value.toLocaleString();
     if (!row.done) remainingIndex++;
-    const displayIndex = $('#hideDone').checked && !row.done ? remainingIndex : row.index;
+    const displayIndex = $('#hideDone').checked && !row.done ? remainingIndex : rowIndex + 1;
     const icon = previewDrafts[mode]?.statIcons[row.skill] || STAT_ICONS[row.skill] || nodeByShort[row.skill]?.icon;
-    return `<tr class="type-${typeClass(row.skill)} ${row.done ? 'done' : ''} ${row.index === index + 1 ? 'next' : ''}"><td>${displayIndex}</td><td><span class="skill-cell">${icon ? `<img class="stat-icon" src="${icon}" alt="">` : '<i class="dot" aria-hidden="true"></i>'}${row.skill}</span></td><td>${row.level}</td><td>${cost ? number(cost.erda) : '<span class="rng">RNG</span>'}</td><td>${cost ? number(cost.frags) : '<span class="rng">RNG</span>'}</td></tr>`;
+    return `<tr class="type-${typeClass(row.skill)} ${row.done ? 'done' : ''} ${row.index <= index + 1 && index + 1 <= row.endIndex ? 'next' : ''}"><td>${displayIndex}</td><td><span class="skill-cell">${icon ? `<img class="stat-icon" src="${icon}" alt="">` : '<i class="dot" aria-hidden="true"></i>'}${row.skill}</span></td><td>${row.level}</td><td>${cost ? number(cost.erda) : '<span class="rng">RNG</span>'}</td><td>${cost ? number(cost.frags) : '<span class="rng">RNG</span>'}</td></tr>`;
   }).join('');
   $$('.stat-icon').forEach(img => { img.addEventListener('error', () => { img.hidden = true; }); });
   $('.priority-table').classList.toggle('hide-done', $('#hideDone').checked);
