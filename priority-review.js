@@ -8,7 +8,6 @@ let saved = {};
 let inspected = null;
 let importedNodes = [];
 try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { saved = {}; }
-$('#payload').value = localStorage.getItem(`${key}-request`) || '';
 
 function compareResponse(response) {
   inspected = inspectScouterResponse(response);
@@ -44,8 +43,6 @@ function show(draft) {
   for (const input of document.querySelectorAll('[data-name]')) input.value = draft.names[input.dataset.name] || '';
   $('#status').textContent = '';
   const historical = draft.mode.startsWith('hecate_');
-  $('#retrieve').disabled = historical;
-  $('#retrieve').title = historical ? 'The current API cannot retrieve the historical Hecate patch' : '';
   if (historical) message('Historical Hecate needs a pasted Maple Scouter response.');
 }
 function collectUnknown() {
@@ -93,26 +90,6 @@ function persist() {
 }
 $('#mode').addEventListener('change', () => show(saved[$('#mode').value] || currentDraft($('#mode').value)));
 document.addEventListener('input', persist);
-$('#payload').addEventListener('input', () => localStorage.setItem(`${key}-request`, $('#payload').value));
-$('#retrieve').addEventListener('click', async () => {
-  try {
-    const mode = $('#mode').value;
-    if (mode.startsWith('hecate_')) throw new Error('The current API cannot retrieve the historical Hecate patch');
-    const payload = JSON.parse($('#payload').value);
-    payload.sole = mode.endsWith('_interactive');
-    payload.userStat.isGMS = mode.startsWith('lotus_');
-    $('#retrieve').disabled = true;
-    message('Checking Maple Scouter…');
-    const response = await fetch('/api/hexa-order', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-    });
-    if (!response.ok) throw new Error((await response.text()).slice(0, 160) || `Request returned ${response.status}`);
-    const result = await response.json();
-    $('#response').value = JSON.stringify(result);
-    compareResponse(result);
-  } catch (error) { message(`Could not check Maple Scouter: ${error.message}. Paste the response below to compare it.`, true); }
-  finally { $('#retrieve').disabled = $('#mode').value.startsWith('hecate_'); }
-});
 $('#inspect').addEventListener('click', () => {
   try {
     compareResponse(JSON.parse($('#response').value));
