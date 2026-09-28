@@ -1,11 +1,19 @@
 import { COSTS, NODES, PRIORITIES } from './data.js';
 
 const byShort = Object.fromEntries(NODES.map(node => [node.short, node]));
-const activeNodeCount = { hecate: 11, lotus: 12, taotie: 13 };
-
 export function activeNodes(mode) {
-  const snapshot = mode.split('_')[0];
-  return NODES.slice(0, activeNodeCount[snapshot] ?? activeNodeCount.lotus);
+  return NODES.filter(node => mode.startsWith('taotie_') || node.short !== 'Taotie');
+}
+
+export function taotieCatchUp(levels, mode) {
+  if (!mode.startsWith('taotie_')) return null;
+  let target = 0;
+  for (const step of PRIORITIES[mode]) {
+    if (step.skill === 'Taotie') target = Math.max(target, step.level);
+    else if ((levels[step.skill] || 0) < step.level) break;
+  }
+  const current = levels.Taotie || 0;
+  return target > current ? { target, cost: rangeCost('Taotie', current, target) } : null;
 }
 
 export function rangeCost(skill, from, to) {
