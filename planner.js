@@ -68,21 +68,25 @@ export function priorityRows(levels, mode, order = PRIORITIES[mode]) {
   });
 }
 
-// Collapse only neighbouring checkpoints for display. The source order and
-// individual levels stay intact for the next upgrade and source comparisons.
+// Completed checkpoints do not interrupt a run of remaining upgrades. Keep
+// them as separate rows for the optional full view, and retain source indices.
 export function displayPriorityRows(levels, mode, order = PRIORITIES[mode]) {
   const rows = priorityRows(levels, mode, order);
   const display = [];
+  let lastUnmet = null;
   for (const row of rows) {
-    const last = display.at(-1);
-    if (last?.skill === row.skill) {
-      last.level = row.level;
-      last.endIndex = row.index;
-      last.done = row.done;
-      last.cost = row.cost === null ? null : rangeCost(row.skill, Math.max(levels[row.skill] || 0, last.from), row.level);
+    if (row.done) {
+      display.push({ ...row, endIndex: row.index });
+      continue;
+    }
+    if (lastUnmet?.skill === row.skill) {
+      lastUnmet.level = row.level;
+      lastUnmet.endIndex = row.index;
+      lastUnmet.cost = row.cost === null ? null : rangeCost(row.skill, levels[row.skill] || 0, row.level);
     } else {
-      display.push({ ...row, endIndex: row.index,
-        cost: row.cost === null ? null : rangeCost(row.skill, Math.max(levels[row.skill] || 0, row.from), row.level) });
+      lastUnmet = { ...row, endIndex: row.index,
+        cost: row.cost === null ? null : rangeCost(row.skill, levels[row.skill] || 0, row.level) };
+      display.push(lastUnmet);
     }
   }
   return display;
