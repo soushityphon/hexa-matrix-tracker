@@ -9,6 +9,7 @@ let inspected = null;
 let importedNodes = [];
 let version = null;
 try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { saved = {}; }
+$('#payload').value = localStorage.getItem(`${key}-request`) || '';
 
 function sameSteps(a, b) {
   return a.length === b.length && a.every((step, index) => step.skill === b[index].skill && step.level === b[index].level);
@@ -80,6 +81,8 @@ function show(draft) {
   for (const input of document.querySelectorAll('[data-name]')) input.value = draft.names[input.dataset.name] || '';
   $('#status').textContent = '';
   const historical = draft.mode.startsWith('hecate_');
+  $('#retrieve').disabled = !draft.mode.startsWith('lotus_');
+  $('#retrieve').title = draft.mode.startsWith('lotus_') ? '' : 'The current API cannot retrieve the historical Hecate patch or the KMS Taotie preview from a GMS request';
   if (historical) message('Historical Hecate needs a pasted Maple Scouter response.');
 }
 function collectUnknown() {
@@ -127,6 +130,28 @@ function persist() {
 }
 $('#mode').addEventListener('change', () => show(saved[$('#mode').value] || currentDraft($('#mode').value)));
 document.addEventListener('input', persist);
+$('#payload').addEventListener('input', () => localStorage.setItem(`${key}-request`, $('#payload').value));
+$('#retrieve').addEventListener('click', async () => {
+  try {
+    const mode = $('#mode').value;
+    if (!mode.startsWith('lotus_')) throw new Error('Choose a current GMS Lotus priority');
+    const payload = JSON.parse($('#payload').value);
+    if (payload?.myHexa?.character_class !== '호영' || payload?.userStat?.stat?.myClass !== '호영' || payload?.userStat?.isGMS !== true) {
+      throw new Error('Paste a GMS Hoyoung request body');
+    }
+    payload.sole = mode.endsWith('_interactive');
+    $('#retrieve').disabled = true;
+    message('Checking Maple Scouter…');
+    const response = await fetch('/api/hexa-order', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error((await response.text()).slice(0, 160) || `Request returned ${response.status}`);
+    const result = await response.json();
+    $('#response').value = JSON.stringify(result);
+    compareResponse(result);
+  } catch (error) { message(`Could not check Maple Scouter: ${error.message}`, true); }
+  finally { $('#retrieve').disabled = !$('#mode').value.startsWith('lotus_'); }
+});
 $('#inspect').addEventListener('click', () => {
   try {
     compareResponse(JSON.parse($('#response').value));

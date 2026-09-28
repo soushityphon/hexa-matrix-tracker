@@ -1,9 +1,42 @@
 // Bundled with the static files by scripts/build-worker.mjs.
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8' };
+const scouterUrl = 'https://api.maplescouter.com/api/calc/hexa-order?class=%ED%98%B8%EC%98%81';
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === '/api/hexa-order') {
+      if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+      if (!env?.MAPLE_SCOUTER_API_KEY) return new Response('Maple Scouter API key is not configured', { status: 503 });
+      if (Number(request.headers.get('content-length')) > 100_000) return new Response('Payload too large', { status: 413 });
+      let body, payload;
+      try {
+        body = await request.text();
+        if (body.length > 100_000) return new Response('Payload too large', { status: 413 });
+        payload = JSON.parse(body);
+      } catch { return new Response('Invalid JSON', { status: 400 }); }
+      if (payload?.myHexa?.character_class !== '호영' || payload?.userStat?.stat?.myClass !== '호영' || payload?.userStat?.isGMS !== true || typeof payload.sole !== 'boolean') {
+        return new Response('GMS Hoyoung request required', { status: 400 });
+      }
+      try {
+        const upstream = await fetch(scouterUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': '*/*',
+            'api-key': env.MAPLE_SCOUTER_API_KEY,
+            'Origin': 'https://maplescouter.com',
+            'Referer': 'https://maplescouter.com/'
+          },
+          body,
+          signal: AbortSignal.timeout(25_000)
+        });
+        if (!upstream.ok) return new Response(`Maple Scouter returned ${upstream.status}`, { status: 502 });
+        const result = await upstream.json();
+        if (!Array.isArray(result?.class_hexa) || !result.class_hexa.length) return new Response('Maple Scouter returned an unexpected order', { status: 502 });
+        return Response.json(result, { headers: { 'Cache-Control': 'no-store' } });
+      } catch { return new Response('Maple Scouter could not be reached', { status: 502 }); }
+    }
     if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method not allowed', { status: 405 });
     const path = url.pathname === '/' ? '/index.html' : url.pathname;
     if (!Object.hasOwn(ASSETS, path)) return new Response('Not found', { status: 404 });

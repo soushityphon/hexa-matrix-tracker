@@ -19,6 +19,11 @@
         <label>Priority name<input id="name" type="text"></label>
         <label class="visibility"><input id="enabled" type="checkbox"> Show on tracker</label>
         <label>Source link or note<input id="source" type="text"></label>
+        <details class="import-panel"><summary>Check Maple Scouter</summary>
+          <p class="fine">Save a GMS Hoyoung request body once in this browser. The check selects Fragments or Sol Erda for the chosen world and compares the current order with imported versions. Historical Hecate needs a captured response.</p>
+          <label>Request body JSON<textarea id="payload" spellcheck="false" placeholder="Paste the JSON after --data-raw from Copy as cURL"></textarea></label>
+          <button id="retrieve" type="button">Request current priority</button>
+        </details>
         <details class="import-panel"><summary>Import Maple Scouter response</summary>
           <label>HEXA order response JSON<textarea id="response" spellcheck="false" placeholder="Paste the response from Maple Scouter Network → Response"></textarea></label>
           <button id="inspect" type="button">Compare response</button>
