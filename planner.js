@@ -1,12 +1,14 @@
-import { COSTS, NODES, PRIORITIES } from './data.js';
+import { COSTS, NODES, PRIORITIES, PRIORITY_SETTINGS } from './data.js';
 
 const byShort = Object.fromEntries(NODES.map(node => [node.short, node]));
+export const priorityPatch = mode => PRIORITY_SETTINGS[mode]?.patch || mode.split('_')[0];
 export function activeNodes(mode) {
-  return NODES.filter(node => (mode.startsWith('taotie_') || node.short !== 'Taotie') && (!mode.startsWith('hecate_') || node.short !== 'Lotus'));
+  const patch = priorityPatch(mode);
+  return NODES.filter(node => (patch === 'taotie' || node.short !== 'Taotie') && (patch !== 'hecate' || node.short !== 'Lotus'));
 }
 
 export function taotieCatchUp(levels, mode) {
-  if (!mode.startsWith('taotie_')) return null;
+  if (priorityPatch(mode) !== 'taotie') return null;
   let target = 0;
   for (const step of PRIORITIES[mode]) {
     if (step.skill === 'Taotie') target = Math.max(target, step.level);

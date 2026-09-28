@@ -1,5 +1,5 @@
-import { NODES } from './data.js';
-import { activeNodes, matrixTotals, nextCheckpoint, priorityRows, rangeCost, taotieCatchUp } from './planner.js';
+import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SETTINGS } from './data.js';
+import { activeNodes, matrixTotals, nextCheckpoint, priorityRows, priorityPatch, rangeCost, taotieCatchUp } from './planner.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -12,6 +12,19 @@ function clamp(value, max) {
   return Math.max(0, Math.min(max, Math.floor(Number(value) || 0)));
 }
 
+function syncPriorityOptions() {
+  const select = $('#patch');
+  const world = $('[name="world"]:checked').value;
+  const previous = select.value || saved.mode || 'lotus_heroic';
+  const patch = PRIORITY_SETTINGS[previous]?.patch || 'lotus';
+  const modes = Object.keys(PRIORITIES).filter(mode => PRIORITY_SETTINGS[mode]?.enabled && PRIORITY_SETTINGS[mode].world === world);
+  if (modes.join('|') !== [...select.options].map(option => option.value).join('|')) {
+    select.replaceChildren(...modes.map(mode => new Option(PRIORITY_LABELS[mode], mode)));
+  }
+  select.value = modes.includes(previous) ? previous : modes.find(mode => PRIORITY_SETTINGS[mode].patch === patch) || modes.find(mode => PRIORITY_SETTINGS[mode].patch === 'lotus') || modes[0] || '';
+  return select.value;
+}
+
 function renderInputs() {
   $('#nodes').innerHTML = NODES.map((node, index) => `${index === 0 || NODES[index - 1].group !== node.group ? `<div class="group-label">${node.group}</div>` : ''}<label class="node-row" data-node-row="${node.short}" title="${node.name}"><span class="node-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span class="node-name">${node.name}</span><input data-node="${node.short}" aria-label="${node.name} level" type="number" min="0" max="30" value="${saved.levels?.[node.short] ?? 0}"></label>`).join('');
   $$('.node-icon img').forEach(img => {
@@ -19,9 +32,8 @@ function renderInputs() {
     if (img.complete && !img.naturalWidth) img.hidden = true;
   });
   $$('[data-stat]').forEach(input => { input.value = saved.levels?.[input.dataset.stat] ?? 0; });
-  const patch = saved.mode?.split('_')[0];
-  $('#patch').value = ['hecate', 'lotus', 'taotie'].includes(patch) ? patch : 'lotus';
-  $(`[name="world"][value="${saved.mode?.endsWith('interactive') ? 'interactive' : 'heroic'}"]`).checked = true;
+  $(`[name="world"][value="${PRIORITY_SETTINGS[saved.mode]?.world || 'heroic'}"]`).checked = true;
+  syncPriorityOptions();
   $('#owned').value = saved.owned ?? 0;
   $('#perday').value = saved.perday ?? 0;
   $('#hideDone').checked = saved.hideDone !== false;
@@ -50,9 +62,15 @@ function typeClass(skill) {
 }
 
 function render() {
-  const patch = $('#patch').value;
-  const world = $('[name="world"]:checked').value;
-  const mode = `${patch}_${world}`;
+  const mode = syncPriorityOptions();
+  if (!mode) {
+    $('#progress').textContent = 'No priorities enabled for this world';
+    $('#priority').replaceChildren();
+    $('#quick').replaceChildren();
+    $('#totals').replaceChildren();
+    return;
+  }
+  const patch = priorityPatch(mode);
   const current = levels();
   const { steps, index, completed, next } = nextCheckpoint(current, mode);
   const owned = clamp($('#owned').value, 9999999);
@@ -65,7 +83,7 @@ function render() {
   const checkpointCost = next && rangeCost(next.skill, current[next.skill] || 0, next.level);
   const nextLevel = next && Math.min((current[next.skill] || 0) + 1, next.level);
   const levelCost = next && rangeCost(next.skill, current[next.skill] || 0, nextLevel);
-  $('#version-name').textContent = `${patch === 'taotie' ? 'KMS preview' : 'GMS'} / ${$('#patch').selectedOptions[0].textContent}`;
+  $('#version-name').textContent = `${patch === 'taotie' ? 'KMS preview' : 'GMS'} / ${PRIORITY_LABELS[mode]}`;
   $('#progress').textContent = steps.length ? `${completed} / ${steps.length} complete` : 'Maple Scouter order pending';
   $('#quick').innerHTML = `${next ? `<div class="metric"><small>Next Upgrade</small><strong>${next.skill} → ${nextLevel}</strong>${levelCost ? materials(levelCost, days(levelCost)) : note}</div><div class="metric"><small>Next Checkpoint</small><strong>${next.skill} → ${next.level}</strong>${checkpointCost ? materials(checkpointCost, days(checkpointCost)) : note}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
   if (catchUp) $('#quick').insertAdjacentHTML('afterbegin', `<div class="metric catch-up"><small>Taotie catch-up</small><strong>Taotie → ${catchUp.target}</strong>${materials(catchUp.cost, days(catchUp.cost))}</div>`);

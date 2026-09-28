@@ -1,4 +1,4 @@
-import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SOURCES } from './data.js';
+import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SOURCES, PRIORITY_SETTINGS } from './data.js';
 
 const byShort = new Map(NODES.map(node => [node.short, node]));
 const statNames = new Set(['HEXA Stat I', 'HEXA Stat II', 'HEXA Stat III']);
@@ -24,9 +24,11 @@ export function parseSteps(text, extraSkills = []) {
 }
 
 export function validateDraft(draft) {
-  if (!draft || !Object.hasOwn(PRIORITIES, draft.mode)) throw new Error('Choose an existing priority mode');
+  if (!draft || !Object.hasOwn(PRIORITIES, draft.sourceMode || draft.mode)) throw new Error('Choose an existing source priority');
+  if (draft.isNew && (Object.hasOwn(PRIORITIES, draft.mode) || !/^[a-z0-9_]+$/.test(draft.mode))) throw new Error('New priority ID is invalid or already exists');
+  if (!draft.isNew && draft.mode !== (draft.sourceMode || draft.mode)) throw new Error('Existing priority ID does not match its source');
   if (typeof draft.name !== 'string' || !draft.name.trim()) throw new Error('Enter a priority name');
-  if (!Array.isArray(draft.steps) || !draft.steps.length) throw new Error('Enter at least one priority step');
+  if (!Array.isArray(draft.steps) || (!draft.steps.length && (draft.isNew || PRIORITIES[draft.mode].length))) throw new Error('Enter at least one priority step');
   const types = new Set(['Skill', 'Skill II', 'Mastery', 'V', 'Common', 'Common II']);
   const groups = { Skill: 'Skill Nodes', 'Skill II': 'Skill Nodes', Mastery: 'Mastery Nodes', V: 'Enhancement Nodes', Common: 'Common Nodes', 'Common II': 'Common Nodes' };
   const newNodes = (draft.newNodes || []).map(node => {
@@ -40,23 +42,24 @@ export function validateDraft(draft) {
   const shorts = newNodes.map(node => node.short);
   if (new Set(shorts).size !== shorts.length || new Set(newNodes.map(node => node.id)).size !== newNodes.length || shorts.some(short => byShort.has(short) || statNames.has(short)) || newNodes.some(node => NODES.some(existing => existing.id === node.id))) throw new Error('New skill short labels must be unique');
   const steps = parseSteps(draft.steps.map(step => `${step.skill}, ${step.level}`).join('\n'), shorts);
-  if (steps.some(step => step.skill === 'Taotie') && !draft.mode.startsWith('taotie_')) throw new Error('Taotie steps need the Taotie mode');
-  if (steps.some(step => step.skill === 'Lotus') && draft.mode.startsWith('hecate_')) throw new Error('Lotus steps are not in the Hecate mode');
+  const patch = PRIORITY_SETTINGS[draft.sourceMode || draft.mode].patch;
+  if (steps.some(step => step.skill === 'Taotie') && patch !== 'taotie') throw new Error('Taotie steps need the Taotie patch');
+  if (steps.some(step => step.skill === 'Lotus') && patch === 'hecate') throw new Error('Lotus steps are not in the Hecate patch');
   const names = {};
   for (const node of NODES) {
     const name = draft.names?.[node.short];
     if (typeof name !== 'string' || !name.trim()) throw new Error(`Enter a display name for ${node.short}`);
     names[node.short] = name.trim();
   }
-  return { schema: 2, mode: draft.mode, name: draft.name.trim(), source: String(draft.source || '').trim(), names, steps, newNodes };
+  return { schema: 3, mode: draft.mode, sourceMode: draft.sourceMode || draft.mode, isNew: draft.isNew === true, enabled: draft.enabled === true, name: draft.name.trim(), source: String(draft.source || '').trim(), names, steps, newNodes };
 }
 
 export function currentDraft(mode) {
-  return { schema: 2, mode, name: PRIORITY_LABELS[mode], source: PRIORITY_SOURCES[mode], names: Object.fromEntries(NODES.map(node => [node.short, node.name])), steps: PRIORITIES[mode], newNodes: [] };
+  return { schema: 3, mode, sourceMode: mode, isNew: false, enabled: PRIORITY_SETTINGS[mode].enabled, name: PRIORITY_LABELS[mode], source: PRIORITY_SOURCES[mode], names: Object.fromEntries(NODES.map(node => [node.short, node.name])), steps: PRIORITIES[mode], newNodes: [] };
 }
 
 export function compareDraft(draft) {
-  const current = PRIORITIES[draft.mode];
+  const current = PRIORITIES[draft.sourceMode || draft.mode];
   const changedNames = NODES.filter(node => draft.names[node.short] !== node.name).length;
   const changedSteps = draft.steps.filter((step, index) => step.skill !== current[index]?.skill || step.level !== current[index]?.level).length;
   return { changedNames, changedSteps, lengthDifference: draft.steps.length - current.length };
