@@ -5,18 +5,17 @@ A browser-based MapleStory HEXA Matrix priority and material tracker. The first 
 ## Current scope
 
 - Hoyoung
-- Heroic Scouter, fragment-limited priority
-- Interactive Scouter, Sol Erda-limited priority
+- Heroic and Interactive Scouter priorities for Hecate, Lotus and Taotie snapshots
 - Current HEXA level inputs saved in the browser
 - Compact priority checkpoints
 - Intermediate level material costs calculated automatically
 - Next checkpoint and next individual level summaries
 
-HEXA Stats are priority-only RNG checkpoints. Their material cost is intentionally not estimated. Ren is planned for a later milestone.
+HEXA Stats are priority-only RNG checkpoints. Their material cost is intentionally not estimated. The skill node completion and material totals include nodes available in the selected snapshot. Ren is planned for a later milestone.
 
 ## Data model
 
-`data.js` contains node metadata, universal level-by-level HEXA material costs extracted from the existing tracker, and the current Hoyoung Scouter priority snapshots. The UI never needs an expanded priority CSV. If a checkpoint says Harmony 1 to 6, the calculator sums levels 2, 3, 4, 5 and 6 itself.
+`data.js` contains node metadata, universal level-by-level HEXA material costs and six Hoyoung Scouter priority snapshots from the 23 August 2026 tracker workbook. The source Hecate Interactive list repeats HEXA Stat II where the other Interactive snapshots have HEXA Stat III. This copy corrects that apparent source typo. The UI never needs an expanded priority CSV. If a checkpoint says Harmony 1 to 6, the calculator sums levels 2, 3, 4, 5 and 6 itself.
 
 ## Hosting
 

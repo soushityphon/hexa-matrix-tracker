@@ -1,12 +1,68 @@
-import {NODES,COSTS,PRIORITIES} from './data.js';
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const key='hexa-tracker-hoyoung-v1'; let saved=JSON.parse(localStorage.getItem(key)||'{}');
-const aliases=Object.fromEntries(NODES.map(n=>[n.short,n]));
-function clamp(v,max){return Math.max(0,Math.min(max,Number(v)||0))}
-function renderNodes(){$('#nodes').innerHTML=NODES.map(n=>`<label class="node"><img src="${n.icon}" alt=""><span><b>${n.short}</b><small>${n.type}</small></span><input data-node="${n.short}" type="number" min="0" max="30" value="${saved.levels?.[n.short]??0}"></label>`).join(''); $$('[data-stat]').forEach(i=>i.value=saved.levels?.[i.dataset.stat]??0); $('#mode').value=saved.mode||'heroic'; $('#owned').value=saved.owned||0; $('#perday').value=saved.perday||0; $('#hideDone').checked=saved.hideDone!==false}
-function levels(){let x={}; $$('[data-node]').forEach(i=>x[i.dataset.node]=clamp(i.value,30)); $$('[data-stat]').forEach(i=>x[i.dataset.stat]=clamp(i.value,20)); return x}
-function rangeCost(skill,from,to){const node=aliases[skill];if(!node)return null;let erda=0,frags=0;for(let lvl=from+1;lvl<=to;lvl++){const cost=COSTS[node.type]?.[lvl-1];if(!cost)throw new Error(`Missing cost for ${node.type} level ${lvl}`);erda+=cost.erda;frags+=cost.frags}return{erda,frags}}
-function mat(c,d){return `<div class="materials">${c.erda} Sol Erda · ${c.frags} Fragments${d!==null?` · ${d.toFixed(1)} days`:''}</div>`} function statNote(){return '<div class="materials">RNG upgrade, materials not estimated</div>'}
-function totalMatrix(lv){let spent={erda:0,frags:0},remaining={erda:0,frags:0},total={erda:0,frags:0};for(const n of NODES){const cur=lv[n.short]||0;const a=rangeCost(n.short,0,cur),b=rangeCost(n.short,cur,30),t=rangeCost(n.short,0,30);for(const k of ['erda','frags']){spent[k]+=a[k];remaining[k]+=b[k];total[k]+=t[k]}}return{spent,remaining,total,percent:total.frags?spent.frags/total.frags*100:0}}
-function calc(){const lv=levels(),mode=$('#mode').value,p=PRIORITIES[mode];let nextIndex=p.findIndex(s=>(lv[s.skill]||0)<s.level);if(nextIndex<0)nextIndex=p.length;const next=p[nextIndex];let checkpointCost=next?rangeCost(next.skill,lv[next.skill]||0,next.level):null;let nextLevelCost=next?rangeCost(next.skill,lv[next.skill]||0,Math.min((lv[next.skill]||0)+1,next.level)):null;const owned=clamp($('#owned').value,9999999),perday=clamp($('#perday').value,9999999),matrix=totalMatrix(lv);const days=c=>c&&perday?Math.max(0,c.frags-owned)/perday:null;$('#quick').innerHTML=next?`<div class="metric"><small>Next checkpoint</small><strong>${next.skill} → ${next.level}</strong>${checkpointCost?mat(checkpointCost,days(checkpointCost)):statNote()}</div><div class="metric"><small>Next individual level</small><strong>${next.skill} → ${Math.min((lv[next.skill]||0)+1,next.level)}</strong>${nextLevelCost?mat(nextLevelCost,days(nextLevelCost)):statNote()}</div><div class="metric"><small>HEXA Matrix completion</small><strong>${matrix.percent.toFixed(2)}%</strong>${mat(matrix.remaining,days(matrix.remaining))}</div><div class="metric"><small>Total materials spent</small><strong>${matrix.spent.erda.toLocaleString()} Sol Erda · ${matrix.spent.frags.toLocaleString()} Fragments</strong></div><div class="metric"><small>Priority progress</small><strong>${nextIndex} / ${p.length} checkpoints complete</strong></div>`:`<div class="metric"><strong>Priority complete</strong></div><div class="metric"><small>HEXA Matrix completion</small><strong>${matrix.percent.toFixed(2)}%</strong>${mat(matrix.remaining,days(matrix.remaining))}</div><div class="metric"><small>Total materials spent</small><strong>${matrix.spent.erda.toLocaleString()} Sol Erda · ${matrix.spent.frags.toLocaleString()} Fragments</strong></div>`;$('#priority').innerHTML=p.map((s,i)=>`<div class="step ${i<nextIndex?'done':''} ${i===nextIndex?'next':''}"><span class="num">${i+1}</span><span>${s.skill}</span><span class="target">Lv. ${s.level}</span></div>`).join('');const hideDone=$('#hideDone').checked;$('#priority').classList.toggle('hide-done',hideDone);saved={mode,levels:lv,owned,perday,hideDone};localStorage.setItem(key,JSON.stringify(saved))}
-document.addEventListener('input',calc);document.addEventListener('change',calc);$('#reset').onclick=()=>{if(confirm('Reset saved Hoyoung levels and resources?')){localStorage.removeItem(key);saved={};renderNodes();calc()}};renderNodes();calc();
+import { NODES } from './data.js';
+import { activeNodes, matrixTotals, nextCheckpoint, rangeCost } from './planner.js';
+
+const $ = selector => document.querySelector(selector);
+const $$ = selector => [...document.querySelectorAll(selector)];
+const storageKey = 'hexa-tracker-hoyoung-v1';
+let saved;
+try { saved = JSON.parse(localStorage.getItem(storageKey) || '{}') || {}; }
+catch { saved = {}; }
+
+function clamp(value, max) {
+  return Math.max(0, Math.min(max, Math.floor(Number(value) || 0)));
+}
+
+function renderInputs() {
+  $('#nodes').innerHTML = NODES.map(node => `<label class="node" data-node-row="${node.short}"><img src="${node.icon}" alt=""><span><b>${node.name}</b><small>${node.type}</small></span><input data-node="${node.short}" aria-label="${node.name} level" type="number" min="0" max="30" value="${saved.levels?.[node.short] ?? 0}"></label>`).join('');
+  $$('[data-stat]').forEach(input => { input.value = saved.levels?.[input.dataset.stat] ?? 0; });
+  const oldMode = { heroic: 'hecate_heroic', interactive: 'hecate_interactive' };
+  $('#mode').value = oldMode[saved.mode] || saved.mode || 'lotus_heroic';
+  $('#owned').value = saved.owned ?? 0;
+  $('#perday').value = saved.perday ?? 0;
+  $('#hideDone').checked = saved.hideDone !== false;
+}
+
+function levels() {
+  const result = { ...saved.levels };
+  $$('[data-node]').forEach(input => { result[input.dataset.node] = clamp(input.value, 30); });
+  $$('[data-stat]').forEach(input => { result[input.dataset.stat] = clamp(input.value, 20); });
+  return result;
+}
+
+function materials(cost, days) {
+  return `<div class="materials">${cost.erda.toLocaleString()} Sol Erda · ${cost.frags.toLocaleString()} Fragments${days === null ? '' : ` · ${days.toFixed(1)} days`}</div>`;
+}
+
+function render() {
+  const mode = $('#mode').value;
+  const current = levels();
+  const { steps, index, next } = nextCheckpoint(current, mode);
+  const owned = clamp($('#owned').value, 9999999);
+  const perday = clamp($('#perday').value, 9999999);
+  const days = cost => perday ? Math.max(0, cost.frags - owned) / perday : null;
+  const matrix = matrixTotals(current, mode);
+  const note = '<div class="materials">RNG upgrade, materials not estimated</div>';
+  const checkpointCost = next && rangeCost(next.skill, current[next.skill] || 0, next.level);
+  const nextLevel = next && Math.min((current[next.skill] || 0) + 1, next.level);
+  const levelCost = next && rangeCost(next.skill, current[next.skill] || 0, nextLevel);
+  $('#quick').innerHTML = `${next ? `<div class="metric"><small>Next checkpoint</small><strong>${next.skill} → ${next.level}</strong>${checkpointCost ? materials(checkpointCost, days(checkpointCost)) : note}</div><div class="metric"><small>Next individual level</small><strong>${next.skill} → ${nextLevel}</strong>${levelCost ? materials(levelCost, days(levelCost)) : note}</div>` : '<div class="metric"><strong>Priority complete</strong></div>'}<div class="metric"><small>Selected skill node completion</small><strong>${matrix.percent.toFixed(2)}%</strong>${materials(matrix.remaining, days(matrix.remaining))}</div><div class="metric"><small>Materials spent on selected nodes</small><strong>${matrix.spent.erda.toLocaleString()} Sol Erda · ${matrix.spent.frags.toLocaleString()} Fragments</strong></div><div class="metric"><small>Priority progress</small><strong>${index} / ${steps.length} checkpoints complete</strong></div>`;
+  $('#priority').innerHTML = steps.map((step, i) => `<div class="step ${i < index ? 'done' : ''} ${i === index ? 'next' : ''}"><span class="num">${i + 1}</span><span>${step.skill}</span><span class="target">Lv. ${step.level}</span></div>`).join('');
+  $('#priority').classList.toggle('hide-done', $('#hideDone').checked);
+  const available = new Set(activeNodes(mode).map(node => node.short));
+  $$('[data-node-row]').forEach(row => { row.hidden = !available.has(row.dataset.nodeRow); });
+  saved = { mode, levels: current, owned, perday, hideDone: $('#hideDone').checked };
+  localStorage.setItem(storageKey, JSON.stringify(saved));
+}
+
+document.addEventListener('input', render);
+document.addEventListener('change', render);
+$('#reset').onclick = () => {
+  if (confirm('Reset saved Hoyoung levels and resources?')) {
+    localStorage.removeItem(storageKey);
+    saved = {};
+    renderInputs();
+    render();
+  }
+};
+renderInputs();
+render();
