@@ -1,5 +1,6 @@
-import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SETTINGS, STAT_ICONS } from './data.js';
-import { activeNodes, matrixTotals, nextCheckpoint, priorityRows, priorityPatch, rangeCost, taotieCatchUp } from './planner.js';
+import { NODES, STAT_ICONS } from './data.js';
+import { activeNodes, matrixTotals, nextCheckpoint, priorityRows, rangeCost, taotieCatchUp } from './planner.js';
+import { loadPreview, previewCatalog } from './preview-priorities.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -7,6 +8,10 @@ const storageKey = 'hexa-tracker-hoyoung-v1';
 let saved;
 try { saved = JSON.parse(localStorage.getItem(storageKey) || '{}') || {}; }
 catch { saved = {}; }
+let previewDrafts = loadPreview(localStorage);
+let catalog = previewCatalog(previewDrafts);
+const requestedMode = new URL(location.href).searchParams.get('mode');
+if (requestedMode && catalog.settings[requestedMode]?.enabled && catalog.priorities[requestedMode]?.length) saved.mode = requestedMode;
 
 function clamp(value, max) {
   return Math.max(0, Math.min(max, Math.floor(Number(value) || 0)));
@@ -15,16 +20,16 @@ function clamp(value, max) {
 function syncPriorityOptions() {
   const select = $('#patch');
   const world = $('[name="world"]:checked').value;
-  const updates = [...new Set(Object.keys(PRIORITIES).filter(mode => PRIORITIES[mode].length && PRIORITY_SETTINGS[mode]?.enabled).map(mode => PRIORITY_SETTINGS[mode].patch))];
+  const updates = [...new Set(Object.keys(catalog.priorities).filter(mode => catalog.priorities[mode].length && catalog.settings[mode]?.enabled).map(mode => catalog.settings[mode].patch))];
   const labels = { lotus: 'GMS Lotus', taotie: 'KMS Taotie' };
   const previousPatch = select.value;
   if (updates.join('|') !== [...select.options].map(option => option.value).join('|')) select.replaceChildren(...updates.map(patch => new Option(labels[patch] || patch, patch)));
-  const patch = previousPatch || PRIORITY_SETTINGS[saved.mode]?.patch || updates[0];
+  const patch = previousPatch || catalog.settings[saved.mode]?.patch || updates[0];
   select.value = updates.includes(patch) ? patch : updates[0] || '';
-  const modes = Object.keys(PRIORITIES).filter(mode => PRIORITIES[mode].length && PRIORITY_SETTINGS[mode]?.enabled && PRIORITY_SETTINGS[mode].world === world && PRIORITY_SETTINGS[mode].patch === select.value);
+  const modes = Object.keys(catalog.priorities).filter(mode => catalog.priorities[mode].length && catalog.settings[mode]?.enabled && catalog.settings[mode].world === world && catalog.settings[mode].patch === select.value);
   const versions = $('#priority-version');
   const previousVersion = versions.value || saved.mode;
-  versions.replaceChildren(...modes.map(mode => new Option(PRIORITY_LABELS[mode], mode)));
+  versions.replaceChildren(...modes.map(mode => new Option(`${catalog.labels[mode]}${previewDrafts[mode] ? ' (preview)' : ''}`, mode)));
   $('#version-picker').hidden = modes.length < 2;
   if (modes.includes(previousVersion)) versions.value = previousVersion;
   return versions.value;
@@ -50,7 +55,7 @@ function renderInputs() {
   });
   $$('[data-node="Apotheosis"]').forEach(input => { input.value = Math.max(1, Number(input.value) || 0); });
   $$('[data-stat]').forEach(input => { input.value = saved.levels?.[input.dataset.stat] ?? 0; });
-  $(`[name="world"][value="${PRIORITY_SETTINGS[saved.mode]?.world || 'heroic'}"]`).checked = true;
+  $(`[name="world"][value="${catalog.settings[saved.mode]?.world || 'heroic'}"]`).checked = true;
   syncPriorityOptions();
   $('#owned').value = saved.owned ?? 0;
   $('#perday').value = saved.perday ?? 0;
@@ -90,42 +95,53 @@ function render() {
     $('#totals').replaceChildren();
     return;
   }
-  const patch = priorityPatch(mode);
+  const sourceMode = previewDrafts[mode]?.sourceMode || mode;
+  const order = catalog.priorities[mode];
   const current = levels();
-  const { steps, index, completed, next } = nextCheckpoint(current, mode);
+  const { steps, index, completed, next } = nextCheckpoint(current, sourceMode, order);
   const owned = clamp($('#owned').value, 9999999);
   const perday = clamp($('#perday').value, 9999999);
   const days = cost => perday ? Math.max(0, cost.frags - owned) / perday : null;
   const includeJanus = $('#includeJanus').checked;
-  const matrix = matrixTotals(current, mode, includeJanus);
-  const catchUp = taotieCatchUp(current, mode);
+  const matrix = matrixTotals(current, sourceMode, includeJanus);
+  const catchUp = taotieCatchUp(current, sourceMode, order);
   const note = '<div class="materials">RNG / no fixed material cost</div>';
   const nextLevel = next && (next.skill.startsWith('HEXA Stat') ? next.level : Math.min((current[next.skill] || 0) + 1, next.level));
   const levelCost = next && rangeCost(next.skill, current[next.skill] || 0, nextLevel);
-  $('#version-name').textContent = `${patch === 'taotie' ? 'KMS Taotie' : 'GMS Lotus'} / ${PRIORITY_SETTINGS[mode].world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'}`;
+  $('#version-name').textContent = `${catalog.labels[mode]} / ${catalog.settings[mode].world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'}${previewDrafts[mode] ? ' / Browser preview' : ''}`;
   $('#progress').textContent = steps.length ? `${completed} / ${steps.length} complete` : 'Maple Scouter order pending';
   $('#next-upgrade').innerHTML = `${next ? `<div class="metric"><small>Next Upgrade</small><strong>${next.skill} → ${nextLevel}</strong>${levelCost ? materials(levelCost, days(levelCost)) : note}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
   if (catchUp) $('#next-upgrade').insertAdjacentHTML('beforeend', `<div class="metric catch-up"><small>Taotie catch-up</small><strong>Taotie → ${catchUp.target}</strong>${materials(catchUp.cost, days(catchUp.cost))}</div>`);
   let remainingIndex = 0;
-  $('#priority').innerHTML = priorityRows(current, mode).map(row => {
+  $('#priority').innerHTML = priorityRows(current, sourceMode, order).map(row => {
     const cost = row.cost;
     const number = value => value === 0 ? '<span class="zero">0</span>' : value.toLocaleString();
     if (!row.done) remainingIndex++;
     const displayIndex = $('#hideDone').checked && !row.done ? remainingIndex : row.index;
-    const icon = STAT_ICONS[row.skill] || nodeByShort[row.skill]?.icon;
+    const icon = previewDrafts[mode]?.statIcons[row.skill] || STAT_ICONS[row.skill] || nodeByShort[row.skill]?.icon;
     return `<tr class="type-${typeClass(row.skill)} ${row.done ? 'done' : ''} ${row.index === index + 1 ? 'next' : ''}"><td>${displayIndex}</td><td><span class="skill-cell">${icon ? `<img class="stat-icon" src="${icon}" alt="">` : '<i class="dot" aria-hidden="true"></i>'}${row.skill}</span></td><td>${row.level}</td><td>${cost ? number(cost.erda) : '<span class="rng">RNG</span>'}</td><td>${cost ? number(cost.frags) : '<span class="rng">RNG</span>'}</td></tr>`;
   }).join('');
   $$('.stat-icon').forEach(img => { img.addEventListener('error', () => { img.hidden = true; }); });
   $('.priority-table').classList.toggle('hide-done', $('#hideDone').checked);
   $('#totals').innerHTML = `<div class="total"><small>HEXA Matrix Completion</small><strong>${matrix.percent.toFixed(2)}%</strong>${materials(matrix.remaining, days(matrix.remaining))}${perday ? '' : '<div class="hint">Enter Fragments per day for a time estimate.</div>'}</div><div class="total"><small>Total Materials Spent</small><strong>${matrix.spent.erda.toLocaleString()} Sol Erda / ${matrix.spent.frags.toLocaleString()} Fragments</strong></div>`;
-  const available = new Set(activeNodes(mode).map(node => node.short));
-  $$('[data-node-row]').forEach(row => { row.hidden = !available.has(row.dataset.nodeRow); });
+  const available = new Set(activeNodes(sourceMode).map(node => node.short));
+  $$('[data-node-row]').forEach(row => {
+    row.hidden = !available.has(row.dataset.nodeRow);
+    row.querySelector('.node-name').textContent = previewDrafts[mode]?.names[row.dataset.nodeRow] || nodeByShort[row.dataset.nodeRow].name;
+  });
   saved = { mode, levels: current, owned, perday, hideDone: $('#hideDone').checked, includeJanus };
   localStorage.setItem(storageKey, JSON.stringify(saved));
 }
 
 document.addEventListener('input', render);
 document.addEventListener('change', render);
+window.addEventListener('storage', event => {
+  if (event.key === 'hexa-priority-preview-v1') {
+    previewDrafts = loadPreview(localStorage);
+    catalog = previewCatalog(previewDrafts);
+    render();
+  }
+});
 $('#reset').onclick = () => {
   if (confirm('Reset saved Hoyoung levels and resources?')) {
     localStorage.removeItem(storageKey);

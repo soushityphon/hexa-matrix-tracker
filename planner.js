@@ -7,10 +7,10 @@ export function activeNodes(mode) {
   return NODES.filter(node => (patch === 'taotie' || node.short !== 'Taotie') && (patch !== 'hecate' || node.short !== 'Lotus'));
 }
 
-export function taotieCatchUp(levels, mode) {
+export function taotieCatchUp(levels, mode, order = PRIORITIES[mode]) {
   if (priorityPatch(mode) !== 'taotie') return null;
   let target = 0;
-  for (const step of PRIORITIES[mode]) {
+  for (const step of order) {
     if (step.skill === 'Taotie') target = Math.max(target, step.level);
     else if ((levels[step.skill] || 0) < step.level) break;
   }
@@ -51,16 +51,15 @@ export function matrixTotals(levels, mode, includeJanus = false) {
   return { spent, remaining, total, percent: total.frags ? spent.frags / total.frags * 100 : 0 };
 }
 
-export function nextCheckpoint(levels, mode) {
-  const steps = PRIORITIES[mode];
+export function nextCheckpoint(levels, mode, steps = PRIORITIES[mode]) {
   const index = steps.findIndex(step => (levels[step.skill] || 0) < step.level);
   const completed = steps.filter(step => (levels[step.skill] || 0) >= step.level).length;
   return { steps, index: index < 0 ? steps.length : index, completed, next: index < 0 ? null : steps[index] };
 }
 
-export function priorityRows(levels, mode) {
+export function priorityRows(levels, mode, order = PRIORITIES[mode]) {
   const previous = { ...levels };
-  return PRIORITIES[mode].map((step, index) => {
+  return order.map((step, index) => {
     const from = previous[step.skill] || 0;
     const done = (levels[step.skill] || 0) >= step.level;
     const cost = step.skill.startsWith('HEXA Stat') ? null : rangeCost(step.skill, Math.min(from, step.level), step.level);

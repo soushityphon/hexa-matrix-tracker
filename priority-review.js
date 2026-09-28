@@ -2,6 +2,7 @@ import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SETTINGS, PRIORITY_SOURCES
 import { compareDraft, currentDraft, parseSteps, validateDraft } from './priority-draft.js';
 import { inspectScouterResponse, resolveScouterResponse } from './scouter-import.js';
 import { extractScouterOrder } from './scouter-extract.js';
+import { loadPreview, previewCatalog, savePreview, removePreview } from './preview-priorities.js';
 
 const $ = selector => document.querySelector(selector);
 const key = 'hexa-priority-review-v1';
@@ -10,6 +11,10 @@ let inspected = null;
 let importedNodes = [];
 let importedStatIcons = {};
 let version = null;
+let previewDrafts = loadPreview(localStorage);
+let catalog = previewCatalog(previewDrafts);
+let materialIssues = 0;
+let pendingSource = '';
 const recentOrders = new Map();
 const recentFailures = new Map();
 const recentOrderMs = 5 * 60 * 1000;
@@ -17,33 +22,57 @@ const limitKey = 'hexa-scouter-pause-until';
 let pauseUntil = 0;
 try { pauseUntil = Number(sessionStorage.getItem(limitKey)) || 0; } catch { /* Session storage may be unavailable. */ }
 try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { saved = {}; }
-const registeredModes = Object.keys(PRIORITIES).filter(mode => PRIORITIES[mode].length);
+const registeredModes = () => Object.keys(catalog.priorities).filter(mode => catalog.priorities[mode].length);
+function refreshCatalog() {
+  previewDrafts = loadPreview(localStorage);
+  catalog = previewCatalog(previewDrafts);
+  const selected = $('#mode').value;
+  $('#mode').replaceChildren(...Object.keys(PRIORITIES).map(mode => new Option(PRIORITY_LABELS[mode], mode)));
+  $('#mode').value = selected || 'lotus_heroic';
+  renderRegistered();
+}
 function visibility(value) {
   document.querySelectorAll('[name="visibility"]').forEach(input => { input.checked = value !== null && input.value === (value ? 'enabled' : 'disabled'); });
 }
 function renderRegistered() {
-  $('#registered-count').textContent = `(${registeredModes.length})`;
+  const modes = registeredModes();
+  $('#registered-count').textContent = `(${modes.filter(mode => PRIORITIES[mode]?.length).length} GitHub${modes.some(mode => !PRIORITIES[mode]?.length) ? `, ${modes.filter(mode => !PRIORITIES[mode]?.length).length} browser preview` : ''})`;
   const list = $('#registered');
   list.replaceChildren();
-  for (const mode of registeredModes) {
-    const settings = PRIORITY_SETTINGS[mode];
+  for (const mode of modes) {
+    const settings = catalog.settings[mode];
     const row = document.createElement('article'); row.className = 'registered-row';
     const details = document.createElement('div'); details.className = 'registered-details';
-    const title = document.createElement('strong'); title.textContent = PRIORITY_LABELS[mode];
+    const title = document.createElement('strong'); title.textContent = catalog.labels[mode];
     const source = document.createElement('small');
-    const date = PRIORITY_SOURCES[mode]?.match(/\b\d{4}-\d{2}-\d{2}\b/)?.[0] || 'Date not recorded';
-    source.textContent = `${settings.patch === 'taotie' ? 'KMS Taotie' : 'GMS Lotus'} · ${settings.world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'} · ${PRIORITIES[mode].length} steps · ${date}`;
-    const note = document.createElement('small'); note.textContent = PRIORITY_SOURCES[mode] || 'Source not recorded';
+    const date = catalog.sources[mode]?.match(/\b\d{4}-\d{2}-\d{2}\b/)?.[0] || 'Date not recorded';
+    source.textContent = `${settings.patch === 'taotie' ? 'KMS Taotie' : 'GMS Lotus'} · ${settings.world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'} · ${catalog.priorities[mode].length} steps · ${date}`;
+    const note = document.createElement('small'); note.textContent = catalog.sources[mode] || 'Source not recorded';
     details.append(title, source, note);
     const actions = document.createElement('div'); actions.className = 'registered-actions';
-    const badge = document.createElement('span'); badge.className = settings.enabled ? 'visible' : 'disabled'; badge.textContent = settings.enabled ? 'Visible' : 'Hidden';
+    const badge = document.createElement('span'); badge.className = settings.enabled ? 'visible' : 'disabled'; badge.textContent = `${settings.enabled ? 'Visible' : 'Hidden'}${previewDrafts[mode] ? ' in this browser' : ''}`;
     const review = document.createElement('button'); review.type = 'button'; review.textContent = 'Review';
-    review.addEventListener('click', () => { $('#mode').value = mode; show(saved[mode] || currentDraft(mode)); $('#draft-heading').scrollIntoView({ behavior: 'smooth' }); });
+    review.addEventListener('click', () => { $('#mode').value = previewDrafts[mode]?.sourceMode || mode; show(previewDrafts[mode] || currentDraft(mode)); $('#draft-heading').scrollIntoView({ behavior: 'smooth' }); });
     const rename = document.createElement('button'); rename.type = 'button'; rename.textContent = 'Rename';
     rename.addEventListener('click', () => { review.click(); $('#name').focus(); });
     const toggle = document.createElement('button'); toggle.type = 'button'; toggle.textContent = settings.enabled ? 'Disable' : 'Enable';
-    toggle.addEventListener('click', () => { review.click(); visibility(!settings.enabled); persist(); message(`Draft set to ${settings.enabled ? 'hidden' : 'visible'}. Download it for GitHub review to apply this change.`); });
-    actions.append(badge, review, rename, toggle); row.append(details, actions); list.append(row);
+    toggle.addEventListener('click', () => {
+      try {
+        const draft = { ...(previewDrafts[mode] || currentDraft(mode)), enabled: !settings.enabled };
+        savePreview(localStorage, draft);
+        refreshCatalog();
+        show(draft);
+        message(`${draft.name} is ${draft.enabled ? 'visible' : 'hidden'} on this browser's preview tracker. Download its draft for GitHub review.`);
+      } catch (error) { message(error.message, true); }
+    });
+    actions.append(badge, review, rename, toggle);
+    if (previewDrafts[mode]) {
+      const restore = document.createElement('button'); restore.type = 'button';
+      restore.textContent = Object.hasOwn(PRIORITIES, mode) ? 'Restore GitHub' : 'Remove preview';
+      restore.addEventListener('click', () => { const sourceMode = previewDrafts[mode].sourceMode; removePreview(localStorage, mode); refreshCatalog(); show(currentDraft(sourceMode)); message('Browser preview change removed.'); });
+      actions.append(restore);
+    }
+    row.append(details, actions); list.append(row);
   }
 }
 
@@ -52,10 +81,8 @@ function sameSteps(a, b) {
 }
 function matchingVersion(steps, sourceMode) {
   const settings = PRIORITY_SETTINGS[sourceMode];
-  return Object.keys(PRIORITIES).find(mode => {
-    const other = PRIORITY_SETTINGS[mode];
-    return other.patch === settings.patch && other.world === settings.world && sameSteps(steps, PRIORITIES[mode]);
-  });
+  return Object.keys(PRIORITIES).find(mode => PRIORITY_SETTINGS[mode].patch === settings.patch && PRIORITY_SETTINGS[mode].world === settings.world && PRIORITIES[mode].length && sameSteps(steps, PRIORITIES[mode]))
+    || Object.keys(previewDrafts).find(mode => catalog.settings[mode].patch === settings.patch && catalog.settings[mode].world === settings.world && sameSteps(steps, previewDrafts[mode].steps));
 }
 function classifyOrder() {
   const sourceMode = $('#mode').value;
@@ -63,6 +90,11 @@ function classifyOrder() {
   const settings = PRIORITY_SETTINGS[sourceMode];
   const match = matchingVersion(steps, sourceMode);
   if (match) {
+    if (previewDrafts[match]?.isNew) {
+      show(previewDrafts[match]);
+      message(`No new priority: ${steps.length} steps match your saved browser preview, ${previewDrafts[match].name}.`);
+      return;
+    }
     version = { sourceMode: match, mode: match, isNew: false };
     $('#priority-id').value = match;
     $('#name').value = PRIORITY_LABELS[match];
@@ -73,17 +105,20 @@ function classifyOrder() {
     const stamp = new Date().toISOString().slice(0, 10).replaceAll('-', '');
     const base = `${settings.patch}_${settings.world}_${stamp}`;
     let mode = base;
-    for (let number = 2; Object.hasOwn(PRIORITIES, mode); number++) mode = `${base}_${number}`;
+    for (let number = 2; Object.hasOwn(catalog.priorities, mode); number++) mode = `${base}_${number}`;
     version = { sourceMode, mode, isNew: true };
     $('#priority-id').value = mode;
     $('#name').value = '';
+    $('#source').value = pendingSource;
     visibility(null);
     $('#version-state').textContent = 'New order. Name it and choose whether to show it on the tracker.';
-    message(`New priority: ${steps.length} steps. Enter its name, then download the draft.`);
+    message(`New priority: ${steps.length} steps. Name it, choose visibility, then save it to the preview tracker.`);
   }
 }
 function compareResponse(response) {
   const extracted = extractScouterOrder(response, $('#mode').value);
+  materialIssues = extracted.validation.issues.length;
+  pendingSource = `Maple Scouter ${$('#mode').value.startsWith('taotie_') ? 'KMS Taotie' : 'GMS Lotus'} ${$('#mode').value.endsWith('_heroic') ? 'Fragments' : 'Sol Erda'}, checked ${new Date().toISOString().slice(0, 10)}${extracted.source.standard ? `, benchmark ${String(extracted.source.standard).slice(0, 80)}` : ''}`;
   inspected = inspectScouterResponse(response);
   renderUnknown(inspected.unknown);
   importedNodes = [];
@@ -94,7 +129,7 @@ function compareResponse(response) {
     inspected = null;
     persist();
   } else message(`${inspected.unknown.length} new skill(s) need a name and type. Enter them, then review changes.`);
-  if (extracted.validation.issues.length) message(`${extracted.count} rows imported. ${extracted.validation.issues.length} material check(s) need review.`, true);
+  if (materialIssues) message(`${extracted.count} rows imported. ${materialIssues} material check(s) need review.`, true);
 }
 
 function read() {
@@ -116,17 +151,19 @@ function show(draft) {
   inspected = null;
   importedNodes = draft.newNodes || [];
   importedStatIcons = draft.statIcons || {};
+  materialIssues = 0;
   $('#unknown').hidden = true;
   $('#unknown-list').replaceChildren();
   $('#name').value = draft.name;
   $('#priority-id').value = draft.mode;
   visibility(draft.isNew && typeof draft.enabled !== 'boolean' ? null : draft.enabled === true);
-  $('#version-state').textContent = draft.isNew ? 'New order. Name it and choose whether to show it on the tracker.' : `${PRIORITIES[draft.mode].length} imported steps. Changes are a draft until reviewed in GitHub.`;
+  $('#version-state').textContent = draft.isNew ? 'New order. Name it and choose whether to show it on the tracker.' : `${catalog.priorities[draft.mode]?.length || draft.steps.length} imported steps. Save to this browser, then download for GitHub review.`;
   $('#source').value = draft.source || '';
   $('#steps').value = draft.steps.map(step => `${step.skill}, ${step.level}`).join('\n');
   $('#names').innerHTML = NODES.map(node => `<div class="review-name"><label for="name-${node.short}">${node.short}</label><input id="name-${node.short}" data-name="${node.short}" type="text"></div>`).join('');
   for (const input of document.querySelectorAll('[data-name]')) input.value = draft.names[input.dataset.name] || '';
   $('#status').textContent = '';
+  $('#open-preview').hidden = true;
   const historical = draft.mode.startsWith('hecate_');
   if (historical) message('Historical Hecate needs a pasted Maple Scouter response.');
 }
@@ -213,7 +250,7 @@ function renderCheck(check) {
   const world = `${check.mode.startsWith('taotie_') ? 'KMS Taotie' : 'GMS Lotus'} ${check.mode.endsWith('_heroic') ? 'Fragments' : 'Sol Erda'}`;
   label.textContent = check.error ? `${world}: ${check.error}`
     : check.unknown ? `${world}: ${check.unknown} new skill(s) need setup.`
-    : check.match ? `${world}: matches ${PRIORITY_LABELS[check.match]} (${check.steps} steps; ${check.issues} material checks).`
+    : check.match ? `${world}: matches ${catalog.labels[check.match]} (${check.steps} steps; ${check.issues} material checks).`
     : `${world}: new order (${check.steps} steps; ${check.issues} material checks). Name and review it.`;
   row.append(label);
   if (!check.error && !check.match) {
@@ -277,6 +314,24 @@ $('#review').addEventListener('click', () => {
     const draft = read();
     const changes = compareDraft(draft);
     message(`${draft.steps.length} steps. ${changes.changedNames} display names changed. ${changes.changedSteps} steps changed at their position. ${changes.lengthDifference} net steps.`);
+  } catch (error) { message(error.message, true); }
+});
+$('#save-preview').addEventListener('click', () => {
+  try {
+    collectUnknown();
+    if (inspected) {
+      classifyOrder();
+      inspected = null;
+    }
+    if (materialIssues) throw new Error(`${materialIssues} material checks need review before saving this order to the preview tracker.`);
+    const draft = read();
+    savePreview(localStorage, draft);
+    saved[draft.sourceMode] = draft;
+    localStorage.setItem(key, JSON.stringify(saved));
+    refreshCatalog();
+    $('#open-preview').href = `index.html?mode=${encodeURIComponent(draft.mode)}`;
+    $('#open-preview').hidden = !draft.enabled;
+    message(`${draft.name} saved to this browser's preview tracker as ${draft.enabled ? 'visible' : 'hidden'}. Download its draft for GitHub review to publish it.`);
   } catch (error) { message(error.message, true); }
 });
 $('#download').addEventListener('click', () => {

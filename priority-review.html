@@ -13,7 +13,7 @@
     <section class="panel registered-panel">
       <div class="panel-head"><h2>Registered priorities <span id="registered-count"></span></h2></div>
       <div id="registered" class="registered-list"></div>
-      <p class="fine">Historical Hecate has no retrievable order. Empty placeholders are not registered.</p>
+      <p class="fine">Preview changes are saved in this browser. Download a draft for GitHub review before they appear outside this browser. Historical Hecate has no retrievable order.</p>
     </section>
     <div class="review-grid">
       <section class="panel">
@@ -37,9 +37,10 @@
           <div id="unknown" hidden><h3>New skills to name</h3><p>Confirm the short label, display name and skill type before downloading the draft.</p><div id="unknown-list"></div></div>
         </details>
         <details class="order-editor"><summary>Inspect ordered checkpoints</summary><label>Upgrade order <small>One step per line: Harmony, 1</small><textarea id="steps" spellcheck="false"></textarea></label></details>
-        <div class="actions"><button id="review" type="button">Review changes</button><button id="download" type="button">Download draft</button></div>
+        <div class="actions"><button id="review" type="button">Review changes</button><button id="save-preview" type="button">Save to preview tracker</button><button id="download" type="button">Download draft for GitHub</button></div>
         <p id="status" role="status"></p>
-        <p class="fine">The draft stays in this browser. A reviewed GitHub update publishes it to the tracker.</p>
+        <a id="open-preview" href="index.html" hidden>Open saved priority on the tracker</a>
+        <p class="fine">Save to preview tracker affects this browser only. A reviewed GitHub update publishes it for other visitors and devices.</p>
       </section>
       <section class="panel">
         <h2>Display names</h2>
