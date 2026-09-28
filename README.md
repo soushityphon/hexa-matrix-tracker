@@ -12,7 +12,7 @@ A browser-based MapleStory HEXA Matrix priority and material tracker. The first 
 - Intermediate level material costs calculated automatically
 - Next checkpoint and next individual level summaries
 
-HEXA Stat material costing and Ren are intentionally left for later milestones.
+HEXA Stats are priority-only RNG checkpoints. Their material cost is intentionally not estimated. Ren is planned for a later milestone.
 
 ## Data model
 
