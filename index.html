@@ -10,7 +10,7 @@
   <main class="shell">
     <header class="masthead">
       <div>
-        <p class="kicker">MapleStory / Hoyoung</p>
+        <p class="kicker">MapleStory / HEXA Matrix</p>
         <h1>HEXA Matrix Tracker</h1>
       </div>
       <div class="version"><span id="version-name">GMS / Lotus</span></div>
@@ -18,8 +18,9 @@
 
     <div class="toolbar">
       <label>Class<select id="class"><option value="hoyoung">Hoyoung</option><option value="ren" disabled>Ren</option></select></label>
-      <label>Priority<select id="patch"></select></label>
-      <fieldset class="world-picker"><legend>World</legend><label><input type="radio" name="world" value="heroic" checked><span>Heroic <small>Fragments</small></span></label><label><input type="radio" name="world" value="interactive"><span>Interactive <small>Sol Erda</small></span></label></fieldset>
+      <label>Update<select id="patch"></select></label>
+      <fieldset class="world-picker"><legend>Priority (World)</legend><label><input type="radio" name="world" value="heroic" checked><span>Fragments (Heroic)</span></label><label><input type="radio" name="world" value="interactive"><span>Sol Erda (Interactive)</span></label></fieldset>
+      <label id="version-picker" hidden>Priority version<select id="priority-version"></select></label>
     </div>
 
     <div class="workspace">
@@ -40,6 +41,7 @@
       <div class="results">
         <section class="panel priority-panel">
           <div class="panel-head"><h2>Skill priority</h2></div>
+          <div id="next-upgrade" class="next-upgrade"></div>
           <div class="priority-controls"><span id="progress" class="quiet"></span><label class="toggle"><input id="hideDone" type="checkbox" checked> Hide completed</label></div>
           <div class="table-wrap">
             <table class="priority-table">
@@ -52,12 +54,11 @@
 
       <aside class="quickstats">
         <section class="panel">
-          <h2>Quick Stats</h2>
+          <h2>Matrix summary</h2>
           <div class="resources">
             <label>Fragments owned <input id="owned" type="number" min="0" value="0"></label>
             <label>Fragments per day <input id="perday" type="number" min="0" value="0"></label>
           </div>
-          <div id="quick" class="quick"></div>
           <div class="include-option"><label class="toggle"><input id="includeJanus" type="checkbox"> Include Sol Janus in completion and spent totals</label></div>
           <div class="totals" id="totals"></div>
         </section>

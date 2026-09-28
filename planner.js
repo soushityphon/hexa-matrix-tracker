@@ -37,11 +37,12 @@ export function matrixTotals(levels, mode, includeJanus = false) {
   const total = { erda: 0, frags: 0 };
   for (const node of activeNodes(mode)) {
     if (node.short === 'Janus' && !includeJanus) continue;
-    const current = levels[node.short] || 0;
+    const initial = node.short === 'Apotheosis' ? 1 : 0;
+    const current = Math.max(initial, levels[node.short] || 0);
     for (const [target, cost] of [
-      [spent, rangeCost(node.short, 0, current)],
+      [spent, rangeCost(node.short, initial, current)],
       [remaining, rangeCost(node.short, current, 30)],
-      [total, rangeCost(node.short, 0, 30)]
+      [total, rangeCost(node.short, initial, 30)]
     ]) {
       target.erda += cost.erda;
       target.frags += cost.frags;

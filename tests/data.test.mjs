@@ -60,6 +60,9 @@ const partial=priorityRows({Harmony:4,Talisman:1,Scroll:1,Hecate:1},'taotie_hero
 assert(partial.find(row=>row.skill==='Harmony'&&row.level===6).cost.frags===48,'checkpoint cost starts at actual level even when upgrades were out of order');
 assert(matrixTotals({Janus:1},'lotus_heroic').spent.frags===0,'Sol Janus excluded by default');
 assert(matrixTotals({Janus:1},'lotus_heroic',true).spent.frags===125,'Sol Janus included when selected');
+assert(matrixTotals({},'lotus_heroic').spent.frags===0,'Apotheosis starts at level 1 without charging its unlock');
+assert(matrixTotals({Apotheosis:1},'lotus_heroic').spent.erda===0,'Apotheosis level 1 is the initial baseline');
+assert(matrixTotals({Apotheosis:2},'lotus_heroic').spent.frags===30,'later Apotheosis levels count from the initial baseline');
 import { compareDraft, currentDraft, parseSteps, validateDraft } from '../priority-draft.js';
 import { inspectScouterResponse, resolveScouterResponse } from '../scouter-import.js';
 import { extractScouterOrder } from '../scouter-extract.js';

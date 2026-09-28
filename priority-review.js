@@ -1,4 +1,4 @@
-import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SETTINGS } from './data.js';
+import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SETTINGS, PRIORITY_SOURCES } from './data.js';
 import { compareDraft, currentDraft, parseSteps, validateDraft } from './priority-draft.js';
 import { inspectScouterResponse, resolveScouterResponse } from './scouter-import.js';
 import { extractScouterOrder } from './scouter-extract.js';
@@ -17,6 +17,35 @@ const limitKey = 'hexa-scouter-pause-until';
 let pauseUntil = 0;
 try { pauseUntil = Number(sessionStorage.getItem(limitKey)) || 0; } catch { /* Session storage may be unavailable. */ }
 try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { saved = {}; }
+const registeredModes = Object.keys(PRIORITIES).filter(mode => PRIORITIES[mode].length);
+function visibility(value) {
+  document.querySelectorAll('[name="visibility"]').forEach(input => { input.checked = value !== null && input.value === (value ? 'enabled' : 'disabled'); });
+}
+function renderRegistered() {
+  $('#registered-count').textContent = `(${registeredModes.length})`;
+  const list = $('#registered');
+  list.replaceChildren();
+  for (const mode of registeredModes) {
+    const settings = PRIORITY_SETTINGS[mode];
+    const row = document.createElement('article'); row.className = 'registered-row';
+    const details = document.createElement('div'); details.className = 'registered-details';
+    const title = document.createElement('strong'); title.textContent = PRIORITY_LABELS[mode];
+    const source = document.createElement('small');
+    const date = PRIORITY_SOURCES[mode]?.match(/\b\d{4}-\d{2}-\d{2}\b/)?.[0] || 'Date not recorded';
+    source.textContent = `${settings.patch === 'taotie' ? 'KMS Taotie' : 'GMS Lotus'} · ${settings.world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'} · ${PRIORITIES[mode].length} steps · ${date}`;
+    const note = document.createElement('small'); note.textContent = PRIORITY_SOURCES[mode] || 'Source not recorded';
+    details.append(title, source, note);
+    const actions = document.createElement('div'); actions.className = 'registered-actions';
+    const badge = document.createElement('span'); badge.className = settings.enabled ? 'visible' : 'disabled'; badge.textContent = settings.enabled ? 'Visible' : 'Hidden';
+    const review = document.createElement('button'); review.type = 'button'; review.textContent = 'Review';
+    review.addEventListener('click', () => { $('#mode').value = mode; show(saved[mode] || currentDraft(mode)); $('#draft-heading').scrollIntoView({ behavior: 'smooth' }); });
+    const rename = document.createElement('button'); rename.type = 'button'; rename.textContent = 'Rename';
+    rename.addEventListener('click', () => { review.click(); $('#name').focus(); });
+    const toggle = document.createElement('button'); toggle.type = 'button'; toggle.textContent = settings.enabled ? 'Disable' : 'Enable';
+    toggle.addEventListener('click', () => { review.click(); visibility(!settings.enabled); persist(); message(`Draft set to ${settings.enabled ? 'hidden' : 'visible'}. Download it for GitHub review to apply this change.`); });
+    actions.append(badge, review, rename, toggle); row.append(details, actions); list.append(row);
+  }
+}
 
 function sameSteps(a, b) {
   return a.length === b.length && a.every((step, index) => step.skill === b[index].skill && step.level === b[index].level);
@@ -37,7 +66,7 @@ function classifyOrder() {
     version = { sourceMode: match, mode: match, isNew: false };
     $('#priority-id').value = match;
     $('#name').value = PRIORITY_LABELS[match];
-    $('#enabled').checked = PRIORITY_SETTINGS[match].enabled;
+    visibility(PRIORITY_SETTINGS[match].enabled);
     $('#version-state').textContent = `Matches ${PRIORITY_LABELS[match]}.`;
     message(`No new priority: ${steps.length} steps match ${PRIORITY_LABELS[match]}.`);
   } else {
@@ -48,7 +77,7 @@ function classifyOrder() {
     version = { sourceMode, mode, isNew: true };
     $('#priority-id').value = mode;
     $('#name').value = '';
-    $('#enabled').checked = false;
+    visibility(null);
     $('#version-state').textContent = 'New order. Name it and choose whether to show it on the tracker.';
     message(`New priority: ${steps.length} steps. Enter its name, then download the draft.`);
   }
@@ -69,10 +98,12 @@ function compareResponse(response) {
 }
 
 function read() {
+  const choice = document.querySelector('[name="visibility"]:checked');
+  if (!choice) throw new Error('Choose whether this priority will be visible on the tracker');
   return validateDraft({
     ...version,
     name: $('#name').value,
-    enabled: $('#enabled').checked,
+    enabled: choice.value === 'enabled',
     source: $('#source').value,
     names: Object.fromEntries([...document.querySelectorAll('[data-name]')].map(input => [input.dataset.name, input.value])),
     newNodes: importedNodes,
@@ -89,8 +120,8 @@ function show(draft) {
   $('#unknown-list').replaceChildren();
   $('#name').value = draft.name;
   $('#priority-id').value = draft.mode;
-  $('#enabled').checked = draft.enabled === true;
-  $('#version-state').textContent = draft.isNew ? 'New order. Name it and choose whether to show it on the tracker.' : `${PRIORITIES[draft.mode].length} imported steps.`;
+  visibility(draft.isNew && typeof draft.enabled !== 'boolean' ? null : draft.enabled === true);
+  $('#version-state').textContent = draft.isNew ? 'New order. Name it and choose whether to show it on the tracker.' : `${PRIORITIES[draft.mode].length} imported steps. Changes are a draft until reviewed in GitHub.`;
   $('#source').value = draft.source || '';
   $('#steps').value = draft.steps.map(step => `${step.skill}, ${step.level}`).join('\n');
   $('#names').innerHTML = NODES.map(node => `<div class="review-name"><label for="name-${node.short}">${node.short}</label><input id="name-${node.short}" data-name="${node.short}" type="text"></div>`).join('');
@@ -251,6 +282,10 @@ $('#review').addEventListener('click', () => {
 $('#download').addEventListener('click', () => {
   try {
     collectUnknown();
+    if (inspected) {
+      classifyOrder();
+      inspected = null;
+    }
     const draft = read();
     const blob = new Blob([JSON.stringify(draft, null, 2) + '\n'], { type: 'application/json' });
     const link = document.createElement('a');
@@ -263,4 +298,5 @@ $('#download').addEventListener('click', () => {
 });
 $('#mode').replaceChildren(...Object.keys(PRIORITIES).map(mode => new Option(PRIORITY_LABELS[mode], mode)));
 $('#mode').value = 'lotus_heroic';
+renderRegistered();
 show(saved[$('#mode').value] || currentDraft($('#mode').value));

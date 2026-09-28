@@ -10,6 +10,11 @@
 <body>
   <main class="shell review-shell">
     <header class="masthead"><div><p class="kicker">Hoyoung</p><h1>Priority Review</h1></div><a href="index.html">Tracker</a></header>
+    <section class="panel registered-panel">
+      <div class="panel-head"><h2>Registered priorities <span id="registered-count"></span></h2></div>
+      <div id="registered" class="registered-list"></div>
+      <p class="fine">Historical Hecate has no retrievable order. Empty placeholders are not registered.</p>
+    </section>
     <div class="review-grid">
       <section class="panel">
         <div class="source-check">
@@ -18,12 +23,12 @@
           <button id="retrieve" type="button">Check for new priorities</button>
           <div id="checks" role="status"></div>
         </div>
-        <h2>Priority draft</h2>
+        <h2 id="draft-heading">Priority draft</h2>
         <label>Compare against<select id="mode"></select></label>
         <p id="version-state" class="fine"></p>
         <label>Priority ID<input id="priority-id" type="text" readonly></label>
         <label>Priority name<input id="name" type="text"></label>
-        <label class="visibility"><input id="enabled" type="checkbox"> Show on tracker</label>
+        <fieldset class="visibility"><legend>Tracker visibility</legend><label><input type="radio" name="visibility" value="enabled"> Enabled, show on tracker</label><label><input type="radio" name="visibility" value="disabled"> Disabled, keep for review</label></fieldset>
         <label>Source link or note<input id="source" type="text"></label>
         <details id="manual-import" class="import-panel"><summary>Import Maple Scouter response</summary>
           <label>Response JSON file<input id="response-file" type="file" accept=".json,.txt,application/json,text/plain"></label>
@@ -31,7 +36,7 @@
           <button id="inspect" type="button">Compare response</button>
           <div id="unknown" hidden><h3>New skills to name</h3><p>Confirm the short label, display name and skill type before downloading the draft.</p><div id="unknown-list"></div></div>
         </details>
-        <label>Upgrade order <small>One step per line: Harmony, 1</small><textarea id="steps" spellcheck="false"></textarea></label>
+        <details class="order-editor"><summary>Inspect ordered checkpoints</summary><label>Upgrade order <small>One step per line: Harmony, 1</small><textarea id="steps" spellcheck="false"></textarea></label></details>
         <div class="actions"><button id="review" type="button">Review changes</button><button id="download" type="button">Download draft</button></div>
         <p id="status" role="status"></p>
         <p class="fine">The draft stays in this browser. A reviewed GitHub update publishes it to the tracker.</p>
