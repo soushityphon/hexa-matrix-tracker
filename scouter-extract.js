@@ -3,7 +3,7 @@ import { rangeCost } from './planner.js';
 import { inspectScouterResponse, resolveScouterResponse } from './scouter-import.js';
 
 const integer = value => Number.isInteger(value) && value >= 0;
-const same = (a, b) => a.skill === b.skill && a.level === b.level;
+const same = (a, b) => !!a && !!b && a.skill === b.skill && a.level === b.level;
 
 /** Extract only order data from a Scouter response. The player's profile is never copied. */
 export function extractScouterOrder(response, mode, mappings = {}) {

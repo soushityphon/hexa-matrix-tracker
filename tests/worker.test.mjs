@@ -43,6 +43,8 @@ try {
 
   globalThis.fetch = async () => Response.json({ class_hexa: [] });
   assert.equal((await worker.fetch(request('lotus_heroic'), env)).status, 502);
+  globalThis.fetch = async () => new Response('limited', { status: 429 });
+  assert.match(await (await worker.fetch(request('lotus_heroic'), env)).text(), /Wait a few minutes/);
   globalThis.fetch = async () => { throw new Error('network unavailable'); };
   assert.equal((await worker.fetch(request('lotus_heroic'), env)).status, 502);
 } finally { globalThis.fetch = originalFetch; }

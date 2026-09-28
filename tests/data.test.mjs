@@ -91,6 +91,7 @@ const sourceRows={standard:'허수아비',class_hexa:[
 const extraction=extractScouterOrder(sourceRows,'taotie_heroic');
 assert(extraction.count===2&&extraction.validation.issues.length===0,'extractor checks source checkpoint and cumulative costs');
 assert(extraction.rows[1].materials.frags===101&&extraction.comparison.firstDifference===2,'extractor retains checkpoint costs and compares order');
+assert(extractScouterOrder(sourceRows,'lotus_interactive').comparison.firstDifference===1,'extractor compares against an empty saved order');
 assert(extractScouterOrder({...sourceRows,class_hexa:[sourceRows.class_hexa[0], [...sourceRows.class_hexa[1].slice(0,4), 100, ...sourceRows.class_hexa[1].slice(5)]]},'taotie_heroic').validation.issues.some(issue=>issue.kind==='material-cost'),'extractor flags incorrect source checkpoint cost');
 assert(rangeCost('Ascent',0,1).frags===100,'Ascent uses its confirmed 5 Sol Erda / 100 Fragment unlock');
 console.log('Data validation passed');

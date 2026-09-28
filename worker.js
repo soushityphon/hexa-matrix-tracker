@@ -57,7 +57,9 @@ export default {
           body: JSON.stringify(payload),
           signal: AbortSignal.timeout(25_000)
         });
-        if (!upstream.ok) return new Response(`Maple Scouter returned ${upstream.status}`, { status: 502 });
+        if (!upstream.ok) return new Response([429, 430].includes(upstream.status)
+          ? `Maple Scouter returned ${upstream.status}. Wait a few minutes before checking again.`
+          : `Maple Scouter returned ${upstream.status}`, { status: 502 });
         const result = await upstream.json();
         if (!Array.isArray(result?.class_hexa) || !result.class_hexa.length) return new Response('Maple Scouter returned an unexpected order', { status: 502 });
         return Response.json(result, { headers: { 'Cache-Control': 'no-store' } });

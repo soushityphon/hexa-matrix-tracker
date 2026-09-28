@@ -10,6 +10,9 @@ let inspected = null;
 let importedNodes = [];
 let importedStatIcons = {};
 let version = null;
+const recentOrders = new Map();
+const recentFailures = new Map();
+const recentOrderMs = 5 * 60 * 1000;
 try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { saved = {}; }
 
 function sameSteps(a, b) {
@@ -142,15 +145,27 @@ $('#mode').addEventListener('change', () => show(saved[$('#mode').value] || curr
 document.addEventListener('input', persist);
 async function checkMode(mode) {
   try {
-    const response = await fetch('/api/hexa-order', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode })
-    });
-    if (!response.ok) throw new Error((await response.text()).slice(0, 160) || `Request returned ${response.status}`);
-    const result = await response.json();
+    const failure = recentFailures.get(mode);
+    if (failure && Date.now() - failure.at < 60_000) return { mode, error: `${failure.error} Try again in a minute.` };
+    const cached = recentOrders.get(mode);
+    let result;
+    if (cached && Date.now() - cached.at < recentOrderMs) result = cached.result;
+    else {
+      const response = await fetch('/api/hexa-order', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode })
+      });
+      if (!response.ok) throw new Error((await response.text()).slice(0, 160) || `Request returned ${response.status}`);
+      result = await response.json();
+      recentOrders.set(mode, { at: Date.now(), result });
+      recentFailures.delete(mode);
+    }
     const extracted = extractScouterOrder(result, mode);
     const match = extracted.unknown.length ? null : matchingVersion(extracted.steps, mode);
     return { mode, result, steps: extracted.count, unknown: extracted.unknown.length, issues: extracted.validation.issues.length, match };
-  } catch (error) { return { mode, error: error.message }; }
+  } catch (error) {
+    recentFailures.set(mode, { at: Date.now(), error: error.message });
+    return { mode, error: error.message };
+  }
 }
 function renderCheck(check) {
   const row = document.createElement('div');
@@ -180,10 +195,12 @@ function renderCheck(check) {
 }
 $('#retrieve').addEventListener('click', async () => {
   $('#retrieve').disabled = true;
-  $('#checks').textContent = 'Checking Fragments and Sol Erda…';
-  const checks = await Promise.all(['lotus_heroic', 'lotus_interactive', 'taotie_heroic', 'taotie_interactive'].map(checkMode));
   $('#checks').replaceChildren();
-  checks.forEach(renderCheck);
+  const modes = ['lotus_heroic', 'lotus_interactive', 'taotie_heroic', 'taotie_interactive'];
+  for (const [index, mode] of modes.entries()) {
+    if (index && !recentOrders.has(mode)) await new Promise(resolve => setTimeout(resolve, 2000));
+    renderCheck(await checkMode(mode));
+  }
   $('#retrieve').disabled = false;
 });
 $('#inspect').addEventListener('click', () => {
