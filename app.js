@@ -1,5 +1,5 @@
 import { NODES } from './data.js';
-import { activeNodes, matrixTotals, nextCheckpoint, rangeCost } from './planner.js';
+import { activeNodes, matrixTotals, nextCheckpoint, rangeCost, taotieCatchUp } from './planner.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -15,8 +15,8 @@ function clamp(value, max) {
 function renderInputs() {
   $('#nodes').innerHTML = NODES.map(node => `<label class="node" data-node-row="${node.short}"><img src="${node.icon}" alt=""><span><b>${node.name}</b><small>${node.type}</small></span><input data-node="${node.short}" aria-label="${node.name} level" type="number" min="0" max="30" value="${saved.levels?.[node.short] ?? 0}"></label>`).join('');
   $$('[data-stat]').forEach(input => { input.value = saved.levels?.[input.dataset.stat] ?? 0; });
-  const oldMode = { heroic: 'hecate_heroic', interactive: 'hecate_interactive' };
-  $('#mode').value = oldMode[saved.mode] || saved.mode || 'lotus_heroic';
+  const region = saved.mode?.startsWith('taotie_') ? 'taotie' : 'lotus';
+  $('#mode').value = `${region}_${saved.mode?.endsWith('interactive') ? 'interactive' : 'heroic'}`;
   $('#owned').value = saved.owned ?? 0;
   $('#perday').value = saved.perday ?? 0;
   $('#hideDone').checked = saved.hideDone !== false;
@@ -41,11 +41,13 @@ function render() {
   const perday = clamp($('#perday').value, 9999999);
   const days = cost => perday ? Math.max(0, cost.frags - owned) / perday : null;
   const matrix = matrixTotals(current, mode);
+  const catchUp = taotieCatchUp(current, mode);
   const note = '<div class="materials">RNG upgrade, materials not estimated</div>';
   const checkpointCost = next && rangeCost(next.skill, current[next.skill] || 0, next.level);
   const nextLevel = next && Math.min((current[next.skill] || 0) + 1, next.level);
   const levelCost = next && rangeCost(next.skill, current[next.skill] || 0, nextLevel);
   $('#quick').innerHTML = `${next ? `<div class="metric"><small>Next checkpoint</small><strong>${next.skill} → ${next.level}</strong>${checkpointCost ? materials(checkpointCost, days(checkpointCost)) : note}</div><div class="metric"><small>Next individual level</small><strong>${next.skill} → ${nextLevel}</strong>${levelCost ? materials(levelCost, days(levelCost)) : note}</div>` : '<div class="metric"><strong>Priority complete</strong></div>'}<div class="metric"><small>Selected skill node completion</small><strong>${matrix.percent.toFixed(2)}%</strong>${materials(matrix.remaining, days(matrix.remaining))}</div><div class="metric"><small>Materials spent on selected nodes</small><strong>${matrix.spent.erda.toLocaleString()} Sol Erda · ${matrix.spent.frags.toLocaleString()} Fragments</strong></div><div class="metric"><small>Priority progress</small><strong>${index} / ${steps.length} checkpoints complete</strong></div>`;
+  if (catchUp) $('#quick').insertAdjacentHTML('afterbegin', `<div class="metric"><small>Taotie catch-up</small><strong>Taotie → ${catchUp.target}</strong>${materials(catchUp.cost, days(catchUp.cost))}<small>Needed before your next unfinished existing-node checkpoint in this priority.</small></div>`);
   $('#priority').innerHTML = steps.map((step, i) => `<div class="step ${i < index ? 'done' : ''} ${i === index ? 'next' : ''}"><span class="num">${i + 1}</span><span>${step.skill}</span><span class="target">Lv. ${step.level}</span></div>`).join('');
   $('#priority').classList.toggle('hide-done', $('#hideDone').checked);
   const available = new Set(activeNodes(mode).map(node => node.short));
