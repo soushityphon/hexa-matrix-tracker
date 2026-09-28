@@ -11,7 +11,7 @@ const sheetGroups={
 };
 assert(JSON.stringify(NODES.map(({group,short,name})=>[group,short,name]))===JSON.stringify(Object.entries(sheetGroups).flatMap(([group,nodes])=>nodes.map(([short,name])=>[group,short,name]))),'node labels and in-game order match the spreadsheet');
 for(const [mode,steps] of Object.entries(PRIORITIES)){assert(steps.length>0,`${mode} empty`);for(const s of steps){assert(names.has(s.skill)||s.skill.startsWith('HEXA Stat'),`${mode}: unknown skill ${s.skill}`);assert(s.level>=1&&s.level<=(s.skill.startsWith('HEXA Stat')?20:30),`${mode}: invalid level ${s.level}`)}}
-assert(Object.keys(PRIORITIES).length===4,'current Lotus and future Taotie Heroic/Interactive priorities required');
+assert(Object.keys(PRIORITIES).length===6,'Hecate, Lotus and Taotie Heroic/Interactive priorities required');
 for(const [mode,steps] of Object.entries(PRIORITIES)){
   for(const stat of ['HEXA Stat I','HEXA Stat II','HEXA Stat III']){
     assert(steps.filter(step=>step.skill===stat&&step.level===20).length===1,`${mode}: ${stat} should occur once`);
@@ -27,6 +27,8 @@ assert(rangeCost('Harmony',0,1).frags===50,'Mastery unlock cost');
 assert(rangeCost('Harmony',1,6).frags===101,'Mastery intermediate cost');
 assert(matrixTotals({Harmony:1},'lotus_heroic').spent.frags===50,'spent cost should use entered level');
 assert(matrixTotals({Taotie:30},'lotus_heroic').spent.frags===0,'future node excluded from current GMS totals');
+assert(matrixTotals({Lotus:30},'hecate_heroic').spent.frags===0,'Lotus excluded from Hecate totals');
+assert(PRIORITIES.hecate_heroic.every(step=>!['Lotus','Taotie'].includes(step.skill)),'Hecate order has only released nodes');
 assert(matrixTotals({Taotie:1},'taotie_heroic').spent.frags===140,'future node included in preview totals');
 const caughtUp={Harmony:6,Talisman:4,Scroll:5,Hecate:1,'HEXA Stat I':20,Taotie:0};
 assert(taotieCatchUp(caughtUp,'taotie_heroic')?.target===1,'Taotie catch-up target follows completed existing checkpoints');

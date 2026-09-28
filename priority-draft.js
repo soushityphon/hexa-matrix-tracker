@@ -28,6 +28,7 @@ export function validateDraft(draft) {
   if (!Array.isArray(draft.steps) || !draft.steps.length) throw new Error('Enter at least one priority step');
   const steps = parseSteps(draft.steps.map(step => `${step.skill}, ${step.level}`).join('\n'));
   if (steps.some(step => step.skill === 'Taotie') && !draft.mode.startsWith('taotie_')) throw new Error('Taotie steps need the Taotie mode');
+  if (steps.some(step => step.skill === 'Lotus') && draft.mode.startsWith('hecate_')) throw new Error('Lotus steps are not in the Hecate mode');
   const names = {};
   for (const node of NODES) {
     const name = draft.names?.[node.short];

@@ -1,4 +1,4 @@
-import { NODES, PRIORITY_LABELS } from './data.js';
+import { NODES } from './data.js';
 import { activeNodes, matrixTotals, nextCheckpoint, priorityRows, rangeCost, taotieCatchUp } from './planner.js';
 
 const $ = selector => document.querySelector(selector);
@@ -13,15 +13,15 @@ function clamp(value, max) {
 }
 
 function renderInputs() {
-  for (const option of $('#mode').options) option.textContent = PRIORITY_LABELS[option.value];
   $('#nodes').innerHTML = NODES.map((node, index) => `${index === 0 || NODES[index - 1].group !== node.group ? `<div class="group-label">${node.group}</div>` : ''}<label class="node-row" data-node-row="${node.short}" title="${node.name}"><span class="node-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span class="node-name">${node.name}</span><input data-node="${node.short}" aria-label="${node.name} level" type="number" min="0" max="30" value="${saved.levels?.[node.short] ?? 0}"></label>`).join('');
   $$('.node-icon img').forEach(img => {
     img.addEventListener('error', () => { img.hidden = true; });
     if (img.complete && !img.naturalWidth) img.hidden = true;
   });
   $$('[data-stat]').forEach(input => { input.value = saved.levels?.[input.dataset.stat] ?? 0; });
-  const region = saved.mode?.startsWith('taotie_') ? 'taotie' : 'lotus';
-  $('#mode').value = `${region}_${saved.mode?.endsWith('interactive') ? 'interactive' : 'heroic'}`;
+  const patch = saved.mode?.split('_')[0];
+  $('#patch').value = ['hecate', 'lotus', 'taotie'].includes(patch) ? patch : 'lotus';
+  $(`[name="world"][value="${saved.mode?.endsWith('interactive') ? 'interactive' : 'heroic'}"]`).checked = true;
   $('#owned').value = saved.owned ?? 0;
   $('#perday').value = saved.perday ?? 0;
   $('#hideDone').checked = saved.hideDone !== false;
@@ -50,7 +50,9 @@ function typeClass(skill) {
 }
 
 function render() {
-  const mode = $('#mode').value;
+  const patch = $('#patch').value;
+  const world = $('[name="world"]:checked').value;
+  const mode = `${patch}_${world}`;
   const current = levels();
   const { steps, index, completed, next } = nextCheckpoint(current, mode);
   const owned = clamp($('#owned').value, 9999999);
@@ -63,7 +65,7 @@ function render() {
   const checkpointCost = next && rangeCost(next.skill, current[next.skill] || 0, next.level);
   const nextLevel = next && Math.min((current[next.skill] || 0) + 1, next.level);
   const levelCost = next && rangeCost(next.skill, current[next.skill] || 0, nextLevel);
-  $('#version-name').textContent = mode.startsWith('taotie_') ? 'KMS / Taotie preview' : 'GMS / Lotus';
+  $('#version-name').textContent = `${patch === 'taotie' ? 'KMS preview' : 'GMS'} / ${$('#patch').selectedOptions[0].textContent}`;
   $('#progress').textContent = `${completed} / ${steps.length} complete`;
   $('#quick').innerHTML = `${next ? `<div class="metric"><small>Next Upgrade</small><strong>${next.skill} → ${nextLevel}</strong>${levelCost ? materials(levelCost, days(levelCost)) : note}</div><div class="metric"><small>Next Checkpoint</small><strong>${next.skill} → ${next.level}</strong>${checkpointCost ? materials(checkpointCost, days(checkpointCost)) : note}</div>` : '<div class="metric"><strong>Priority complete</strong></div>'}`;
   if (catchUp) $('#quick').insertAdjacentHTML('afterbegin', `<div class="metric catch-up"><small>Taotie catch-up</small><strong>Taotie → ${catchUp.target}</strong>${materials(catchUp.cost, days(catchUp.cost))}</div>`);
