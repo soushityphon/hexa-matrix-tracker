@@ -1,6 +1,6 @@
 // Bundled with the static files by scripts/build-worker.mjs.
 import { validateDraft } from './priority-draft.js';
-const mimeTypes = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8' };
+const mimeTypes = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png' };
 const scouterUrl = 'https://api.maplescouter.com/api/calc/hexa-order?class=%ED%98%B8%EC%98%81';
 const noStore = { 'Cache-Control': 'no-store' };
 function isAdmin(request, env) {
@@ -126,6 +126,7 @@ export default {
     const path = url.pathname === '/' ? '/index.html' : url.pathname;
     if (!Object.hasOwn(ASSETS, path)) return new Response('Not found', { status: 404 });
     const ext = path.slice(path.lastIndexOf('.'));
-    return new Response(request.method === 'HEAD' ? null : ASSETS[path], { headers: { 'Content-Type': mimeTypes[ext] || 'application/octet-stream', 'Cache-Control': 'public, max-age=60' } });
+    const body = ext === '.png' && request.method !== 'HEAD' ? Uint8Array.from(atob(ASSETS[path]), char => char.charCodeAt(0)) : ASSETS[path];
+    return new Response(request.method === 'HEAD' ? null : body, { headers: { 'Content-Type': mimeTypes[ext] || 'application/octet-stream', 'Cache-Control': 'public, max-age=60' } });
   }
 };

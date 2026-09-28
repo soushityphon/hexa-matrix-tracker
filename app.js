@@ -73,7 +73,22 @@ function levels() {
 }
 
 function materials(cost, days) {
-  return `<div class="materials">${cost.erda.toLocaleString()} Sol Erda / ${cost.frags.toLocaleString()} Fragments${days === null ? '' : ` / ${days.toFixed(1)} days`}</div>`;
+  return `<div class="materials">${materialAmount(cost.erda, 'erda')} ${materialAmount(cost.frags, 'frags')}${days === null ? '' : ` <span class="material-days">/ ${days.toFixed(1)} days</span>`}</div>`;
+}
+
+const materialIcons = {
+  erda: { path: 'assets/sol-erda.png', name: 'Sol Erda' },
+  frags: { path: 'assets/sol-erda-fragment.png', name: 'Fragments' }
+};
+function materialAmount(value, type) {
+  const { path, name } = materialIcons[type];
+  return `<span class="material-amount" aria-label="${value.toLocaleString()} ${name}"><img src="${path}" alt=""><span aria-hidden="true">${value.toLocaleString()}</span><span class="material-fallback" aria-hidden="true">${name}</span></span>`;
+}
+function checkMaterialIcons() {
+  $$('.material-amount img, .material-heading img').forEach(img => {
+    img.addEventListener('error', () => { img.parentElement.classList.add('icon-failed'); });
+    if (img.complete && !img.naturalWidth) img.parentElement.classList.add('icon-failed');
+  });
 }
 
 const nodeByShort = Object.fromEntries(NODES.map(node => [node.short, node]));
@@ -94,7 +109,9 @@ function render() {
     $('#next-upgrade').textContent = 'No priority is available for this update and world.';
     $('#priority').replaceChildren();
     $('#totals').replaceChildren();
+    $('#completion').replaceChildren();
     $('#time-estimate').hidden = true;
+    checkMaterialIcons();
     return;
   }
   const sourceMode = previewDrafts[mode]?.sourceMode || mode;
@@ -125,9 +142,11 @@ function render() {
     const icon = previewDrafts[mode]?.statIcons[row.skill] || STAT_ICONS[row.skill] || nodeByShort[row.skill]?.icon;
     return `<tr class="type-${typeClass(row.skill)} ${row.done ? 'done' : ''} ${row.index <= index + 1 && index + 1 <= row.endIndex ? 'next' : ''}"><td>${displayIndex}</td><td><span class="skill-cell">${icon ? `<img class="stat-icon" src="${icon}" alt="">` : '<i class="dot" aria-hidden="true"></i>'}${row.skill}</span></td><td>${row.level}</td><td>${cost ? number(cost.erda) : '<span class="rng">RNG</span>'}</td><td>${cost ? number(cost.frags) : '<span class="rng">RNG</span>'}</td></tr>`;
   }).join('');
+  $('#completion').innerHTML = `<div class="completion-label"><span>Completion</span><strong>${matrix.percent.toFixed(2)}%</strong></div><div class="completion-track" role="progressbar" aria-label="HEXA Matrix completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${matrix.percent.toFixed(2)}"><span style="width:${matrix.percent.toFixed(2)}%"></span></div>`;
   $$('.stat-icon').forEach(img => { img.addEventListener('error', () => { img.hidden = true; }); });
   $('.priority-table').classList.toggle('hide-done', $('#hideDone').checked);
-  $('#totals').innerHTML = `<div class="total"><small>Total Materials Spent</small><strong>${matrix.spent.erda.toLocaleString()} Sol Erda / ${matrix.spent.frags.toLocaleString()} Fragments</strong></div><div class="total"><small>Materials to Complete HEXA Matrix</small><strong>${matrix.remaining.erda.toLocaleString()} Sol Erda / ${matrix.remaining.frags.toLocaleString()} Fragments</strong></div>`;
+  $('#totals').innerHTML = `<div class="total"><small>Total Materials Spent</small><strong class="material-total">${materialAmount(matrix.spent.erda, 'erda')} ${materialAmount(matrix.spent.frags, 'frags')}</strong></div><div class="total"><small>Materials to Complete HEXA Matrix</small><strong class="material-total">${materialAmount(matrix.remaining.erda, 'erda')} ${materialAmount(matrix.remaining.frags, 'frags')}</strong></div>`;
+  checkMaterialIcons();
   $('#time-estimate').hidden = !perday;
   if (perday) $('#time-estimate').innerHTML = `<small>Estimated time for remaining Fragments</small><strong>${days(matrix.remaining).toFixed(1)} days</strong>`;
   const available = new Set(activeNodes(sourceMode).map(node => node.short));
