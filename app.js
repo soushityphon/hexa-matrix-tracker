@@ -106,15 +106,17 @@ function render() {
   const includeJanus = $('#includeJanus').checked;
   const matrix = matrixTotals(current, sourceMode, includeJanus);
   const catchUp = taotieCatchUp(current, sourceMode, order);
+  const displayRows = displayPriorityRows(current, sourceMode, order);
+  const nextRow = displayRows.find(row => !row.done && row.index <= index + 1 && index + 1 <= row.endIndex);
   const note = '<div class="materials">RNG / no fixed material cost</div>';
   const nextLevel = next && (next.skill.startsWith('HEXA Stat') ? next.level : Math.min((current[next.skill] || 0) + 1, next.level));
   const levelCost = next && rangeCost(next.skill, current[next.skill] || 0, nextLevel);
   $('#version-name').textContent = `${catalog.labels[mode]} / ${catalog.settings[mode].world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'}${previewDrafts[mode] ? ' / Test site preview' : ''}`;
   $('#progress').textContent = steps.length ? `${completed} / ${steps.length} complete` : 'Maple Scouter order pending';
-  $('#next-upgrade').innerHTML = `${next ? `<div class="metric"><small>Next Upgrade</small><strong>${next.skill} → ${nextLevel}</strong>${levelCost ? materials(levelCost, days(levelCost)) : note}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
+  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric"><small>Next Upgrade</small><strong>${nextRow.skill} → ${nextRow.level}</strong><div class="upgrade-cost"><span>Next level ${next.skill} → ${nextLevel}</span>${levelCost ? materials(levelCost, days(levelCost)) : note}</div>${nextRow.level === nextLevel ? '' : `<div class="upgrade-cost"><span>To checkpoint ${nextRow.skill} → ${nextRow.level}</span>${nextRow.cost ? materials(nextRow.cost, days(nextRow.cost)) : note}</div>`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
   if (catchUp) $('#next-upgrade').insertAdjacentHTML('beforeend', `<div class="metric catch-up"><small>Taotie catch-up</small><strong>Taotie → ${catchUp.target}</strong>${materials(catchUp.cost, days(catchUp.cost))}</div>`);
   let remainingIndex = 0;
-  $('#priority').innerHTML = displayPriorityRows(current, sourceMode, order).map((row, rowIndex) => {
+  $('#priority').innerHTML = displayRows.map((row, rowIndex) => {
     const cost = row.cost;
     const number = value => value === 0 ? '<span class="zero">0</span>' : value.toLocaleString();
     if (!row.done) remainingIndex++;
