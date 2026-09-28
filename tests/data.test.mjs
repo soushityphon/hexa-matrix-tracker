@@ -1,4 +1,4 @@
-import {COSTS,NODES,PRIORITIES,PRIORITY_SETTINGS} from '../data.js';
+import {COSTS,NODES,PRIORITIES,PRIORITY_SETTINGS,STAT_ICONS} from '../data.js';
 import {activeNodes,matrixTotals,nextCheckpoint,priorityRows,rangeCost,taotieCatchUp} from '../planner.js';
 import {readFileSync} from 'node:fs';
 const assert=(x,m)=>{if(!x)throw new Error(m)};
@@ -97,4 +97,6 @@ assert(extraction.rows[1].materials.frags===101&&extraction.comparison.firstDiff
 assert(extractScouterOrder(sourceRows,'lotus_interactive').comparison.firstDifference===1,'extractor compares against an empty saved order');
 assert(extractScouterOrder({...sourceRows,class_hexa:[sourceRows.class_hexa[0], [...sourceRows.class_hexa[1].slice(0,4), 100, ...sourceRows.class_hexa[1].slice(5)]]},'taotie_heroic').validation.issues.some(issue=>issue.kind==='material-cost'),'extractor flags incorrect source checkpoint cost');
 assert(rangeCost('Ascent',0,1).frags===100,'Ascent uses its confirmed 5 Sol Erda / 100 Fragment unlock');
+const captured=JSON.parse(readFileSync(new URL('../data/scouter-kms-taotie-fragment-extracted-2026-09-28.json',import.meta.url)));
+assert(JSON.stringify(STAT_ICONS)===JSON.stringify(captured.statIcons),'HEXA Stat icons match the extracted KMS source');
 console.log('Data validation passed');

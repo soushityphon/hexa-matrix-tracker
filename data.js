@@ -7,7 +7,7 @@ export const COSTS={
 "V":mk([4,1,1,1,2,2,2,3,3,8,3,3,3,3,3,3,3,3,4,12,4,4,4,4,4,5,5,5,6,15],[75,23,27,30,34,38,42,45,49,150,60,68,75,83,90,98,105,113,120,263,128,135,143,150,158,165,173,180,188,375]),
 "Common":mk([7,2,2,2,3,3,3,5,5,14,5,5,6,6,6,6,6,6,7,17,7,7,7,7,7,9,9,9,10,20],[125,38,44,50,57,63,69,75,82,300,110,124,138,152,165,179,193,207,220,525,234,248,262,275,289,303,317,330,344,750]),
 "Common II":mk([4,1,1,1,2,2,2,3,3,9,3,3,3,3,4,4,4,4,4,14,4,5,5,5,5,5,5,5,6,18],[90,25,30,35,40,45,50,55,60,180,73,81,90,98,107,115,124,132,141,315,151,160,170,179,189,198,208,217,227,450])};
-export const STAT_ICONS={};
+export const STAT_ICONS={"HEXA Stat I":"https://open.api.nexon.com/static/maplestory/skill/icon/KAPCLAPBMA","HEXA Stat II":"https://open.api.nexon.com/static/maplestory/skill/icon/KAPCLAPBMA","HEXA Stat III":"https://open.api.nexon.com/static/maplestory/skill/icon/KAPCLAPBMA"};
 
 // Orders are transcribed from Maple Scouter reset-baseline checkpoints.
 // Empty modes have no verified Maple Scouter snapshot yet.
