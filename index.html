@@ -1,1 +1,73 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HEXA Matrix Tracker</title><link rel="stylesheet" href="styles.css"></head><body><main><header><div><p class="eyebrow">MapleStory</p><h1>HEXA Matrix Tracker</h1><p>Hoyoung GMS priority and material planner.</p><p class="muted">Skill names follow current GMS MapleStory Wiki naming. Lotus is current GMS. Taotie previews a future GMS patch using KMS priorities. Both are dated 23 August 2026 snapshots. Scouter checkpoints use familiar short labels.</p></div><div class="controls"><label>Class<select disabled><option>Hoyoung</option><option>Ren, coming soon</option></select></label><label>Scouter priority<select id="mode"><option value="lotus_heroic">Lotus, Heroic</option><option value="lotus_interactive">Lotus, Interactive</option><option value="taotie_heroic">Taotie, Heroic (future GMS)</option><option value="taotie_interactive">Taotie, Interactive (future GMS)</option></select></label></div></header><section class="layout"><div><section class="card"><div class="section-head"><h2>Current HEXA levels</h2><button id="reset" class="ghost">Reset</button></div><div id="nodes" class="nodes"></div><div class="stat-grid"><label>HEXA Stat I<input data-stat="HEXA Stat I" type="number" min="0" max="20" value="0"></label><label>HEXA Stat II<input data-stat="HEXA Stat II" type="number" min="0" max="20" value="0"></label><label>HEXA Stat III<input data-stat="HEXA Stat III" type="number" min="0" max="20" value="0"></label></div></section><section class="card"><h2>Resources</h2><div class="stat-grid"><label>Fragments owned<input id="owned" type="number" min="0" value="0"></label><label>Fragments per day<input id="perday" type="number" min="0" value="0"></label></div></section></div><div><section class="card sticky"><h2>Quick stats</h2><div id="quick"></div></section></div></section><section class="card"><div class="section-head"><div><h2>Scouter priority</h2><p class="muted">Checkpoints stay compact. Intermediate levels are costed behind the scenes.</p></div></div><div class="priority-tools"><label><input id="hideDone" type="checkbox" checked> Hide completed checkpoints</label></div><div id="priority" class="priority"></div></section></main><script type="module" src="app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HEXA Matrix Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div>
+        <p class="kicker">MapleStory / Hoyoung</p>
+        <h1>HEXA Matrix Tracker</h1>
+        <p class="subhead">Upgrade order and material costs from your current levels.</p>
+      </div>
+      <div class="version">GMS / Lotus<br><span>23 Aug 2026 snapshot</span></div>
+    </header>
+
+    <div class="toolbar">
+      <label>Priority source
+        <select id="mode">
+          <option value="lotus_heroic">GMS Lotus / Heroic</option>
+          <option value="lotus_interactive">GMS Lotus / Interactive</option>
+          <option value="taotie_heroic">KMS Taotie preview / Heroic</option>
+          <option value="taotie_interactive">KMS Taotie preview / Interactive</option>
+        </select>
+      </label>
+      <span id="source-note" class="source-note">Current GMS priority</span>
+    </div>
+
+    <div class="workspace">
+      <aside class="inputs">
+        <section class="panel">
+          <div class="panel-head"><h2>Current HEXA levels</h2><button id="reset" type="button">Reset</button></div>
+          <div class="column-head"><span>node</span><span>level</span></div>
+          <div id="nodes" class="node-list"></div>
+          <div class="group-label">HEXA Stats <span>RNG / level 20 max</span></div>
+          <div class="stat-list">
+            <label>HEXA Stat I <input data-stat="HEXA Stat I" aria-label="HEXA Stat I level" type="number" min="0" max="20" value="0"></label>
+            <label>HEXA Stat II <input data-stat="HEXA Stat II" aria-label="HEXA Stat II level" type="number" min="0" max="20" value="0"></label>
+            <label>HEXA Stat III <input data-stat="HEXA Stat III" aria-label="HEXA Stat III level" type="number" min="0" max="20" value="0"></label>
+          </div>
+        </section>
+        <section class="panel resources">
+          <h2>Resources</h2>
+          <label>Fragments owned <input id="owned" type="number" min="0" value="0"></label>
+          <label>Fragments per day <input id="perday" type="number" min="0" value="0"></label>
+        </section>
+      </aside>
+
+      <div class="results">
+        <section class="panel next-panel">
+          <div class="panel-head"><h2>Next upgrade</h2><span id="progress" class="quiet"></span></div>
+          <div id="quick" class="quick"></div>
+        </section>
+        <section class="panel priority-panel">
+          <div class="panel-head"><div><h2>Skill priority</h2><p class="hint">Full upgrade order. Costs are for levels you still need. HEXA Stat rolls have no fixed cost.</p></div><label class="toggle"><input id="hideDone" type="checkbox" checked> Hide completed</label></div>
+          <div class="table-wrap">
+            <table class="priority-table">
+              <thead><tr><th>#</th><th>Node</th><th>Target</th><th>Sol Erda</th><th>Fragments</th></tr></thead>
+              <tbody id="priority"></tbody>
+            </table>
+          </div>
+        </section>
+        <section class="totals" id="totals"></section>
+      </div>
+    </div>
+    <footer>Hoyoung priorities are dated workbook snapshots. Lotus is current GMS. Taotie uses KMS priorities to preview a future GMS patch.</footer>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
