@@ -4,13 +4,13 @@ import {readFileSync} from 'node:fs';
 const assert=(x,m)=>{if(!x)throw new Error(m)};
 for(const [type,rows] of Object.entries(COSTS)){assert(rows.length===30,`${type} must have 30 levels`);for(const [i,c] of rows.entries()){assert(Number.isFinite(c.erda)&&Number.isFinite(c.frags),`${type} level ${i+1} invalid`)}}
 const names=new Set(NODES.map(n=>n.short));
-const sheetGroups={
-  'Skill Nodes':[['Taotie','Sage: Liberated Taotie'],['Ascent','Heavenly World'],['Apotheosis','Sage: Apotheosis']],
-  'Mastery Nodes':[['Scroll','Scroll: Vortex & Butterfly'],['Talisman','Talisman: Clone & Ghost'],['Basics','Basics Mastery'],['Harmony','Universal Harmony']],
+const matrixGroups={
+  'Skill Nodes':[['Apotheosis','Sage: Apotheosis'],['Ascent','Heavenly World'],['Taotie','Sage: Liberated Taotie']],
+  'Mastery Nodes':[['Harmony','Universal Harmony'],['Basics','Basics Mastery'],['Talisman','Talisman: Clone & Ghost'],['Scroll','Scroll: Vortex & Butterfly']],
   'Enhancement Nodes':[['Rampage','Sage: Maximum Clone Rampage'],['Tiger','Scroll: Tiger of Songyu'],['Wrath of Gods','Sage: Wrath of Gods'],['Apparition','Sage: Three Paths Apparition']],
   'Common Nodes':[['Janus','Sol Janus'],['Hecate','Sol Hecate'],['Lotus','Lotus Flower']]
 };
-assert(JSON.stringify(NODES.map(({group,short,name})=>[group,short,name]))===JSON.stringify(Object.entries(sheetGroups).flatMap(([group,nodes])=>nodes.map(([short,name])=>[group,short,name]))),'node labels and in-game order match the spreadsheet');
+assert(JSON.stringify(NODES.map(({group,short,name})=>[group,short,name]))===JSON.stringify(Object.entries(matrixGroups).flatMap(([group,nodes])=>nodes.map(([short,name])=>[group,short,name]))),'current matrix follows the confirmed Scouter core layout');
 for(const [mode,steps] of Object.entries(PRIORITIES)){for(const s of steps){assert(names.has(s.skill)||s.skill.startsWith('HEXA Stat'),`${mode}: unknown skill ${s.skill}`);assert(s.level>=1&&s.level<=(s.skill.startsWith('HEXA Stat')?20:30),`${mode}: invalid level ${s.level}`)}}
 assert(Object.keys(PRIORITIES).length===6,'Hecate, Lotus and Taotie Heroic/Interactive priorities required');
 assert(Object.keys(PRIORITIES).every(mode=>PRIORITY_SETTINGS[mode]),'every priority has visibility and patch metadata');
