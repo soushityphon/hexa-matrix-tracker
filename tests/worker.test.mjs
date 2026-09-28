@@ -3,19 +3,33 @@ import worker from '../worker.js';
 import { currentDraft } from '../priority-draft.js';
 
 const url = 'https://preview.example/api/hexa-order';
-const payload = { myHexa: { character_class: '호영', hexaStat: 2, hexaStat_opened: false }, userStat: { stat: { myClass: '호영' }, isGMS: true, hexa: { hexaStat: 2, hexaStat_opened: false } }, sole: false };
+const dirtyHexa = { character_class: '호영', hexaStat: 2, hexaStat_opened: true, skillCore1: '12', skillCore2: '5', masteryCore1: '4', reinCore1: '3', generalCore1: '2', hexaSkill: { skillCore1: 12, skillCore2: 5, masteryCore1: 4, reinCore1: 3 }, hexaSkill_general: { generalCore1: 2 } };
+const payload = { myHexa: structuredClone(dirtyHexa), userStat: { stat: { myClass: '호영' }, isGMS: true, hexa: structuredClone(dirtyHexa) }, sole: false };
 const request = mode => new Request(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }) });
 const template = JSON.stringify(payload);
 const env = { MAPLE_SCOUTER_API_KEY: 'test-key', MAPLE_SCOUTER_REQUEST_PART_1: template.slice(0, 30), MAPLE_SCOUTER_REQUEST_PART_2: template.slice(30) };
-const fixedHexa = { character_class: '호영', hexaStat: 0, hexaStat_opened: false, skillCore1: '1', masteryCore1: '0', hexaSkill: { skillCore1: 1, masteryCore1: 0 }, hexaSkill_general: { generalCore1: 0 } };
-const kmsPayload = { ...payload, userStat: { ...payload.userStat, isGMS: false, hexa: fixedHexa }, myHexa: fixedHexa };
+const kmsPayload = { ...payload, userStat: { ...payload.userStat, isGMS: false, hexa: structuredClone(dirtyHexa) }, myHexa: structuredClone(dirtyHexa) };
 const kmsTemplate = JSON.stringify(kmsPayload);
 const kmsEnv = { ...env, MAPLE_SCOUTER_KMS_REQUEST_PART_1: kmsTemplate.slice(0, 40), MAPLE_SCOUTER_KMS_REQUEST_PART_2: kmsTemplate.slice(40) };
 
 assert.equal((await worker.fetch(request('lotus_heroic'), {})).status, 503);
 assert.equal((await worker.fetch(request('taotie_heroic'), env)).status, 503);
-const wrongBaseline = kmsTemplate.replace('"hexaStat":0', '"hexaStat":2');
-assert.equal((await worker.fetch(request('taotie_heroic'), { ...kmsEnv, MAPLE_SCOUTER_KMS_REQUEST_PART_1: wrongBaseline.slice(0, 40), MAPLE_SCOUTER_KMS_REQUEST_PART_2: wrongBaseline.slice(40) })).status, 503);
+for (const mode of ['lotus_heroic', 'taotie_interactive']) {
+  const base = mode.startsWith('lotus_') ? payload : kmsPayload;
+  const broken = [
+    { ...base, myHexa: { ...base.myHexa, hexaSkill: undefined } },
+    { ...base, userStat: { ...base.userStat, hexa: { ...base.userStat.hexa, skillCore1: undefined } } },
+    { ...base, userStat: { ...base.userStat, hexa: { ...base.userStat.hexa, hexaStat_opened: undefined } } },
+    { ...base, myHexa: { ...base.myHexa, hexaSkill_general: { generalCore1: 'broken' } } }
+  ];
+  for (const bad of broken) {
+    const raw = JSON.stringify(bad);
+    const prefix = mode.startsWith('lotus_') ? 'MAPLE_SCOUTER_REQUEST_PART_' : 'MAPLE_SCOUTER_KMS_REQUEST_PART_';
+    const result = await worker.fetch(request(mode), { ...kmsEnv, [prefix + '1']: raw.slice(0, 40), [prefix + '2']: raw.slice(40) });
+    assert.equal(result.status, 503);
+    assert.match(await result.text(), /cannot be reset/);
+  }
+}
 const invalidTemplate = JSON.stringify({ ...payload, userStat: { ...payload.userStat, isGMS: false } });
 assert.equal((await worker.fetch(request('lotus_heroic'), { ...env, MAPLE_SCOUTER_REQUEST_PART_1: invalidTemplate.slice(0, 30), MAPLE_SCOUTER_REQUEST_PART_2: invalidTemplate.slice(30) })).status, 503);
 assert.equal((await worker.fetch(new Request(url, { method: 'GET' }), env)).status, 405);
@@ -28,8 +42,12 @@ try {
     assert.equal(options.headers['api-key'], env.MAPLE_SCOUTER_API_KEY);
     assert.equal(options.headers.Origin, 'https://maplescouter.com');
     const sent = JSON.parse(options.body);
-    const expected = sent.userStat.isGMS ? payload : kmsPayload;
-    assert.deepEqual(sent, { ...expected, myHexa: { ...expected.myHexa, hexaStat: 0, hexaStat_opened: false }, userStat: { ...expected.userStat, hexa: { ...expected.userStat.hexa, hexaStat: 0, hexaStat_opened: false } }, sole: sent.sole });
+    for (const hexa of [sent.myHexa, sent.userStat.hexa]) {
+      assert.equal(hexa.hexaStat, 0);
+      assert.equal(hexa.hexaStat_opened, false);
+      for (const [key, value] of Object.entries(hexa)) if (/^(skillCore|masteryCore|reinCore|generalCore)\d+$/.test(key)) assert.equal(value, key === 'skillCore1' ? '1' : '0');
+      for (const group of [hexa.hexaSkill, hexa.hexaSkill_general]) for (const [key, value] of Object.entries(group)) assert.equal(value, key === 'skillCore1' ? 1 : 0);
+    }
     requestedModes.push(sent.sole);
     return Response.json({ class_hexa: [['sample']] });
   };
