@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Priority Review | HEXA Matrix Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="priority-review.css">
+</head>
+<body>
+  <main class="shell review-shell">
+    <header class="masthead"><div><p class="kicker">Hoyoung</p><h1>Priority Review</h1></div><a href="index.html">Tracker</a></header>
+    <div class="review-grid">
+      <section class="panel">
+        <h2>Priority draft</h2>
+        <label>Mode<select id="mode"><option value="lotus_heroic">GMS Lotus / Heroic</option><option value="lotus_interactive">GMS Lotus / Interactive</option><option value="taotie_heroic">KMS Taotie / Heroic</option><option value="taotie_interactive">KMS Taotie / Interactive</option></select></label>
+        <label>Priority name<input id="name" type="text"></label>
+        <label>Source link or note<input id="source" type="text"></label>
+        <label>Upgrade order <small>One step per line: Harmony, 1</small><textarea id="steps" spellcheck="false"></textarea></label>
+        <div class="actions"><button id="review" type="button">Review changes</button><button id="download" type="button">Download draft</button></div>
+        <p id="status" role="status"></p>
+        <p class="fine">The draft stays in this browser. A reviewed GitHub update publishes it to the tracker.</p>
+      </section>
+      <section class="panel">
+        <h2>Display names</h2>
+        <div id="names"></div>
+      </section>
+    </div>
+  </main>
+  <script type="module" src="priority-review.js"></script>
+</body>
+</html>
