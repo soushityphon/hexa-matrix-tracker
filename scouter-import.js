@@ -1,0 +1,35 @@
+import { NODES } from './data.js';
+
+const knownIcons = new Map(NODES.map(node => [new URL(node.icon).pathname, node.short]));
+
+export function inspectScouterResponse(response) {
+  if (!response || !Array.isArray(response.class_hexa) || !response.class_hexa.length) {
+    throw new Error('Paste a Maple Scouter HEXA order response with class_hexa steps');
+  }
+  const unknown = new Map();
+  const steps = response.class_hexa.map((row, index) => {
+    const [sourceName, level, icon, , , , , , , coreId] = row;
+    if (typeof sourceName !== 'string' || typeof icon !== 'string' || typeof coreId !== 'string' || !Number.isInteger(level) || level < 1 || level > 30) {
+      throw new Error(`Invalid Maple Scouter step ${index + 1}`);
+    }
+    const skill = knownIcons.get(icon);
+    if (!skill) {
+      const key = `${coreId}|${icon}`;
+      unknown.set(key, { key, sourceName, coreId, icon });
+    }
+    return { skill: skill || null, level, sourceName, coreId, icon };
+  });
+  return { steps, unknown: [...unknown.values()] };
+}
+
+export function resolveScouterResponse(inspected, mappings = {}) {
+  const newNodes = inspected.unknown.map(item => {
+    const mapping = mappings[item.key];
+    if (!mapping?.short?.trim() || !mapping?.name?.trim() || !mapping?.type) {
+      throw new Error(`Name and classify ${item.sourceName} (${item.coreId}) before downloading`);
+    }
+    return { short: mapping.short.trim(), name: mapping.name.trim(), type: mapping.type, icon: `https://maplescouter.com${item.icon}`, sourceName: item.sourceName, coreId: item.coreId };
+  });
+  const byKey = new Map(inspected.unknown.map((item, index) => [item.key, newNodes[index].short]));
+  return { steps: inspected.steps.map(row => ({ skill: row.skill || byKey.get(`${row.coreId}|${row.icon}`), level: row.level })), newNodes };
+}

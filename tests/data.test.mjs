@@ -13,7 +13,10 @@ const sheetGroups={
 assert(JSON.stringify(NODES.map(({group,short,name})=>[group,short,name]))===JSON.stringify(Object.entries(sheetGroups).flatMap(([group,nodes])=>nodes.map(([short,name])=>[group,short,name]))),'node labels and in-game order match the spreadsheet');
 for(const [mode,steps] of Object.entries(PRIORITIES)){for(const s of steps){assert(names.has(s.skill)||s.skill.startsWith('HEXA Stat'),`${mode}: unknown skill ${s.skill}`);assert(s.level>=1&&s.level<=(s.skill.startsWith('HEXA Stat')?20:30),`${mode}: invalid level ${s.level}`)}}
 assert(Object.keys(PRIORITIES).length===6,'Hecate, Lotus and Taotie Heroic/Interactive priorities required');
-for(const mode of ['hecate_heroic','hecate_interactive','lotus_heroic','lotus_interactive']) assert(PRIORITIES[mode].length===0,`${mode}: unverified order must remain unpublished`);
+for(const mode of ['hecate_heroic','hecate_interactive','lotus_interactive']) assert(PRIORITIES[mode].length===0,`${mode}: unverified order must remain unpublished`);
+const gms=JSON.parse(readFileSync(new URL('../data/scouter-gms-2026-09-28.json',import.meta.url)));
+assert(JSON.stringify(PRIORITIES.lotus_heroic)===JSON.stringify(gms.steps.map(([skill,level])=>({skill,level}))),'Lotus Heroic matches captured GMS order');
+assert(PRIORITIES.lotus_heroic.some(step=>step.skill==='Lotus')&&PRIORITIES.lotus_heroic.every(step=>step.skill!=='Taotie'),'GMS Lotus includes Lotus but no Taotie');
 assert(PRIORITIES.taotie_heroic.length===178&&PRIORITIES.taotie_interactive.length===78,'Maple Scouter KMS checkpoint counts');
 const scouter=JSON.parse(readFileSync(new URL('../data/scouter-kms-2026-09-28.json',import.meta.url)));
 const iconToSkill=Object.fromEntries(NODES.filter(n=>n.short!=='Janus').map(n=>[(n.short==='Hecate'?'G':'H')+n.icon.match(/_(\d+)\.png$/)[1],n.short]));
@@ -56,6 +59,7 @@ assert(partial.find(row=>row.skill==='Harmony'&&row.level===6).cost.frags===48,'
 assert(matrixTotals({Janus:1},'lotus_heroic').spent.frags===0,'Sol Janus excluded by default');
 assert(matrixTotals({Janus:1},'lotus_heroic',true).spent.frags===125,'Sol Janus included when selected');
 import { compareDraft, currentDraft, parseSteps, validateDraft } from '../priority-draft.js';
+import { inspectScouterResponse, resolveScouterResponse } from '../scouter-import.js';
 const draft=validateDraft(currentDraft('taotie_heroic'));
 assert(draft.steps.length===PRIORITIES.taotie_heroic.length,'review draft includes the current priority');
 assert(compareDraft(draft).changedSteps===0,'unchanged draft has no step changes');
@@ -65,4 +69,11 @@ for (const invalid of ['Harmony, 6\nHarmony, 1','Not a skill, 1','HEXA Stat I, 1
   try { parseSteps(invalid); } catch { rejected=true; }
   assert(rejected,`draft parser should reject ${invalid}`);
 }
+const sample={class_hexa:[['화중군자 VI',1,'/hexaskill/Hoyeong_11.png',4,90,4,90,0.1,0.5,'generalCore3','0→1',0],['새 스킬',1,'/hexaskill/Hoyeong_99.png',4,90,8,180,0.1,0.6,'skillCore3','0→1',0]]};
+const inspected=inspectScouterResponse(sample);
+assert(inspected.unknown.length===1&&inspected.steps[0].skill==='Lotus','import maps known skill image and flags unfamiliar image');
+let blocked=false;try{resolveScouterResponse(inspected)}catch{blocked=true}
+assert(blocked,'new skill needs admin naming');
+const resolved=resolveScouterResponse(inspected,{[inspected.unknown[0].key]:{short:'New Skill',name:'New Skill Name',type:'Skill II'}});
+assert(resolved.steps[1].skill==='New Skill'&&validateDraft({...currentDraft('taotie_heroic'),steps:resolved.steps,newNodes:resolved.newNodes}).newNodes[0].group==='Skill Nodes','new skill type and name pass review');
 console.log('Data validation passed');

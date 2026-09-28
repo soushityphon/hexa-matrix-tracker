@@ -20,7 +20,14 @@ function replaceLiteral(prefix, after, update) {
   const next = update(value);
   source = source.slice(0, contentStart) + JSON.stringify(next) + source.slice(end);
 }
-replaceLiteral('export const NODES=', ';\nconst mk=', nodes => nodes.map(node => ({ ...node, name: draft.names[node.short] })));
+replaceLiteral('export const NODES=', ';\nconst mk=', nodes => {
+  const updated = nodes.map(node => ({ ...node, name: draft.names[node.short] }));
+  for (const node of draft.newNodes) {
+    const last = updated.findLastIndex(existing => existing.group === node.group);
+    updated.splice(last + 1, 0, node);
+  }
+  return updated;
+});
 replaceLiteral('const rawPriorities=', ';\nexport const PRIORITIES=', priorities => {
   priorities[draft.mode] = draft.steps.map(({ skill, level }) => [skill, level]);
   return priorities;
