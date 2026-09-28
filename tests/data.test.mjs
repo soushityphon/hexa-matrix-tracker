@@ -1,5 +1,5 @@
 import {COSTS,NODES,PRIORITIES,PRIORITY_SETTINGS,STAT_ICONS} from '../data.js';
-import {activeNodes,matrixTotals,nextCheckpoint,priorityRows,rangeCost,taotieCatchUp} from '../planner.js';
+import {activeNodes,displayPriorityRows,matrixTotals,nextCheckpoint,priorityRows,rangeCost,taotieCatchUp} from '../planner.js';
 import {readFileSync} from 'node:fs';
 const assert=(x,m)=>{if(!x)throw new Error(m)};
 for(const [type,rows] of Object.entries(COSTS)){assert(rows.length===30,`${type} must have 30 levels`);for(const [i,c] of rows.entries()){assert(Number.isFinite(c.erda)&&Number.isFinite(c.frags),`${type} level ${i+1} invalid`)}}
@@ -50,6 +50,13 @@ assert(rows[0].skill==='Harmony'&&rows[0].cost.frags===50,'first priority row in
 const harmonySix=rows.find(row=>row.skill==='Harmony'&&row.level===6);
 assert(harmonySix.cost.frags===101,'later checkpoint costs only intervening levels');
 assert(priorityRows({Harmony:6},'taotie_heroic')[0].done,'entered levels mark rows complete');
+const adjacent=[{skill:'Harmony',level:1},{skill:'Harmony',level:6},{skill:'Tiger',level:1},{skill:'Harmony',level:7},{skill:'HEXA Stat I',level:20}];
+const compact=displayPriorityRows({Harmony:3},'taotie_heroic',adjacent);
+assert(compact.length===4&&compact[0].level===6&&compact[0].index===1&&compact[0].endIndex===2,'only adjacent checkpoints merge and retain source positions');
+assert(compact[0].cost.frags===rangeCost('Harmony',3,6).frags,'merged row sums remaining intermediate level costs');
+assert(compact[2].skill==='Harmony'&&compact[2].level===7,'intervening skills prevent merging');
+assert(compact[3].cost===null,'HEXA Stat remains RNG');
+assert(adjacent.length===5&&nextCheckpoint({Harmony:3},'taotie_heroic',adjacent).next.level===6,'display compaction leaves exact source order and next checkpoint intact');
 const outOfOrder={Harmony:0,Talisman:30,Scroll:30,Hecate:30};
 const recommendation=nextCheckpoint(outOfOrder,'taotie_heroic');
 assert(recommendation.next.skill==='Harmony'&&recommendation.next.level===1,'next upgrade ignores later completed nodes');
