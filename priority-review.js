@@ -99,10 +99,10 @@ $('#retrieve').addEventListener('click', async () => {
     payload.userStat.isGMS = mode.startsWith('lotus_');
     $('#retrieve').disabled = true;
     message('Checking Maple Scouter…');
-    const response = await fetch('https://api.maplescouter.com/api/calc/hexa-order?class=%ED%98%B8%EC%98%81', {
+    const response = await fetch('/api/hexa-order', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
     });
-    if (!response.ok) throw new Error(`Maple Scouter returned ${response.status}`);
+    if (!response.ok) throw new Error((await response.text()).slice(0, 160) || `Request returned ${response.status}`);
     const result = await response.json();
     $('#response').value = JSON.stringify(result);
     compareResponse(result);
