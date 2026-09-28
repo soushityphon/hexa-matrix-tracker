@@ -27,3 +27,5 @@
 .next-upgrade .metric:first-child{border-left:3px solid var(--skill-accent,#b6d4ad);padding-left:9px}
 
 .priority-table tr.next td:first-child{font-weight:700;color:#f0f0f0}
+.node-row.next-skill,.stat-list .stat-row.next-skill{border-left:4px solid var(--skill-accent,#a8b0ad);background:#242725;background:color-mix(in srgb,var(--skill-accent,#a8b0ad) 17%,#1a1a1a)}
+.node-row.next-skill .node-name,.stat-list .stat-row.next-skill .stat-name{font-weight:700}

@@ -110,9 +110,25 @@ function typeClass(skill) {
   return 'mastery';
 }
 
+function highlightCurrentSkill(skill) {
+  $$('[data-node-row]').forEach(row => {
+    const active = row.dataset.nodeRow === skill;
+    row.classList.toggle('next-skill', active);
+    if (active) row.setAttribute('aria-current', 'step');
+    else row.removeAttribute('aria-current');
+  });
+  $$('.stat-row').forEach(row => {
+    const active = row.querySelector('[data-stat]')?.dataset.stat === skill;
+    row.classList.toggle('next-skill', active);
+    if (active) row.setAttribute('aria-current', 'step');
+    else row.removeAttribute('aria-current');
+  });
+}
+
 function render() {
   const mode = syncPriorityOptions();
   if (!mode) {
+    highlightCurrentSkill(null);
     $('#version-name').textContent = `${$('#patch').selectedOptions[0]?.textContent || 'Update'} / ${$('[name="world"]:checked').value === 'heroic' ? 'Fragments' : 'Sol Erda'}`;
     $('#progress').textContent = 'No registered priority is visible for this selection';
     $('#next-upgrade').textContent = 'No priority is available for this update and world.';
@@ -142,6 +158,7 @@ function render() {
   const catchUp = taotieCatchUp(current, sourceMode, order);
   const displayRows = displayPriorityRows(current, sourceMode, order, statUnlocked);
   const nextRow = displayRows.find(row => !row.done && row.index <= index + 1 && index + 1 <= row.endIndex);
+  highlightCurrentSkill(nextRow?.skill);
   const nextIsStat = next?.skill.startsWith('HEXA Stat');
   const nextLevel = next && !nextIsStat ? Math.min((current[next.skill] || 0) + 1, next.level) : null;
   const levelCost = next && !nextIsStat && rangeCost(next.skill, current[next.skill] || 0, nextLevel);
