@@ -1,4 +1,4 @@
-import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SETTINGS } from './data.js';
+import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SETTINGS, STAT_ICONS } from './data.js';
 import { activeNodes, matrixTotals, nextCheckpoint, priorityRows, priorityPatch, rangeCost, taotieCatchUp } from './planner.js';
 
 const $ = selector => document.querySelector(selector);
@@ -30,6 +30,16 @@ function renderInputs() {
   $$('.node-icon img').forEach(img => {
     img.addEventListener('error', () => { img.hidden = true; });
     if (img.complete && !img.naturalWidth) img.hidden = true;
+  });
+  $$('[data-stat]').forEach(input => {
+    const icon = STAT_ICONS[input.dataset.stat];
+    if (!icon) return;
+    const label = input.closest('label');
+    const image = document.createElement('img');
+    image.src = icon;
+    image.alt = '';
+    image.addEventListener('error', () => { image.hidden = true; });
+    label.prepend(image);
   });
   $$('[data-stat]').forEach(input => { input.value = saved.levels?.[input.dataset.stat] ?? 0; });
   $(`[name="world"][value="${PRIORITY_SETTINGS[saved.mode]?.world || 'heroic'}"]`).checked = true;
@@ -93,8 +103,10 @@ function render() {
     const number = value => value === 0 ? '<span class="zero">0</span>' : value.toLocaleString();
     if (!row.done) remainingIndex++;
     const displayIndex = $('#hideDone').checked && !row.done ? remainingIndex : row.index;
-    return `<tr class="type-${typeClass(row.skill)} ${row.done ? 'done' : ''} ${row.index === index + 1 ? 'next' : ''}"><td>${displayIndex}</td><td><span class="skill-cell"><i class="dot" aria-hidden="true"></i>${row.skill}</span></td><td>${row.level}</td><td>${cost ? number(cost.erda) : '<span class="rng">RNG</span>'}</td><td>${cost ? number(cost.frags) : '<span class="rng">RNG</span>'}</td></tr>`;
+    const icon = STAT_ICONS[row.skill];
+    return `<tr class="type-${typeClass(row.skill)} ${row.done ? 'done' : ''} ${row.index === index + 1 ? 'next' : ''}"><td>${displayIndex}</td><td><span class="skill-cell">${icon ? `<img class="stat-icon" src="${icon}" alt="">` : '<i class="dot" aria-hidden="true"></i>'}${row.skill}</span></td><td>${row.level}</td><td>${cost ? number(cost.erda) : '<span class="rng">RNG</span>'}</td><td>${cost ? number(cost.frags) : '<span class="rng">RNG</span>'}</td></tr>`;
   }).join('');
+  $$('.stat-icon').forEach(img => { img.addEventListener('error', () => { img.hidden = true; }); });
   $('.priority-table').classList.toggle('hide-done', $('#hideDone').checked);
   $('#totals').innerHTML = `<div class="total"><small>HEXA skill node completion</small><strong>${matrix.percent.toFixed(2)}%</strong>${materials(matrix.remaining, days(matrix.remaining))}</div><div class="total"><small>Total materials spent</small><strong>${matrix.spent.erda.toLocaleString()} Sol Erda / ${matrix.spent.frags.toLocaleString()} Fragments</strong></div>`;
   const available = new Set(activeNodes(mode).map(node => node.short));

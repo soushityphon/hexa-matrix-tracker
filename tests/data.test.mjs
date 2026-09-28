@@ -73,11 +73,14 @@ for (const invalid of ['Harmony, 6\nHarmony, 1','Not a skill, 1','HEXA Stat I, 1
   try { parseSteps(invalid); } catch { rejected=true; }
   assert(rejected,`draft parser should reject ${invalid}`);
 }
-const sample={class_hexa:[['화중군자 VI',1,'/hexaskill/Hoyeong_11.png',4,90,4,90,0.1,0.5,'generalCore3','0→1',0],['새 스킬',1,'/hexaskill/Hoyeong_99.png',4,90,8,180,0.1,0.6,'skillCore3','0→1',0]]};
+const statIcon='https://open.api.nexon.com/static/maplestory/skill/icon/KAPCLAPBMA';
+const sample={class_hexa:[['화중군자 VI',1,'/hexaskill/Hoyeong_11.png',4,90,4,90,0.1,0.5,'generalCore3','0→1',0],['헥사스탯3: 떡작',1,statIcon,0,0,0,0,0,0,'hexastat3','0→1',0],['새 스킬',1,'/hexaskill/Hoyeong_99.png',4,90,8,180,0.1,0.6,'skillCore3','0→1',0]]};
 const inspected=inspectScouterResponse(sample);
 assert(inspected.unknown.length===1&&inspected.steps[0].skill==='Lotus','import maps known skill image and flags unfamiliar image');
+assert(inspected.steps[1].skill==='HEXA Stat III'&&inspected.steps[1].level===20&&inspected.statIcons['HEXA Stat III']===statIcon,'HEXA Stat maps to a max-level checkpoint and retains its icon');
 let blocked=false;try{resolveScouterResponse(inspected)}catch{blocked=true}
 assert(blocked,'new skill needs admin naming');
 const resolved=resolveScouterResponse(inspected,{[inspected.unknown[0].key]:{short:'New Skill',name:'New Skill Name',type:'Skill II'}});
-assert(resolved.steps[1].skill==='New Skill'&&validateDraft({...currentDraft('taotie_heroic'),steps:resolved.steps,newNodes:resolved.newNodes}).newNodes[0].group==='Skill Nodes','new skill type and name pass review');
+assert(resolved.steps[2].skill==='New Skill'&&validateDraft({...currentDraft('taotie_heroic'),steps:resolved.steps,newNodes:resolved.newNodes,statIcons:resolved.statIcons}).newNodes[0].group==='Skill Nodes','new skill type and name pass review');
+assert(validateDraft({...currentDraft('lotus_heroic'),statIcons:resolved.statIcons}).statIcons['HEXA Stat III']===statIcon,'draft preserves verified stat icon');
 console.log('Data validation passed');

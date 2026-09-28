@@ -2,6 +2,7 @@ import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SOURCES, PRIORITY_SETTINGS
 
 const byShort = new Map(NODES.map(node => [node.short, node]));
 const statNames = new Set(['HEXA Stat I', 'HEXA Stat II', 'HEXA Stat III']);
+const statIconPattern = /^https:\/\/open\.api\.nexon\.com\/static\/maplestory\/skill\/icon\/[A-Za-z0-9_-]+$/;
 
 export function parseSteps(text, extraSkills = []) {
   const seen = new Map();
@@ -40,6 +41,11 @@ export function validateDraft(draft) {
     if (!id) throw new Error('Use a short label with Latin letters or numbers');
     return { id, short: node.short.trim(), name: node.name.trim(), type: node.type, group: groups[node.type], icon: node.icon, sourceName: String(node.sourceName || ''), coreId: String(node.coreId || '') };
   });
+  const statIcons = {};
+  for (const [skill, icon] of Object.entries(draft.statIcons || {})) {
+    if (!statNames.has(skill) || !statIconPattern.test(icon)) throw new Error(`Invalid HEXA Stat icon for ${skill}`);
+    statIcons[skill] = icon;
+  }
   const shorts = newNodes.map(node => node.short);
   if (new Set(shorts).size !== shorts.length || new Set(newNodes.map(node => node.id)).size !== newNodes.length || shorts.some(short => byShort.has(short) || statNames.has(short)) || newNodes.some(node => NODES.some(existing => existing.id === node.id))) throw new Error('New skill short labels must be unique');
   const steps = parseSteps(draft.steps.map(step => `${step.skill}, ${step.level}`).join('\n'), shorts);
@@ -52,11 +58,11 @@ export function validateDraft(draft) {
     if (typeof name !== 'string' || !name.trim()) throw new Error(`Enter a display name for ${node.short}`);
     names[node.short] = name.trim();
   }
-  return { schema: 3, mode: draft.mode, sourceMode: draft.sourceMode || draft.mode, isNew: draft.isNew === true, enabled: draft.enabled === true, name: draft.name.trim(), source: String(draft.source || '').trim(), names, steps, newNodes };
+  return { schema: 3, mode: draft.mode, sourceMode: draft.sourceMode || draft.mode, isNew: draft.isNew === true, enabled: draft.enabled === true, name: draft.name.trim(), source: String(draft.source || '').trim(), names, steps, newNodes, statIcons };
 }
 
 export function currentDraft(mode) {
-  return { schema: 3, mode, sourceMode: mode, isNew: false, enabled: PRIORITY_SETTINGS[mode].enabled, name: PRIORITY_LABELS[mode], source: PRIORITY_SOURCES[mode], names: Object.fromEntries(NODES.map(node => [node.short, node.name])), steps: PRIORITIES[mode], newNodes: [] };
+  return { schema: 3, mode, sourceMode: mode, isNew: false, enabled: PRIORITY_SETTINGS[mode].enabled, name: PRIORITY_LABELS[mode], source: PRIORITY_SOURCES[mode], names: Object.fromEntries(NODES.map(node => [node.short, node.name])), steps: PRIORITIES[mode], newNodes: [], statIcons: {} };
 }
 
 export function compareDraft(draft) {

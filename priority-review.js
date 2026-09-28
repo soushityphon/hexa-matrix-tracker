@@ -7,6 +7,7 @@ const key = 'hexa-priority-review-v1';
 let saved = {};
 let inspected = null;
 let importedNodes = [];
+let importedStatIcons = {};
 let version = null;
 try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { saved = {}; }
 
@@ -49,6 +50,7 @@ function compareResponse(response) {
   inspected = inspectScouterResponse(response);
   renderUnknown(inspected.unknown);
   importedNodes = [];
+  importedStatIcons = inspected.statIcons;
   if (!inspected.unknown.length) {
     collectUnknown();
     classifyOrder();
@@ -65,6 +67,7 @@ function read() {
     source: $('#source').value,
     names: Object.fromEntries([...document.querySelectorAll('[data-name]')].map(input => [input.dataset.name, input.value])),
     newNodes: importedNodes,
+    statIcons: importedStatIcons,
     steps: parseSteps($('#steps').value, importedNodes.map(node => node.short))
   });
 }
@@ -72,6 +75,7 @@ function show(draft) {
   version = { mode: draft.mode, sourceMode: draft.sourceMode || draft.mode, isNew: draft.isNew === true };
   inspected = null;
   importedNodes = draft.newNodes || [];
+  importedStatIcons = draft.statIcons || {};
   $('#unknown').hidden = true;
   $('#unknown-list').replaceChildren();
   $('#name').value = draft.name;
@@ -94,6 +98,7 @@ function collectUnknown() {
   }
   const resolved = resolveScouterResponse(inspected, mappings);
   importedNodes = resolved.newNodes;
+  importedStatIcons = resolved.statIcons;
   $('#steps').value = resolved.steps.map(step => `${step.skill}, ${step.level}`).join('\n');
 }
 function renderUnknown(items) {
