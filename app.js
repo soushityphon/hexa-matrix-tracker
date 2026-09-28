@@ -66,8 +66,8 @@ function render() {
   const nextLevel = next && Math.min((current[next.skill] || 0) + 1, next.level);
   const levelCost = next && rangeCost(next.skill, current[next.skill] || 0, nextLevel);
   $('#version-name').textContent = `${patch === 'taotie' ? 'KMS preview' : 'GMS'} / ${$('#patch').selectedOptions[0].textContent}`;
-  $('#progress').textContent = `${completed} / ${steps.length} complete`;
-  $('#quick').innerHTML = `${next ? `<div class="metric"><small>Next Upgrade</small><strong>${next.skill} → ${nextLevel}</strong>${levelCost ? materials(levelCost, days(levelCost)) : note}</div><div class="metric"><small>Next Checkpoint</small><strong>${next.skill} → ${next.level}</strong>${checkpointCost ? materials(checkpointCost, days(checkpointCost)) : note}</div>` : '<div class="metric"><strong>Priority complete</strong></div>'}`;
+  $('#progress').textContent = steps.length ? `${completed} / ${steps.length} complete` : 'Maple Scouter order pending';
+  $('#quick').innerHTML = `${next ? `<div class="metric"><small>Next Upgrade</small><strong>${next.skill} → ${nextLevel}</strong>${levelCost ? materials(levelCost, days(levelCost)) : note}</div><div class="metric"><small>Next Checkpoint</small><strong>${next.skill} → ${next.level}</strong>${checkpointCost ? materials(checkpointCost, days(checkpointCost)) : note}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
   if (catchUp) $('#quick').insertAdjacentHTML('afterbegin', `<div class="metric catch-up"><small>Taotie catch-up</small><strong>Taotie → ${catchUp.target}</strong>${materials(catchUp.cost, days(catchUp.cost))}</div>`);
   let remainingIndex = 0;
   $('#priority').innerHTML = priorityRows(current, mode).map(row => {
