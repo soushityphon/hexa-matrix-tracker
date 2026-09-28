@@ -41,12 +41,35 @@ async function priorityPreview(request, env) {
     return Response.json({ saved: draft.mode }, { headers: noStore });
   } catch { return new Response('Priority preview storage failed. Try again later.', { status: 503 }); }
 }
-function fixedBaseline(hexa) {
-  if (!hexa || hexa.hexaStat !== 0 || hexa.hexaStat_opened !== false || hexa.hexaSkill?.skillCore1 !== 1) return false;
-  if (Object.entries(hexa.hexaSkill).some(([key, level]) => key !== 'skillCore1' && level !== 0)) return false;
-  if (Object.values(hexa.hexaSkill_general || {}).some(level => level !== 0)) return false;
-  return Object.entries(hexa).every(([key, level]) =>
-    !/^(?:skillCore|masteryCore|reinCore|generalCore)\d+$/.test(key) || (key === 'skillCore1' ? level === '1' : level === '0'));
+// Each Scouter request starts from the job's fixed Origin baseline, regardless of
+// the account levels in the saved template. Add other jobs' Origin IDs here only
+// when their request schema has been verified.
+const originByClass = { '호영': 'skillCore1' };
+const coreKey = /^(?:skillCore|masteryCore|reinCore|generalCore)\d+$/;
+const record = value => value && typeof value === 'object' && !Array.isArray(value);
+function resetHexa(hexa, origin) {
+  if (!record(hexa) || !record(hexa.hexaSkill) || !record(hexa.hexaSkill_general) ||
+      !Object.hasOwn(hexa, 'hexaStat') || !Object.hasOwn(hexa, 'hexaStat_opened') ||
+      !Object.hasOwn(hexa, origin) || !Object.hasOwn(hexa.hexaSkill, origin)) return false;
+  hexa.hexaStat = 0;
+  hexa.hexaStat_opened = false;
+  for (const [key, value] of Object.entries(hexa)) {
+    if (coreKey.test(key)) {
+      if (!/^(?:0|[1-9]\d*)$/.test(String(value))) return false;
+      hexa[key] = key === origin ? '1' : '0';
+    }
+  }
+  for (const group of [hexa.hexaSkill, hexa.hexaSkill_general]) {
+    for (const [key, value] of Object.entries(group)) {
+      if (!coreKey.test(key) || !Number.isInteger(value) || value < 0) return false;
+      group[key] = key === origin ? 1 : 0;
+    }
+  }
+  return hexa.hexaStat === 0 && hexa.hexaStat_opened === false &&
+    hexa[origin] === '1' && hexa.hexaSkill[origin] === 1 &&
+    Object.entries(hexa).every(([key, value]) => !coreKey.test(key) || value === (key === origin ? '1' : '0')) &&
+    [hexa.hexaSkill, hexa.hexaSkill_general].every(group =>
+      Object.entries(group).every(([key, value]) => value === (key === origin ? 1 : 0)));
 }
 
 export default {
@@ -73,17 +96,9 @@ export default {
       if (payload?.myHexa?.character_class !== '호영' || payload?.userStat?.stat?.myClass !== '호영' || payload?.userStat?.isGMS !== !kms) {
         return new Response('Configured Hoyoung request has the wrong class or region', { status: 503 });
       }
-      // The saved GMS capture predates the reset baseline and reports two unlocked Stats.
-      // Keep the two copies in sync before sending either world to Maple Scouter.
-      if (!payload.userStat?.hexa) return new Response('Configured Hoyoung request is missing HEXA data', { status: 503 });
-      if (kms && (!fixedBaseline(payload.myHexa) || !fixedBaseline(payload.userStat?.hexa))) {
-        return new Response('Configured KMS request must use the fixed level-one Origin baseline', { status: 503 });
-      }
-      if (!kms) {
-        payload.myHexa.hexaStat = 0;
-        payload.userStat.hexa.hexaStat = 0;
-        payload.myHexa.hexaStat_opened = false;
-        payload.userStat.hexa.hexaStat_opened = false;
+      const origin = originByClass[payload.myHexa.character_class];
+      if (!origin || !resetHexa(payload.myHexa, origin) || !resetHexa(payload.userStat?.hexa, origin)) {
+        return new Response('Configured Hoyoung request cannot be reset to Origin 1, all other skills 0 and unopened HEXA Stats', { status: 503 });
       }
       payload.sole = selection.mode.endsWith('_interactive');
       try {
