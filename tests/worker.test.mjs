@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import worker from '../worker.js';
 
 const url = 'https://preview.example/api/hexa-order';
-const payload = { myHexa: { character_class: '호영' }, userStat: { stat: { myClass: '호영' }, isGMS: true }, sole: false };
+const payload = { myHexa: { character_class: '호영', hexaStat: 2, hexaStat_opened: false }, userStat: { stat: { myClass: '호영' }, isGMS: true, hexa: { hexaStat: 2, hexaStat_opened: false } }, sole: false };
 const request = mode => new Request(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }) });
 const template = JSON.stringify(payload);
 const env = { MAPLE_SCOUTER_API_KEY: 'test-key', MAPLE_SCOUTER_REQUEST_PART_1: template.slice(0, 30), MAPLE_SCOUTER_REQUEST_PART_2: template.slice(30) };
@@ -27,7 +27,8 @@ try {
     assert.equal(options.headers['api-key'], env.MAPLE_SCOUTER_API_KEY);
     assert.equal(options.headers.Origin, 'https://maplescouter.com');
     const sent = JSON.parse(options.body);
-    assert.deepEqual(sent, { ...(sent.userStat.isGMS ? payload : kmsPayload), sole: sent.sole });
+    const expected = sent.userStat.isGMS ? payload : kmsPayload;
+    assert.deepEqual(sent, { ...expected, myHexa: { ...expected.myHexa, hexaStat: 0, hexaStat_opened: false }, userStat: { ...expected.userStat, hexa: { ...expected.userStat.hexa, hexaStat: 0, hexaStat_opened: false } }, sole: sent.sole });
     requestedModes.push(sent.sole);
     return Response.json({ class_hexa: [['sample']] });
   };

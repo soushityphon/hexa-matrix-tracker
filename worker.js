@@ -31,8 +31,17 @@ export default {
       if (payload?.myHexa?.character_class !== '호영' || payload?.userStat?.stat?.myClass !== '호영' || payload?.userStat?.isGMS !== !kms) {
         return new Response('Configured Hoyoung request has the wrong class or region', { status: 503 });
       }
+      // The saved GMS capture predates the reset baseline and reports two unlocked Stats.
+      // Keep the two copies in sync before sending either world to Maple Scouter.
+      if (!payload.userStat?.hexa) return new Response('Configured Hoyoung request is missing HEXA data', { status: 503 });
       if (kms && (!fixedBaseline(payload.myHexa) || !fixedBaseline(payload.userStat?.hexa))) {
         return new Response('Configured KMS request must use the fixed level-one Origin baseline', { status: 503 });
+      }
+      if (!kms) {
+        payload.myHexa.hexaStat = 0;
+        payload.userStat.hexa.hexaStat = 0;
+        payload.myHexa.hexaStat_opened = false;
+        payload.userStat.hexa.hexaStat_opened = false;
       }
       payload.sole = selection.mode.endsWith('_interactive');
       try {
