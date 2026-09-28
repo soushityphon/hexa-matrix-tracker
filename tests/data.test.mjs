@@ -1,4 +1,4 @@
-import {COSTS,NODES,PRIORITIES} from '../data.js';
+import {COSTS,NODES,PRIORITIES,PRIORITY_SETTINGS} from '../data.js';
 import {activeNodes,matrixTotals,nextCheckpoint,priorityRows,rangeCost,taotieCatchUp} from '../planner.js';
 import {readFileSync} from 'node:fs';
 const assert=(x,m)=>{if(!x)throw new Error(m)};
@@ -13,6 +13,8 @@ const sheetGroups={
 assert(JSON.stringify(NODES.map(({group,short,name})=>[group,short,name]))===JSON.stringify(Object.entries(sheetGroups).flatMap(([group,nodes])=>nodes.map(([short,name])=>[group,short,name]))),'node labels and in-game order match the spreadsheet');
 for(const [mode,steps] of Object.entries(PRIORITIES)){for(const s of steps){assert(names.has(s.skill)||s.skill.startsWith('HEXA Stat'),`${mode}: unknown skill ${s.skill}`);assert(s.level>=1&&s.level<=(s.skill.startsWith('HEXA Stat')?20:30),`${mode}: invalid level ${s.level}`)}}
 assert(Object.keys(PRIORITIES).length===6,'Hecate, Lotus and Taotie Heroic/Interactive priorities required');
+assert(Object.keys(PRIORITIES).every(mode=>PRIORITY_SETTINGS[mode]),'every priority has visibility and patch metadata');
+assert(!PRIORITY_SETTINGS.hecate_heroic.enabled&&!PRIORITY_SETTINGS.lotus_interactive.enabled,'unverified priorities are hidden');
 for(const mode of ['hecate_heroic','hecate_interactive','lotus_interactive']) assert(PRIORITIES[mode].length===0,`${mode}: unverified order must remain unpublished`);
 const gms=JSON.parse(readFileSync(new URL('../data/scouter-gms-2026-09-28.json',import.meta.url)));
 assert(JSON.stringify(PRIORITIES.lotus_heroic)===JSON.stringify(gms.steps.map(([skill,level])=>({skill,level}))),'Lotus Heroic matches captured GMS order');
@@ -63,6 +65,8 @@ import { inspectScouterResponse, resolveScouterResponse } from '../scouter-impor
 const draft=validateDraft(currentDraft('taotie_heroic'));
 assert(draft.steps.length===PRIORITIES.taotie_heroic.length,'review draft includes the current priority');
 assert(compareDraft(draft).changedSteps===0,'unchanged draft has no step changes');
+const nextVersion=validateDraft({...currentDraft('lotus_heroic'),mode:'lotus_heroic_20260928',sourceMode:'lotus_heroic',isNew:true,enabled:false,name:'Next GMS order'});
+assert(nextVersion.isNew&&!nextVersion.enabled&&nextVersion.steps.length===PRIORITIES.lotus_heroic.length,'new version preserves the prior order and visibility choice');
 assert(parseSteps('Harmony, 1\nHarmony, 6\nHEXA Stat I, 20').length===3,'draft parser accepts valid checkpoints');
 for (const invalid of ['Harmony, 6\nHarmony, 1','Not a skill, 1','HEXA Stat I, 19']) {
   let rejected=false;

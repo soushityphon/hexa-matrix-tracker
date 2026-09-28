@@ -13,12 +13,15 @@
     <div class="review-grid">
       <section class="panel">
         <h2>Priority draft</h2>
-        <label>Mode<select id="mode"><option value="hecate_heroic">GMS Hecate / Heroic</option><option value="hecate_interactive">GMS Hecate / Interactive</option><option value="lotus_heroic" selected>GMS Lotus / Heroic</option><option value="lotus_interactive">GMS Lotus / Interactive</option><option value="taotie_heroic">KMS Taotie / Heroic</option><option value="taotie_interactive">KMS Taotie / Interactive</option></select></label>
+        <label>Compare against<select id="mode"></select></label>
+        <p id="version-state" class="fine"></p>
+        <label>Priority ID<input id="priority-id" type="text" readonly></label>
         <label>Priority name<input id="name" type="text"></label>
+        <label class="visibility"><input id="enabled" type="checkbox"> Show on tracker</label>
         <label>Source link or note<input id="source" type="text"></label>
         <details class="import-panel"><summary>Import Maple Scouter response</summary>
           <label>HEXA order response JSON<textarea id="response" spellcheck="false" placeholder="Paste the response from Maple Scouter Network → Response"></textarea></label>
-          <button id="inspect" type="button">Compare with current order</button>
+          <button id="inspect" type="button">Compare response</button>
           <div id="unknown" hidden><h3>New skills to name</h3><p>Confirm the short label, display name and skill type before downloading the draft.</p><div id="unknown-list"></div></div>
         </details>
         <label>Upgrade order <small>One step per line: Harmony, 1</small><textarea id="steps" spellcheck="false"></textarea></label>

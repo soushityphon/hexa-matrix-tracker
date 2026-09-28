@@ -44,5 +44,12 @@ for (const [prefix, value] of [
   object[draft.mode] = value;
   source = source.slice(0, start + prefix.length) + JSON.stringify(object) + source.slice(end);
 }
+replaceLiteral('export const PRIORITY_SETTINGS=', ';', settings => {
+  settings[draft.mode] = {
+    ...settings[draft.sourceMode],
+    enabled: draft.enabled
+  };
+  return settings;
+});
 writeFileSync(dataPath, source);
 console.log(`Applied ${draft.name}: ${draft.steps.length} steps`);
