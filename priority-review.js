@@ -43,6 +43,10 @@ function show(draft) {
   $('#names').innerHTML = NODES.map(node => `<div class="review-name"><label for="name-${node.short}">${node.short}</label><input id="name-${node.short}" data-name="${node.short}" type="text"></div>`).join('');
   for (const input of document.querySelectorAll('[data-name]')) input.value = draft.names[input.dataset.name] || '';
   $('#status').textContent = '';
+  const historical = draft.mode.startsWith('hecate_');
+  $('#retrieve').disabled = historical;
+  $('#retrieve').title = historical ? 'The current API cannot retrieve the historical Hecate patch' : '';
+  if (historical) message('Historical Hecate needs a pasted Maple Scouter response.');
 }
 function collectUnknown() {
   if (!inspected) return;
@@ -107,7 +111,7 @@ $('#retrieve').addEventListener('click', async () => {
     $('#response').value = JSON.stringify(result);
     compareResponse(result);
   } catch (error) { message(`Could not check Maple Scouter: ${error.message}. Paste the response below to compare it.`, true); }
-  finally { $('#retrieve').disabled = false; }
+  finally { $('#retrieve').disabled = $('#mode').value.startsWith('hecate_'); }
 });
 $('#inspect').addEventListener('click', () => {
   try {
