@@ -4,11 +4,13 @@ import worker from '../worker.js';
 const url = 'https://preview.example/api/hexa-order';
 const payload = { myHexa: { character_class: '호영' }, userStat: { stat: { myClass: '호영' }, isGMS: true }, sole: false };
 const request = mode => new Request(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }) });
-const env = { MAPLE_SCOUTER_API_KEY: 'test-key', MAPLE_SCOUTER_REQUEST_JSON: JSON.stringify(payload) };
+const template = JSON.stringify(payload);
+const env = { MAPLE_SCOUTER_API_KEY: 'test-key', MAPLE_SCOUTER_REQUEST_PART_1: template.slice(0, 30), MAPLE_SCOUTER_REQUEST_PART_2: template.slice(30) };
 
 assert.equal((await worker.fetch(request('lotus_heroic'), {})).status, 503);
 assert.equal((await worker.fetch(request('taotie_heroic'), env)).status, 400);
-assert.equal((await worker.fetch(request('lotus_heroic'), { ...env, MAPLE_SCOUTER_REQUEST_JSON: JSON.stringify({ ...payload, userStat: { ...payload.userStat, isGMS: false } }) })).status, 503);
+const invalidTemplate = JSON.stringify({ ...payload, userStat: { ...payload.userStat, isGMS: false } });
+assert.equal((await worker.fetch(request('lotus_heroic'), { ...env, MAPLE_SCOUTER_REQUEST_PART_1: invalidTemplate.slice(0, 30), MAPLE_SCOUTER_REQUEST_PART_2: invalidTemplate.slice(30) })).status, 503);
 assert.equal((await worker.fetch(new Request(url, { method: 'GET' }), env)).status, 405);
 
 const originalFetch = globalThis.fetch;
