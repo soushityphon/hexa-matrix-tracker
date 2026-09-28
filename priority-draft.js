@@ -29,6 +29,7 @@ export function validateDraft(draft) {
   if (!draft.isNew && draft.mode !== (draft.sourceMode || draft.mode)) throw new Error('Existing priority ID does not match its source');
   if (typeof draft.name !== 'string' || !draft.name.trim()) throw new Error('Enter a priority name');
   if (!Array.isArray(draft.steps) || (!draft.steps.length && (draft.isNew || PRIORITIES[draft.mode].length))) throw new Error('Enter at least one priority step');
+  if (draft.enabled && !draft.steps.length) throw new Error('Import an order before showing this priority on the tracker');
   const types = new Set(['Skill', 'Skill II', 'Mastery', 'V', 'Common', 'Common II']);
   const groups = { Skill: 'Skill Nodes', 'Skill II': 'Skill Nodes', Mastery: 'Mastery Nodes', V: 'Enhancement Nodes', Common: 'Common Nodes', 'Common II': 'Common Nodes' };
   const newNodes = (draft.newNodes || []).map(node => {
