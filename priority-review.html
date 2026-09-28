@@ -10,11 +10,6 @@
 <body>
   <main class="shell review-shell">
     <header class="masthead"><div><p class="kicker">Hoyoung</p><h1>Priority Review</h1></div><a href="index.html">Tracker</a></header>
-    <section class="panel registered-panel">
-      <div class="panel-head"><h2>Registered priorities <span id="registered-count"></span></h2></div>
-      <div id="registered" class="registered-list"></div><button id="move-browser" type="button" hidden></button>
-      <p class="fine">Saved changes apply to the private test tracker across devices. Public publishing is a separate step. Historical Hecate has no retrievable order.</p>
-    </section>
     <div class="review-grid">
       <section class="panel">
         <div class="source-check">
@@ -30,14 +25,15 @@
         <label>Priority name<input id="name" type="text"></label>
         <fieldset class="visibility"><legend>Tracker visibility</legend><label><input type="radio" name="visibility" value="enabled"> Enabled, show on tracker</label><label><input type="radio" name="visibility" value="disabled"> Disabled, keep for review</label></fieldset>
         <label>Source link or note<input id="source" type="text"></label>
-        <details id="manual-import" class="import-panel"><summary>Import Maple Scouter response</summary>
+        <details id="manual-import" class="import-panel"><summary>Advanced: response JSON and draft download</summary>
           <label>Response JSON file<input id="response-file" type="file" accept=".json,.txt,application/json,text/plain"></label>
           <label>HEXA order response JSON<textarea id="response" spellcheck="false" placeholder="Paste the response from Maple Scouter Network → Response"></textarea></label>
           <button id="inspect" type="button">Compare response</button>
-          <div id="unknown" hidden><h3>New skills to name</h3><p>Confirm the short label, display name and skill type before downloading the draft.</p><div id="unknown-list"></div></div>
+          <div id="unknown" hidden><h3>New skills to name</h3><p>Confirm the short label, display name and skill type before reviewing the draft.</p><div id="unknown-list"></div></div>
+          <button id="download" type="button">Download draft for review</button>
         </details>
         <details class="order-editor"><summary>Inspect ordered checkpoints</summary><label>Upgrade order <small>One step per line: Harmony, 1</small><textarea id="steps" spellcheck="false"></textarea></label></details>
-        <div class="actions"><button id="review" type="button">Review changes</button><button id="save-preview" type="button">Save to private test site</button><button id="download" type="button">Download draft for review</button></div>
+        <div class="actions"><button id="review" type="button">Review changes</button><button id="save-preview" type="button">Save to private test site</button></div>
         <p id="status" role="status"></p>
         <a id="open-preview" href="index.html" hidden>Open saved priority on the tracker</a>
         <p class="fine">Save applies to the private test tracker across devices. Public publishing is a separate step.</p>
@@ -47,6 +43,11 @@
         <div id="names"></div>
       </section>
     </div>
+    <section class="panel registered-panel">
+      <div class="panel-head"><h2>Registered priorities <span id="registered-count"></span></h2></div>
+      <div id="registered" class="registered-list"></div><button id="move-browser" type="button" hidden></button>
+      <p class="fine">Saved changes apply to the private test tracker across devices. Public publishing is a separate step. Historical Hecate has no retrievable order.</p>
+    </section>
   </main>
   <script type="module" src="priority-review.js"></script>
 </body>
