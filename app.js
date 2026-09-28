@@ -20,6 +20,7 @@ function renderInputs() {
   $('#owned').value = saved.owned ?? 0;
   $('#perday').value = saved.perday ?? 0;
   $('#hideDone').checked = saved.hideDone !== false;
+  $('#includeJanus').checked = saved.includeJanus === true;
 }
 
 function levels() {
@@ -46,30 +47,35 @@ function typeClass(skill) {
 function render() {
   const mode = $('#mode').value;
   const current = levels();
-  const { steps, index, next } = nextCheckpoint(current, mode);
+  const { steps, index, completed, next } = nextCheckpoint(current, mode);
   const owned = clamp($('#owned').value, 9999999);
   const perday = clamp($('#perday').value, 9999999);
   const days = cost => perday ? Math.max(0, cost.frags - owned) / perday : null;
-  const matrix = matrixTotals(current, mode);
+  const includeJanus = $('#includeJanus').checked;
+  const matrix = matrixTotals(current, mode, includeJanus);
   const catchUp = taotieCatchUp(current, mode);
   const note = '<div class="materials">RNG / no fixed material cost</div>';
   const checkpointCost = next && rangeCost(next.skill, current[next.skill] || 0, next.level);
   const nextLevel = next && Math.min((current[next.skill] || 0) + 1, next.level);
   const levelCost = next && rangeCost(next.skill, current[next.skill] || 0, nextLevel);
   $('#source-note').textContent = mode.startsWith('taotie_') ? 'Future GMS planning / KMS priority snapshot' : 'Current GMS / Lotus priority snapshot';
-  $('#progress').textContent = `${index} / ${steps.length} checkpoints`;
+  $('#version-name').textContent = mode.startsWith('taotie_') ? 'KMS / Taotie preview' : 'GMS / Lotus';
+  $('#progress').textContent = `${completed} / ${steps.length} complete`;
   $('#quick').innerHTML = `${next ? `<div class="metric"><small>Checkpoint</small><strong>${next.skill} → ${next.level}</strong>${checkpointCost ? materials(checkpointCost, days(checkpointCost)) : note}</div><div class="metric"><small>Next level</small><strong>${next.skill} → ${nextLevel}</strong>${levelCost ? materials(levelCost, days(levelCost)) : note}</div>` : '<div class="metric"><strong>Priority complete</strong></div>'}`;
   if (catchUp) $('#quick').insertAdjacentHTML('afterbegin', `<div class="metric catch-up"><small>Taotie catch-up</small><strong>Taotie → ${catchUp.target}</strong>${materials(catchUp.cost, days(catchUp.cost))}<small class="explain">Through your completed existing-node checkpoints.</small></div>`);
+  let remainingIndex = 0;
   $('#priority').innerHTML = priorityRows(current, mode).map(row => {
     const cost = row.cost;
     const number = value => value === 0 ? '<span class="zero">0</span>' : value.toLocaleString();
-    return `<tr class="type-${typeClass(row.skill)} ${row.done ? 'done' : ''} ${row.index === index + 1 ? 'next' : ''}"><td>${row.index}</td><td><span class="skill-cell"><i class="dot" aria-hidden="true"></i>${row.skill}</span></td><td>${row.level}</td><td>${cost ? number(cost.erda) : '<span class="rng">RNG</span>'}</td><td>${cost ? number(cost.frags) : '<span class="rng">RNG</span>'}</td></tr>`;
+    if (!row.done) remainingIndex++;
+    const displayIndex = $('#hideDone').checked && !row.done ? remainingIndex : row.index;
+    return `<tr class="type-${typeClass(row.skill)} ${row.done ? 'done' : ''} ${row.index === index + 1 ? 'next' : ''}"><td>${displayIndex}</td><td><span class="skill-cell"><i class="dot" aria-hidden="true"></i>${row.skill}</span></td><td>${row.level}</td><td>${cost ? number(cost.erda) : '<span class="rng">RNG</span>'}</td><td>${cost ? number(cost.frags) : '<span class="rng">RNG</span>'}</td></tr>`;
   }).join('');
   $('.priority-table').classList.toggle('hide-done', $('#hideDone').checked);
-  $('#totals').innerHTML = `<div class="total"><small>Skill node completion</small><strong>${matrix.percent.toFixed(2)}%</strong></div><div class="total"><small>Remaining material</small><strong>${matrix.remaining.erda.toLocaleString()} Sol Erda / ${matrix.remaining.frags.toLocaleString()} Fragments</strong></div><div class="total"><small>Materials spent</small><strong>${matrix.spent.erda.toLocaleString()} Sol Erda / ${matrix.spent.frags.toLocaleString()} Fragments</strong></div>`;
+  $('#totals').innerHTML = `<div class="total"><small>HEXA skill node completion</small><strong>${matrix.percent.toFixed(2)}%</strong>${materials(matrix.remaining, days(matrix.remaining))}</div><div class="total"><small>Total materials spent</small><strong>${matrix.spent.erda.toLocaleString()} Sol Erda / ${matrix.spent.frags.toLocaleString()} Fragments</strong></div>`;
   const available = new Set(activeNodes(mode).map(node => node.short));
   $$('[data-node-row]').forEach(row => { row.hidden = !available.has(row.dataset.nodeRow); });
-  saved = { mode, levels: current, owned, perday, hideDone: $('#hideDone').checked };
+  saved = { mode, levels: current, owned, perday, hideDone: $('#hideDone').checked, includeJanus };
   localStorage.setItem(storageKey, JSON.stringify(saved));
 }
 

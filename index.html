@@ -14,7 +14,7 @@
         <h1>HEXA Matrix Tracker</h1>
         <p class="subhead">Upgrade order and material costs from your current levels.</p>
       </div>
-      <div class="version">GMS / Lotus<br><span>23 Aug 2026 snapshot</span></div>
+      <div class="version"><span id="version-name">GMS / Lotus</span><br><span>23 Aug 2026 snapshot</span></div>
     </header>
 
     <div class="toolbar">
@@ -42,20 +42,12 @@
             <label>HEXA Stat III <input data-stat="HEXA Stat III" aria-label="HEXA Stat III level" type="number" min="0" max="20" value="0"></label>
           </div>
         </section>
-        <section class="panel resources">
-          <h2>Resources</h2>
-          <label>Fragments owned <input id="owned" type="number" min="0" value="0"></label>
-          <label>Fragments per day <input id="perday" type="number" min="0" value="0"></label>
-        </section>
       </aside>
 
       <div class="results">
-        <section class="panel next-panel">
-          <div class="panel-head"><h2>Next upgrade</h2><span id="progress" class="quiet"></span></div>
-          <div id="quick" class="quick"></div>
-        </section>
         <section class="panel priority-panel">
-          <div class="panel-head"><div><h2>Skill priority</h2><p class="hint">Full upgrade order. Costs are for levels you still need. HEXA Stat rolls have no fixed cost.</p></div><label class="toggle"><input id="hideDone" type="checkbox" checked> Hide completed</label></div>
+          <div class="panel-head"><div><h2>Skill priority</h2><p class="hint">Live order from the levels entered. Completed steps can be skipped anywhere.</p></div></div>
+          <div class="priority-controls"><span id="progress" class="quiet"></span><label class="toggle"><input id="hideDone" type="checkbox" checked> Hide completed</label></div>
           <div class="table-wrap">
             <table class="priority-table">
               <thead><tr><th>#</th><th>Node</th><th>Target</th><th>Sol Erda</th><th>Fragments</th></tr></thead>
@@ -63,8 +55,20 @@
             </table>
           </div>
         </section>
-        <section class="totals" id="totals"></section>
       </div>
+
+      <aside class="quickstats">
+        <section class="panel">
+          <h2>Quick Stats</h2>
+          <div class="resources">
+            <label>Fragments owned <input id="owned" type="number" min="0" value="0"></label>
+            <label>Fragments per day <input id="perday" type="number" min="0" value="0"></label>
+          </div>
+          <div id="quick" class="quick"></div>
+          <div class="include-option"><label class="toggle"><input id="includeJanus" type="checkbox"> Include Sol Janus in completion and spent totals</label></div>
+          <div class="totals" id="totals"></div>
+        </section>
+      </aside>
     </div>
     <footer>Hoyoung priorities are dated workbook snapshots. Lotus is current GMS. Taotie uses KMS priorities to preview a future GMS patch.</footer>
   </main>

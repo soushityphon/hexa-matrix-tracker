@@ -29,11 +29,12 @@ export function rangeCost(skill, from, to) {
   return result;
 }
 
-export function matrixTotals(levels, mode) {
+export function matrixTotals(levels, mode, includeJanus = false) {
   const spent = { erda: 0, frags: 0 };
   const remaining = { erda: 0, frags: 0 };
   const total = { erda: 0, frags: 0 };
   for (const node of activeNodes(mode)) {
+    if (node.short === 'Janus' && !includeJanus) continue;
     const current = levels[node.short] || 0;
     for (const [target, cost] of [
       [spent, rangeCost(node.short, 0, current)],
@@ -50,7 +51,8 @@ export function matrixTotals(levels, mode) {
 export function nextCheckpoint(levels, mode) {
   const steps = PRIORITIES[mode];
   const index = steps.findIndex(step => (levels[step.skill] || 0) < step.level);
-  return { steps, index: index < 0 ? steps.length : index, next: index < 0 ? null : steps[index] };
+  const completed = steps.filter(step => (levels[step.skill] || 0) >= step.level).length;
+  return { steps, index: index < 0 ? steps.length : index, completed, next: index < 0 ? null : steps[index] };
 }
 
 export function priorityRows(levels, mode) {
