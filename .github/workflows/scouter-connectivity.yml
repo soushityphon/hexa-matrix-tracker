@@ -1,0 +1,11 @@
+name: Maple Scouter connectivity probe
+on:
+  push:
+    branches: [scouter-connectivity-probe]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check API transport
+        run: |
+          curl --silent --show-error --head --max-time 20 --output /dev/null --write-out 'HTTP %{http_code}; connect %{time_connect}s; total %{time_total}s\n' 'https://api.maplescouter.com/api/calc/hexa-order?class=%ED%98%B8%EC%98%81'
