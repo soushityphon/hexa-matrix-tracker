@@ -13,6 +13,9 @@ let version = null;
 const recentOrders = new Map();
 const recentFailures = new Map();
 const recentOrderMs = 5 * 60 * 1000;
+const limitKey = 'hexa-scouter-pause-until';
+let pauseUntil = 0;
+try { pauseUntil = Number(sessionStorage.getItem(limitKey)) || 0; } catch { /* Session storage may be unavailable. */ }
 try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { saved = {}; }
 
 function sameSteps(a, b) {
@@ -164,7 +167,12 @@ async function checkMode(mode) {
     return { mode, result, steps: extracted.count, unknown: extracted.unknown.length, issues: extracted.validation.issues.length, match };
   } catch (error) {
     recentFailures.set(mode, { at: Date.now(), error: error.message });
-    return { mode, error: error.message };
+    const limited = /Maple Scouter returned (?:429|430)\b/.test(error.message);
+    if (limited) {
+      pauseUntil = Date.now() + 5 * 60 * 1000;
+      try { sessionStorage.setItem(limitKey, String(pauseUntil)); } catch { /* Keep the in-page pause. */ }
+    }
+    return { mode, error: error.message, limited };
   }
 }
 function renderCheck(check) {
@@ -194,12 +202,23 @@ function renderCheck(check) {
   $('#checks').append(row);
 }
 $('#retrieve').addEventListener('click', async () => {
+  if (Date.now() < pauseUntil) {
+    $('#checks').textContent = 'Maple Scouter refused a recent request. Please wait five minutes before checking again.';
+    return;
+  }
   $('#retrieve').disabled = true;
   $('#checks').replaceChildren();
   const modes = ['lotus_heroic', 'lotus_interactive', 'taotie_heroic', 'taotie_interactive'];
   for (const [index, mode] of modes.entries()) {
     if (index && !recentOrders.has(mode)) await new Promise(resolve => setTimeout(resolve, 2000));
-    renderCheck(await checkMode(mode));
+    const result = await checkMode(mode);
+    renderCheck(result);
+    if (result.limited) {
+      const note = document.createElement('p');
+      note.textContent = 'The remaining orders were not requested. Maple Scouter refused this request, so checks are paused for five minutes.';
+      $('#checks').append(note);
+      break;
+    }
   }
   $('#retrieve').disabled = false;
 });
