@@ -46,16 +46,22 @@ function renderInputs() {
   $$('[data-stat]').forEach(input => {
     const icon = STAT_ICONS[input.dataset.stat];
     if (!icon) return;
-    const label = input.closest('label');
-    if (label.querySelector('img')) return;
+    const row = input.closest('.stat-row');
+    if (row.querySelector('img')) return;
     const image = document.createElement('img');
     image.src = icon;
     image.alt = '';
     image.addEventListener('error', () => { image.hidden = true; });
-    label.prepend(image);
+    row.prepend(image);
   });
   $$('[data-node="Apotheosis"]').forEach(input => { input.value = Math.max(1, Number(input.value) || 0); });
   $$('[data-stat]').forEach(input => { input.value = saved.levels?.[input.dataset.stat] ?? 0; });
+  $$('[data-stat-unlocked]').forEach(input => {
+    const skill = input.dataset.statUnlocked;
+    const level = clamp(saved.levels?.[skill], 20);
+    input.checked = level > 0 || saved.statUnlocked?.[skill] === true;
+    input.disabled = level > 0;
+  });
   $(`[name="world"][value="${catalog.settings[saved.mode]?.world || 'heroic'}"]`).checked = true;
   syncPriorityOptions();
   $('#owned').value = saved.owned ?? 0;
@@ -73,16 +79,17 @@ function levels() {
 }
 
 function materials(cost, days) {
-  return `<div class="materials">${materialAmount(cost.erda, 'erda')} ${materialAmount(cost.frags, 'frags')}${days === null ? '' : ` <span class="material-days">/ ${days.toFixed(1)} days</span>`}</div>`;
+  return `<div class="materials">${materialAmount(cost.erda, 'erda')} ${materialAmount(cost.frags, 'frags', cost.rng)}${days === null || cost.rng ? '' : ` <span class="material-days">/ ${days.toFixed(1)} days</span>`}</div>`;
 }
 
 const materialIcons = {
   erda: { path: 'assets/sol-erda.png', name: 'Sol Erda' },
   frags: { path: 'assets/sol-erda-fragment.png', name: 'Fragments' }
 };
-function materialAmount(value, type) {
+function materialAmount(value, type, rng = false) {
   const { path, name } = materialIcons[type];
-  return `<span class="material-amount" aria-label="${value.toLocaleString()} ${name}"><img src="${path}" alt=""><span aria-hidden="true">${value.toLocaleString()}</span><span class="material-fallback" aria-hidden="true">${name}</span></span>`;
+  const amount = rng ? (value ? `${value.toLocaleString()}+` : 'RNG') : value.toLocaleString();
+  return `<span class="material-amount" aria-label="${rng ? (value ? `at least ${value.toLocaleString()}` : 'variable') : value.toLocaleString()} ${name}"><img src="${path}" alt=""><span aria-hidden="true">${amount}</span><span class="material-fallback" aria-hidden="true">${name}</span></span>`;
 }
 function checkMaterialIcons() {
   $$('.material-amount img, .material-heading img').forEach(img => {
@@ -117,21 +124,28 @@ function render() {
   const sourceMode = previewDrafts[mode]?.sourceMode || mode;
   const order = catalog.priorities[mode];
   const current = levels();
+  const statUnlocked = {};
+  $$('[data-stat-unlocked]').forEach(input => {
+    const skill = input.dataset.statUnlocked;
+    if (current[skill] > 0) input.checked = true;
+    input.disabled = current[skill] > 0;
+    statUnlocked[skill] = input.checked;
+  });
   const { steps, index, completed, next } = nextCheckpoint(current, sourceMode, order);
   const owned = clamp($('#owned').value, 9999999);
   const perday = clamp($('#perday').value, 9999999);
   const days = cost => perday ? Math.max(0, cost.frags - owned) / perday : null;
   const includeJanus = $('#includeJanus').checked;
-  const matrix = matrixTotals(current, sourceMode, includeJanus);
+  const matrix = matrixTotals(current, sourceMode, includeJanus, statUnlocked, order);
   const catchUp = taotieCatchUp(current, sourceMode, order);
-  const displayRows = displayPriorityRows(current, sourceMode, order);
+  const displayRows = displayPriorityRows(current, sourceMode, order, statUnlocked);
   const nextRow = displayRows.find(row => !row.done && row.index <= index + 1 && index + 1 <= row.endIndex);
-  const note = '<div class="materials">RNG / no fixed material cost</div>';
-  const nextLevel = next && (next.skill.startsWith('HEXA Stat') ? next.level : Math.min((current[next.skill] || 0) + 1, next.level));
-  const levelCost = next && rangeCost(next.skill, current[next.skill] || 0, nextLevel);
+  const nextIsStat = next?.skill.startsWith('HEXA Stat');
+  const nextLevel = next && !nextIsStat ? Math.min((current[next.skill] || 0) + 1, next.level) : null;
+  const levelCost = next && !nextIsStat && rangeCost(next.skill, current[next.skill] || 0, nextLevel);
   $('#version-name').textContent = `${catalog.labels[mode]} / ${catalog.settings[mode].world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'}${previewDrafts[mode] ? ' / Test site preview' : ''}`;
   $('#progress').textContent = steps.length ? `${completed} / ${steps.length} complete` : 'Maple Scouter order pending';
-  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric"><small>Next Upgrade</small><strong>${nextRow.skill} → ${nextRow.level}</strong><div class="upgrade-cost"><span>Next level ${next.skill} → ${nextLevel}</span>${levelCost ? materials(levelCost, days(levelCost)) : note}</div>${nextRow.level === nextLevel ? '' : `<div class="upgrade-cost"><span>To checkpoint ${nextRow.skill} → ${nextRow.level}</span>${nextRow.cost ? materials(nextRow.cost, days(nextRow.cost)) : note}</div>`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
+  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric"><small>Next Upgrade</small><strong>${nextRow.skill} → ${nextRow.level}</strong>${nextIsStat ? `<div class="upgrade-cost"><span>${statUnlocked[next.skill] ? 'Level to 20' : 'Unlock and level to 20'}</span>${materials(nextRow.cost, null)}</div>` : `<div class="upgrade-cost"><span>Next level ${next.skill} → ${nextLevel}</span>${materials(levelCost, days(levelCost))}</div>${nextRow.level === nextLevel ? '' : `<div class="upgrade-cost"><span>To checkpoint ${nextRow.skill} → ${nextRow.level}</span>${materials(nextRow.cost, days(nextRow.cost))}</div>`}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
   if (catchUp) $('#next-upgrade').insertAdjacentHTML('beforeend', `<div class="metric catch-up"><small>Taotie catch-up</small><strong>Taotie → ${catchUp.target}</strong>${materials(catchUp.cost, days(catchUp.cost))}</div>`);
   let remainingIndex = 0;
   $('#priority').innerHTML = displayRows.map((row, rowIndex) => {
@@ -140,7 +154,7 @@ function render() {
     if (!row.done) remainingIndex++;
     const displayIndex = $('#hideDone').checked && !row.done ? remainingIndex : rowIndex + 1;
     const icon = previewDrafts[mode]?.statIcons[row.skill] || STAT_ICONS[row.skill] || nodeByShort[row.skill]?.icon;
-    return `<tr class="type-${typeClass(row.skill)} ${row.done ? 'done' : ''} ${row.index <= index + 1 && index + 1 <= row.endIndex ? 'next' : ''}"><td>${displayIndex}</td><td><span class="skill-cell">${icon ? `<img class="stat-icon" src="${icon}" alt="">` : '<i class="dot" aria-hidden="true"></i>'}${row.skill}</span></td><td>${row.level}</td><td>${cost ? number(cost.erda) : '<span class="rng">RNG</span>'}</td><td>${cost ? number(cost.frags) : '<span class="rng">RNG</span>'}</td></tr>`;
+    return `<tr class="type-${typeClass(row.skill)} ${row.done ? 'done' : ''} ${row.index <= index + 1 && index + 1 <= row.endIndex ? 'next' : ''}"><td>${displayIndex}</td><td><span class="skill-cell">${icon ? `<img class="stat-icon" src="${icon}" alt="">` : '<i class="dot" aria-hidden="true"></i>'}${row.skill}</span></td><td>${row.level}</td><td>${number(cost.erda)}</td><td>${cost.rng ? `<span class="rng" aria-label="${cost.frags ? `at least ${cost.frags} Fragments` : 'variable Fragment cost'}">${cost.frags ? `${cost.frags.toLocaleString()}+` : 'RNG'}</span>` : number(cost.frags)}</td></tr>`;
   }).join('');
   $('#completion').innerHTML = `<div class="completion-label"><span>Completion</span><strong>${matrix.percent.toFixed(2)}%</strong></div><div class="completion-track" role="progressbar" aria-label="HEXA Matrix completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${matrix.percent.toFixed(2)}"><span style="width:${matrix.percent.toFixed(2)}%"></span></div>`;
   $$('.stat-icon').forEach(img => { img.addEventListener('error', () => { img.hidden = true; }); });
@@ -154,7 +168,7 @@ function render() {
     row.hidden = !available.has(row.dataset.nodeRow);
     row.querySelector('.node-name').textContent = previewDrafts[mode]?.names[row.dataset.nodeRow] || nodeByShort[row.dataset.nodeRow].name;
   });
-  saved = { mode, levels: current, owned, perday, hideDone: $('#hideDone').checked, includeJanus };
+  saved = { mode, levels: current, statUnlocked, owned, perday, hideDone: $('#hideDone').checked, includeJanus };
   localStorage.setItem(storageKey, JSON.stringify(saved));
 }
 

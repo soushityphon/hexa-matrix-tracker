@@ -14,7 +14,7 @@ A browser-based MapleStory HEXA Matrix priority and material tracker. The first 
 - Quick Stats with next level, next checkpoint, completion and spent materials
 - Optional Sol Janus inclusion in completion and spent material totals
 
-The earlier captured Maple Scouter orders do not contain HEXA Stat checkpoints. Live orders can include `hexastat1`, `hexastat2` or `hexastat3`. The importer treats each as a level 20 HEXA Stat checkpoint and carries its Nexon icon through the reviewed draft to the tracker. HEXA Stat costs are shown as RNG with no fixed material total. The skill node completion and material totals include Taotie only in the future planning view. Sol Janus is an editable level but is excluded from those totals unless selected. Ren is planned for a later milestone.
+The earlier captured Maple Scouter orders do not contain HEXA Stat checkpoints. Live orders can include `hexastat1`, `hexastat2` or `hexastat3`. The importer treats each as a level 20 HEXA Stat checkpoint and carries its Nexon icon through the reviewed draft to the tracker. Each Stat has a fixed unlock cost and a separate Unlocked control because level 0 may already be unlocked. Later levelling uses variable Fragments, so a priority shows the unlock Fragment cost with `+` while it is locked, or RNG after unlock. Fixed unlocks for Stats present in the saved order are included in material totals; variable levelling is excluded. The skill node completion and material totals include Taotie only in the future planning view. Sol Janus is an editable level but is excluded from those totals unless selected. Ren is planned for a later milestone.
 
 ## Data model
 
