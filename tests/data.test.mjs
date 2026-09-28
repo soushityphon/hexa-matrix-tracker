@@ -62,6 +62,7 @@ assert(matrixTotals({Janus:1},'lotus_heroic').spent.frags===0,'Sol Janus exclude
 assert(matrixTotals({Janus:1},'lotus_heroic',true).spent.frags===125,'Sol Janus included when selected');
 import { compareDraft, currentDraft, parseSteps, validateDraft } from '../priority-draft.js';
 import { inspectScouterResponse, resolveScouterResponse } from '../scouter-import.js';
+import { extractScouterOrder } from '../scouter-extract.js';
 const draft=validateDraft(currentDraft('taotie_heroic'));
 assert(draft.steps.length===PRIORITIES.taotie_heroic.length,'review draft includes the current priority');
 assert(compareDraft(draft).changedSteps===0,'unchanged draft has no step changes');
@@ -83,4 +84,13 @@ assert(blocked,'new skill needs admin naming');
 const resolved=resolveScouterResponse(inspected,{[inspected.unknown[0].key]:{short:'New Skill',name:'New Skill Name',type:'Skill II'}});
 assert(resolved.steps[2].skill==='New Skill'&&validateDraft({...currentDraft('taotie_heroic'),steps:resolved.steps,newNodes:resolved.newNodes,statIcons:resolved.statIcons}).newNodes[0].group==='Skill Nodes','new skill type and name pass review');
 assert(validateDraft({...currentDraft('lotus_heroic'),statIcons:resolved.statIcons}).statIcons['HEXA Stat III']===statIcon,'draft preserves verified stat icon');
+const sourceRows={standard:'허수아비',class_hexa:[
+  ['Harmony',1,'/hexaskill/Hoyeong_2.png',3,50,3,50,0,0,'masteryCore1','0→1',0],
+  ['Harmony',6,'/hexaskill/Hoyeong_2.png',5,101,8,151,0,0,'masteryCore1','1→6',0]
+]};
+const extraction=extractScouterOrder(sourceRows,'taotie_heroic');
+assert(extraction.count===2&&extraction.validation.issues.length===0,'extractor checks source checkpoint and cumulative costs');
+assert(extraction.rows[1].materials.frags===101&&extraction.comparison.firstDifference===2,'extractor retains checkpoint costs and compares order');
+assert(extractScouterOrder({...sourceRows,class_hexa:[sourceRows.class_hexa[0], [...sourceRows.class_hexa[1].slice(0,4), 100, ...sourceRows.class_hexa[1].slice(5)]]},'taotie_heroic').validation.issues.some(issue=>issue.kind==='material-cost'),'extractor flags incorrect source checkpoint cost');
+assert(rangeCost('Ascent',0,1).frags===100,'Ascent uses its confirmed 5 Sol Erda / 100 Fragment unlock');
 console.log('Data validation passed');

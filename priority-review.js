@@ -1,6 +1,7 @@
 import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SETTINGS } from './data.js';
 import { compareDraft, currentDraft, parseSteps, validateDraft } from './priority-draft.js';
 import { inspectScouterResponse, resolveScouterResponse } from './scouter-import.js';
+import { extractScouterOrder } from './scouter-extract.js';
 
 const $ = selector => document.querySelector(selector);
 const key = 'hexa-priority-review-v1';
@@ -47,6 +48,7 @@ function classifyOrder() {
   }
 }
 function compareResponse(response) {
+  const extracted = extractScouterOrder(response, $('#mode').value);
   inspected = inspectScouterResponse(response);
   renderUnknown(inspected.unknown);
   importedNodes = [];
@@ -57,6 +59,7 @@ function compareResponse(response) {
     inspected = null;
     persist();
   } else message(`${inspected.unknown.length} new skill(s) need a name and type. Enter them, then review changes.`);
+  if (extracted.validation.issues.length) message(`${extracted.count} rows imported. ${extracted.validation.issues.length} material check(s) need review.`, true);
 }
 
 function read() {
@@ -144,20 +147,20 @@ async function checkMode(mode) {
     });
     if (!response.ok) throw new Error((await response.text()).slice(0, 160) || `Request returned ${response.status}`);
     const result = await response.json();
-    const inspected = inspectScouterResponse(result);
-    const match = inspected.unknown.length ? null : matchingVersion(inspected.steps, mode);
-    return { mode, result, steps: inspected.steps.length, unknown: inspected.unknown.length, match };
+    const extracted = extractScouterOrder(result, mode);
+    const match = extracted.unknown.length ? null : matchingVersion(extracted.steps, mode);
+    return { mode, result, steps: extracted.count, unknown: extracted.unknown.length, issues: extracted.validation.issues.length, match };
   } catch (error) { return { mode, error: error.message }; }
 }
 function renderCheck(check) {
   const row = document.createElement('div');
   row.className = `check-result${check.error ? ' error' : ''}`;
   const label = document.createElement('span');
-  const world = check.mode.endsWith('_heroic') ? 'Fragments' : 'Sol Erda';
+  const world = `${check.mode.startsWith('taotie_') ? 'KMS Taotie' : 'GMS Lotus'} ${check.mode.endsWith('_heroic') ? 'Fragments' : 'Sol Erda'}`;
   label.textContent = check.error ? `${world}: ${check.error}`
     : check.unknown ? `${world}: ${check.unknown} new skill(s) need setup.`
-    : check.match ? `${world}: matches ${PRIORITY_LABELS[check.match]} (${check.steps} steps).`
-    : `${world}: new order (${check.steps} steps). Name and review it.`;
+    : check.match ? `${world}: matches ${PRIORITY_LABELS[check.match]} (${check.steps} steps; ${check.issues} material checks).`
+    : `${world}: new order (${check.steps} steps; ${check.issues} material checks). Name and review it.`;
   row.append(label);
   if (!check.error && !check.match) {
     const button = document.createElement('button');
@@ -178,7 +181,7 @@ function renderCheck(check) {
 $('#retrieve').addEventListener('click', async () => {
   $('#retrieve').disabled = true;
   $('#checks').textContent = 'Checking Fragments and Sol Erda…';
-  const checks = await Promise.all(['lotus_heroic', 'lotus_interactive'].map(checkMode));
+  const checks = await Promise.all(['lotus_heroic', 'lotus_interactive', 'taotie_heroic', 'taotie_interactive'].map(checkMode));
   $('#checks').replaceChildren();
   checks.forEach(renderCheck);
   $('#retrieve').disabled = false;
@@ -186,6 +189,15 @@ $('#retrieve').addEventListener('click', async () => {
 $('#inspect').addEventListener('click', () => {
   try {
     compareResponse(JSON.parse($('#response').value));
+  } catch (error) { message(error.message, true); }
+});
+$('#response-file').addEventListener('change', async event => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const content = await file.text();
+    $('#response').value = content;
+    compareResponse(JSON.parse(content));
   } catch (error) { message(error.message, true); }
 });
 $('#review').addEventListener('click', () => {
