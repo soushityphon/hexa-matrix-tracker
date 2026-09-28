@@ -24,10 +24,19 @@ let pauseUntil = 0;
 try { pauseUntil = Number(sessionStorage.getItem(limitKey)) || 0; } catch { /* Session storage may be unavailable. */ }
 try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { saved = {}; }
 const registeredModes = () => Object.keys(catalog.priorities).filter(mode => catalog.priorities[mode].length);
+function contextLabel(mode) {
+  const settings = PRIORITY_SETTINGS[mode];
+  const update = { hecate: 'Historical Hecate', lotus: 'GMS Lotus', taotie: 'KMS Taotie' }[settings.patch];
+  const material = settings.world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)';
+  return `Hoyoung · ${update} · ${material}`;
+}
+function sourceOptions() {
+  return Object.keys(PRIORITIES).map(mode => new Option(contextLabel(mode), mode));
+}
 function refreshCatalog() {
   catalog = previewCatalog(previewDrafts);
   const selected = $('#mode').value;
-  $('#mode').replaceChildren(...Object.keys(PRIORITIES).map(mode => new Option(PRIORITY_LABELS[mode], mode)));
+  $('#mode').replaceChildren(...sourceOptions());
   $('#mode').value = selected || 'lotus_heroic';
   renderRegistered();
 }
@@ -149,6 +158,8 @@ function read() {
 }
 function show(draft) {
   version = { mode: draft.mode, sourceMode: draft.sourceMode || draft.mode, isNew: draft.isNew === true };
+  $('#mode').value = version.sourceMode;
+  $('#review-context').textContent = contextLabel(version.sourceMode);
   inspected = null;
   importedNodes = draft.newNodes || [];
   importedStatIcons = draft.statIcons || {};
@@ -357,7 +368,7 @@ $('#download').addEventListener('click', () => {
     message('Draft downloaded for review.');
   } catch (error) { message(error.message, true); }
 });
-$('#mode').replaceChildren(...Object.keys(PRIORITIES).map(mode => new Option(PRIORITY_LABELS[mode], mode)));
+$('#mode').replaceChildren(...sourceOptions());
 $('#mode').value = 'lotus_heroic';
 show(saved[$('#mode').value] || currentDraft($('#mode').value));
 message('Loading saved priorities from the private test site…');
