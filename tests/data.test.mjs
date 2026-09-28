@@ -48,4 +48,14 @@ const partial=priorityRows({Harmony:4,Talisman:1,Scroll:1,Hecate:1},'lotus_heroi
 assert(partial.find(row=>row.skill==='Harmony'&&row.level===6).cost.frags===48,'checkpoint cost starts at actual level even when upgrades were out of order');
 assert(matrixTotals({Janus:1},'lotus_heroic').spent.frags===0,'Sol Janus excluded by default');
 assert(matrixTotals({Janus:1},'lotus_heroic',true).spent.frags===125,'Sol Janus included when selected');
+import { compareDraft, currentDraft, parseSteps, validateDraft } from '../priority-draft.js';
+const draft=validateDraft(currentDraft('lotus_heroic'));
+assert(draft.steps.length===PRIORITIES.lotus_heroic.length,'review draft includes the current priority');
+assert(compareDraft(draft).changedSteps===0,'unchanged draft has no step changes');
+assert(parseSteps('Harmony, 1\nHarmony, 6\nHEXA Stat I, 20').length===3,'draft parser accepts valid checkpoints');
+for (const invalid of ['Harmony, 6\nHarmony, 1','Not a skill, 1','HEXA Stat I, 19']) {
+  let rejected=false;
+  try { parseSteps(invalid); } catch { rejected=true; }
+  assert(rejected,`draft parser should reject ${invalid}`);
+}
 console.log('Data validation passed');

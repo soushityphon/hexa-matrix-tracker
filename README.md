@@ -23,3 +23,9 @@ HEXA Stats are priority-only RNG checkpoints. Their material cost is intentional
 ## Hosting
 
 The project is static and is suitable for Cloudflare Workers static assets or Cloudflare Pages.
+
+## Priority review
+
+Open `priority-review.html` to edit a draft priority and the public display names. The draft is stored in that browser. `Review changes` validates the order against known skill keys and compares it with the current mode. `Download draft` saves a JSON file for review. To apply an approved draft in a checkout, run `node scripts/apply-priority-draft.mjs path/to/draft.json`, run `npm test`, then review and merge the change through GitHub. The editor does not publish by itself.
+
+Automatic Maple Scouter priority detection is not connected. The current source does not expose a documented public priority feed. The image URLs are sourced from Maple Scouter, with the Sol Janus URL corrected to its working Maple Scouter image. To remove remote image dependencies, save and review image assets in the repository when a reliable retrieval workflow is available.
