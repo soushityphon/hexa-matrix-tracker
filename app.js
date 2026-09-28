@@ -94,6 +94,7 @@ function render() {
     $('#next-upgrade').textContent = 'No priority is available for this update and world.';
     $('#priority').replaceChildren();
     $('#totals').replaceChildren();
+    $('#time-estimate').hidden = true;
     return;
   }
   const sourceMode = previewDrafts[mode]?.sourceMode || mode;
@@ -126,7 +127,9 @@ function render() {
   }).join('');
   $$('.stat-icon').forEach(img => { img.addEventListener('error', () => { img.hidden = true; }); });
   $('.priority-table').classList.toggle('hide-done', $('#hideDone').checked);
-  $('#totals').innerHTML = `<div class="total"><small>HEXA Matrix Completion</small><strong>${matrix.percent.toFixed(2)}%</strong>${materials(matrix.remaining, days(matrix.remaining))}${perday ? '' : '<div class="hint">Enter Fragments per day for a time estimate.</div>'}</div><div class="total"><small>Total Materials Spent</small><strong>${matrix.spent.erda.toLocaleString()} Sol Erda / ${matrix.spent.frags.toLocaleString()} Fragments</strong></div>`;
+  $('#totals').innerHTML = `<div class="total"><small>Total Materials Spent</small><strong>${matrix.spent.erda.toLocaleString()} Sol Erda / ${matrix.spent.frags.toLocaleString()} Fragments</strong></div><div class="total"><small>Materials to Complete HEXA Matrix</small><strong>${matrix.remaining.erda.toLocaleString()} Sol Erda / ${matrix.remaining.frags.toLocaleString()} Fragments</strong></div>`;
+  $('#time-estimate').hidden = !perday;
+  if (perday) $('#time-estimate').innerHTML = `<small>Estimated time for remaining Fragments</small><strong>${days(matrix.remaining).toFixed(1)} days</strong>`;
   const available = new Set(activeNodes(sourceMode).map(node => node.short));
   $$('[data-node-row]').forEach(row => {
     row.hidden = !available.has(row.dataset.nodeRow);
