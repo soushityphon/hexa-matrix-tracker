@@ -13,14 +13,18 @@ try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { sav
 function sameSteps(a, b) {
   return a.length === b.length && a.every((step, index) => step.skill === b[index].skill && step.level === b[index].level);
 }
+function matchingVersion(steps, sourceMode) {
+  const settings = PRIORITY_SETTINGS[sourceMode];
+  return Object.keys(PRIORITIES).find(mode => {
+    const other = PRIORITY_SETTINGS[mode];
+    return other.patch === settings.patch && other.world === settings.world && sameSteps(steps, PRIORITIES[mode]);
+  });
+}
 function classifyOrder() {
   const sourceMode = $('#mode').value;
   const steps = parseSteps($('#steps').value, importedNodes.map(node => node.short));
   const settings = PRIORITY_SETTINGS[sourceMode];
-  const match = Object.keys(PRIORITIES).find(mode => {
-    const other = PRIORITY_SETTINGS[mode];
-    return other.patch === settings.patch && other.world === settings.world && sameSteps(steps, PRIORITIES[mode]);
-  });
+  const match = matchingVersion(steps, sourceMode);
   if (match) {
     version = { sourceMode: match, mode: match, isNew: false };
     $('#priority-id').value = match;
@@ -80,8 +84,6 @@ function show(draft) {
   for (const input of document.querySelectorAll('[data-name]')) input.value = draft.names[input.dataset.name] || '';
   $('#status').textContent = '';
   const historical = draft.mode.startsWith('hecate_');
-  $('#retrieve').disabled = !draft.mode.startsWith('lotus_');
-  $('#retrieve').title = draft.mode.startsWith('lotus_') ? '' : 'The current API cannot retrieve the historical Hecate patch or the KMS Taotie preview from a GMS request';
   if (historical) message('Historical Hecate needs a pasted Maple Scouter response.');
 }
 function collectUnknown() {
@@ -98,6 +100,7 @@ function renderUnknown(items) {
   const list = $('#unknown-list');
   list.replaceChildren();
   $('#unknown').hidden = !items.length;
+  if (items.length) $('#manual-import').open = true;
   for (const item of items) {
     const card = document.createElement('div');
     card.className = 'unknown-card';
@@ -129,21 +132,51 @@ function persist() {
 }
 $('#mode').addEventListener('change', () => show(saved[$('#mode').value] || currentDraft($('#mode').value)));
 document.addEventListener('input', persist);
-$('#retrieve').addEventListener('click', async () => {
+async function checkMode(mode) {
   try {
-    const mode = $('#mode').value;
-    if (!mode.startsWith('lotus_')) throw new Error('Choose a current GMS Lotus priority');
-    $('#retrieve').disabled = true;
-    message('Checking Maple Scouter…');
     const response = await fetch('/api/hexa-order', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode })
     });
     if (!response.ok) throw new Error((await response.text()).slice(0, 160) || `Request returned ${response.status}`);
     const result = await response.json();
-    $('#response').value = JSON.stringify(result);
-    compareResponse(result);
-  } catch (error) { message(`Could not check Maple Scouter: ${error.message}`, true); }
-  finally { $('#retrieve').disabled = !$('#mode').value.startsWith('lotus_'); }
+    const inspected = inspectScouterResponse(result);
+    const match = inspected.unknown.length ? null : matchingVersion(inspected.steps, mode);
+    return { mode, result, steps: inspected.steps.length, unknown: inspected.unknown.length, match };
+  } catch (error) { return { mode, error: error.message }; }
+}
+function renderCheck(check) {
+  const row = document.createElement('div');
+  row.className = `check-result${check.error ? ' error' : ''}`;
+  const label = document.createElement('span');
+  const world = check.mode.endsWith('_heroic') ? 'Fragments' : 'Sol Erda';
+  label.textContent = check.error ? `${world}: ${check.error}`
+    : check.unknown ? `${world}: ${check.unknown} new skill(s) need setup.`
+    : check.match ? `${world}: matches ${PRIORITY_LABELS[check.match]} (${check.steps} steps).`
+    : `${world}: new order (${check.steps} steps). Name and review it.`;
+  row.append(label);
+  if (!check.error && !check.match) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = 'Review';
+    button.addEventListener('click', () => {
+      $('#mode').value = check.mode;
+      show(saved[check.mode] || currentDraft(check.mode));
+      $('#response').value = JSON.stringify(check.result);
+      try { compareResponse(check.result); }
+      catch (error) { message(error.message, true); }
+      if (!check.unknown) $('#name').focus();
+    });
+    row.append(button);
+  }
+  $('#checks').append(row);
+}
+$('#retrieve').addEventListener('click', async () => {
+  $('#retrieve').disabled = true;
+  $('#checks').textContent = 'Checking Fragments and Sol Erda…';
+  const checks = await Promise.all(['lotus_heroic', 'lotus_interactive'].map(checkMode));
+  $('#checks').replaceChildren();
+  checks.forEach(renderCheck);
+  $('#retrieve').disabled = false;
 });
 $('#inspect').addEventListener('click', () => {
   try {
