@@ -4,7 +4,7 @@ const mimeTypes = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript
 const scouterUrl = 'https://api.maplescouter.com/api/calc/hexa-order?class=%ED%98%B8%EC%98%81';
 const noStore = { 'Cache-Control': 'no-store' };
 function isAdmin(request, env) {
-  return !!env?.ADMIN_USER_ID && request.headers.get('oai-authenticated-user-id') === env.ADMIN_USER_ID;
+  return !!env?.ADMIN_EMAIL && request.headers.get('oai-authenticated-user-email')?.toLowerCase() === env.ADMIN_EMAIL.toLowerCase();
 }
 async function priorityPreview(request, env) {
   if (!env?.DB) return new Response('Priority preview storage is unavailable', { status: 503 });

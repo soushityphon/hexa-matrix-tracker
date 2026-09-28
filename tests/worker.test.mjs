@@ -66,8 +66,8 @@ const DB = {
   }
 };
 const previewUrl = 'https://preview.example/api/priority-preview';
-const adminEnv = { DB, ADMIN_USER_ID: 'owner-id' };
-const adminHeaders = { 'Content-Type': 'application/json', 'oai-authenticated-user-id': 'owner-id' };
+const adminEnv = { DB, ADMIN_EMAIL: 'owner@example.test' };
+const adminHeaders = { 'Content-Type': 'application/json', 'oai-authenticated-user-email': 'owner@example.test' };
 const previewRequest = (method, body, headers = adminHeaders) => new Request(previewUrl, { method, headers, body: JSON.stringify(body) });
 assert.equal((await worker.fetch(new Request(previewUrl), {})).status, 503);
 assert.deepEqual((await (await worker.fetch(new Request(previewUrl), adminEnv)).json()).drafts, {});
@@ -84,5 +84,7 @@ assert.equal((await worker.fetch(previewRequest('DELETE', { mode: newOrder.mode 
 assert.equal((await worker.fetch(previewRequest('DELETE', { mode: newOrder.mode }), adminEnv)).status, 200);
 assert.equal((await (await worker.fetch(new Request(previewUrl), adminEnv)).json()).drafts[newOrder.mode], undefined);
 assert.equal((await worker.fetch(new Request('https://preview.example/priority-review.html'), adminEnv)).status, 403);
+assert.equal((await worker.fetch(previewRequest('PUT', { draft: hidden }, { ...adminHeaders, 'oai-authenticated-user-email': 'other@example.test' }), adminEnv)).status, 403);
+assert.equal((await worker.fetch(previewRequest('PUT', { draft: hidden }, { ...adminHeaders, 'oai-authenticated-user-email': 'OWNER@example.test' }), adminEnv)).status, 200);
 
 console.log('Worker route validation passed');
