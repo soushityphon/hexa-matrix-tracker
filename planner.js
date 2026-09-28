@@ -2,7 +2,7 @@ import { COSTS, NODES, PRIORITIES } from './data.js';
 
 const byShort = Object.fromEntries(NODES.map(node => [node.short, node]));
 export function activeNodes(mode) {
-  return NODES.filter(node => mode.startsWith('taotie_') || node.short !== 'Taotie');
+  return NODES.filter(node => (mode.startsWith('taotie_') || node.short !== 'Taotie') && (!mode.startsWith('hecate_') || node.short !== 'Lotus'));
 }
 
 export function taotieCatchUp(levels, mode) {
