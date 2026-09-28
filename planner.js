@@ -67,3 +67,23 @@ export function priorityRows(levels, mode, order = PRIORITIES[mode]) {
     return { ...step, index: index + 1, from, done, cost };
   });
 }
+
+// Collapse only neighbouring checkpoints for display. The source order and
+// individual levels stay intact for the next upgrade and source comparisons.
+export function displayPriorityRows(levels, mode, order = PRIORITIES[mode]) {
+  const rows = priorityRows(levels, mode, order);
+  const display = [];
+  for (const row of rows) {
+    const last = display.at(-1);
+    if (last?.skill === row.skill) {
+      last.level = row.level;
+      last.endIndex = row.index;
+      last.done = row.done;
+      last.cost = row.cost === null ? null : rangeCost(row.skill, Math.max(levels[row.skill] || 0, last.from), row.level);
+    } else {
+      display.push({ ...row, endIndex: row.index,
+        cost: row.cost === null ? null : rangeCost(row.skill, Math.max(levels[row.skill] || 0, row.from), row.level) });
+    }
+  }
+  return display;
+}
