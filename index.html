@@ -54,13 +54,17 @@
 
       <aside class="quickstats">
         <section class="panel">
-          <h2>Matrix summary</h2>
+          <h2>HEXA Matrix Summary</h2>
+          <div class="totals" id="totals"></div>
+        </section>
+        <section class="panel calculator-panel">
+          <h2>Calculator</h2>
           <div class="resources">
             <label>Fragments owned <input id="owned" type="number" min="0" value="0"></label>
             <label>Fragments per day <input id="perday" type="number" min="0" value="0"></label>
           </div>
           <div class="include-option"><label class="toggle"><input id="includeJanus" type="checkbox"> Include Sol Janus in completion and spent totals</label></div>
-          <div class="totals" id="totals"></div>
+          <div id="time-estimate" class="time-estimate" hidden></div>
         </section>
       </aside>
     </div>
