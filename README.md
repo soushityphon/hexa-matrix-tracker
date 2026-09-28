@@ -9,10 +9,12 @@ A browser-based MapleStory HEXA Matrix priority and material tracker. The first 
 - Taotie future GMS planning view using KMS priority snapshots, with Taotie catch-up materials
 - Current HEXA level inputs saved in the browser
 - Compact priority checkpoints
+- Live remaining upgrade order that skips completed checkpoints even when levels were raised out of order
 - Intermediate level material costs calculated automatically
-- Next checkpoint and next individual level summaries
+- Quick Stats with next level, next checkpoint, completion and spent materials
+- Optional Sol Janus inclusion in completion and spent material totals
 
-HEXA Stats are priority-only RNG checkpoints. Their material cost is intentionally not estimated. The skill node completion and material totals include Taotie only in the future planning view. Ren is planned for a later milestone.
+HEXA Stats are priority-only RNG checkpoints. Their material cost is intentionally not estimated. The skill node completion and material totals include Taotie only in the future planning view. Sol Janus is an editable level but is excluded from those totals unless selected. Ren is planned for a later milestone.
 
 ## Data model
 
