@@ -51,6 +51,8 @@ const harmonySix=rows.find(row=>row.skill==='Harmony'&&row.level===6);
 assert(harmonySix.cost.frags===101,'later checkpoint costs only intervening levels');
 assert(priorityRows({Harmony:6},'taotie_heroic')[0].done,'entered levels mark rows complete');
 const adjacent=[{skill:'Harmony',level:1},{skill:'Harmony',level:6},{skill:'Tiger',level:1},{skill:'Harmony',level:7},{skill:'HEXA Stat I',level:20}];
+const adjacentUnmet=displayPriorityRows({Harmony:0},'taotie_heroic',adjacent);
+assert(adjacentUnmet.length===4&&adjacentUnmet[0].level===6&&adjacentUnmet[0].endIndex===2&&adjacentUnmet[0].cost.frags===rangeCost('Harmony',0,6).frags,'adjacent unmet checkpoints merge with full intermediate cost');
 const compact=displayPriorityRows({Harmony:3},'taotie_heroic',adjacent);
 assert(compact.length===5&&compact[0].done&&compact[1].level===6&&compact[1].index===2&&compact[1].endIndex===2,'completed checkpoints stay separate and retain source positions');
 assert(compact[1].cost.frags===rangeCost('Harmony',3,6).frags,'remaining row sums intermediate level costs');
