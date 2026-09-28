@@ -9,7 +9,6 @@ let inspected = null;
 let importedNodes = [];
 let version = null;
 try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { saved = {}; }
-$('#payload').value = localStorage.getItem(`${key}-request`) || '';
 
 function sameSteps(a, b) {
   return a.length === b.length && a.every((step, index) => step.skill === b[index].skill && step.level === b[index].level);
@@ -130,20 +129,14 @@ function persist() {
 }
 $('#mode').addEventListener('change', () => show(saved[$('#mode').value] || currentDraft($('#mode').value)));
 document.addEventListener('input', persist);
-$('#payload').addEventListener('input', () => localStorage.setItem(`${key}-request`, $('#payload').value));
 $('#retrieve').addEventListener('click', async () => {
   try {
     const mode = $('#mode').value;
     if (!mode.startsWith('lotus_')) throw new Error('Choose a current GMS Lotus priority');
-    const payload = JSON.parse($('#payload').value);
-    if (payload?.myHexa?.character_class !== '호영' || payload?.userStat?.stat?.myClass !== '호영' || payload?.userStat?.isGMS !== true) {
-      throw new Error('Paste a GMS Hoyoung request body');
-    }
-    payload.sole = mode.endsWith('_interactive');
     $('#retrieve').disabled = true;
     message('Checking Maple Scouter…');
     const response = await fetch('/api/hexa-order', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode })
     });
     if (!response.ok) throw new Error((await response.text()).slice(0, 160) || `Request returned ${response.status}`);
     const result = await response.json();
