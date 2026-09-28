@@ -1,6 +1,46 @@
 // Bundled with the static files by scripts/build-worker.mjs.
+import { validateDraft } from './priority-draft.js';
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8' };
 const scouterUrl = 'https://api.maplescouter.com/api/calc/hexa-order?class=%ED%98%B8%EC%98%81';
+const noStore = { 'Cache-Control': 'no-store' };
+function isAdmin(request, env) {
+  return !!env?.ADMIN_USER_ID && request.headers.get('oai-authenticated-user-id') === env.ADMIN_USER_ID;
+}
+async function priorityPreview(request, env) {
+  if (!env?.DB) return new Response('Priority preview storage is unavailable', { status: 503 });
+  try {
+    if (request.method === 'GET') {
+      const rows = await env.DB.prepare('SELECT mode, draft_json FROM priority_preview').all();
+      const drafts = {};
+      for (const row of rows.results || []) {
+        try {
+          const draft = validateDraft(JSON.parse(row.draft_json));
+          if (draft.mode === row.mode && !draft.newNodes.length) drafts[row.mode] = draft;
+        } catch { /* A stale version cannot replace the GitHub baseline. */ }
+      }
+      return Response.json({ drafts }, { headers: noStore });
+    }
+    if (!['PUT', 'DELETE'].includes(request.method)) return new Response('Method not allowed', { status: 405 });
+    if (!isAdmin(request, env)) return new Response('Admin access required', { status: 403 });
+    if (Number(request.headers.get('content-length')) > 100_000) return new Response('Payload too large', { status: 413 });
+    const body = await request.text();
+    if (body.length > 100_000) return new Response('Payload too large', { status: 413 });
+    let selection;
+    try { selection = JSON.parse(body); } catch { return new Response('Invalid JSON', { status: 400 }); }
+    if (request.method === 'DELETE') {
+      if (typeof selection?.mode !== 'string' || !/^[a-z0-9_]+$/.test(selection.mode)) return new Response('Invalid priority ID', { status: 400 });
+      await env.DB.prepare('DELETE FROM priority_preview WHERE mode = ?').bind(selection.mode).run();
+      return Response.json({ removed: selection.mode }, { headers: noStore });
+    }
+    let draft;
+    try { draft = validateDraft(selection?.draft); }
+    catch (error) { return new Response(error.message, { status: 400 }); }
+    if (draft.newNodes.length) return new Response('New skills need a reviewed GitHub update before their costs can be used in the tracker', { status: 400 });
+    await env.DB.prepare('INSERT INTO priority_preview (mode, draft_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(mode) DO UPDATE SET draft_json = excluded.draft_json, updated_at = excluded.updated_at')
+      .bind(draft.mode, JSON.stringify(draft), new Date().toISOString()).run();
+    return Response.json({ saved: draft.mode }, { headers: noStore });
+  } catch { return new Response('Priority preview storage failed. Try again later.', { status: 503 }); }
+}
 function fixedBaseline(hexa) {
   if (!hexa || hexa.hexaStat !== 0 || hexa.hexaStat_opened !== false || hexa.hexaSkill?.skillCore1 !== 1) return false;
   if (Object.entries(hexa.hexaSkill).some(([key, level]) => key !== 'skillCore1' && level !== 0)) return false;
@@ -12,6 +52,8 @@ function fixedBaseline(hexa) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === '/api/priority-preview') return priorityPreview(request, env);
+    if (url.pathname === '/priority-review.html' && !isAdmin(request, env)) return new Response('Admin access required', { status: 403 });
     if (url.pathname === '/api/hexa-order') {
       if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
       if (Number(request.headers.get('content-length')) > 1_000) return new Response('Payload too large', { status: 413 });

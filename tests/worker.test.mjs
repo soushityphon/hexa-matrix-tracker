@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import worker from '../worker.js';
+import { currentDraft } from '../priority-draft.js';
 
 const url = 'https://preview.example/api/hexa-order';
 const payload = { myHexa: { character_class: '호영', hexaStat: 2, hexaStat_opened: false }, userStat: { stat: { myClass: '호영' }, isGMS: true, hexa: { hexaStat: 2, hexaStat_opened: false } }, sole: false };
@@ -48,5 +49,40 @@ try {
   globalThis.fetch = async () => { throw new Error('network unavailable'); };
   assert.equal((await worker.fetch(request('lotus_heroic'), env)).status, 502);
 } finally { globalThis.fetch = originalFetch; }
+
+
+const previews = new Map();
+const DB = {
+  prepare(sql) {
+    let values = [];
+    return {
+      bind(...args) { values = args; return this; },
+      async all() { assert.match(sql, /^SELECT /); return { results: [...previews].map(([mode, draft_json]) => ({ mode, draft_json })) }; },
+      async run() {
+        if (sql.startsWith('DELETE ')) previews.delete(values[0]);
+        else { assert.match(sql, /^INSERT /); previews.set(values[0], values[1]); }
+      }
+    };
+  }
+};
+const previewUrl = 'https://preview.example/api/priority-preview';
+const adminEnv = { DB, ADMIN_USER_ID: 'owner-id' };
+const adminHeaders = { 'Content-Type': 'application/json', 'oai-authenticated-user-id': 'owner-id' };
+const previewRequest = (method, body, headers = adminHeaders) => new Request(previewUrl, { method, headers, body: JSON.stringify(body) });
+assert.equal((await worker.fetch(new Request(previewUrl), {})).status, 503);
+assert.deepEqual((await (await worker.fetch(new Request(previewUrl), adminEnv)).json()).drafts, {});
+assert.equal((await worker.fetch(previewRequest('PUT', { draft: currentDraft('lotus_heroic') }, { 'Content-Type': 'application/json' }), adminEnv)).status, 403);
+const hidden = { ...currentDraft('lotus_heroic'), enabled: false };
+assert.equal((await worker.fetch(previewRequest('PUT', { draft: hidden }), adminEnv)).status, 200);
+assert.equal((await (await worker.fetch(new Request(previewUrl), adminEnv)).json()).drafts.lotus_heroic.enabled, false);
+const newOrder = { ...currentDraft('lotus_interactive'), mode: 'lotus_interactive_20260929', sourceMode: 'lotus_interactive', isNew: true, name: 'Imported order', enabled: true, steps: [{ skill: 'Harmony', level: 1 }] };
+assert.equal((await worker.fetch(previewRequest('PUT', { draft: newOrder }), adminEnv)).status, 200);
+assert.equal((await (await worker.fetch(new Request(previewUrl), adminEnv)).json()).drafts[newOrder.mode].steps.length, 1);
+const unknownOrder = { ...newOrder, newNodes: [{ short: 'New', name: 'New', type: 'Skill', icon: 'https://maplescouter.com/hexaskill/New.png' }], steps: [{ skill: 'New', level: 1 }] };
+assert.equal((await worker.fetch(previewRequest('PUT', { draft: unknownOrder }), adminEnv)).status, 400);
+assert.equal((await worker.fetch(previewRequest('DELETE', { mode: newOrder.mode }, { 'Content-Type': 'application/json' }), adminEnv)).status, 403);
+assert.equal((await worker.fetch(previewRequest('DELETE', { mode: newOrder.mode }), adminEnv)).status, 200);
+assert.equal((await (await worker.fetch(new Request(previewUrl), adminEnv)).json()).drafts[newOrder.mode], undefined);
+assert.equal((await worker.fetch(new Request('https://preview.example/priority-review.html'), adminEnv)).status, 403);
 
 console.log('Worker route validation passed');

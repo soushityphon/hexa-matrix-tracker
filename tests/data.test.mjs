@@ -66,7 +66,7 @@ assert(matrixTotals({Apotheosis:2},'lotus_heroic').spent.frags===30,'later Apoth
 import { compareDraft, currentDraft, parseSteps, validateDraft } from '../priority-draft.js';
 import { inspectScouterResponse, resolveScouterResponse } from '../scouter-import.js';
 import { extractScouterOrder } from '../scouter-extract.js';
-import { loadPreview, previewCatalog, savePreview, removePreview } from '../preview-priorities.js';
+import { loadPreview, previewCatalog } from '../preview-priorities.js';
 const draft=validateDraft(currentDraft('taotie_heroic'));
 assert(draft.steps.length===PRIORITIES.taotie_heroic.length,'review draft includes the current priority');
 assert(compareDraft(draft).changedSteps===0,'unchanged draft has no step changes');
@@ -101,19 +101,14 @@ assert(rangeCost('Ascent',0,1).frags===100,'Ascent uses its confirmed 5 Sol Erda
 const captured=JSON.parse(readFileSync(new URL('../data/scouter-kms-taotie-fragment-extracted-2026-09-28.json',import.meta.url)));
 assert(JSON.stringify(STAT_ICONS)===JSON.stringify(captured.statIcons),'HEXA Stat icons match the extracted KMS source');
 const browserData=new Map();
-const storage={getItem:key=>browserData.get(key)??null,setItem:(key,value)=>browserData.set(key,value)};
-savePreview(storage,{...currentDraft('lotus_heroic'),enabled:false});
-assert(!previewCatalog(loadPreview(storage)).settings.lotus_heroic.enabled,'disabled GitHub version is hidden in browser preview');
+const storage={getItem:key=>browserData.get(key)??null};
+const disabled={...currentDraft('lotus_heroic'),enabled:false};
+browserData.set('hexa-priority-preview-v1',JSON.stringify({lotus_heroic:disabled}));
+assert(!previewCatalog(loadPreview(storage)).settings.lotus_heroic.enabled,'old browser preview remains available to migrate');
 const localOrder={...currentDraft('lotus_interactive'),mode:'lotus_interactive_20260929',sourceMode:'lotus_interactive',isNew:true,name:'GMS Lotus Sol Erda test',enabled:true,steps:[{skill:'Harmony',level:1},{skill:'HEXA Stat I',level:20}]};
-savePreview(storage,localOrder);
-const localCatalog=previewCatalog(loadPreview(storage));
+const localCatalog=previewCatalog({[localOrder.mode]:validateDraft(localOrder)});
 assert(localCatalog.priorities[localOrder.mode].length===2&&localCatalog.settings[localOrder.mode].world==='interactive','new named version is available for the correct world');
 assert(nextCheckpoint({},localOrder.sourceMode,localCatalog.priorities[localOrder.mode]).next.skill==='Harmony','preview priority keeps exact checkpoint order');
 assert(priorityRows({},localOrder.sourceMode,localCatalog.priorities[localOrder.mode])[1].cost===null,'preview HEXA Stat checkpoint has RNG cost');
-removePreview(storage,'lotus_heroic');
-assert(previewCatalog(loadPreview(storage)).settings.lotus_heroic.enabled,'restoring GitHub visibility removes browser override');
-let blockedUnknown=false;
-try { savePreview(storage,{...localOrder,newNodes:[{short:'New Skill',name:'New Skill',type:'Skill',icon:'https://maplescouter.com/hexaskill/Hoyeong_99.png'}],steps:[{skill:'New Skill',level:1}]}); }
-catch { blockedUnknown=true; }
-assert(blockedUnknown,'unknown cost nodes cannot be previewed before GitHub review');
+assert(previewCatalog({}).settings.lotus_heroic.enabled,'removing staged override restores GitHub visibility');
 console.log('Data validation passed');

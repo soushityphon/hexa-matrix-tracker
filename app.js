@@ -1,6 +1,6 @@
 import { NODES, STAT_ICONS } from './data.js';
 import { activeNodes, matrixTotals, nextCheckpoint, priorityRows, rangeCost, taotieCatchUp } from './planner.js';
-import { loadPreview, previewCatalog } from './preview-priorities.js';
+import { fetchSharedPreview, previewCatalog } from './preview-priorities.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -8,9 +8,10 @@ const storageKey = 'hexa-tracker-hoyoung-v1';
 let saved;
 try { saved = JSON.parse(localStorage.getItem(storageKey) || '{}') || {}; }
 catch { saved = {}; }
-let previewDrafts = loadPreview(localStorage);
+let previewDrafts = {};
 let catalog = previewCatalog(previewDrafts);
 const requestedMode = new URL(location.href).searchParams.get('mode');
+let initialSharedLoad = true;
 if (requestedMode && catalog.settings[requestedMode]?.enabled && catalog.priorities[requestedMode]?.length) saved.mode = requestedMode;
 
 function clamp(value, max) {
@@ -28,8 +29,8 @@ function syncPriorityOptions() {
   select.value = updates.includes(patch) ? patch : updates[0] || '';
   const modes = Object.keys(catalog.priorities).filter(mode => catalog.priorities[mode].length && catalog.settings[mode]?.enabled && catalog.settings[mode].world === world && catalog.settings[mode].patch === select.value);
   const versions = $('#priority-version');
-  const previousVersion = versions.value || saved.mode;
-  versions.replaceChildren(...modes.map(mode => new Option(`${catalog.labels[mode]}${previewDrafts[mode] ? ' (preview)' : ''}`, mode)));
+  const previousVersion = saved.mode || versions.value;
+  versions.replaceChildren(...modes.map(mode => new Option(`${catalog.labels[mode]}${previewDrafts[mode] ? ' (test site)' : ''}`, mode)));
   $('#version-picker').hidden = modes.length < 2;
   if (modes.includes(previousVersion)) versions.value = previousVersion;
   return versions.value;
@@ -108,7 +109,7 @@ function render() {
   const note = '<div class="materials">RNG / no fixed material cost</div>';
   const nextLevel = next && (next.skill.startsWith('HEXA Stat') ? next.level : Math.min((current[next.skill] || 0) + 1, next.level));
   const levelCost = next && rangeCost(next.skill, current[next.skill] || 0, nextLevel);
-  $('#version-name').textContent = `${catalog.labels[mode]} / ${catalog.settings[mode].world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'}${previewDrafts[mode] ? ' / Browser preview' : ''}`;
+  $('#version-name').textContent = `${catalog.labels[mode]} / ${catalog.settings[mode].world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'}${previewDrafts[mode] ? ' / Test site preview' : ''}`;
   $('#progress').textContent = steps.length ? `${completed} / ${steps.length} complete` : 'Maple Scouter order pending';
   $('#next-upgrade').innerHTML = `${next ? `<div class="metric"><small>Next Upgrade</small><strong>${next.skill} → ${nextLevel}</strong>${levelCost ? materials(levelCost, days(levelCost)) : note}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
   if (catchUp) $('#next-upgrade').insertAdjacentHTML('beforeend', `<div class="metric catch-up"><small>Taotie catch-up</small><strong>Taotie → ${catchUp.target}</strong>${materials(catchUp.cost, days(catchUp.cost))}</div>`);
@@ -135,13 +136,22 @@ function render() {
 
 document.addEventListener('input', render);
 document.addEventListener('change', render);
-window.addEventListener('storage', event => {
-  if (event.key === 'hexa-priority-preview-v1') {
-    previewDrafts = loadPreview(localStorage);
-    catalog = previewCatalog(previewDrafts);
+async function refreshSharedPriorities() {
+  try {
+    const drafts = await fetchSharedPreview();
+    previewDrafts = drafts;
+    catalog = previewCatalog(drafts);
+    if (initialSharedLoad && requestedMode && catalog.settings[requestedMode]?.enabled && catalog.priorities[requestedMode]?.length) saved.mode = requestedMode;
+    initialSharedLoad = false;
+    if (catalog.settings[saved.mode]) $('#patch').value = catalog.settings[saved.mode].patch;
+    renderInputs();
     render();
+    $('#priority-sync').textContent = '';
+  } catch (error) {
+    $('#priority-sync').textContent = `Shared priorities could not be loaded: ${error.message}. Showing the GitHub baseline.`;
   }
-});
+}
+window.addEventListener('focus', refreshSharedPriorities);
 $('#reset').onclick = () => {
   if (confirm('Reset saved Hoyoung levels and resources?')) {
     localStorage.removeItem(storageKey);
@@ -152,3 +162,5 @@ $('#reset').onclick = () => {
 };
 renderInputs();
 render();
+
+refreshSharedPriorities();

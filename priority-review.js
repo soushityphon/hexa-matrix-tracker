@@ -2,7 +2,7 @@ import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SETTINGS, PRIORITY_SOURCES
 import { compareDraft, currentDraft, parseSteps, validateDraft } from './priority-draft.js';
 import { inspectScouterResponse, resolveScouterResponse } from './scouter-import.js';
 import { extractScouterOrder } from './scouter-extract.js';
-import { loadPreview, previewCatalog, savePreview, removePreview } from './preview-priorities.js';
+import { loadPreview, previewCatalog, fetchSharedPreview, saveSharedPreview, removeSharedPreview } from './preview-priorities.js';
 
 const $ = selector => document.querySelector(selector);
 const key = 'hexa-priority-review-v1';
@@ -11,7 +11,7 @@ let inspected = null;
 let importedNodes = [];
 let importedStatIcons = {};
 let version = null;
-let previewDrafts = loadPreview(localStorage);
+let previewDrafts = {};
 let catalog = previewCatalog(previewDrafts);
 let materialIssues = 0;
 let pendingSource = '';
@@ -24,7 +24,6 @@ try { pauseUntil = Number(sessionStorage.getItem(limitKey)) || 0; } catch { /* S
 try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { saved = {}; }
 const registeredModes = () => Object.keys(catalog.priorities).filter(mode => catalog.priorities[mode].length);
 function refreshCatalog() {
-  previewDrafts = loadPreview(localStorage);
   catalog = previewCatalog(previewDrafts);
   const selected = $('#mode').value;
   $('#mode').replaceChildren(...Object.keys(PRIORITIES).map(mode => new Option(PRIORITY_LABELS[mode], mode)));
@@ -36,7 +35,7 @@ function visibility(value) {
 }
 function renderRegistered() {
   const modes = registeredModes();
-  $('#registered-count').textContent = `(${modes.filter(mode => PRIORITIES[mode]?.length).length} GitHub${modes.some(mode => !PRIORITIES[mode]?.length) ? `, ${modes.filter(mode => !PRIORITIES[mode]?.length).length} browser preview` : ''})`;
+  $('#registered-count').textContent = `(${modes.filter(mode => PRIORITIES[mode]?.length).length} GitHub${modes.some(mode => !PRIORITIES[mode]?.length) ? `, ${modes.filter(mode => !PRIORITIES[mode]?.length).length} test site preview` : ''})`;
   const list = $('#registered');
   list.replaceChildren();
   for (const mode of modes) {
@@ -50,26 +49,27 @@ function renderRegistered() {
     const note = document.createElement('small'); note.textContent = catalog.sources[mode] || 'Source not recorded';
     details.append(title, source, note);
     const actions = document.createElement('div'); actions.className = 'registered-actions';
-    const badge = document.createElement('span'); badge.className = settings.enabled ? 'visible' : 'disabled'; badge.textContent = `${settings.enabled ? 'Visible' : 'Hidden'}${previewDrafts[mode] ? ' in this browser' : ''}`;
+    const badge = document.createElement('span'); badge.className = settings.enabled ? 'visible' : 'disabled'; badge.textContent = `${settings.enabled ? 'Visible' : 'Hidden'}${previewDrafts[mode] ? ' on test site' : ''}`;
     const review = document.createElement('button'); review.type = 'button'; review.textContent = 'Review';
     review.addEventListener('click', () => { $('#mode').value = previewDrafts[mode]?.sourceMode || mode; show(previewDrafts[mode] || currentDraft(mode)); $('#draft-heading').scrollIntoView({ behavior: 'smooth' }); });
     const rename = document.createElement('button'); rename.type = 'button'; rename.textContent = 'Rename';
     rename.addEventListener('click', () => { review.click(); $('#name').focus(); });
     const toggle = document.createElement('button'); toggle.type = 'button'; toggle.textContent = settings.enabled ? 'Disable' : 'Enable';
-    toggle.addEventListener('click', () => {
+    toggle.addEventListener('click', async () => {
       try {
         const draft = { ...(previewDrafts[mode] || currentDraft(mode)), enabled: !settings.enabled };
-        savePreview(localStorage, draft);
+        await saveSharedPreview(draft);
+        previewDrafts[draft.mode] = draft;
         refreshCatalog();
         show(draft);
-        message(`${draft.name} is ${draft.enabled ? 'visible' : 'hidden'} on this browser's preview tracker. Download its draft for GitHub review.`);
+        message(`${draft.name} is ${draft.enabled ? 'visible' : 'hidden'} on the private test tracker. Public publishing is a separate step.`);
       } catch (error) { message(error.message, true); }
     });
     actions.append(badge, review, rename, toggle);
     if (previewDrafts[mode]) {
       const restore = document.createElement('button'); restore.type = 'button';
       restore.textContent = Object.hasOwn(PRIORITIES, mode) ? 'Restore GitHub' : 'Remove preview';
-      restore.addEventListener('click', () => { const sourceMode = previewDrafts[mode].sourceMode; removePreview(localStorage, mode); refreshCatalog(); show(currentDraft(sourceMode)); message('Browser preview change removed.'); });
+      restore.addEventListener('click', async () => { try { const sourceMode = previewDrafts[mode].sourceMode; await removeSharedPreview(mode); delete previewDrafts[mode]; refreshCatalog(); show(currentDraft(sourceMode)); message('Test site preview change removed.'); } catch (error) { message(error.message, true); } });
       actions.append(restore);
     }
     row.append(details, actions); list.append(row);
@@ -92,7 +92,7 @@ function classifyOrder() {
   if (match) {
     if (previewDrafts[match]?.isNew) {
       show(previewDrafts[match]);
-      message(`No new priority: ${steps.length} steps match your saved browser preview, ${previewDrafts[match].name}.`);
+      message(`No new priority: ${steps.length} steps match your saved test site preview, ${previewDrafts[match].name}.`);
       return;
     }
     version = { sourceMode: match, mode: match, isNew: false };
@@ -157,7 +157,7 @@ function show(draft) {
   $('#name').value = draft.name;
   $('#priority-id').value = draft.mode;
   visibility(draft.isNew && typeof draft.enabled !== 'boolean' ? null : draft.enabled === true);
-  $('#version-state').textContent = draft.isNew ? 'New order. Name it and choose whether to show it on the tracker.' : `${catalog.priorities[draft.mode]?.length || draft.steps.length} imported steps. Save to this browser, then download for GitHub review.`;
+  $('#version-state').textContent = draft.isNew ? 'New order. Name it and choose whether to show it on the tracker.' : `${catalog.priorities[draft.mode]?.length || draft.steps.length} imported steps. Save to the private test tracker, then review before public publishing.`;
   $('#source').value = draft.source || '';
   $('#steps').value = draft.steps.map(step => `${step.skill}, ${step.level}`).join('\n');
   $('#names').innerHTML = NODES.map(node => `<div class="review-name"><label for="name-${node.short}">${node.short}</label><input id="name-${node.short}" data-name="${node.short}" type="text"></div>`).join('');
@@ -316,7 +316,7 @@ $('#review').addEventListener('click', () => {
     message(`${draft.steps.length} steps. ${changes.changedNames} display names changed. ${changes.changedSteps} steps changed at their position. ${changes.lengthDifference} net steps.`);
   } catch (error) { message(error.message, true); }
 });
-$('#save-preview').addEventListener('click', () => {
+$('#save-preview').addEventListener('click', async () => {
   try {
     collectUnknown();
     if (inspected) {
@@ -325,13 +325,14 @@ $('#save-preview').addEventListener('click', () => {
     }
     if (materialIssues) throw new Error(`${materialIssues} material checks need review before saving this order to the preview tracker.`);
     const draft = read();
-    savePreview(localStorage, draft);
+    await saveSharedPreview(draft);
+    previewDrafts[draft.mode] = draft;
     saved[draft.sourceMode] = draft;
     localStorage.setItem(key, JSON.stringify(saved));
     refreshCatalog();
     $('#open-preview').href = `index.html?mode=${encodeURIComponent(draft.mode)}`;
     $('#open-preview').hidden = !draft.enabled;
-    message(`${draft.name} saved to this browser's preview tracker as ${draft.enabled ? 'visible' : 'hidden'}. Download its draft for GitHub review to publish it.`);
+    message(`${draft.name} saved to the private test tracker as ${draft.enabled ? 'visible' : 'hidden'}. Public publishing is a separate step.`);
   } catch (error) { message(error.message, true); }
 });
 $('#download').addEventListener('click', () => {
@@ -353,5 +354,29 @@ $('#download').addEventListener('click', () => {
 });
 $('#mode').replaceChildren(...Object.keys(PRIORITIES).map(mode => new Option(PRIORITY_LABELS[mode], mode)));
 $('#mode').value = 'lotus_heroic';
-renderRegistered();
 show(saved[$('#mode').value] || currentDraft($('#mode').value));
+message('Loading saved priorities from the private test site…');
+$('#save-preview').disabled = true;
+$('#retrieve').disabled = true;
+try {
+  previewDrafts = await fetchSharedPreview();
+  refreshCatalog();
+  message('Shared priorities are ready. Save applies changes to the private test tracker.');
+  const browserDrafts = loadPreview(localStorage);
+  const legacy = Object.values(browserDrafts).filter(draft => !previewDrafts[draft.mode]);
+  if (legacy.length) {
+    $('#move-browser').hidden = false;
+    $('#move-browser').textContent = `Move ${legacy.length} browser preview${legacy.length === 1 ? '' : 's'} to test site`;
+    $('#move-browser').addEventListener('click', async () => {
+      try {
+        for (const draft of legacy) { await saveSharedPreview(draft); previewDrafts[draft.mode] = draft; }
+        localStorage.removeItem('hexa-priority-preview-v1');
+        refreshCatalog();
+        $('#move-browser').hidden = true;
+        message(`${legacy.length} browser preview${legacy.length === 1 ? '' : 's'} saved to the private test site.`);
+      } catch (error) { message(`Some previews could not be moved: ${error.message}`, true); }
+    });
+  }
+  $('#save-preview').disabled = false;
+  $('#retrieve').disabled = false;
+} catch (error) { message(`Shared priorities could not be loaded: ${error.message}. Try reloading this page.`, true); }

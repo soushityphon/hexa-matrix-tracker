@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
@@ -8,4 +8,5 @@ const output = `const ASSETS = ${JSON.stringify(assets)};\n${readFileSync(resolv
 const outDir = resolve(root, 'dist/server');
 mkdirSync(outDir, { recursive: true });
 writeFileSync(resolve(outDir, 'index.js'), output);
+for (const file of ['data.js', 'priority-draft.js']) copyFileSync(resolve(root, file), resolve(outDir, file));
 console.log(`Bundled ${files.length} assets and HEXA route`);
