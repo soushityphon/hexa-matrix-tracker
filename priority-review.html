@@ -19,13 +19,14 @@
           <div id="checks" role="status"></div>
         </div>
         <h2 id="draft-heading">Priority draft</h2>
-        <label>Compare against<select id="mode"></select></label>
+        <p id="review-context" class="fine"></p>
         <p id="version-state" class="fine"></p>
         <label>Priority ID<input id="priority-id" type="text" readonly></label>
         <label>Priority name<input id="name" type="text"></label>
         <fieldset class="visibility"><legend>Tracker visibility</legend><label><input type="radio" name="visibility" value="enabled"> Enabled, show on tracker</label><label><input type="radio" name="visibility" value="disabled"> Disabled, keep for review</label></fieldset>
         <label>Source link or note<input id="source" type="text"></label>
         <details id="manual-import" class="import-panel"><summary>Advanced: response JSON and draft download</summary>
+          <label>Response context (update and material)<select id="mode"></select></label>
           <label>Response JSON file<input id="response-file" type="file" accept=".json,.txt,application/json,text/plain"></label>
           <label>HEXA order response JSON<textarea id="response" spellcheck="false" placeholder="Paste the response from Maple Scouter Network → Response"></textarea></label>
           <button id="inspect" type="button">Compare response</button>
