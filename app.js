@@ -1,6 +1,7 @@
 import { NODES, STAT_ICONS } from './data.js';
 import { activeNodes, displayPriorityRows, matrixTotals, nextCheckpoint, rangeCost, taotieCatchUp } from './planner.js';
 import { fetchSharedPreview, previewCatalog } from './preview-priorities.js';
+import { skillAccent } from './skill-colours.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -38,7 +39,7 @@ function syncPriorityOptions() {
 
 function renderInputs() {
   const categories = { 'Skill Nodes': 'Skill', 'Mastery Nodes': 'Mastery', 'Enhancement Nodes': 'Enhancement', 'Common Nodes': 'Common' };
-  $('#nodes').innerHTML = NODES.map((node, index) => `${index === 0 || NODES[index - 1].group !== node.group ? `<div class="group-label">${categories[node.group] || node.group}</div>` : ''}<label class="node-row" data-node-row="${node.short}" title="${node.name}"><span class="node-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span class="node-name">${node.name}</span><input data-node="${node.short}" aria-label="${node.name} level" type="number" min="0" max="30" value="${saved.levels?.[node.short] ?? 0}"></label>`).join('');
+  $('#nodes').innerHTML = NODES.map((node, index) => `${index === 0 || NODES[index - 1].group !== node.group ? `<div class="group-label">${categories[node.group] || node.group}</div>` : ''}<label class="node-row" style="--skill-accent:${skillAccent(node.short)}" data-node-row="${node.short}" title="${node.name}"><span class="node-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span class="node-name">${node.name}</span><input data-node="${node.short}" aria-label="${node.name} level" type="number" min="0" max="30" value="${saved.levels?.[node.short] ?? 0}"></label>`).join('');
   $$('.node-icon img').forEach(img => {
     img.addEventListener('error', () => { img.hidden = true; });
     if (img.complete && !img.naturalWidth) img.hidden = true;
@@ -53,6 +54,7 @@ function renderInputs() {
     image.alt = '';
     image.addEventListener('error', () => { image.hidden = true; });
     row.prepend(image);
+    row.style.setProperty('--skill-accent', skillAccent(input.dataset.stat));
   });
   $$('[data-node="Apotheosis"]').forEach(input => { input.value = Math.max(1, Number(input.value) || 0); });
   $$('[data-stat]').forEach(input => { input.value = saved.levels?.[input.dataset.stat] ?? 0; });
@@ -145,7 +147,7 @@ function render() {
   const levelCost = next && !nextIsStat && rangeCost(next.skill, current[next.skill] || 0, nextLevel);
   $('#version-name').textContent = `${catalog.labels[mode]} / ${catalog.settings[mode].world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'}${previewDrafts[mode] ? ' / Test site preview' : ''}`;
   $('#progress').textContent = steps.length ? `${completed} / ${steps.length} complete` : 'Maple Scouter order pending';
-  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric"><small>Next Upgrade</small><strong>${nextRow.skill} → ${nextRow.level}</strong>${nextIsStat ? `<div class="upgrade-cost"><span>${statUnlocked[next.skill] ? 'Level to 20' : 'Unlock and level to 20'}</span>${materials(nextRow.cost, null)}</div>` : `<div class="upgrade-cost"><span>Next level ${next.skill} → ${nextLevel}</span>${materials(levelCost, days(levelCost))}</div>${nextRow.level === nextLevel ? '' : `<div class="upgrade-cost"><span>To checkpoint ${nextRow.skill} → ${nextRow.level}</span>${materials(nextRow.cost, days(nextRow.cost))}</div>`}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
+  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><small>Next Upgrade</small><strong>${nextRow.skill} → ${nextRow.level}</strong>${nextIsStat ? `<div class="upgrade-cost"><span>${statUnlocked[next.skill] ? 'Level to 20' : 'Unlock and level to 20'}</span>${materials(nextRow.cost, null)}</div>` : `<div class="upgrade-cost"><span>Next level ${next.skill} → ${nextLevel}</span>${materials(levelCost, days(levelCost))}</div>${nextRow.level === nextLevel ? '' : `<div class="upgrade-cost"><span>To checkpoint ${nextRow.skill} → ${nextRow.level}</span>${materials(nextRow.cost, days(nextRow.cost))}</div>`}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
   if (catchUp) $('#next-upgrade').insertAdjacentHTML('beforeend', `<div class="metric catch-up"><small>Taotie catch-up</small><strong>Taotie → ${catchUp.target}</strong>${materials(catchUp.cost, days(catchUp.cost))}</div>`);
   let remainingIndex = 0;
   $('#priority').innerHTML = displayRows.map((row, rowIndex) => {
@@ -154,7 +156,8 @@ function render() {
     if (!row.done) remainingIndex++;
     const displayIndex = $('#hideDone').checked && !row.done ? remainingIndex : rowIndex + 1;
     const icon = previewDrafts[mode]?.statIcons[row.skill] || STAT_ICONS[row.skill] || nodeByShort[row.skill]?.icon;
-    return `<tr class="type-${typeClass(row.skill)} ${row.done ? 'done' : ''} ${row.index <= index + 1 && index + 1 <= row.endIndex ? 'next' : ''}"><td>${displayIndex}</td><td><span class="skill-cell">${icon ? `<img class="stat-icon" src="${icon}" alt="">` : '<i class="dot" aria-hidden="true"></i>'}${row.skill}</span></td><td>${row.level}</td><td>${number(cost.erda)}</td><td>${cost.rng ? `<span class="rng" aria-label="${cost.frags ? `at least ${cost.frags} Fragments` : 'variable Fragment cost'}">${cost.frags ? `${cost.frags.toLocaleString()}+` : 'RNG'}</span>` : number(cost.frags)}</td></tr>`;
+    const isNext = row.index <= index + 1 && index + 1 <= row.endIndex;
+    return `<tr class="type-${typeClass(row.skill)} ${row.done ? 'done' : ''} ${isNext ? 'next' : ''}" style="--skill-accent:${skillAccent(row.skill)}"><td>${displayIndex}</td><td><span class="skill-cell">${icon ? `<img class="stat-icon" src="${icon}" alt="">` : '<i class="dot" aria-hidden="true"></i>'}<span>${row.skill}</span>${isNext ? '<span class="next-tag">Next</span>' : ''}</span></td><td>${row.level}</td><td>${number(cost.erda)}</td><td>${cost.rng ? `<span class="rng" aria-label="${cost.frags ? `at least ${cost.frags} Fragments` : 'variable Fragment cost'}">${cost.frags ? `${cost.frags.toLocaleString()}+` : 'RNG'}</span>` : number(cost.frags)}</td></tr>`;
   }).join('');
   $('#completion').innerHTML = `<div class="completion-label"><span>Completion</span><strong>${matrix.percent.toFixed(2)}%</strong></div><div class="completion-track" role="progressbar" aria-label="HEXA Matrix completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${matrix.percent.toFixed(2)}"><span style="width:${matrix.percent.toFixed(2)}%"></span></div>`;
   $$('.stat-icon').forEach(img => { img.addEventListener('error', () => { img.hidden = true; }); });

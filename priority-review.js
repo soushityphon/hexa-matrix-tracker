@@ -3,6 +3,7 @@ import { compareDraft, currentDraft, parseSteps, validateDraft } from './priorit
 import { inspectScouterResponse, resolveScouterResponse } from './scouter-import.js';
 import { extractScouterOrder } from './scouter-extract.js';
 import { loadPreview, previewCatalog, fetchSharedPreview, saveSharedPreview, removeSharedPreview } from './preview-priorities.js';
+import { skillAccent } from './skill-colours.js';
 
 const $ = selector => document.querySelector(selector);
 const key = 'hexa-priority-review-v1';
@@ -160,7 +161,11 @@ function show(draft) {
   $('#version-state').textContent = draft.isNew ? 'New order. Name it and choose whether to show it on the tracker.' : `${catalog.priorities[draft.mode]?.length || draft.steps.length} imported steps. Save to the private test tracker, then review before public publishing.`;
   $('#source').value = draft.source || '';
   $('#steps').value = draft.steps.map(step => `${step.skill}, ${step.level}`).join('\n');
-  $('#names').innerHTML = NODES.map(node => `<div class="review-name"><label for="name-${node.short}">${node.short}</label><input id="name-${node.short}" data-name="${node.short}" type="text"></div>`).join('');
+  $('#names').innerHTML = NODES.map(node => `<div class="review-name" style="--skill-accent:${skillAccent(node.short)}"><label for="name-${node.short}"><img src="${node.icon}" alt=""><span>${node.short}</span></label><input id="name-${node.short}" data-name="${node.short}" type="text"></div>`).join('');
+  document.querySelectorAll('.review-name img').forEach(img => {
+    img.addEventListener('error', () => { img.hidden = true; });
+    if (img.complete && !img.naturalWidth) img.hidden = true;
+  });
   for (const input of document.querySelectorAll('[data-name]')) input.value = draft.names[input.dataset.name] || '';
   $('#status').textContent = '';
   $('#open-preview').hidden = true;

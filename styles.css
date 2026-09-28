@@ -19,3 +19,11 @@
 .completion{padding:13px 2px 11px}.completion-label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;color:#bfcfc2}.completion-label strong{font-size:16px;color:#d9efdd}.completion-track{height:7px;margin-top:8px;border-radius:7px;background:#303b32;overflow:hidden}.completion-track span{display:block;height:100%;background:#85bf93}
 .materials,.material-total{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px}.material-amount{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;font-variant-numeric:tabular-nums}.material-amount img{width:21px;height:21px;object-fit:contain}.material-total{margin-top:5px!important;line-height:1.5}.material-total .material-amount img{width:24px;height:24px}.material-heading{display:inline-flex;align-items:center;justify-content:flex-end;min-width:24px}.material-heading img{width:22px;height:22px;object-fit:contain}.material-fallback{display:none}.icon-failed img{display:none}.icon-failed .material-fallback{display:inline}.material-days{white-space:nowrap}.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:780px){.toolbar{align-items:end}.toolbar label{width:auto}.toolbar select{width:100%}.world-picker{width:100%}.world-picker label{flex:1;text-align:center}.world-picker span{padding:8px 5px}}
+.node-row,.stat-list .stat-row{border-left:2px solid var(--skill-accent,#a8b0ad)}
+.node-icon{border-color:var(--skill-accent,#a8b0ad)}
+.priority-table .skill-cell{min-width:0;white-space:normal;line-height:1.25}
+.priority-table .skill-cell>span:first-of-type{color:var(--skill-accent,#d9d9d9)}
+.priority-table .skill-cell .dot{background:var(--skill-accent,#a8b0ad)}
+.priority-table tr.next{outline:2px solid #c6dfc9;outline-offset:-2px;background:#29402e}
+.next-tag{flex:none;border:1px solid #b9d9c0;border-radius:2px;padding:1px 4px;color:#e7f2e8;background:#29402e;font-size:10px;font-weight:700;line-height:1.3}
+.next-upgrade .metric:first-child{border-left:3px solid var(--skill-accent,#b6d4ad);padding-left:9px}
