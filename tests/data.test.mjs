@@ -3,6 +3,13 @@ import {activeNodes,matrixTotals,nextCheckpoint,priorityRows,rangeCost,taotieCat
 const assert=(x,m)=>{if(!x)throw new Error(m)};
 for(const [type,rows] of Object.entries(COSTS)){assert(rows.length===30,`${type} must have 30 levels`);for(const [i,c] of rows.entries()){assert(Number.isFinite(c.erda)&&Number.isFinite(c.frags),`${type} level ${i+1} invalid`)}}
 const names=new Set(NODES.map(n=>n.short));
+const sheetGroups={
+  'Skill Nodes':[['Taotie','Sage: Liberated Taotie'],['Ascent','Heavenly World'],['Apotheosis','Sage: Apotheosis']],
+  'Mastery Nodes':[['Scroll','Scroll: Vortex & Butterfly'],['Talisman','Talisman: Clone & Ghost'],['Basics','Basics Mastery'],['Harmony','Universal Harmony']],
+  'Enhancement Nodes':[['Rampage','Sage: Maximum Clone Rampage'],['Tiger','Scroll: Tiger of Songyu'],['Wrath of Gods','Sage: Wrath of Gods'],['Apparition','Sage: Three Paths Apparition']],
+  'Common Nodes':[['Janus','Sol Janus'],['Hecate','Sol Hecate'],['Lotus','Lotus Flower']]
+};
+assert(JSON.stringify(NODES.map(({group,short,name})=>[group,short,name]))===JSON.stringify(Object.entries(sheetGroups).flatMap(([group,nodes])=>nodes.map(([short,name])=>[group,short,name]))),'node labels and in-game order match the spreadsheet');
 for(const [mode,steps] of Object.entries(PRIORITIES)){assert(steps.length>0,`${mode} empty`);for(const s of steps){assert(names.has(s.skill)||s.skill.startsWith('HEXA Stat'),`${mode}: unknown skill ${s.skill}`);assert(s.level>=1&&s.level<=(s.skill.startsWith('HEXA Stat')?20:30),`${mode}: invalid level ${s.level}`)}}
 assert(Object.keys(PRIORITIES).length===4,'current Lotus and future Taotie Heroic/Interactive priorities required');
 for(const [mode,steps] of Object.entries(PRIORITIES)){

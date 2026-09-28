@@ -12,9 +12,8 @@
       <div>
         <p class="kicker">MapleStory / Hoyoung</p>
         <h1>HEXA Matrix Tracker</h1>
-        <p class="subhead">Upgrade order and material costs from your current levels.</p>
       </div>
-      <div class="version"><span id="version-name">GMS / Lotus</span><br><span>23 Aug 2026 snapshot</span></div>
+      <div class="version"><span id="version-name">GMS / Lotus</span></div>
     </header>
 
     <div class="toolbar">
@@ -26,7 +25,6 @@
           <option value="taotie_interactive">KMS Taotie preview / Interactive</option>
         </select>
       </label>
-      <span id="source-note" class="source-note">Current GMS priority</span>
     </div>
 
     <div class="workspace">
@@ -35,7 +33,7 @@
           <div class="panel-head"><h2>Current HEXA levels</h2><button id="reset" type="button">Reset</button></div>
           <div class="column-head"><span>node</span><span>level</span></div>
           <div id="nodes" class="node-list"></div>
-          <div class="group-label">HEXA Stats <span>RNG / level 20 max</span></div>
+          <div class="group-label">HEXA Stats</div>
           <div class="stat-list">
             <label>HEXA Stat I <input data-stat="HEXA Stat I" aria-label="HEXA Stat I level" type="number" min="0" max="20" value="0"></label>
             <label>HEXA Stat II <input data-stat="HEXA Stat II" aria-label="HEXA Stat II level" type="number" min="0" max="20" value="0"></label>
@@ -46,7 +44,7 @@
 
       <div class="results">
         <section class="panel priority-panel">
-          <div class="panel-head"><div><h2>Skill priority</h2><p class="hint">Live order from the levels entered. Completed steps can be skipped anywhere.</p></div></div>
+          <div class="panel-head"><h2>Skill priority</h2></div>
           <div class="priority-controls"><span id="progress" class="quiet"></span><label class="toggle"><input id="hideDone" type="checkbox" checked> Hide completed</label></div>
           <div class="table-wrap">
             <table class="priority-table">
@@ -70,7 +68,6 @@
         </section>
       </aside>
     </div>
-    <footer>Hoyoung priorities are dated workbook snapshots. Lotus is current GMS. Taotie uses KMS priorities to preview a future GMS patch.</footer>
   </main>
   <script type="module" src="app.js"></script>
 </body>
