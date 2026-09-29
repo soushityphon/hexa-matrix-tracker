@@ -41,3 +41,10 @@
 .fd-gain{color:#b7d9bc;font-size:11px;font-variant-numeric:tabular-nums;white-space:nowrap}.next-upgrade .upgrade-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.next-upgrade .upgrade-top .fd-gain{font-size:13px;font-weight:700}.priority-table td:last-child{min-width:95px}
 .node-row .node-name{min-width:0;overflow:visible;text-overflow:clip;white-space:normal;line-height:1.3;overflow-wrap:anywhere}
 .skill-tag{display:inline-block;vertical-align:middle;margin-left:4px;padding:1px 5px;border:1px solid #747d78;border-radius:3px;color:#dce4de;background:#303633;font-size:10px;font-weight:600;line-height:1.3;white-space:nowrap}
+.node-row .node-name:not(:has(.skill-tag))::after{display:inline-block;vertical-align:middle;margin-left:6px;padding:1px 5px;border:1px solid #747d78;border-radius:3px;color:#dce4de;background:#303633;font-size:10px;font-weight:600;line-height:1.3;white-space:nowrap}
+.node-row[data-node-row="Apotheosis"] .node-name:not(:has(.skill-tag))::after{content:"Origin"}
+.node-row[data-node-row="Ascent"] .node-name:not(:has(.skill-tag))::after{content:"Ascent"}
+.node-row[data-node-row="Harmony"] .node-name:not(:has(.skill-tag))::after{content:"M1"}
+.node-row[data-node-row="Basics"] .node-name:not(:has(.skill-tag))::after{content:"M2"}
+.node-row[data-node-row="Talisman"] .node-name:not(:has(.skill-tag))::after{content:"M3"}
+.node-row[data-node-row="Scroll"] .node-name:not(:has(.skill-tag))::after{content:"M4"}
