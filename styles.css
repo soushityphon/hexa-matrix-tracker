@@ -39,3 +39,5 @@
 .next-upgrade .upgrade-cost button:hover{background:#354239}
 @media(max-width:450px){.next-upgrade .upgrade-cost{align-items:flex-start}.next-upgrade .upgrade-cost button{white-space:normal;max-width:105px;text-align:center}}
 .fd-gain{color:#b7d9bc;font-size:11px;font-variant-numeric:tabular-nums;white-space:nowrap}.next-upgrade .upgrade-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.next-upgrade .upgrade-top .fd-gain{font-size:13px;font-weight:700}.priority-table td:last-child{min-width:95px}
+.node-row .node-name{min-width:0;overflow:visible;text-overflow:clip;white-space:normal;line-height:1.3;overflow-wrap:anywhere}
+.skill-tag{display:inline-block;vertical-align:middle;margin-left:4px;padding:1px 5px;border:1px solid #747d78;border-radius:3px;color:#dce4de;background:#303633;font-size:10px;font-weight:600;line-height:1.3;white-space:nowrap}
