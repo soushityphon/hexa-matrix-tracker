@@ -57,8 +57,18 @@ function syncPriorityOptions() {
 }
 
 function renderInputs() {
-  const categories = { 'Skill Nodes': 'Skill', 'Mastery Nodes': 'Mastery', 'Enhancement Nodes': 'Enhancement', 'Common Nodes': 'Common' };
-  $('#nodes').innerHTML = NODES.map((node, index) => `${index === 0 || NODES[index - 1].group !== node.group ? `<div class="group-label">${categories[node.group] || node.group}</div>` : ''}<label class="node-row" style="--skill-accent:${skillAccent(node.short)}" data-node-row="${node.short}" title="${node.name}"><span class="node-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span class="node-name">${node.name}${hoyoungSkillTags[node.id] ? ` <span class="skill-tag">${hoyoungSkillTags[node.id]}</span>` : ''}</span><input data-node="${node.short}" aria-label="${node.name} level" type="number" min="${node.short === 'Apotheosis' ? 1 : 0}" max="30" step="1" value="${clamp(saved.levels?.[node.short], 30, node.short === 'Apotheosis' ? 1 : 0)}"></label>`).join('');
+  const groups = [
+    ['Skill Nodes', 'Skill', true],
+    ['Mastery Nodes', 'Mastery', true],
+    ['Enhancement Nodes', 'Enhancement', false],
+    ['Common Nodes', 'Common', false]
+  ];
+  const nodeRow = node => `<label class="node-row" style="--skill-accent:${skillAccent(node.short)}" data-node-row="${node.short}" data-node-id="${node.id}" title="${node.name}"><span class="node-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span class="node-label">${hoyoungSkillTags[node.id] ? `<span class="skill-tag">${hoyoungSkillTags[node.id]}</span>` : ''}<span class="node-name">${node.name}</span></span><input data-node="${node.short}" aria-label="${node.name} level" type="number" min="${node.short === 'Apotheosis' ? 1 : 0}" max="30" step="1" value="${clamp(saved.levels?.[node.short], 30, node.short === 'Apotheosis' ? 1 : 0)}"></label>`;
+  $('#nodes').innerHTML = groups.map(([group, label, descending]) => {
+    const nodes = NODES.filter(node => node.group === group);
+    if (descending) nodes.reverse();
+    return `<section class="node-group"><h3 class="group-label">${label}</h3>${nodes.map(nodeRow).join('')}</section>`;
+  }).join('');
   $$('.node-icon img').forEach(img => {
     img.addEventListener('error', () => { img.hidden = true; });
     if (img.complete && !img.naturalWidth) img.hidden = true;
