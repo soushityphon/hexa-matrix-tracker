@@ -129,6 +129,6 @@ export default {
     if (!Object.hasOwn(ASSETS, path)) return new Response('Not found', { status: 404 });
     const ext = path.slice(path.lastIndexOf('.'));
     const body = ext === '.png' && request.method !== 'HEAD' ? Uint8Array.from(atob(ASSETS[path]), char => char.charCodeAt(0)) : ASSETS[path];
-    return new Response(request.method === 'HEAD' ? null : body, { headers: { 'Content-Type': mimeTypes[ext] || 'application/octet-stream', 'Cache-Control': 'public, max-age=60' } });
+    return new Response(request.method === 'HEAD' ? null : body, { headers: { 'Content-Type': mimeTypes[ext] || 'application/octet-stream', 'Cache-Control': ['.html', '.js', '.css'].includes(ext) ? 'no-store' : 'public, max-age=60' } });
   }
 };
