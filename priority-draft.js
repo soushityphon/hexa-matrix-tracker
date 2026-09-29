@@ -48,6 +48,14 @@ export function validateDraft(draft) {
   const shorts = newNodes.map(node => node.short);
   if (new Set(shorts).size !== shorts.length || new Set(newNodes.map(node => node.id)).size !== newNodes.length || shorts.some(short => byShort.has(short) || statNames.has(short)) || newNodes.some(node => NODES.some(existing => existing.id === node.id))) throw new Error('New skill short labels must be unique');
   const steps = parseSteps(draft.steps.map(step => `${step.skill}, ${step.level}`).join('\n'), shorts);
+  for (let index = 0; index < steps.length; index++) {
+    const { fdGain, fdFrom } = draft.steps[index];
+    if (fdGain === undefined && fdFrom === undefined) continue;
+    if (statNames.has(steps[index].skill) || !Number.isFinite(fdGain) || fdGain < 0 || !Number.isInteger(fdFrom) || fdFrom < 0 || fdFrom >= steps[index].level) throw new Error(`Invalid source FD at step ${index + 1}`);
+    const previousLevel = steps.slice(0, index).reverse().find(step => step.skill === steps[index].skill)?.level || 0;
+    if (fdFrom !== previousLevel) throw new Error(`Source FD transition does not match step ${index + 1}`);
+    steps[index] = { ...steps[index], fdFrom, fdGain };
+  }
   const patch = PRIORITY_SETTINGS[draft.sourceMode || draft.mode].patch;
   if (steps.some(step => step.skill === 'Taotie') && patch !== 'taotie') throw new Error('Taotie steps need the Taotie patch');
   if (steps.some(step => step.skill === 'Lotus') && patch === 'hecate') throw new Error('Lotus steps are not in the Hecate patch');

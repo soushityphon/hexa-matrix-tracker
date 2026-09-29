@@ -10,6 +10,7 @@ const key = 'hexa-priority-review-v1';
 let saved = {};
 let inspected = null;
 let importedNodes = [];
+let importedSteps = null;
 let importedStatIcons = {};
 let version = null;
 let previewDrafts = {};
@@ -100,8 +101,10 @@ function classifyOrder() {
   const settings = PRIORITY_SETTINGS[sourceMode];
   const match = matchingVersion(steps, sourceMode);
   if (match) {
-    show(previewDrafts[match]);
-    message(`No new priority: ${steps.length} steps match your saved test site version, ${previewDrafts[match].name}.`);
+    const existing = previewDrafts[match];
+    const matched = importedSteps?.length === steps.length && importedSteps.every((step, index) => step.skill === steps[index].skill && step.level === steps[index].level);
+    show({ ...existing, steps: matched ? importedSteps : existing.steps });
+    message(`No new priority: ${steps.length} steps match your saved test site version, ${existing.name}. Save to retain any newly captured source FD.`);
     return;
   } else {
     const stamp = new Date().toISOString().slice(0, 10).replaceAll('-', '');
@@ -145,10 +148,14 @@ function read() {
     names: Object.fromEntries([...document.querySelectorAll('[data-name]')].map(input => [input.dataset.name, input.value])),
     newNodes: importedNodes,
     statIcons: importedStatIcons,
-    steps: parseSteps($('#steps').value, importedNodes.map(node => node.short))
+    steps: parseSteps($('#steps').value, importedNodes.map(node => node.short)).map((step, index) => {
+      const source = importedSteps?.[index];
+      return source?.skill === step.skill && source.level === step.level ? { ...step, ...(source.fdGain === undefined ? {} : { fdFrom: source.fdFrom, fdGain: source.fdGain }) } : step;
+    })
   });
 }
 function show(draft) {
+  importedSteps = draft.steps;
   version = { mode: draft.mode, sourceMode: draft.sourceMode || draft.mode, isNew: draft.isNew === true };
   $('#mode').value = version.sourceMode;
   $('#review-context').textContent = contextLabel(version.sourceMode);
@@ -182,6 +189,7 @@ function collectUnknown() {
     mappings[card.dataset.key] = Object.fromEntries(['short', 'name', 'type'].map(field => [field, card.querySelector(`[data-field="${field}"]`).value]));
   }
   const resolved = resolveScouterResponse(inspected, mappings);
+  importedSteps = resolved.steps;
   importedNodes = resolved.newNodes;
   importedStatIcons = resolved.statIcons;
   $('#steps').value = resolved.steps.map(step => `${step.skill}, ${step.level}`).join('\n');

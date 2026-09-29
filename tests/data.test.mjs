@@ -1,5 +1,5 @@
 import {COSTS,NODES,PRIORITIES,PRIORITY_SETTINGS,STAT_ICONS} from '../data.js';
-import {activeNodes,displayPriorityRows,matrixTotals,nextCheckpoint,priorityRows,rangeCost,statRemainingCost,taotieCatchUp} from '../planner.js';
+import {activeNodes,displayPriorityRows,matrixTotals,nextCheckpoint,priorityRows,rangeCost,sourceStepGains,statRemainingCost,taotieCatchUp} from '../planner.js';
 import {readFileSync} from 'node:fs';
 const assert=(x,m)=>{if(!x)throw new Error(m)};
 const assertEqual=(actual,expected,message)=>assert(JSON.stringify(actual)===JSON.stringify(expected),message);
@@ -109,7 +109,8 @@ assert(matrixTotals({Apotheosis:2},'lotus_heroic').spent.frags===30,'later Apoth
 import { compareDraft, currentDraft, parseSteps, validateDraft } from '../priority-draft.js';
 import { inspectScouterResponse, resolveScouterResponse } from '../scouter-import.js';
 import { extractScouterOrder } from '../scouter-extract.js';
-import { loadPreview, previewCatalog, matchingPriorityVersion } from '../preview-priorities.js';
+import { loadPreview, previewCatalog, matchingPriorityVersion, withCapturedGains } from '../preview-priorities.js';
+import { LOTUS_GAINS } from '../source-gains.js';
 const draft=validateDraft(currentDraft('taotie_heroic'));
 assert(draft.steps.length===PRIORITIES.taotie_heroic.length,'review draft includes the current priority');
 assert(compareDraft(draft).changedSteps===0,'unchanged draft has no step changes');
@@ -129,6 +130,12 @@ assert(inspected.steps[1].skill==='HEXA Stat III'&&inspected.steps[1].level===20
 let blocked=false;try{resolveScouterResponse(inspected)}catch{blocked=true}
 assert(blocked,'new skill needs admin naming');
 const resolved=resolveScouterResponse(inspected,{[inspected.unknown[0].key]:{short:'New Skill',name:'New Skill Name',type:'Skill II'}});
+assert(resolved.steps[0].fdGain===0.3&&resolved.steps[0].fdFrom===0,'Scouter efficiency becomes whole-step FD gain');
+assert(!Object.hasOwn(resolved.steps[1],'fdGain'),'HEXA Stat does not receive estimated FD');
+const withFd=validateDraft({...currentDraft('lotus_heroic'),steps:[{skill:'Harmony',level:1,fdFrom:0,fdGain:8.288333}]});
+assert(withFd.steps[0].fdGain===8.288333,'validated draft retains source FD');
+let invalidFd=false;try{validateDraft({...currentDraft('lotus_heroic'),steps:[{skill:'Harmony',level:1,fdFrom:1,fdGain:8}]})}catch{invalidFd=true}
+assert(invalidFd,'incorrect transition must be rejected');
 assert(resolved.steps[2].skill==='New Skill'&&validateDraft({...currentDraft('taotie_heroic'),steps:resolved.steps,newNodes:resolved.newNodes,statIcons:resolved.statIcons}).newNodes[0].group==='Skill Nodes','new skill type and name pass review');
 assert(validateDraft({...currentDraft('lotus_heroic'),statIcons:resolved.statIcons}).statIcons['HEXA Stat III']===statIcon,'draft preserves verified stat icon');
 const sourceRows={standard:'허수아비',class_hexa:[
@@ -163,4 +170,17 @@ assertEqual(priorityRows({},localOrder.sourceMode,localCatalog.priorities[localO
 assertEqual(previewCatalog({}),{priorities:{},labels:{},settings:{},sources:{}},'empty or failed shared storage has no runtime priority baseline');
 assertEqual(Object.keys(previewCatalog({[localOrder.mode]:localOrder}).priorities),[localOrder.mode],'only saved imports are registered');
 assert(!previewCatalog({lotus_heroic:disabled}).settings.lotus_heroic.enabled,'disabled saved versions stay hidden');
+for (const mode of ['lotus_heroic','lotus_interactive']) {
+  const steps=LOTUS_GAINS[mode].map(([skill,level])=>({skill,level}));
+  const captured=withCapturedGains({sourceMode:mode,steps});
+  assert(Math.abs(captured.steps[0].fdGain-8.288333)<0.00001,`${mode} exact captured order gets the first source gain`);
+  assert(withCapturedGains({sourceMode:mode,steps:[...steps].reverse()}).steps[0].fdGain===undefined,`${mode} different order cannot inherit source gain`);
+  const firstRow=displayPriorityRows({},mode,captured.steps)[0];
+  assert(sourceStepGains(captured.steps,firstRow,0)[0].fdGain===captured.steps[0].fdGain,'full source transition has FD');
+  assert(sourceStepGains(captured.steps,firstRow,1).length===0,'completed source transition has no remaining FD');
+}
+const joined=[{skill:'Harmony',level:1,fdFrom:0,fdGain:8},{skill:'Talisman',level:1,fdFrom:0,fdGain:2},{skill:'Harmony',level:6,fdFrom:1,fdGain:3}];
+const joinedRow=displayPriorityRows({Talisman:1},'lotus_heroic',joined)[0];
+assertEqual(sourceStepGains(joined,joinedRow,0).map(s=>s.fdGain),[8,3],'combined row shows separate source gains');
+assertEqual(sourceStepGains(joined,joinedRow,2).map(s=>s.fdGain),[],'partial source range is not presented as remaining FD');
 console.log('Data validation passed');

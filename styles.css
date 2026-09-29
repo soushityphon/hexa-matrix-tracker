@@ -38,3 +38,4 @@
 .next-upgrade .upgrade-cost button{flex:none;min-height:32px;border-color:var(--skill-accent,#a8b0ad);background:#252b27;white-space:nowrap}
 .next-upgrade .upgrade-cost button:hover{background:#354239}
 @media(max-width:450px){.next-upgrade .upgrade-cost{align-items:flex-start}.next-upgrade .upgrade-cost button{white-space:normal;max-width:105px;text-align:center}}
+.fd-gain{color:#b7d9bc;font-size:11px;font-variant-numeric:tabular-nums;white-space:nowrap}.upgrade-cost-details>.fd-gain{display:block;margin-top:3px}.priority-table .fd-step{display:block;white-space:nowrap}.fd-breakdown{display:grid;gap:3px;border-top:1px solid #444;padding-top:7px;margin-top:5px;font-size:11px;color:#aaa}.fd-breakdown .fd-gain{margin-left:4px}

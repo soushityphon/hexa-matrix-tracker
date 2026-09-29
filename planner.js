@@ -118,3 +118,16 @@ export function displayPriorityRows(levels, mode, order = PRIORITIES[mode], unlo
   }
   return display;
 }
+
+// Only report complete Scouter transitions. A partially levelled checkpoint
+// has no observed FD value for its remaining levels.
+export function sourceStepGains(order, row, currentLevel) {
+  let from = currentLevel;
+  const gains = [];
+  for (const step of order.slice(row.index - 1, row.endIndex)) {
+    if (step.skill !== row.skill || step.level <= currentLevel) continue;
+    if (step.fdFrom === from && Number.isFinite(step.fdGain)) gains.push(step);
+    from = step.level;
+  }
+  return gains;
+}

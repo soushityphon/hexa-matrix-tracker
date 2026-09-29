@@ -1,7 +1,21 @@
 import { PRIORITY_SETTINGS } from './data.js';
 import { validateDraft } from './priority-draft.js';
+import { LOTUS_GAINS } from './source-gains.js';
 
 export const PREVIEW_KEY = 'hexa-priority-preview-v1';
+
+// Legacy saved Lotus imports predate source FD storage. The captured gains
+// apply only if the entire live Scouter order matches its source capture.
+export function withCapturedGains(draft) {
+  const captured = LOTUS_GAINS[draft.sourceMode];
+  if (!captured || captured.length !== draft.steps.length || !captured.every(([skill, level], index) =>
+    draft.steps[index].skill === skill && draft.steps[index].level === level)) return draft;
+  return { ...draft, steps: draft.steps.map((step, index) => {
+    if (step.fdGain !== undefined) return step;
+    const [, , fdFrom, fdGain] = captured[index];
+    return fdGain === null ? step : { ...step, fdFrom, fdGain };
+  }) };
+}
 
 export function loadPreview(storage) {
   let raw;
@@ -25,7 +39,7 @@ export function previewCatalog(drafts) {
   const sources = {};
   for (const draft of Object.values(drafts)) {
     const base = PRIORITY_SETTINGS[draft.sourceMode];
-    priorities[draft.mode] = draft.steps;
+    priorities[draft.mode] = withCapturedGains(draft).steps;
     labels[draft.mode] = draft.name;
     settings[draft.mode] = { ...base, enabled: draft.enabled };
     sources[draft.mode] = draft.source;

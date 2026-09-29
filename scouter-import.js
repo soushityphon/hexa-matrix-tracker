@@ -11,7 +11,7 @@ export function inspectScouterResponse(response) {
   const unknown = new Map();
   const statIcons = {};
   const steps = response.class_hexa.map((row, index) => {
-    const [sourceName, level, icon, , , , , , , coreId] = row;
+    const [sourceName, level, icon, , fragments, , , efficiency, , coreId] = row;
     if (typeof sourceName !== 'string' || typeof icon !== 'string' || typeof coreId !== 'string' || !Number.isInteger(level) || level < 1 || level > 30) {
       throw new Error(`Invalid Maple Scouter step ${index + 1}`);
     }
@@ -27,7 +27,11 @@ export function inspectScouterResponse(response) {
       const key = `${coreId}|${icon}`;
       unknown.set(key, { key, sourceName, coreId, icon });
     }
-    return { skill: skill || null, level, sourceName, coreId, icon };
+    // Scouter field 7 is FD efficiency per 30 Fragments. Preserve the
+    // whole checkpoint gain, including multi-level transitions.
+    const fdGain = Number.isFinite(efficiency) && efficiency >= 0 && Number.isInteger(fragments) && fragments > 0
+      ? Math.round(efficiency * fragments / 30 * 1e6) / 1e6 : null;
+    return { skill: skill || null, level, sourceName, coreId, icon, fdGain };
   });
   return { steps, unknown: [...unknown.values()], statIcons };
 }
@@ -41,5 +45,12 @@ export function resolveScouterResponse(inspected, mappings = {}) {
     return { short: mapping.short.trim(), name: mapping.name.trim(), type: mapping.type, icon: `https://maplescouter.com${item.icon}`, sourceName: item.sourceName, coreId: item.coreId };
   });
   const byKey = new Map(inspected.unknown.map((item, index) => [item.key, newNodes[index].short]));
-  return { steps: inspected.steps.map(row => ({ skill: row.skill || byKey.get(`${row.coreId}|${row.icon}`), level: row.level })), newNodes, statIcons: inspected.statIcons || {} };
+  const previous = new Map();
+  const steps = inspected.steps.map(row => {
+    const skill = row.skill || byKey.get(`${row.coreId}|${row.icon}`);
+    const from = previous.get(skill) || 0;
+    previous.set(skill, row.level);
+    return { skill, level: row.level, ...(row.fdGain === null || row.fdGain === undefined ? {} : { fdFrom: from, fdGain: row.fdGain }) };
+  });
+  return { steps, newNodes, statIcons: inspected.statIcons || {} };
 }
