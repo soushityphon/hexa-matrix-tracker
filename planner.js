@@ -130,10 +130,13 @@ export function combinedSourceGain(order, row, currentLevel) {
   let estimated = false;
   for (const step of order.slice(row.index - 1, row.endIndex)) {
     if (step.skill !== row.skill || step.level <= start) continue;
-    if (!Number.isFinite(step.fdGain) || !Number.isInteger(step.fdFrom) || step.fdFrom > from) return null;
+    // Older Scouter captures marked the first Origin transition as 0→N even
+    // though Apotheosis starts at 1. Ignore its free unlock in FD cost shares.
+    const sourceFrom = step.skill === 'Apotheosis' ? Math.max(1, step.fdFrom) : step.fdFrom;
+    if (!Number.isFinite(step.fdGain) || !Number.isInteger(step.fdFrom) || sourceFrom > from) return null;
     let share = 1;
-    if (step.fdFrom < from) {
-      const full = rangeCost(step.skill, step.fdFrom, step.level);
+    if (sourceFrom < from) {
+      const full = rangeCost(step.skill, sourceFrom, step.level);
       const remaining = rangeCost(step.skill, from, step.level);
       if (!full?.frags || !remaining?.frags) return null;
       share = remaining.frags / full.frags;

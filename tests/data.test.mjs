@@ -162,9 +162,13 @@ assert(harmonyReview.observations[1].expected.frags===101,'aggregate checks the 
 assert(skillCostReview([{short:'New',type:'Skill',unreviewed:true}], [{skill:'New',level:1,sourceCost:{from:0,erda:5,frags:100}}])[0].state==='pending','unfamiliar skill is not treated as verified by a generic schedule');
 assert(skillCostReview([{short:'HEXA Stat I',type:'HEXA Stat'}],[])[0].state==='rng','HEXA Stat never claims a fixed level schedule');
 assert(skillCostReview(NODES.filter(node=>node.short==='Harmony'),[{skill:'Harmony',level:1,sourceCost:{from:0,erda:9,frags:50}}])[0].state==='mismatch','review exposes a mismatched source transition');
-const originCost=resolveScouterResponse(inspectScouterResponse({class_hexa:[['Origin',2,'/hexaskill/Hoyeong_1.png',1,30,1,30,0,0,'skillCore1','1→2',0]]})).steps[0].sourceCost;
+const originStep=resolveScouterResponse(inspectScouterResponse({class_hexa:[['Origin',2,'/hexaskill/Hoyeong_1.png',1,30,1,30,8,0,'skillCore1','1→2',0]]})).steps[0];
+const originCost=originStep.sourceCost;
 assert(originCost.from===1,'first Origin source cost starts at its free baseline level 1');
+assert(originStep.fdFrom===1,'fresh Origin FD starts at its actual level-one baseline');
 assert(validateDraft({...currentDraft('lotus_heroic'),steps:[{skill:'Apotheosis',level:2,sourceCost:originCost}]}).steps[0].sourceCost.from===1,'origin source cost validates against levels after the free unlock');
+assert(validateDraft({...currentDraft('lotus_heroic'),steps:[originStep]}).steps[0].fdFrom===1,'fresh Origin FD transition can be saved');
+assert(validateDraft({...currentDraft('lotus_heroic'),steps:[{...originStep,fdFrom:0}]}).steps[0].fdFrom===0,'older Origin FD annotations remain valid');
 let mismatchBlocked=false;try{validateDraft({...currentDraft('taotie_heroic'),steps:[{skill:'Harmony',level:1,sourceCost:{from:0,erda:9,frags:50}}]})}catch{mismatchBlocked=true}
 assert(mismatchBlocked,'a mismatched known skill cost cannot be saved through the Worker');
 assert(!savedSource.steps[1].sourceCost.perLevel,'aggregate cost does not invent per-level prices');
@@ -220,6 +224,13 @@ assert(partialGain.estimated&&partialGain.gain>0&&partialGain.gain<3,'partial so
 const scrollPartial=[{skill:'Scroll',level:2,fdFrom:0,fdGain:2.147167}];
 const scrollRow=displayPriorityRows({Scroll:1},'lotus_heroic',scrollPartial)[0];
 const scrollEstimate=combinedSourceGain(scrollPartial,scrollRow,1);
+const originLegacy=[{skill:'Apotheosis',level:4,fdFrom:0,fdGain:8}];
+const originRow=displayPriorityRows({Apotheosis:1},'lotus_heroic',originLegacy)[0];
+assert(Math.abs(combinedSourceGain(originLegacy,originRow,1).gain-8)<1e-8&&!combinedSourceGain(originLegacy,originRow,1).estimated,'free Origin unlock does not reduce the complete 1 to 4 FD gain');
+const originEstimate=combinedSourceGain(originLegacy,originRow,2);
+const expectedOriginEstimate=((1.08)**(rangeCost('Apotheosis',2,4).frags/rangeCost('Apotheosis',1,4).frags)-1)*100;
+assert(originEstimate.estimated&&Math.abs(originEstimate.gain-expectedOriginEstimate)<1e-8,'legacy Origin partial gain uses only paid levels in the Fragment share');
+assert(Math.abs(combinedSourceGain([{...originLegacy[0],fdFrom:1}],originRow,2).gain-expectedOriginEstimate)<1e-8,'fresh and legacy Origin gains agree');
 assert(scrollEstimate.estimated&&Math.abs(scrollEstimate.gain-((1+2.147167/100)**(15/65)-1)*100)<1e-8,'Scroll 1→2 estimate uses remaining 15 of 65 Fragments');
 assert(combinedSourceGain([{skill:'Harmony',level:1,fdFrom:0,fdGain:8},{skill:'Harmony',level:6,fdFrom:1}],{...joinedRow,index:1,endIndex:2},0)===null,'missing source gain blocks a combined estimate');
 console.log('Data validation passed');

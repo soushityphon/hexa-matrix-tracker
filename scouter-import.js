@@ -54,7 +54,7 @@ export function resolveScouterResponse(inspected, mappings = {}) {
     return { skill, level: row.level,
       ...(!/^HEXA Stat /.test(skill) && Number.isInteger(row.sourceMaterials?.erda) && Number.isInteger(row.sourceMaterials?.frags)
         ? { sourceCost: { from: costFrom, erda: row.sourceMaterials.erda, frags: row.sourceMaterials.frags } } : {}),
-      ...(row.fdGain === null || row.fdGain === undefined ? {} : { fdFrom: from, fdGain: row.fdGain }) };
+      ...(row.fdGain === null || row.fdGain === undefined ? {} : { fdFrom: costFrom, fdGain: row.fdGain }) };
   });
   return { steps, newNodes, statIcons: inspected.statIcons || {} };
 }

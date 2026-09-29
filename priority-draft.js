@@ -68,9 +68,11 @@ export function validateDraft(draft) {
     }
     if (fdGain === undefined && fdFrom === undefined) continue;
     if (statNames.has(steps[index].skill) || !Number.isFinite(fdGain) || fdGain < 0 || !Number.isInteger(fdFrom) || fdFrom < 0 || fdFrom >= steps[index].level) throw new Error(`Invalid source FD at step ${index + 1}`);
-    // Older saved FD annotations use zero as the first Origin transition start.
     const previousFdLevel = steps.slice(0, index).reverse().find(step => step.skill === steps[index].skill)?.level || 0;
-    if (fdFrom !== previousFdLevel) throw new Error(`Source FD transition does not match step ${index + 1}`);
+    // Existing captures use zero for the first Origin step. Fresh scans use
+    // its actual level-one baseline. Accept both without rewriting saved data.
+    const firstOrigin = steps[index].skill === 'Apotheosis' && previousFdLevel === 0;
+    if (fdFrom !== previousFdLevel && !(firstOrigin && fdFrom === 1)) throw new Error(`Source FD transition does not match step ${index + 1}`);
     steps[index] = { ...steps[index], fdFrom, fdGain };
   }
   const patch = PRIORITY_SETTINGS[draft.sourceMode || draft.mode].patch;
