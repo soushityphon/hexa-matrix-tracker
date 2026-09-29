@@ -133,7 +133,10 @@ function compareResponse(response) {
     classifyOrder();
     inspected = null;
     persist();
-  } else message(`${inspected.unknown.length} new skill(s) need a name and type. Enter them, then review changes.`);
+  } else {
+    message(`${inspected.unknown.length} new skill(s) need a name and type. Enter them, then review changes.`);
+    $('#unknown-list [data-field="short"]')?.focus();
+  }
   if (materialIssues) message(`${extracted.count} rows imported. ${materialIssues} material check(s) need review.`, true);
 }
 
@@ -198,7 +201,6 @@ function renderUnknown(items) {
   const list = $('#unknown-list');
   list.replaceChildren();
   $('#unknown').hidden = !items.length;
-  if (items.length) $('#manual-import').open = true;
   for (const item of items) {
     const card = document.createElement('div');
     card.className = 'unknown-card';
