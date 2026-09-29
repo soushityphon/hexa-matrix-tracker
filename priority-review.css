@@ -8,3 +8,7 @@
 .review-name label{display:flex;align-items:center;gap:8px;color:var(--skill-accent,#d9d9d9)}
 .review-name img{width:24px;height:24px;flex:none;object-fit:cover}
 .review-name img[hidden]{display:none}
+.unknown-review{margin-top:16px;border:1px solid #596753;border-radius:7px;padding:12px}
+.unknown-review h3{margin:0}
+.unknown-review p{color:#aaa}
+.unknown-review .unknown-card label{display:grid;gap:5px}
