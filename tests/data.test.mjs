@@ -112,6 +112,12 @@ import { extractScouterOrder } from '../scouter-extract.js';
 import { loadPreview, previewCatalog, matchingPriorityVersion, withCapturedGains } from '../preview-priorities.js';
 import { CAPTURED_GAINS } from '../source-gains.js';
 const draft=validateDraft(currentDraft('taotie_heroic'));
+const renamed=validateDraft({...currentDraft('lotus_heroic'),names:{...currentDraft('lotus_heroic').names,Harmony:'Long Harmony'},shortNames:{...currentDraft('lotus_heroic').shortNames,Harmony:'Short Harmony'}});
+assert(renamed.names.Harmony==='Long Harmony'&&renamed.shortNames.Harmony==='Short Harmony'&&renamed.steps[0].skill==='Harmony','independent display names retain the Scouter step identity');
+assert(validateDraft({...renamed,shortNames:undefined}).shortNames.Harmony==='Harmony','old saved drafts gain the original short label without changing the long name');
+assert(compareDraft(renamed).changedNames===1,'either display name counts as one changed skill');
+let missingShort=false;try{validateDraft({...renamed,shortNames:{...renamed.shortNames,Harmony:'   '}})}catch{missingShort=true}
+assert(missingShort,'a blank short display name cannot be saved');
 assert(draft.steps.length===PRIORITIES.taotie_heroic.length,'review draft includes the current priority');
 assert(compareDraft(draft).changedSteps===0,'unchanged draft has no step changes');
 const nextVersion=validateDraft({...currentDraft('lotus_heroic'),mode:'lotus_heroic_20260928',sourceMode:'lotus_heroic',isNew:true,enabled:false,name:'Next GMS order'});
