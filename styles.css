@@ -29,3 +29,12 @@
 .priority-table tr.next td:first-child{font-weight:700;color:#f0f0f0}
 .node-row.next-skill,.stat-list .stat-row.next-skill{border-left:4px solid var(--skill-accent,#a8b0ad);background:#242725;background:color-mix(in srgb,var(--skill-accent,#a8b0ad) 17%,#1a1a1a)}
 .node-row.next-skill .node-name,.stat-list .stat-row.next-skill .stat-name{font-weight:700}
+.next-upgrade .upgrade-heading{display:flex;align-items:center;gap:8px;min-width:0;margin:5px 0}
+.next-upgrade .upgrade-heading strong{min-width:0;margin:0}
+.next-upgrade .upgrade-heading .node-icon{flex:none}
+.next-upgrade .upgrade-cost{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.next-upgrade .upgrade-cost-details{min-width:0}
+.next-upgrade .upgrade-cost-details>span{display:block;color:#ccc;font-size:11px;margin-bottom:2px}
+.next-upgrade .upgrade-cost button{flex:none;min-height:32px;border-color:var(--skill-accent,#a8b0ad);background:#252b27;white-space:nowrap}
+.next-upgrade .upgrade-cost button:hover{background:#354239}
+@media(max-width:450px){.next-upgrade .upgrade-cost{align-items:flex-start}.next-upgrade .upgrade-cost button{white-space:normal;max-width:105px;text-align:center}}
