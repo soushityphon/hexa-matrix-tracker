@@ -102,7 +102,10 @@ assert.equal((await worker.fetch(previewRequest('PUT', { draft: unknownOrder }),
 assert.equal((await worker.fetch(previewRequest('DELETE', { mode: newOrder.mode }, { 'Content-Type': 'application/json' }), adminEnv)).status, 403);
 assert.equal((await worker.fetch(previewRequest('DELETE', { mode: newOrder.mode }), adminEnv)).status, 200);
 assert.equal((await (await worker.fetch(new Request(previewUrl), adminEnv)).json()).drafts[newOrder.mode], undefined);
-assert.equal((await worker.fetch(new Request('https://preview.example/priority-review.html'), adminEnv)).status, 403);
+const signInPage = await worker.fetch(new Request('https://preview.example/priority-review.html'), adminEnv);
+assert.equal(signInPage.status, 200);
+assert.match(await signInPage.text(), /href="\/signin-with-chatgpt\?return_to=%2Fpriority-review\.html"/);
+assert.equal(signInPage.headers.get('Cache-Control'), 'no-store');
 assert.equal((await worker.fetch(previewRequest('PUT', { draft: hidden }, { ...adminHeaders, 'oai-authenticated-user-email': 'other@example.test' }), adminEnv)).status, 403);
 assert.equal((await worker.fetch(previewRequest('PUT', { draft: hidden }, { ...adminHeaders, 'oai-authenticated-user-email': 'OWNER@example.test' }), adminEnv)).status, 200);
 
