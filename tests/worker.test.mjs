@@ -161,3 +161,8 @@ try {
   assert(privateReport.requests[0].issues.some(i=>/Missing matching top-level/.test(i.reason)));
 } finally {globalThis.fetch=oldDiagnosticFetch;}
 console.log('Owner request diagnostic validation passed');
+
+const serviceSecret = 'diagnostic-test-token-at-least-32-characters';
+assert.equal((await worker.fetch(new Request(diagnosticUrl,{headers:{Authorization:'Bearer wrong'}}),{...diagnosticEnv,SCOUTER_DIAGNOSTIC_TOKEN:serviceSecret})).status,403);
+assert.equal((await worker.fetch(new Request(diagnosticUrl,{headers:{Authorization:'Bearer '+serviceSecret}}),{...diagnosticEnv,SCOUTER_DIAGNOSTIC_TOKEN:serviceSecret})).status,200);
+assert.equal((await worker.fetch(new Request(diagnosticUrl,{headers:{Authorization:'Bearer short'}}),{...diagnosticEnv,SCOUTER_DIAGNOSTIC_TOKEN:'short'})).status,403);

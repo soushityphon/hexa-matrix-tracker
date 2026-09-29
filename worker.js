@@ -125,7 +125,9 @@ export function inspectScouterRequest(payload) {
 }
 
 async function requestDiagnostic(request, env) {
-  if (!isAdmin(request, env)) return new Response('Admin access required', {status:403, headers:noStore});
+  const serviceToken = env?.SCOUTER_DIAGNOSTIC_TOKEN;
+  const ownerService = typeof serviceToken === 'string' && serviceToken.length >= 32 && request.headers.get('Authorization') === `Bearer ${serviceToken}`;
+  if (!isAdmin(request, env) && !ownerService) return new Response('Admin access required', {status:403, headers:noStore});
   if (request.method !== 'GET') return new Response('Method not allowed', {status:405, headers:noStore});
   const requests = ['lotus_heroic','lotus_interactive','taotie_heroic','taotie_interactive'].map(mode => {
     try { return { mode, ...inspectScouterRequest(prepareScouterRequest(mode, env)) }; }
