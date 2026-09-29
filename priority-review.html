@@ -18,6 +18,9 @@
           <button id="retrieve" type="button">Check for new priorities</button>
           <div id="checks" role="status"></div>
         </div>
+        <label class="review-context-select">Job, update and priority material
+          <select id="mode" aria-describedby="review-context"></select>
+        </label>
         <h2 id="draft-heading">Priority draft</h2>
         <p id="review-context" class="fine"></p>
         <p id="version-state" class="fine"></p>
@@ -27,7 +30,6 @@
         <label>Source link or note<input id="source" type="text"></label>
         <div id="unknown" class="unknown-review" hidden><h3>New skills to name</h3><p>Confirm the short label, display name and skill type before reviewing the draft.</p><div id="unknown-list"></div></div>
         <details id="manual-import" class="import-panel"><summary>Advanced: response JSON and draft download</summary>
-          <label>Response context (update and material)<select id="mode"></select></label>
           <label>Response JSON file<input id="response-file" type="file" accept=".json,.txt,application/json,text/plain"></label>
           <label>HEXA order response JSON<textarea id="response" spellcheck="false" placeholder="Paste the response from Maple Scouter Network → Response"></textarea></label>
           <button id="inspect" type="button">Compare response</button>
