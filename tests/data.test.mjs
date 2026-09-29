@@ -176,12 +176,17 @@ for (const mode of ['lotus_heroic','lotus_interactive']) {
   assert(Math.abs(captured.steps[0].fdGain-8.288333)<0.00001,`${mode} exact captured order gets the first source gain`);
   assert(withCapturedGains({sourceMode:mode,steps:[...steps].reverse()}).steps[0].fdGain===undefined,`${mode} different order cannot inherit source gain`);
   const firstRow=displayPriorityRows({},mode,captured.steps)[0];
-  assert(Math.abs(combinedSourceGain(captured.steps,firstRow,0)-captured.steps[0].fdGain)<1e-8,'full source transition has FD');
+  assert(Math.abs(combinedSourceGain(captured.steps,firstRow,0).gain-captured.steps[0].fdGain)<1e-8,'full source transition has FD');
   assert(combinedSourceGain(captured.steps,firstRow,1)===null,'completed source transition has no remaining FD');
 }
 const joined=[{skill:'Harmony',level:1,fdFrom:0,fdGain:8},{skill:'Talisman',level:1,fdFrom:0,fdGain:2},{skill:'Harmony',level:6,fdFrom:1,fdGain:3}];
 const joinedRow=displayPriorityRows({Talisman:1},'lotus_heroic',joined)[0];
-assert(Math.abs(combinedSourceGain(joined,joinedRow,0)-11.24)<1e-8,'combined FD compounds complete source steps');
-assert(combinedSourceGain(joined,joinedRow,2)===null,'partial source range does not claim a whole gain');
+assert(Math.abs(combinedSourceGain(joined,joinedRow,0).gain-11.24)<1e-8,'combined FD compounds complete source steps');
+const partialGain=combinedSourceGain(joined,joinedRow,2);
+assert(partialGain.estimated&&partialGain.gain>0&&partialGain.gain<3,'partial source range has a marked remaining estimate');
+const scrollPartial=[{skill:'Scroll',level:2,fdFrom:0,fdGain:2.147167}];
+const scrollRow=displayPriorityRows({Scroll:1},'lotus_heroic',scrollPartial)[0];
+const scrollEstimate=combinedSourceGain(scrollPartial,scrollRow,1);
+assert(scrollEstimate.estimated&&Math.abs(scrollEstimate.gain-((1+2.147167/100)**(15/65)-1)*100)<1e-8,'Scroll 1→2 estimate uses remaining 15 of 65 Fragments');
 assert(combinedSourceGain([{skill:'Harmony',level:1,fdFrom:0,fdGain:8},{skill:'Harmony',level:6,fdFrom:1}],{...joinedRow,index:1,endIndex:2},0)===null,'missing source gain blocks a combined estimate');
 console.log('Data validation passed');

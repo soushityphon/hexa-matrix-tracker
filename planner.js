@@ -119,18 +119,28 @@ export function displayPriorityRows(levels, mode, order = PRIORITIES[mode], unlo
   return display;
 }
 
-// Compound complete source transitions. A partial or uncaptured transition
-// cannot supply the whole remaining gain for this displayed row.
+// Compound source transitions. Within a partially completed transition,
+// estimate the remaining logarithmic gain by its share of Fragment cost.
+// This is a display estimate, not a measured per-level FD value.
 export function combinedSourceGain(order, row, currentLevel) {
   const start = Math.max(row.from, currentLevel);
   if (start >= row.level) return null;
   let from = start;
   let multiplier = 1;
+  let estimated = false;
   for (const step of order.slice(row.index - 1, row.endIndex)) {
     if (step.skill !== row.skill || step.level <= start) continue;
-    if (step.fdFrom !== from || !Number.isFinite(step.fdGain)) return null;
-    multiplier *= 1 + step.fdGain / 100;
+    if (!Number.isFinite(step.fdGain) || !Number.isInteger(step.fdFrom) || step.fdFrom > from) return null;
+    let share = 1;
+    if (step.fdFrom < from) {
+      const full = rangeCost(step.skill, step.fdFrom, step.level);
+      const remaining = rangeCost(step.skill, from, step.level);
+      if (!full?.frags || !remaining?.frags) return null;
+      share = remaining.frags / full.frags;
+      estimated = true;
+    }
+    multiplier *= (1 + step.fdGain / 100) ** share;
     from = step.level;
   }
-  return from === row.level ? (multiplier - 1) * 100 : null;
+  return from === row.level ? { gain: (multiplier - 1) * 100, estimated } : null;
 }

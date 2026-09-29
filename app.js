@@ -133,8 +133,11 @@ function statAction(skill, action, label) {
   return `<button type="button" data-upgrade-skill="${skill}" data-stat-action="${action}" aria-label="${label} for ${skill}">${label}</button>`;
 }
 
-function fdText(gain) {
-  return `<span class="fd-gain">+${gain.toFixed(3)}% FD</span>`;
+function fdText(result) {
+  const note = result.estimated
+    ? 'Approximate FD gain. The remaining gain within a partly completed Scouter step is estimated from its share of Fragment cost. Actual gain may differ.'
+    : 'Approximate FD gain based on rounded Maple Scouter step values. Combined gains are compounded.';
+  return `<span class="fd-gain" title="${note}" aria-label="${result.estimated ? 'Estimated ' : ''}plus ${result.gain.toFixed(3)} percent final damage. ${note}">${result.estimated ? '≈' : ''}+${result.gain.toFixed(3)}% FD</span>`;
 }
 
 function upgradeCost(label, cost, time, action = '') {
