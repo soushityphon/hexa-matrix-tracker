@@ -91,11 +91,23 @@ export function prepareScouterRequest(mode, env) {
 // fields retain their paths/types but never their private strings or statistics.
 export function inspectScouterRequest(payload) {
   const fields = [], issues = [];
+  // Observed in both live Hoyoung templates on 30 September. This is a schema
+  // fingerprint, not a claim that the inventories must mirror each other.
+  const observed = {
+    top: ['skillCore1','skillCore2','skillCore3','skillCore4','skillCore5','skillCore6','masteryCore1','masteryCore2','masteryCore3','masteryCore4','reinCore1','reinCore2','reinCore3','reinCore4','generalCore2','generalCore3','generalCore4'],
+    hexaSkill: ['skillCore1','skillCore2','skillCore3','masteryCore1','masteryCore2','masteryCore3','masteryCore4','reinCore1','reinCore2','reinCore3','reinCore4'],
+    hexaSkill_general: ['generalCore1','generalCore2','generalCore3']
+  };
   const type = value => value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value;
   function walk(value, path = '') {
     const key = path.split('.').at(-1);
     const inHexa = /^(myHexa|userStat\.hexa)(\.|$)/.test(path);
     const knownLevel = inHexa && coreKey.test(key);
+    if (knownLevel) {
+      const relative = path.replace(/^(myHexa|userStat\.hexa)\./, '').split('.');
+      const group = relative.length === 1 ? 'top' : relative.length === 2 ? relative[0] : '';
+      if (!observed[group]?.includes(key)) issues.push({path, reason:'Unrecognised core or level location outside the observed Hoyoung schema'});
+    }
     const knownStat = inHexa && ['hexaStat', 'hexaStat_opened'].includes(key);
     const row = { path: path || '$', type: type(value) };
     if ((knownLevel || knownStat) && ['number', 'boolean'].includes(typeof value)) row.value = value;
@@ -111,6 +123,9 @@ export function inspectScouterRequest(payload) {
   walk(payload);
   const copies = ['myHexa','userStat.hexa'].map(path => {
     const h = path === 'myHexa' ? payload.myHexa : payload.userStat?.hexa;
+    for (const [group, keys] of Object.entries(observed)) for (const key of keys) {
+      if (!Object.hasOwn(group === 'top' ? h || {} : h?.[group] || {}, key)) issues.push({path: `${path}.${group === 'top' ? '' : group + '.'}${key}`, reason:'Missing core from the observed Hoyoung schema'});
+    }
     const cores = Object.keys(h || {}).filter(k => coreKey.test(k)).sort();
     for (const key of cores) {
       const group = key.startsWith('generalCore') ? 'hexaSkill_general' : 'hexaSkill';

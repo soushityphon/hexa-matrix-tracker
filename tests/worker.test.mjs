@@ -176,3 +176,11 @@ for (const [field,value] of [['hexaStat','not-a-level'],['hexaStat_opened','true
   assert.match(report.requests[0].error,/cannot be reset/);
   assert.equal(report.requests[0].validatedForClassSubstitution,false);
 }
+
+const unexpectedPayload = structuredClone(payload);
+unexpectedPayload.myHexa.skillCore99 = '12';
+unexpectedPayload.myHexa.hexaSkill.skillCore99 = 12;
+const unexpectedRaw = JSON.stringify(unexpectedPayload);
+const unexpectedReport = await (await worker.fetch(new Request(diagnosticUrl,{headers:adminHeaders}), {...diagnosticEnv,MAPLE_SCOUTER_REQUEST_PART_1:unexpectedRaw,MAPLE_SCOUTER_REQUEST_PART_2:' '})).json();
+assert(unexpectedReport.requests[0].issues.some(i=>i.path==='myHexa.skillCore99' && /Unrecognised/.test(i.reason)));
+assert(unexpectedReport.requests[0].issues.some(i=>i.path==='myHexa.skillCore3' && /Missing core/.test(i.reason)));
