@@ -36,7 +36,7 @@ function sourceOptions() {
 }
 function blankDraft(mode) {
   return { mode, sourceMode: mode, isNew: false, enabled: false, name: '', source: '',
-    names: Object.fromEntries(NODES.map(node => [node.short, node.name])), steps: [], newNodes: [], statIcons: {} };
+    names: Object.fromEntries(NODES.map(node => [node.short, node.name])), shortNames: Object.fromEntries(NODES.map(node => [node.short, node.short])), steps: [], newNodes: [], statIcons: {} };
 }
 function refreshCatalog() {
   catalog = previewCatalog(previewDrafts);
@@ -149,6 +149,7 @@ function read() {
     enabled: choice.value === 'enabled',
     source: $('#source').value,
     names: Object.fromEntries([...document.querySelectorAll('[data-name]')].map(input => [input.dataset.name, input.value])),
+    shortNames: Object.fromEntries([...document.querySelectorAll('[data-short-name]')].map(input => [input.dataset.shortName, input.value])),
     newNodes: importedNodes,
     statIcons: importedStatIcons,
     steps: parseSteps($('#steps').value, importedNodes.map(node => node.short)).map((step, index) => {
@@ -174,12 +175,13 @@ function show(draft) {
   $('#version-state').textContent = draft.isNew ? 'New order. Name it and choose whether to show it on the tracker.' : `${catalog.priorities[draft.mode]?.length || draft.steps.length} imported steps. Save to the private test tracker, then review before public publishing.`;
   $('#source').value = draft.source || '';
   $('#steps').value = draft.steps.map(step => `${step.skill}, ${step.level}`).join('\n');
-  $('#names').innerHTML = NODES.map(node => `<div class="review-name" style="--skill-accent:${skillAccent(node.short)}"><label for="name-${node.short}"><img src="${node.icon}" alt=""><span>${node.short}</span></label><input id="name-${node.short}" data-name="${node.short}" type="text"></div>`).join('');
+  $('#names').innerHTML = NODES.map(node => `<div class="review-name" style="--skill-accent:${skillAccent(node.short)}"><div class="review-identity"><span class="review-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span><strong>${node.short}</strong><small>${node.icon.split('/').at(-1).replace('.png', '')}</small></span></div><label>Short priority name<input data-short-name="${node.short}" type="text"></label><label>Long matrix name<input data-name="${node.short}" type="text"></label></div>`).join('');
   document.querySelectorAll('.review-name img').forEach(img => {
     img.addEventListener('error', () => { img.hidden = true; });
     if (img.complete && !img.naturalWidth) img.hidden = true;
   });
   for (const input of document.querySelectorAll('[data-name]')) input.value = draft.names[input.dataset.name] || '';
+  for (const input of document.querySelectorAll('[data-short-name]')) input.value = draft.shortNames?.[input.dataset.shortName] ?? input.dataset.shortName;
   $('#status').textContent = '';
   $('#open-preview').hidden = true;
   const historical = draft.sourceMode.startsWith('hecate_');
@@ -206,9 +208,15 @@ function renderUnknown(items) {
     card.className = 'unknown-card';
     card.dataset.key = item.key;
     const title = document.createElement('strong'); title.textContent = item.sourceName;
-    const meta = document.createElement('small'); meta.textContent = `${item.coreId} · ${item.icon}`;
-    card.append(title, meta);
-    for (const [field, label] of [['short', 'Short label'], ['name', 'Display name'], ['type', 'Skill type']]) {
+    const meta = document.createElement('div'); meta.className = 'unknown-identity';
+    const iconBox = document.createElement('span'); iconBox.className = 'review-icon';
+    const fallback = document.createElement('span'); fallback.textContent = item.sourceName?.[0] || '?'; fallback.setAttribute('aria-hidden', 'true');
+    const icon = document.createElement('img'); icon.src = `https://maplescouter.com${item.icon}`; icon.alt = '';
+    icon.addEventListener('error', () => { icon.hidden = true; });
+    iconBox.append(fallback, icon);
+    const id = document.createElement('small'); id.textContent = `Scouter ${item.coreId} · ${item.sourceName}`;
+    meta.append(iconBox, id); card.append(title, meta);
+    for (const [field, label] of [['short', 'Short priority name'], ['name', 'Long matrix name'], ['type', 'Skill type']]) {
       const wrapper = document.createElement('label'); wrapper.textContent = label;
       const input = document.createElement(field === 'type' ? 'select' : 'input'); input.dataset.field = field;
       if (field === 'type') for (const value of ['', 'Skill', 'Skill II', 'Mastery', 'V', 'Common', 'Common II']) {
