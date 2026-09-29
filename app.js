@@ -129,6 +129,10 @@ function upgradeAction(skill, target, label, nextLevel = false) {
   return `<button type="button" data-upgrade-skill="${skill}" data-upgrade-level="${target}" ${nextLevel ? 'data-next-level="true"' : ''} aria-label="${label} for ${skill}">${label}</button>`;
 }
 
+function statAction(skill, action, label) {
+  return `<button type="button" data-upgrade-skill="${skill}" data-stat-action="${action}" aria-label="${label} for ${skill}">${label}</button>`;
+}
+
 function upgradeCost(label, cost, time, action = '') {
   return `<div class="upgrade-cost"><div class="upgrade-cost-details"><span>${label}</span>${materials(cost, time)}</div>${action}</div>`;
 }
@@ -174,7 +178,10 @@ function render() {
   $('#progress').textContent = steps.length ? `${completed} / ${steps.length} complete` : 'Maple Scouter order pending';
   $('#next-upgrade').style.setProperty('--skill-accent', skillAccent(nextRow?.skill));
   const nextIcon = nextRow && (previewDrafts[mode]?.statIcons[nextRow.skill] || STAT_ICONS[nextRow.skill] || nodeByShort[nextRow.skill]?.icon);
-  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><small>Next Upgrade</small><div class="upgrade-heading"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${nextRow.skill} → ${nextRow.level}</strong></div>${nextIsStat ? upgradeCost(statUnlocked[next.skill] ? 'Level to 20' : 'Unlock and level to 20', nextRow.cost, null) : `${upgradeCost(`Next level · ${nextLevel}`, levelCost, days(levelCost), upgradeAction(next.skill, nextLevel, `Mark level ${nextLevel}`, true))}${nextRow.level === nextLevel ? '' : upgradeCost(`Checkpoint · ${nextRow.level}`, nextRow.cost, days(nextRow.cost), upgradeAction(next.skill, nextRow.level, `Mark checkpoint ${nextRow.level}`))}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
+  const statStep = nextIsStat && (statUnlocked[next.skill]
+    ? upgradeCost(`Completion · ${nextRow.level}`, nextRow.cost, null, statAction(next.skill, 'complete', 'Mark complete'))
+    : upgradeCost('Unlock', { ...nextRow.cost, rng: false }, null, statAction(next.skill, 'unlock', 'Mark unlocked')));
+  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><small>Next Upgrade</small><div class="upgrade-heading"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${nextRow.skill} → ${nextRow.level}</strong></div>${nextIsStat ? statStep : `${upgradeCost(`Next level · ${nextLevel}`, levelCost, days(levelCost), upgradeAction(next.skill, nextLevel, `Mark level ${nextLevel}`, true))}${nextRow.level === nextLevel ? '' : upgradeCost(`Checkpoint · ${nextRow.level}`, nextRow.cost, days(nextRow.cost), upgradeAction(next.skill, nextRow.level, `Mark checkpoint ${nextRow.level}`))}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
   $$('#next-upgrade .upgrade-heading img').forEach(img => {
     img.addEventListener('error', () => { img.hidden = true; });
     if (img.complete && !img.naturalWidth) img.hidden = true;
@@ -211,6 +218,19 @@ document.addEventListener('change', render);
 $('#next-upgrade').addEventListener('click', event => {
   const button = event.target.closest('button[data-upgrade-skill]');
   if (!button || !$('#next-upgrade').contains(button)) return;
+  if (button.dataset.statAction) {
+    const stat = [...$$('[data-stat]')].find(field => field.dataset.stat === button.dataset.upgradeSkill);
+    const unlocked = [...$$('[data-stat-unlocked]')].find(field => field.dataset.statUnlocked === button.dataset.upgradeSkill);
+    if (!stat || !unlocked) return;
+    if (button.dataset.statAction === 'unlock' && !unlocked.checked && !unlocked.disabled) {
+      unlocked.checked = true;
+      unlocked.dispatchEvent(new Event('change', { bubbles: true }));
+    } else if (button.dataset.statAction === 'complete' && unlocked.checked) {
+      stat.value = Math.min(20, Number(stat.max));
+      stat.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    return;
+  }
   const input = [...$$('[data-node]')].find(field => field.dataset.node === button.dataset.upgradeSkill);
   if (!input) return;
   const current = clamp(input.value, Number(input.max));
