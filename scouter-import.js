@@ -49,10 +49,11 @@ export function resolveScouterResponse(inspected, mappings = {}) {
   const steps = inspected.steps.map(row => {
     const skill = row.skill || byKey.get(`${row.coreId}|${row.icon}`);
     const from = previous.get(skill) || 0;
+    const costFrom = previous.has(skill) ? from : skill === 'Apotheosis' ? 1 : 0;
     previous.set(skill, row.level);
     return { skill, level: row.level,
       ...(!/^HEXA Stat /.test(skill) && Number.isInteger(row.sourceMaterials?.erda) && Number.isInteger(row.sourceMaterials?.frags)
-        ? { sourceCost: { from, erda: row.sourceMaterials.erda, frags: row.sourceMaterials.frags } } : {}),
+        ? { sourceCost: { from: costFrom, erda: row.sourceMaterials.erda, frags: row.sourceMaterials.frags } } : {}),
       ...(row.fdGain === null || row.fdGain === undefined ? {} : { fdFrom: from, fdGain: row.fdGain }) };
   });
   return { steps, newNodes, statIcons: inspected.statIcons || {} };

@@ -1,9 +1,10 @@
-import { NODES, PRIORITY_SETTINGS } from './data.js';
+import { NODES, PRIORITY_SETTINGS, STAT_ICONS } from './data.js';
 import { compareDraft, parseSteps, validateDraft } from './priority-draft.js';
 import { inspectScouterResponse, resolveScouterResponse } from './scouter-import.js';
 import { extractScouterOrder } from './scouter-extract.js';
 import { loadPreview, previewCatalog, matchingPriorityVersion, fetchSharedPreview, saveSharedPreview, removeSharedPreview } from './preview-priorities.js';
 import { skillAccent } from './skill-colours.js';
+import { skillCostReview } from './skill-cost-review.js';
 
 const $ = selector => document.querySelector(selector);
 const key = 'hexa-priority-review-v1';
@@ -47,6 +48,59 @@ function refreshCatalog() {
 }
 function visibility(value) {
   document.querySelectorAll('[name="visibility"]').forEach(input => { input.checked = value !== null && input.value === (value ? 'enabled' : 'disabled'); });
+}
+function renderCostReview() {
+  const steps = importedSteps || [];
+  const stats = Object.keys(STAT_ICONS).map(short => ({ short, name: short, icon: importedStatIcons[short] || STAT_ICONS[short], type: 'HEXA Stat' }));
+  const rows = skillCostReview([...NODES, ...importedNodes.map(node => ({ ...node, unreviewed: true })), ...stats], steps);
+  const observations = rows.reduce((sum, row) => sum + row.observations.length, 0);
+  $('#cost-context').textContent = `${contextLabel(version.sourceMode)} · ${observations} exact fixed-cost transition${observations === 1 ? '' : 's'} saved in this draft. ${observations ? 'A multi-level total checks the range only.' : 'Older saved versions may have no cost observations. Run a new check to collect them.'}`;
+  const list = $('#cost-list'); list.replaceChildren();
+  for (const row of rows) {
+    const card = document.createElement('details'); card.className = `cost-skill cost-${row.state}`;
+    const summary = document.createElement('summary');
+    const iconBox = document.createElement('span'); iconBox.className = 'review-icon';
+    const fallback = document.createElement('span'); fallback.setAttribute('aria-hidden', 'true'); fallback.textContent = row.short[0] || '?';
+    const icon = document.createElement('img'); icon.src = row.icon; icon.alt = '';
+    icon.addEventListener('error', () => { icon.hidden = true; });
+    iconBox.append(fallback, icon);
+    const identity = document.createElement('span'); identity.className = 'cost-identity';
+    const name = document.createElement('strong'); name.textContent = version && document.querySelector(`[data-name="${CSS.escape(row.short)}"]`)?.value || row.name;
+    const meta = document.createElement('small'); meta.textContent = `${row.category} · ${row.short} · ${row.type}`;
+    identity.append(name, meta);
+    const status = document.createElement('span'); status.className = 'cost-status';
+    status.textContent = { rng: 'RNG levelling', pending: 'Cost review needed', missing: 'Schedule missing', mismatch: 'Cost mismatch', matches: `${row.observations.length} source match${row.observations.length === 1 ? '' : 'es'}`, unobserved: 'No source costs saved' }[row.state];
+    summary.append(iconBox, identity, status); card.append(summary);
+    const content = document.createElement('div'); content.className = 'cost-content';
+    const note = document.createElement('p');
+    note.textContent = row.state === 'rng' ? `Fixed unlock: ${row.unlock.erda} Sol Erda / ${row.unlock.frags} Fragments. Later rolls have no fixed cost.`
+      : row.state === 'pending' ? 'New skill. Its category and full cost schedule still need review before this order can be visible.'
+      : `Tracker schedule: ${row.type}, levels 1–30. ${row.oneLevelCount} observed one-level transitions; ${row.aggregateCount} aggregate transitions. An aggregate does not verify each level inside it.`;
+    content.append(note);
+    if (row.observations.length) {
+      const table = document.createElement('table'); table.className = 'cost-table';
+      const head = document.createElement('thead'); head.innerHTML = '<tr><th>Scouter step</th><th>Observed total</th><th>Tracker total</th><th>Check</th></tr>'; table.append(head);
+      const body = document.createElement('tbody');
+      for (const observation of row.observations) {
+        const tr = document.createElement('tr');
+        for (const value of [`${observation.from}→${observation.to}${observation.oneLevel ? '' : ' (range)'}`, `${observation.erda} / ${observation.frags}`, observation.expected ? `${observation.expected.erda} / ${observation.expected.frags}` : 'No verified schedule', observation.expected ? observation.matches ? 'Matches' : 'Mismatch' : 'Review needed']) {
+          const cell = document.createElement('td'); cell.textContent = value; tr.append(cell);
+        }
+        body.append(tr);
+      }
+      table.append(body); content.append(table);
+    }
+    if (row.schedule) {
+      const schedule = document.createElement('details'); schedule.className = 'cost-schedule';
+      const label = document.createElement('summary'); label.textContent = 'View tracker costs for levels 1–30'; schedule.append(label);
+      const grid = document.createElement('div'); grid.className = 'cost-levels';
+      row.schedule.forEach((cost, index) => {
+        const level = document.createElement('span'); level.textContent = `${index + 1}: ${cost.erda} / ${cost.frags}`; grid.append(level);
+      });
+      schedule.append(grid); content.append(schedule);
+    }
+    card.append(content); list.append(card);
+  }
 }
 function renderRegistered() {
   const modes = registeredModes();
@@ -104,7 +158,7 @@ function classifyOrder() {
     const existing = previewDrafts[match];
     const matched = importedSteps?.length === steps.length && importedSteps.every((step, index) => step.skill === steps[index].skill && step.level === steps[index].level);
     show({ ...existing, steps: matched ? importedSteps : existing.steps });
-    message(`No new priority: ${steps.length} steps match your saved test site version, ${existing.name}. Save to retain any newly captured source FD.`);
+    message(`No new priority: ${steps.length} steps match your saved test site version, ${existing.name}. Save to retain newly captured source costs and FD.`);
     return;
   } else {
     const stamp = new Date().toISOString().slice(0, 10).replaceAll('-', '');
@@ -122,7 +176,7 @@ function classifyOrder() {
 }
 function compareResponse(response) {
   const extracted = extractScouterOrder(response, $('#mode').value);
-  materialIssues = extracted.validation.issues.length;
+  const issueCount = extracted.validation.issues.length;
   pendingSource = `Maple Scouter ${$('#mode').value.startsWith('taotie_') ? 'KMS Taotie' : 'GMS Lotus'} ${$('#mode').value.endsWith('_heroic') ? 'Fragments' : 'Sol Erda'}, checked ${new Date().toISOString().slice(0, 10)}${extracted.source.standard ? `, benchmark ${String(extracted.source.standard).slice(0, 80)}` : ''}`;
   inspected = inspectScouterResponse(response);
   renderUnknown(inspected.unknown);
@@ -137,7 +191,10 @@ function compareResponse(response) {
     message(`${inspected.unknown.length} new skill(s) need a name and type. Enter them, then review changes.`);
     $('#unknown-list [data-field="short"]')?.focus();
   }
+  // classifyOrder may show an existing draft, which clears the previous check state.
+  materialIssues = issueCount;
   if (materialIssues) message(`${extracted.count} rows imported. ${materialIssues} material check(s) need review.`, true);
+  renderCostReview();
 }
 
 function read() {
@@ -187,6 +244,7 @@ function show(draft) {
   $('#status').textContent = '';
   $('#open-preview').hidden = true;
   const historical = draft.sourceMode.startsWith('hecate_');
+  renderCostReview();
   if (historical) message('Historical Hecate needs a pasted Maple Scouter response.');
 }
 function collectUnknown() {
@@ -200,6 +258,7 @@ function collectUnknown() {
   importedNodes = resolved.newNodes;
   importedStatIcons = resolved.statIcons;
   $('#steps').value = resolved.steps.map(step => `${step.skill}, ${step.level}`).join('\n');
+  renderCostReview();
 }
 function renderUnknown(items) {
   const list = $('#unknown-list');
@@ -281,10 +340,10 @@ function renderCheck(check) {
     : check.match ? `${world}: matches ${catalog.labels[check.match]} (${check.steps} steps; ${check.issues} material checks).`
     : `${world}: new order (${check.steps} steps; ${check.issues} material checks). Name and review it.`;
   row.append(label);
-  if (!check.error && !check.match) {
+  if (!check.error) {
     const button = document.createElement('button');
     button.type = 'button';
-    button.textContent = 'Review';
+    button.textContent = check.match ? 'Review source costs' : 'Review';
     button.addEventListener('click', () => {
       $('#mode').value = check.mode;
       show(saved[check.mode] || blankDraft(check.mode));

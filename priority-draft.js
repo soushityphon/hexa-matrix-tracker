@@ -1,4 +1,4 @@
-import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SOURCES, PRIORITY_SETTINGS } from './data.js';
+import { COSTS, NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SOURCES, PRIORITY_SETTINGS } from './data.js';
 
 const byShort = new Map(NODES.map(node => [node.short, node]));
 const statNames = new Set(['HEXA Stat I', 'HEXA Stat II', 'HEXA Stat III']);
@@ -50,18 +50,27 @@ export function validateDraft(draft) {
   const steps = parseSteps(draft.steps.map(step => `${step.skill}, ${step.level}`).join('\n'), shorts);
   for (let index = 0; index < steps.length; index++) {
     const { fdGain, fdFrom, sourceCost } = draft.steps[index];
-    const previousLevel = steps.slice(0, index).reverse().find(step => step.skill === steps[index].skill)?.level || 0;
+    const previousLevel = steps.slice(0, index).reverse().find(step => step.skill === steps[index].skill)?.level ?? (steps[index].skill === 'Apotheosis' ? 1 : 0);
     if (sourceCost !== undefined) {
       if (statNames.has(steps[index].skill) || !sourceCost || sourceCost.from !== previousLevel ||
           !Number.isInteger(sourceCost.erda) || sourceCost.erda < 0 ||
           !Number.isInteger(sourceCost.frags) || sourceCost.frags < 0) {
         throw new Error(`Invalid Scouter transition cost at step ${index + 1}`);
       }
+      const node = byShort.get(steps[index].skill);
+      if (node) {
+        const expected = COSTS[node.type]?.slice(previousLevel, steps[index].level).reduce((total, cost) => ({ erda: total.erda + cost.erda, frags: total.frags + cost.frags }), { erda: 0, frags: 0 });
+        if (!expected || expected.erda !== sourceCost.erda || expected.frags !== sourceCost.frags) {
+          throw new Error(`Scouter cost differs from the tracker schedule at step ${index + 1}; review the schedule before saving`);
+        }
+      }
       steps[index] = { ...steps[index], sourceCost: { from: previousLevel, erda: sourceCost.erda, frags: sourceCost.frags } };
     }
     if (fdGain === undefined && fdFrom === undefined) continue;
     if (statNames.has(steps[index].skill) || !Number.isFinite(fdGain) || fdGain < 0 || !Number.isInteger(fdFrom) || fdFrom < 0 || fdFrom >= steps[index].level) throw new Error(`Invalid source FD at step ${index + 1}`);
-    if (fdFrom !== previousLevel) throw new Error(`Source FD transition does not match step ${index + 1}`);
+    // Older saved FD annotations use zero as the first Origin transition start.
+    const previousFdLevel = steps.slice(0, index).reverse().find(step => step.skill === steps[index].skill)?.level || 0;
+    if (fdFrom !== previousFdLevel) throw new Error(`Source FD transition does not match step ${index + 1}`);
     steps[index] = { ...steps[index], fdFrom, fdGain };
   }
   const patch = PRIORITY_SETTINGS[draft.sourceMode || draft.mode].patch;

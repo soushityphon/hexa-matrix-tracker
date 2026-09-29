@@ -111,6 +111,7 @@ import { inspectScouterResponse, resolveScouterResponse } from '../scouter-impor
 import { extractScouterOrder } from '../scouter-extract.js';
 import { loadPreview, previewCatalog, matchingPriorityVersion, withCapturedGains } from '../preview-priorities.js';
 import { CAPTURED_GAINS } from '../source-gains.js';
+import { skillCostReview } from '../skill-cost-review.js';
 const draft=validateDraft(currentDraft('taotie_heroic'));
 const renamed=validateDraft({...currentDraft('lotus_heroic'),names:{...currentDraft('lotus_heroic').names,Harmony:'Long Harmony'},shortNames:{...currentDraft('lotus_heroic').shortNames,Harmony:'Short Harmony'}});
 assert(renamed.names.Harmony==='Long Harmony'&&renamed.shortNames.Harmony==='Short Harmony'&&renamed.steps[0].skill==='Harmony','independent display names retain the Scouter step identity');
@@ -155,6 +156,17 @@ assert(extraction.count===2&&extraction.validation.issues.length===0,'extractor 
 const sourceSteps=resolveScouterResponse(inspectScouterResponse(sourceRows)).steps;
 const savedSource=validateDraft({...currentDraft('taotie_heroic'),steps:sourceSteps});
 assert(JSON.stringify(savedSource.steps[1].sourceCost)===JSON.stringify({from:1,erda:5,frags:101}),'multi-level Scouter total stays attached to its exact 1 to 6 transition');
+const harmonyReview=skillCostReview(NODES.filter(node=>node.short==='Harmony'),savedSource.steps)[0];
+assert(harmonyReview.category==='Mastery'&&harmonyReview.state==='matches'&&harmonyReview.oneLevelCount===1&&harmonyReview.aggregateCount===1,'review separates single-level observations from matching aggregate costs');
+assert(harmonyReview.observations[1].expected.frags===101,'aggregate checks the entire range against tracker schedule');
+assert(skillCostReview([{short:'New',type:'Skill',unreviewed:true}], [{skill:'New',level:1,sourceCost:{from:0,erda:5,frags:100}}])[0].state==='pending','unfamiliar skill is not treated as verified by a generic schedule');
+assert(skillCostReview([{short:'HEXA Stat I',type:'HEXA Stat'}],[])[0].state==='rng','HEXA Stat never claims a fixed level schedule');
+assert(skillCostReview(NODES.filter(node=>node.short==='Harmony'),[{skill:'Harmony',level:1,sourceCost:{from:0,erda:9,frags:50}}])[0].state==='mismatch','review exposes a mismatched source transition');
+const originCost=resolveScouterResponse(inspectScouterResponse({class_hexa:[['Origin',2,'/hexaskill/Hoyeong_1.png',1,30,1,30,0,0,'skillCore1','1→2',0]]})).steps[0].sourceCost;
+assert(originCost.from===1,'first Origin source cost starts at its free baseline level 1');
+assert(validateDraft({...currentDraft('lotus_heroic'),steps:[{skill:'Apotheosis',level:2,sourceCost:originCost}]}).steps[0].sourceCost.from===1,'origin source cost validates against levels after the free unlock');
+let mismatchBlocked=false;try{validateDraft({...currentDraft('taotie_heroic'),steps:[{skill:'Harmony',level:1,sourceCost:{from:0,erda:9,frags:50}}]})}catch{mismatchBlocked=true}
+assert(mismatchBlocked,'a mismatched known skill cost cannot be saved through the Worker');
 assert(!savedSource.steps[1].sourceCost.perLevel,'aggregate cost does not invent per-level prices');
 for (const sourceCost of [{from:0,erda:5,frags:101},{from:1,erda:-1,frags:101},{from:1,erda:5,frags:101.5}]) {
   let rejected=false;
