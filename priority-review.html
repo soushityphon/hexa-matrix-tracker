@@ -25,12 +25,12 @@
         <label>Priority name<input id="name" type="text"></label>
         <fieldset class="visibility"><legend>Tracker visibility</legend><label><input type="radio" name="visibility" value="enabled"> Enabled, show on tracker</label><label><input type="radio" name="visibility" value="disabled"> Disabled, keep for review</label></fieldset>
         <label>Source link or note<input id="source" type="text"></label>
+        <div id="unknown" class="unknown-review" hidden><h3>New skills to name</h3><p>Confirm the short label, display name and skill type before reviewing the draft.</p><div id="unknown-list"></div></div>
         <details id="manual-import" class="import-panel"><summary>Advanced: response JSON and draft download</summary>
           <label>Response context (update and material)<select id="mode"></select></label>
           <label>Response JSON file<input id="response-file" type="file" accept=".json,.txt,application/json,text/plain"></label>
           <label>HEXA order response JSON<textarea id="response" spellcheck="false" placeholder="Paste the response from Maple Scouter Network → Response"></textarea></label>
           <button id="inspect" type="button">Compare response</button>
-          <div id="unknown" hidden><h3>New skills to name</h3><p>Confirm the short label, display name and skill type before reviewing the draft.</p><div id="unknown-list"></div></div>
           <button id="download" type="button">Download draft for review</button>
         </details>
         <details class="order-editor"><summary>Inspect ordered checkpoints</summary><label>Upgrade order <small>One step per line: Harmony, 1</small><textarea id="steps" spellcheck="false"></textarea></label></details>
