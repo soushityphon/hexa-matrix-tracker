@@ -203,7 +203,7 @@ function render() {
     const displayIndex = $('#hideDone').checked && !row.done ? remainingIndex : rowIndex + 1;
     const icon = previewDrafts[mode]?.statIcons[row.skill] || STAT_ICONS[row.skill] || nodeByShort[row.skill]?.icon;
     const isNext = row.index <= index + 1 && index + 1 <= row.endIndex;
-    const gains = row.done || row.skill.startsWith('HEXA Stat') ? [] : sourceStepGains(order, row, current[row.skill] || 0);
+    const gains = row.done || row.skill.startsWith('HEXA Stat') ? [] : sourceStepGains(order, row, Math.max(row.from, current[row.skill] || 0));
     const fd = gains.map(step => `<span class="fd-step">${gains.length > 1 ? `${step.fdFrom}→${step.level} ` : ''}${fdText(step.fdGain)}</span>`).join('');
     return `<tr class="type-${typeClass(row.skill)} ${row.done ? 'done' : ''} ${isNext ? 'next' : ''}" ${isNext ? 'aria-current="step"' : ''} style="--skill-accent:${skillAccent(row.skill)}"><td>${displayIndex}</td><td><span class="skill-cell">${icon ? `<img class="stat-icon" src="${icon}" alt="">` : '<i class="dot" aria-hidden="true"></i>'}<span>${row.skill}</span></td><td>${row.level}</td><td>${number(cost.erda)}</td><td>${cost.rng ? `<span class="rng" aria-label="${cost.frags ? `at least ${cost.frags} Fragments` : 'variable Fragment cost'}">${cost.frags ? `${cost.frags.toLocaleString()}+` : 'RNG'}</span>` : number(cost.frags)}</td><td>${fd}</td></tr>`;
   }).join('');
