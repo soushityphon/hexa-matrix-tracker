@@ -29,8 +29,7 @@ export function validateDraft(draft) {
   if (draft.isNew && (Object.hasOwn(PRIORITIES, draft.mode) || !/^[a-z0-9_]+$/.test(draft.mode))) throw new Error('New priority ID is invalid or already exists');
   if (!draft.isNew && draft.mode !== (draft.sourceMode || draft.mode)) throw new Error('Existing priority ID does not match its source');
   if (typeof draft.name !== 'string' || !draft.name.trim()) throw new Error('Enter a priority name');
-  if (!Array.isArray(draft.steps) || (!draft.steps.length && (draft.isNew || PRIORITIES[draft.mode].length))) throw new Error('Enter at least one priority step');
-  if (draft.enabled && !draft.steps.length) throw new Error('Import an order before showing this priority on the tracker');
+  if (!Array.isArray(draft.steps) || !draft.steps.length) throw new Error('Import an order before saving this priority');
   const types = new Set(['Skill', 'Skill II', 'Mastery', 'V', 'Common', 'Common II']);
   const groups = { Skill: 'Skill Nodes', 'Skill II': 'Skill Nodes', Mastery: 'Mastery Nodes', V: 'Enhancement Nodes', Common: 'Common Nodes', 'Common II': 'Common Nodes' };
   const newNodes = (draft.newNodes || []).map(node => {
@@ -65,8 +64,7 @@ export function currentDraft(mode) {
   return { schema: 3, mode, sourceMode: mode, isNew: false, enabled: PRIORITY_SETTINGS[mode].enabled, name: PRIORITY_LABELS[mode], source: PRIORITY_SOURCES[mode], names: Object.fromEntries(NODES.map(node => [node.short, node.name])), steps: PRIORITIES[mode], newNodes: [], statIcons: {} };
 }
 
-export function compareDraft(draft) {
-  const current = PRIORITIES[draft.sourceMode || draft.mode];
+export function compareDraft(draft, current = PRIORITIES[draft.sourceMode || draft.mode] || []) {
   const changedNames = NODES.filter(node => draft.names[node.short] !== node.name).length;
   const changedSteps = draft.steps.filter((step, index) => step.skill !== current[index]?.skill || step.level !== current[index]?.level).length;
   return { changedNames, changedSteps, lengthDifference: draft.steps.length - current.length };

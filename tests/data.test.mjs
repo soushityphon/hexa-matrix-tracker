@@ -154,11 +154,13 @@ assert(localCatalog.priorities[localOrder.mode].length===2&&localCatalog.setting
 assert(matchingPriorityVersion(localOrder.steps,'lotus_interactive',{[localOrder.mode]:localOrder})===localOrder.mode,'saved order matches its material context');
 assert(matchingPriorityVersion(localOrder.steps,'lotus_heroic',{[localOrder.mode]:localOrder})===null,'a different material does not match');
 const savedSameAsGitHub={...currentDraft('lotus_heroic'),name:'Saved Scouter Lotus',enabled:true};
-assert(matchingPriorityVersion(PRIORITIES.lotus_heroic,'lotus_heroic',{lotus_heroic:savedSameAsGitHub})==='lotus_heroic','saved override is checked ahead of the repository capture');
+assert(matchingPriorityVersion(PRIORITIES.lotus_heroic,'lotus_heroic',{lotus_heroic:savedSameAsGitHub})==='lotus_heroic','saved imported order is matched');
 const savedNamedVersion={...nextVersion,name:'Saved named import'};
 assert(matchingPriorityVersion(PRIORITIES.lotus_heroic,'lotus_heroic',{[savedNamedVersion.mode]:savedNamedVersion})===savedNamedVersion.mode,'a named saved version wins over an identical repository capture');
-assert(matchingPriorityVersion(PRIORITIES.lotus_heroic,'lotus_heroic',{})==='lotus_heroic','repository capture still matches during migration');
+assert(matchingPriorityVersion(PRIORITIES.lotus_heroic,'lotus_heroic',{})===null,'repository capture cannot match without a saved import');
 assert(nextCheckpoint({},localOrder.sourceMode,localCatalog.priorities[localOrder.mode]).next.skill==='Harmony','preview priority keeps exact checkpoint order');
 assertEqual(priorityRows({},localOrder.sourceMode,localCatalog.priorities[localOrder.mode])[1].cost,{erda:5,frags:10,rng:true},'preview HEXA Stat checkpoint includes fixed unlock plus RNG');
-assert(previewCatalog({}).settings.lotus_heroic.enabled,'removing staged override restores GitHub visibility');
+assertEqual(previewCatalog({}),{priorities:{},labels:{},settings:{},sources:{}},'empty or failed shared storage has no runtime priority baseline');
+assertEqual(Object.keys(previewCatalog({[localOrder.mode]:localOrder}).priorities),[localOrder.mode],'only saved imports are registered');
+assert(!previewCatalog({lotus_heroic:disabled}).settings.lotus_heroic.enabled,'disabled saved versions stay hidden');
 console.log('Data validation passed');

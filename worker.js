@@ -16,7 +16,7 @@ async function priorityPreview(request, env) {
         try {
           const draft = validateDraft(JSON.parse(row.draft_json));
           if (draft.mode === row.mode && !draft.newNodes.length) drafts[row.mode] = draft;
-        } catch { /* A stale version cannot replace the GitHub baseline. */ }
+        } catch { /* An invalid saved version cannot be shown. */ }
       }
       return Response.json({ drafts }, { headers: noStore });
     }

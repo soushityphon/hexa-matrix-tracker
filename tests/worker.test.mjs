@@ -92,6 +92,7 @@ assert.deepEqual((await (await worker.fetch(new Request(previewUrl), adminEnv)).
 assert.equal((await worker.fetch(previewRequest('PUT', { draft: currentDraft('lotus_heroic') }, { 'Content-Type': 'application/json' }), adminEnv)).status, 403);
 const hidden = { ...currentDraft('lotus_heroic'), enabled: false };
 assert.equal((await worker.fetch(previewRequest('PUT', { draft: hidden }), adminEnv)).status, 200);
+assert.equal((await worker.fetch(previewRequest('PUT', { draft: { ...hidden, steps: [] } }), adminEnv)).status, 400);
 assert.equal((await (await worker.fetch(new Request(previewUrl), adminEnv)).json()).drafts.lotus_heroic.enabled, false);
 const newOrder = { ...currentDraft('lotus_interactive'), mode: 'lotus_interactive_20260929', sourceMode: 'lotus_interactive', isNew: true, name: 'Imported order', enabled: true, steps: [{ skill: 'Harmony', level: 1 }] };
 assert.equal((await worker.fetch(previewRequest('PUT', { draft: newOrder }), adminEnv)).status, 200);

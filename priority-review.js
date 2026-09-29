@@ -1,5 +1,5 @@
-import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SETTINGS, PRIORITY_SOURCES } from './data.js';
-import { compareDraft, currentDraft, parseSteps, validateDraft } from './priority-draft.js';
+import { NODES, PRIORITY_SETTINGS } from './data.js';
+import { compareDraft, parseSteps, validateDraft } from './priority-draft.js';
 import { inspectScouterResponse, resolveScouterResponse } from './scouter-import.js';
 import { extractScouterOrder } from './scouter-extract.js';
 import { loadPreview, previewCatalog, matchingPriorityVersion, fetchSharedPreview, saveSharedPreview, removeSharedPreview } from './preview-priorities.js';
@@ -31,7 +31,11 @@ function contextLabel(mode) {
   return `Hoyoung · ${update} · ${material}`;
 }
 function sourceOptions() {
-  return Object.keys(PRIORITIES).map(mode => new Option(contextLabel(mode), mode));
+  return Object.keys(PRIORITY_SETTINGS).map(mode => new Option(contextLabel(mode), mode));
+}
+function blankDraft(mode) {
+  return { mode, sourceMode: mode, isNew: false, enabled: false, name: '', source: '',
+    names: Object.fromEntries(NODES.map(node => [node.short, node.name])), steps: [], newNodes: [], statIcons: {} };
 }
 function refreshCatalog() {
   catalog = previewCatalog(previewDrafts);
@@ -55,19 +59,19 @@ function renderRegistered() {
     const title = document.createElement('strong'); title.textContent = catalog.labels[mode];
     const source = document.createElement('small');
     const date = catalog.sources[mode]?.match(/\b\d{4}-\d{2}-\d{2}\b/)?.[0] || 'Date not recorded';
-    source.textContent = `${settings.patch === 'taotie' ? 'KMS Taotie' : 'GMS Lotus'} · ${settings.world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'} · ${catalog.priorities[mode].length} steps · ${date} · ${previewDrafts[mode] ? 'Saved on test site' : 'GitHub capture'}`;
+    source.textContent = `${settings.patch === 'taotie' ? 'KMS Taotie' : 'GMS Lotus'} · ${settings.world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'} · ${catalog.priorities[mode].length} steps · ${date} · Saved on test site`;
     const note = document.createElement('small'); note.textContent = catalog.sources[mode] || 'Source not recorded';
     details.append(title, source, note);
     const actions = document.createElement('div'); actions.className = 'registered-actions';
-    const badge = document.createElement('span'); badge.className = settings.enabled ? 'visible' : 'disabled'; badge.textContent = `${settings.enabled ? 'Visible' : 'Hidden'}${previewDrafts[mode] ? ' on test site' : ''}`;
+    const badge = document.createElement('span'); badge.className = settings.enabled ? 'visible' : 'disabled'; badge.textContent = `${settings.enabled ? 'Visible' : 'Hidden'} on test site`;
     const review = document.createElement('button'); review.type = 'button'; review.textContent = 'Review';
-    review.addEventListener('click', () => { $('#mode').value = previewDrafts[mode]?.sourceMode || mode; show(previewDrafts[mode] || currentDraft(mode)); $('#draft-heading').scrollIntoView({ behavior: 'smooth' }); });
+    review.addEventListener('click', () => { $('#mode').value = previewDrafts[mode].sourceMode; show(previewDrafts[mode]); $('#draft-heading').scrollIntoView({ behavior: 'smooth' }); });
     const rename = document.createElement('button'); rename.type = 'button'; rename.textContent = 'Rename';
     rename.addEventListener('click', () => { review.click(); $('#name').focus(); });
     const toggle = document.createElement('button'); toggle.type = 'button'; toggle.textContent = settings.enabled ? 'Disable' : 'Enable';
     toggle.addEventListener('click', async () => {
       try {
-        const draft = { ...(previewDrafts[mode] || currentDraft(mode)), enabled: !settings.enabled };
+        const draft = { ...previewDrafts[mode], enabled: !settings.enabled };
         await saveSharedPreview(draft);
         previewDrafts[draft.mode] = draft;
         refreshCatalog();
@@ -76,12 +80,13 @@ function renderRegistered() {
       } catch (error) { message(error.message, true); }
     });
     actions.append(badge, review, rename, toggle);
-    if (previewDrafts[mode]) {
-      const restore = document.createElement('button'); restore.type = 'button';
-      restore.textContent = Object.hasOwn(PRIORITIES, mode) ? 'Restore GitHub' : 'Remove preview';
-      restore.addEventListener('click', async () => { try { const sourceMode = previewDrafts[mode].sourceMode; await removeSharedPreview(mode); delete previewDrafts[mode]; refreshCatalog(); show(currentDraft(sourceMode)); message('Test site preview change removed.'); } catch (error) { message(error.message, true); } });
-      actions.append(restore);
-    }
+    const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'Remove saved version';
+    remove.addEventListener('click', async () => {
+      if (!confirm(`Remove ${previewDrafts[mode].name} from the private test site? This removes its saved order.`)) return;
+      try { const sourceMode = previewDrafts[mode].sourceMode; await removeSharedPreview(mode); delete previewDrafts[mode]; refreshCatalog(); show(blankDraft(sourceMode)); message('Saved version removed from the private test site.'); }
+      catch (error) { message(error.message, true); }
+    });
+    actions.append(remove);
     row.append(details, actions); list.append(row);
   }
 }
@@ -95,17 +100,9 @@ function classifyOrder() {
   const settings = PRIORITY_SETTINGS[sourceMode];
   const match = matchingVersion(steps, sourceMode);
   if (match) {
-    if (previewDrafts[match]) {
-      show(previewDrafts[match]);
-      message(`No new priority: ${steps.length} steps match your saved test site version, ${previewDrafts[match].name}.`);
-      return;
-    }
-    version = { sourceMode: match, mode: match, isNew: false };
-    $('#priority-id').value = match;
-    $('#name').value = PRIORITY_LABELS[match];
-    visibility(PRIORITY_SETTINGS[match].enabled);
-    $('#version-state').textContent = `Matches ${PRIORITY_LABELS[match]}.`;
-    message(`No new priority: ${steps.length} steps match ${PRIORITY_LABELS[match]}.`);
+    show(previewDrafts[match]);
+    message(`No new priority: ${steps.length} steps match your saved test site version, ${previewDrafts[match].name}.`);
+    return;
   } else {
     const stamp = new Date().toISOString().slice(0, 10).replaceAll('-', '');
     const base = `${settings.patch}_${settings.world}_${stamp}`;
@@ -175,7 +172,7 @@ function show(draft) {
   for (const input of document.querySelectorAll('[data-name]')) input.value = draft.names[input.dataset.name] || '';
   $('#status').textContent = '';
   $('#open-preview').hidden = true;
-  const historical = draft.mode.startsWith('hecate_');
+  const historical = draft.sourceMode.startsWith('hecate_');
   if (historical) message('Historical Hecate needs a pasted Maple Scouter response.');
 }
 function collectUnknown() {
@@ -223,7 +220,7 @@ function persist() {
     localStorage.setItem(key, JSON.stringify(saved));
   } catch { /* Keep incomplete edits in the form until valid. */ }
 }
-$('#mode').addEventListener('change', () => show(saved[$('#mode').value] || currentDraft($('#mode').value)));
+$('#mode').addEventListener('change', () => show(saved[$('#mode').value] || blankDraft($('#mode').value)));
 document.addEventListener('input', persist);
 async function checkMode(mode) {
   try {
@@ -270,7 +267,7 @@ function renderCheck(check) {
     button.textContent = 'Review';
     button.addEventListener('click', () => {
       $('#mode').value = check.mode;
-      show(saved[check.mode] || currentDraft(check.mode));
+      show(saved[check.mode] || blankDraft(check.mode));
       $('#response').value = JSON.stringify(check.result);
       try { compareResponse(check.result); }
       catch (error) { message(error.message, true); }
@@ -323,7 +320,7 @@ $('#review').addEventListener('click', () => {
       inspected = null;
     }
     const draft = read();
-    const changes = compareDraft(draft);
+    const changes = compareDraft(draft, previewDrafts[draft.mode]?.steps || []);
     message(`${draft.steps.length} steps. ${changes.changedNames} display names changed. ${changes.changedSteps} steps changed at their position. ${changes.lengthDifference} net steps.`);
   } catch (error) { message(error.message, true); }
 });
@@ -365,7 +362,7 @@ $('#download').addEventListener('click', () => {
 });
 $('#mode').replaceChildren(...sourceOptions());
 $('#mode').value = 'lotus_heroic';
-show(saved[$('#mode').value] || currentDraft($('#mode').value));
+show(saved[$('#mode').value] || blankDraft($('#mode').value));
 message('Loading saved priorities from the private test site…');
 $('#save-preview').disabled = true;
 $('#retrieve').disabled = true;

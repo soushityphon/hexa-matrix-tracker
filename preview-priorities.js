@@ -1,4 +1,4 @@
-import { PRIORITIES, PRIORITY_LABELS, PRIORITY_SETTINGS, PRIORITY_SOURCES } from './data.js';
+import { PRIORITY_SETTINGS } from './data.js';
 import { validateDraft } from './priority-draft.js';
 
 export const PREVIEW_KEY = 'hexa-priority-preview-v1';
@@ -19,10 +19,10 @@ export function loadPreview(storage) {
 }
 
 export function previewCatalog(drafts) {
-  const priorities = { ...PRIORITIES };
-  const labels = { ...PRIORITY_LABELS };
-  const settings = { ...PRIORITY_SETTINGS };
-  const sources = { ...PRIORITY_SOURCES };
+  const priorities = {};
+  const labels = {};
+  const settings = {};
+  const sources = {};
   for (const draft of Object.values(drafts)) {
     const base = PRIORITY_SETTINGS[draft.sourceMode];
     priorities[draft.mode] = draft.steps;
@@ -38,14 +38,11 @@ export function matchingPriorityVersion(steps, sourceMode, drafts) {
   if (!source) return null;
   const sameOrder = order => order.length === steps.length && order.every((step, index) =>
     step.skill === steps[index].skill && step.level === steps[index].level);
-  // A saved Scouter import takes precedence when an older repository capture has
-  // the same checkpoints. Keep the latter available until the D1 migration.
   for (const [mode, draft] of Object.entries(drafts)) {
     const context = PRIORITY_SETTINGS[draft.sourceMode];
     if (context?.patch === source.patch && context.world === source.world && sameOrder(draft.steps)) return mode;
   }
-  return Object.keys(PRIORITIES).find(mode => PRIORITY_SETTINGS[mode].patch === source.patch &&
-    PRIORITY_SETTINGS[mode].world === source.world && PRIORITIES[mode].length && sameOrder(PRIORITIES[mode])) || null;
+  return null;
 }
 
 async function previewRequest(method, value) {

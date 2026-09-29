@@ -130,8 +130,8 @@ function render() {
   if (!mode) {
     highlightCurrentSkill(null);
     $('#version-name').textContent = `${$('#patch').selectedOptions[0]?.textContent || 'Update'} / ${$('[name="world"]:checked').value === 'heroic' ? 'Fragments' : 'Sol Erda'}`;
-    $('#progress').textContent = 'No registered priority is visible for this selection';
-    $('#next-upgrade').textContent = 'No priority is available for this update and world.';
+    $('#progress').textContent = 'No saved priority is visible for this selection';
+    $('#next-upgrade').textContent = 'No saved priority is available for this update and world.';
     $('#priority').replaceChildren();
     $('#totals').replaceChildren();
     $('#completion').replaceChildren();
@@ -207,7 +207,10 @@ async function refreshSharedPriorities() {
     render();
     $('#priority-sync').textContent = '';
   } catch (error) {
-    $('#priority-sync').textContent = `Shared priorities could not be loaded: ${error.message}. Showing the GitHub baseline.`;
+    previewDrafts = {};
+    catalog = previewCatalog({});
+    render();
+    $('#priority-sync').textContent = `Shared priorities could not be loaded: ${error.message}. Priorities are unavailable until storage responds.`;
   }
 }
 window.addEventListener('focus', refreshSharedPriorities);
