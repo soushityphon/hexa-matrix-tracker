@@ -15,8 +15,18 @@ const requestedMode = new URL(location.href).searchParams.get('mode');
 let initialSharedLoad = true;
 if (requestedMode && catalog.settings[requestedMode]?.enabled && catalog.priorities[requestedMode]?.length) saved.mode = requestedMode;
 
-function clamp(value, max) {
-  return Math.max(0, Math.min(max, Math.floor(Number(value) || 0)));
+function clamp(value, max, min = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(min, Math.min(max, Math.floor(number))) : min;
+}
+
+function levelRange(input) {
+  return { min: Number(input.min), max: Number(input.max) };
+}
+
+function validLevel(input) {
+  const { min, max } = levelRange(input);
+  return clamp(input.value, max, min);
 }
 
 function syncPriorityOptions() {
@@ -39,7 +49,7 @@ function syncPriorityOptions() {
 
 function renderInputs() {
   const categories = { 'Skill Nodes': 'Skill', 'Mastery Nodes': 'Mastery', 'Enhancement Nodes': 'Enhancement', 'Common Nodes': 'Common' };
-  $('#nodes').innerHTML = NODES.map((node, index) => `${index === 0 || NODES[index - 1].group !== node.group ? `<div class="group-label">${categories[node.group] || node.group}</div>` : ''}<label class="node-row" style="--skill-accent:${skillAccent(node.short)}" data-node-row="${node.short}" title="${node.name}"><span class="node-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span class="node-name">${node.name}</span><input data-node="${node.short}" aria-label="${node.name} level" type="number" min="0" max="30" value="${saved.levels?.[node.short] ?? 0}"></label>`).join('');
+  $('#nodes').innerHTML = NODES.map((node, index) => `${index === 0 || NODES[index - 1].group !== node.group ? `<div class="group-label">${categories[node.group] || node.group}</div>` : ''}<label class="node-row" style="--skill-accent:${skillAccent(node.short)}" data-node-row="${node.short}" title="${node.name}"><span class="node-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span class="node-name">${node.name}</span><input data-node="${node.short}" aria-label="${node.name} level" type="number" min="${node.short === 'Apotheosis' ? 1 : 0}" max="30" step="1" value="${clamp(saved.levels?.[node.short], 30, node.short === 'Apotheosis' ? 1 : 0)}"></label>`).join('');
   $$('.node-icon img').forEach(img => {
     img.addEventListener('error', () => { img.hidden = true; });
     if (img.complete && !img.naturalWidth) img.hidden = true;
@@ -56,8 +66,7 @@ function renderInputs() {
     row.prepend(image);
     row.style.setProperty('--skill-accent', skillAccent(input.dataset.stat));
   });
-  $$('[data-node="Apotheosis"]').forEach(input => { input.value = Math.max(1, Number(input.value) || 0); });
-  $$('[data-stat]').forEach(input => { input.value = saved.levels?.[input.dataset.stat] ?? 0; });
+  $$('[data-stat]').forEach(input => { input.value = clamp(saved.levels?.[input.dataset.stat], 20); });
   $$('[data-stat-unlocked]').forEach(input => {
     const skill = input.dataset.statUnlocked;
     const level = clamp(saved.levels?.[skill], 20);
@@ -74,9 +83,8 @@ function renderInputs() {
 
 function levels() {
   const result = { ...saved.levels };
-  $$('[data-node]').forEach(input => { result[input.dataset.node] = clamp(input.value, 30); });
-  $$('[data-stat]').forEach(input => { result[input.dataset.stat] = clamp(input.value, 20); });
-  result.Apotheosis = Math.max(1, result.Apotheosis || 0);
+  $$('[data-node]').forEach(input => { result[input.dataset.node] = validLevel(input); });
+  $$('[data-stat]').forEach(input => { result[input.dataset.stat] = validLevel(input); });
   return result;
 }
 
@@ -224,7 +232,10 @@ function render() {
 }
 
 document.addEventListener('input', render);
-document.addEventListener('change', render);
+document.addEventListener('change', event => {
+  if (event.target.matches('[data-node], [data-stat]')) event.target.value = validLevel(event.target);
+  render();
+});
 $('#next-upgrade').addEventListener('click', event => {
   const button = event.target.closest('button[data-upgrade-skill]');
   if (!button || !$('#next-upgrade').contains(button)) return;
@@ -243,8 +254,8 @@ $('#next-upgrade').addEventListener('click', event => {
   }
   const input = [...$$('[data-node]')].find(field => field.dataset.node === button.dataset.upgradeSkill);
   if (!input) return;
-  const current = clamp(input.value, Number(input.max));
-  const target = button.dataset.nextLevel ? Math.min(current + 1, Number(input.max)) : clamp(button.dataset.upgradeLevel, Number(input.max));
+  const current = validLevel(input);
+  const target = button.dataset.nextLevel ? Math.min(current + 1, Number(input.max)) : clamp(button.dataset.upgradeLevel, Number(input.max), Number(input.min));
   if (target <= current) return;
   input.value = target;
   input.dispatchEvent(new Event('input', { bubbles: true }));
