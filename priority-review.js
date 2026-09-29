@@ -154,7 +154,9 @@ function read() {
     statIcons: importedStatIcons,
     steps: parseSteps($('#steps').value, importedNodes.map(node => node.short)).map((step, index) => {
       const source = importedSteps?.[index];
-      return source?.skill === step.skill && source.level === step.level ? { ...step, ...(source.fdGain === undefined ? {} : { fdFrom: source.fdFrom, fdGain: source.fdGain }) } : step;
+      return source?.skill === step.skill && source.level === step.level ? { ...step,
+        ...(source.sourceCost === undefined ? {} : { sourceCost: source.sourceCost }),
+        ...(source.fdGain === undefined ? {} : { fdFrom: source.fdFrom, fdGain: source.fdGain }) } : step;
     })
   });
 }

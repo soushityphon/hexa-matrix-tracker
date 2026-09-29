@@ -138,6 +138,8 @@ assert(blocked,'new skill needs admin naming');
 const resolved=resolveScouterResponse(inspected,{[inspected.unknown[0].key]:{short:'New Skill',name:'New Skill Name',type:'Skill II'}});
 assert(resolved.steps[0].fdGain===0.3&&resolved.steps[0].fdFrom===0,'Scouter efficiency becomes whole-step FD gain');
 assert(!Object.hasOwn(resolved.steps[1],'fdGain'),'HEXA Stat does not receive estimated FD');
+assert(resolved.steps[0].sourceCost.erda===4&&resolved.steps[0].sourceCost.frags===90,'known skill keeps its exact source transition cost');
+assert(!Object.hasOwn(resolved.steps[1],'sourceCost'),'random HEXA Stat estimate is not stored as a fixed cost');
 const withFd=validateDraft({...currentDraft('lotus_heroic'),steps:[{skill:'Harmony',level:1,fdFrom:0,fdGain:8.288333}]});
 assert(withFd.steps[0].fdGain===8.288333,'validated draft retains source FD');
 let invalidFd=false;try{validateDraft({...currentDraft('lotus_heroic'),steps:[{skill:'Harmony',level:1,fdFrom:1,fdGain:8}]})}catch{invalidFd=true}
@@ -150,6 +152,15 @@ const sourceRows={standard:'허수아비',class_hexa:[
 ]};
 const extraction=extractScouterOrder(sourceRows,'taotie_heroic');
 assert(extraction.count===2&&extraction.validation.issues.length===0,'extractor checks source checkpoint and cumulative costs');
+const sourceSteps=resolveScouterResponse(inspectScouterResponse(sourceRows)).steps;
+const savedSource=validateDraft({...currentDraft('taotie_heroic'),steps:sourceSteps});
+assert(JSON.stringify(savedSource.steps[1].sourceCost)===JSON.stringify({from:1,erda:5,frags:101}),'multi-level Scouter total stays attached to its exact 1 to 6 transition');
+assert(!savedSource.steps[1].sourceCost.perLevel,'aggregate cost does not invent per-level prices');
+for (const sourceCost of [{from:0,erda:5,frags:101},{from:1,erda:-1,frags:101},{from:1,erda:5,frags:101.5}]) {
+  let rejected=false;
+  try { validateDraft({...currentDraft('taotie_heroic'),steps:[sourceSteps[0],{...sourceSteps[1],sourceCost}]}); } catch { rejected=true; }
+  assert(rejected,'malformed or mismatched source cost cannot be saved');
+}
 assert(extraction.rows[1].materials.frags===101&&extraction.comparison.firstDifference===2,'extractor retains checkpoint costs and compares order');
 assert(extractScouterOrder(sourceRows,'lotus_interactive').comparison.firstDifference===1,'extractor compares against an empty saved order');
 assert(extractScouterOrder({...sourceRows,class_hexa:[sourceRows.class_hexa[0], [...sourceRows.class_hexa[1].slice(0,4), 100, ...sourceRows.class_hexa[1].slice(5)]]},'taotie_heroic').validation.issues.some(issue=>issue.kind==='material-cost'),'extractor flags incorrect source checkpoint cost');

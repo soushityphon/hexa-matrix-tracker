@@ -11,7 +11,7 @@ export function inspectScouterResponse(response) {
   const unknown = new Map();
   const statIcons = {};
   const steps = response.class_hexa.map((row, index) => {
-    const [sourceName, level, icon, , fragments, , , efficiency, , coreId] = row;
+    const [sourceName, level, icon, erda, fragments, , , efficiency, , coreId] = row;
     if (typeof sourceName !== 'string' || typeof icon !== 'string' || typeof coreId !== 'string' || !Number.isInteger(level) || level < 1 || level > 30) {
       throw new Error(`Invalid Maple Scouter step ${index + 1}`);
     }
@@ -31,7 +31,7 @@ export function inspectScouterResponse(response) {
     // whole checkpoint gain, including multi-level transitions.
     const fdGain = Number.isFinite(efficiency) && efficiency >= 0 && Number.isInteger(fragments) && fragments > 0
       ? Math.round(efficiency * fragments / 30 * 1e6) / 1e6 : null;
-    return { skill: skill || null, level, sourceName, coreId, icon, fdGain };
+    return { skill: skill || null, level, sourceName, coreId, icon, fdGain, sourceMaterials: { erda, frags: fragments } };
   });
   return { steps, unknown: [...unknown.values()], statIcons };
 }
@@ -50,7 +50,10 @@ export function resolveScouterResponse(inspected, mappings = {}) {
     const skill = row.skill || byKey.get(`${row.coreId}|${row.icon}`);
     const from = previous.get(skill) || 0;
     previous.set(skill, row.level);
-    return { skill, level: row.level, ...(row.fdGain === null || row.fdGain === undefined ? {} : { fdFrom: from, fdGain: row.fdGain }) };
+    return { skill, level: row.level,
+      ...(!/^HEXA Stat /.test(skill) && Number.isInteger(row.sourceMaterials?.erda) && Number.isInteger(row.sourceMaterials?.frags)
+        ? { sourceCost: { from, erda: row.sourceMaterials.erda, frags: row.sourceMaterials.frags } } : {}),
+      ...(row.fdGain === null || row.fdGain === undefined ? {} : { fdFrom: from, fdGain: row.fdGain }) };
   });
   return { steps, newNodes, statIcons: inspected.statIcons || {} };
 }
