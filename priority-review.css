@@ -8,7 +8,10 @@
 .review-name label{display:flex;align-items:center;gap:8px;color:var(--skill-accent,#d9d9d9)}
 .review-name img{width:24px;height:24px;flex:none;object-fit:cover}
 .review-name img[hidden]{display:none}
+.review-name label{display:grid;align-items:stretch;gap:4px;color:#aaa}
+.review-icon{position:relative;display:grid;place-items:center;width:24px;height:24px;flex:none;border:1px solid var(--skill-accent,#777);background:#303a32;color:#dce4de}.review-icon img{position:absolute;inset:0;width:24px;height:24px;object-fit:cover}.review-icon img[hidden]{display:none}
 .unknown-review{margin-top:16px;border:1px solid #596753;border-radius:7px;padding:12px}
 .unknown-review h3{margin:0}
 .unknown-review p{color:#aaa}
 .unknown-review .unknown-card label{display:grid;gap:5px}
+.review-name{grid-template-columns:minmax(0,1fr);gap:7px;padding:10px 6px}.review-identity,.unknown-identity{display:flex;align-items:center;gap:9px;min-width:0}.review-identity span{display:grid;gap:2px}.review-identity strong{color:var(--skill-accent,#d9d9d9)}.review-identity small{overflow-wrap:anywhere}.review-name label{display:grid;gap:4px;overflow:visible;white-space:normal}.unknown-identity img{width:24px;height:24px;object-fit:cover;flex:none}.unknown-identity img[hidden]{display:none}
