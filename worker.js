@@ -50,7 +50,8 @@ const record = value => value && typeof value === 'object' && !Array.isArray(val
 function resetHexa(hexa, origin) {
   if (!record(hexa) || !record(hexa.hexaSkill) || !record(hexa.hexaSkill_general) ||
       !Object.hasOwn(hexa, 'hexaStat') || !Object.hasOwn(hexa, 'hexaStat_opened') ||
-      !Object.hasOwn(hexa, origin) || !Object.hasOwn(hexa.hexaSkill, origin)) return false;
+      !Object.hasOwn(hexa, origin) || !Object.hasOwn(hexa.hexaSkill, origin) ||
+      !Number.isInteger(hexa.hexaStat) || hexa.hexaStat < 0 || typeof hexa.hexaStat_opened !== 'boolean') return false;
   hexa.hexaStat = 0;
   hexa.hexaStat_opened = false;
   for (const [key, value] of Object.entries(hexa)) {
@@ -100,7 +101,7 @@ export function inspectScouterRequest(payload) {
     if ((knownLevel || knownStat) && ['number', 'boolean'].includes(typeof value)) row.value = value;
     else if (knownLevel && /^[0-9]+$/.test(value)) row.value = value;
     else if (['sole','userStat.isGMS'].includes(path)) row.value = value;
-    else if (['myHexa.character_class','userStat.stat.myClass'].includes(path)) row.value = value === '호영' ? '호영' : '[redacted]';
+    else if (['myHexa.character_class','userStat.hexa.character_class','userStat.stat.myClass'].includes(path)) row.value = value === '호영' ? '호영' : '[redacted]';
     else if (typeof value !== 'object' || value === null) row.value = '[redacted]';
     fields.push(row);
     if (!knownLevel && !knownStat && !['hexaSkill','hexaSkill_general','myHexa','userStat.hexa'].includes(key) &&

@@ -166,3 +166,13 @@ const serviceSecret = 'diagnostic-test-token-at-least-32-characters';
 assert.equal((await worker.fetch(new Request(diagnosticUrl,{headers:{Authorization:'Bearer wrong'}}),{...diagnosticEnv,SCOUTER_DIAGNOSTIC_TOKEN:serviceSecret})).status,403);
 assert.equal((await worker.fetch(new Request(diagnosticUrl,{headers:{Authorization:'Bearer '+serviceSecret}}),{...diagnosticEnv,SCOUTER_DIAGNOSTIC_TOKEN:serviceSecret})).status,200);
 assert.equal((await worker.fetch(new Request(diagnosticUrl,{headers:{Authorization:'Bearer short'}}),{...diagnosticEnv,SCOUTER_DIAGNOSTIC_TOKEN:'short'})).status,403);
+
+for (const [field,value] of [['hexaStat','not-a-level'],['hexaStat_opened','true']]) {
+  const malformed = structuredClone(payload);
+  malformed.userStat.hexa[field] = value;
+  const raw = JSON.stringify(malformed);
+  const response = await worker.fetch(new Request(diagnosticUrl,{headers:adminHeaders}), {...diagnosticEnv,MAPLE_SCOUTER_REQUEST_PART_1:raw,MAPLE_SCOUTER_REQUEST_PART_2:' '});
+  const report = await response.json();
+  assert.match(report.requests[0].error,/cannot be reset/);
+  assert.equal(report.requests[0].validatedForClassSubstitution,false);
+}
