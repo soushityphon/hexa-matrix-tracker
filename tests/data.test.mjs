@@ -109,7 +109,7 @@ assert(matrixTotals({Apotheosis:2},'lotus_heroic').spent.frags===30,'later Apoth
 import { compareDraft, currentDraft, parseSteps, validateDraft } from '../priority-draft.js';
 import { inspectScouterResponse, resolveScouterResponse } from '../scouter-import.js';
 import { extractScouterOrder } from '../scouter-extract.js';
-import { loadPreview, previewCatalog } from '../preview-priorities.js';
+import { loadPreview, previewCatalog, matchingPriorityVersion } from '../preview-priorities.js';
 const draft=validateDraft(currentDraft('taotie_heroic'));
 assert(draft.steps.length===PRIORITIES.taotie_heroic.length,'review draft includes the current priority');
 assert(compareDraft(draft).changedSteps===0,'unchanged draft has no step changes');
@@ -151,6 +151,13 @@ assert(!previewCatalog(loadPreview(storage)).settings.lotus_heroic.enabled,'old 
 const localOrder={...currentDraft('lotus_interactive'),mode:'lotus_interactive_20260929',sourceMode:'lotus_interactive',isNew:true,name:'GMS Lotus Sol Erda test',enabled:true,steps:[{skill:'Harmony',level:1},{skill:'HEXA Stat I',level:20}]};
 const localCatalog=previewCatalog({[localOrder.mode]:validateDraft(localOrder)});
 assert(localCatalog.priorities[localOrder.mode].length===2&&localCatalog.settings[localOrder.mode].world==='interactive','new named version is available for the correct world');
+assert(matchingPriorityVersion(localOrder.steps,'lotus_interactive',{[localOrder.mode]:localOrder})===localOrder.mode,'saved order matches its material context');
+assert(matchingPriorityVersion(localOrder.steps,'lotus_heroic',{[localOrder.mode]:localOrder})===null,'a different material does not match');
+const savedSameAsGitHub={...currentDraft('lotus_heroic'),name:'Saved Scouter Lotus',enabled:true};
+assert(matchingPriorityVersion(PRIORITIES.lotus_heroic,'lotus_heroic',{lotus_heroic:savedSameAsGitHub})==='lotus_heroic','saved override is checked ahead of the repository capture');
+const savedNamedVersion={...nextVersion,name:'Saved named import'};
+assert(matchingPriorityVersion(PRIORITIES.lotus_heroic,'lotus_heroic',{[savedNamedVersion.mode]:savedNamedVersion})===savedNamedVersion.mode,'a named saved version wins over an identical repository capture');
+assert(matchingPriorityVersion(PRIORITIES.lotus_heroic,'lotus_heroic',{})==='lotus_heroic','repository capture still matches during migration');
 assert(nextCheckpoint({},localOrder.sourceMode,localCatalog.priorities[localOrder.mode]).next.skill==='Harmony','preview priority keeps exact checkpoint order');
 assertEqual(priorityRows({},localOrder.sourceMode,localCatalog.priorities[localOrder.mode])[1].cost,{erda:5,frags:10,rng:true},'preview HEXA Stat checkpoint includes fixed unlock plus RNG');
 assert(previewCatalog({}).settings.lotus_heroic.enabled,'removing staged override restores GitHub visibility');
