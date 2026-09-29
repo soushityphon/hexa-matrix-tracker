@@ -33,6 +33,21 @@ export function previewCatalog(drafts) {
   return { priorities, labels, settings, sources };
 }
 
+export function matchingPriorityVersion(steps, sourceMode, drafts) {
+  const source = PRIORITY_SETTINGS[sourceMode];
+  if (!source) return null;
+  const sameOrder = order => order.length === steps.length && order.every((step, index) =>
+    step.skill === steps[index].skill && step.level === steps[index].level);
+  // A saved Scouter import takes precedence when an older repository capture has
+  // the same checkpoints. Keep the latter available until the D1 migration.
+  for (const [mode, draft] of Object.entries(drafts)) {
+    const context = PRIORITY_SETTINGS[draft.sourceMode];
+    if (context?.patch === source.patch && context.world === source.world && sameOrder(draft.steps)) return mode;
+  }
+  return Object.keys(PRIORITIES).find(mode => PRIORITY_SETTINGS[mode].patch === source.patch &&
+    PRIORITY_SETTINGS[mode].world === source.world && PRIORITIES[mode].length && sameOrder(PRIORITIES[mode])) || null;
+}
+
 async function previewRequest(method, value) {
   const response = await fetch('/api/priority-preview', {
     method, headers: method === 'GET' ? {} : { 'Content-Type': 'application/json' },
