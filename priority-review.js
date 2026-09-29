@@ -45,7 +45,7 @@ function visibility(value) {
 }
 function renderRegistered() {
   const modes = registeredModes();
-  $('#registered-count').textContent = `(${modes.filter(mode => PRIORITIES[mode]?.length).length} GitHub${modes.some(mode => !PRIORITIES[mode]?.length) ? `, ${modes.filter(mode => !PRIORITIES[mode]?.length).length} test site preview` : ''})`;
+  $('#registered-count').textContent = `(${modes.length})`;
   const list = $('#registered');
   list.replaceChildren();
   for (const mode of modes) {
@@ -55,7 +55,7 @@ function renderRegistered() {
     const title = document.createElement('strong'); title.textContent = catalog.labels[mode];
     const source = document.createElement('small');
     const date = catalog.sources[mode]?.match(/\b\d{4}-\d{2}-\d{2}\b/)?.[0] || 'Date not recorded';
-    source.textContent = `${settings.patch === 'taotie' ? 'KMS Taotie' : 'GMS Lotus'} · ${settings.world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'} · ${catalog.priorities[mode].length} steps · ${date}`;
+    source.textContent = `${settings.patch === 'taotie' ? 'KMS Taotie' : 'GMS Lotus'} · ${settings.world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'} · ${catalog.priorities[mode].length} steps · ${date} · ${previewDrafts[mode] ? 'Saved on test site' : 'GitHub capture'}`;
     const note = document.createElement('small'); note.textContent = catalog.sources[mode] || 'Source not recorded';
     details.append(title, source, note);
     const actions = document.createElement('div'); actions.className = 'registered-actions';
