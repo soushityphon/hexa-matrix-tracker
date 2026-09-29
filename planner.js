@@ -119,15 +119,18 @@ export function displayPriorityRows(levels, mode, order = PRIORITIES[mode], unlo
   return display;
 }
 
-// Only report complete Scouter transitions. A partially levelled checkpoint
-// has no observed FD value for its remaining levels.
-export function sourceStepGains(order, row, currentLevel) {
-  let from = currentLevel;
-  const gains = [];
+// Compound complete source transitions. A partial or uncaptured transition
+// cannot supply the whole remaining gain for this displayed row.
+export function combinedSourceGain(order, row, currentLevel) {
+  const start = Math.max(row.from, currentLevel);
+  if (start >= row.level) return null;
+  let from = start;
+  let multiplier = 1;
   for (const step of order.slice(row.index - 1, row.endIndex)) {
-    if (step.skill !== row.skill || step.level <= currentLevel) continue;
-    if (step.fdFrom === from && Number.isFinite(step.fdGain)) gains.push(step);
+    if (step.skill !== row.skill || step.level <= start) continue;
+    if (step.fdFrom !== from || !Number.isFinite(step.fdGain)) return null;
+    multiplier *= 1 + step.fdGain / 100;
     from = step.level;
   }
-  return gains;
+  return from === row.level ? (multiplier - 1) * 100 : null;
 }

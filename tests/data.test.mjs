@@ -1,5 +1,5 @@
 import {COSTS,NODES,PRIORITIES,PRIORITY_SETTINGS,STAT_ICONS} from '../data.js';
-import {activeNodes,displayPriorityRows,matrixTotals,nextCheckpoint,priorityRows,rangeCost,sourceStepGains,statRemainingCost,taotieCatchUp} from '../planner.js';
+import {activeNodes,combinedSourceGain,displayPriorityRows,matrixTotals,nextCheckpoint,priorityRows,rangeCost,statRemainingCost,taotieCatchUp} from '../planner.js';
 import {readFileSync} from 'node:fs';
 const assert=(x,m)=>{if(!x)throw new Error(m)};
 const assertEqual=(actual,expected,message)=>assert(JSON.stringify(actual)===JSON.stringify(expected),message);
@@ -176,11 +176,12 @@ for (const mode of ['lotus_heroic','lotus_interactive']) {
   assert(Math.abs(captured.steps[0].fdGain-8.288333)<0.00001,`${mode} exact captured order gets the first source gain`);
   assert(withCapturedGains({sourceMode:mode,steps:[...steps].reverse()}).steps[0].fdGain===undefined,`${mode} different order cannot inherit source gain`);
   const firstRow=displayPriorityRows({},mode,captured.steps)[0];
-  assert(sourceStepGains(captured.steps,firstRow,0)[0].fdGain===captured.steps[0].fdGain,'full source transition has FD');
-  assert(sourceStepGains(captured.steps,firstRow,1).length===0,'completed source transition has no remaining FD');
+  assert(Math.abs(combinedSourceGain(captured.steps,firstRow,0)-captured.steps[0].fdGain)<1e-8,'full source transition has FD');
+  assert(combinedSourceGain(captured.steps,firstRow,1)===null,'completed source transition has no remaining FD');
 }
 const joined=[{skill:'Harmony',level:1,fdFrom:0,fdGain:8},{skill:'Talisman',level:1,fdFrom:0,fdGain:2},{skill:'Harmony',level:6,fdFrom:1,fdGain:3}];
 const joinedRow=displayPriorityRows({Talisman:1},'lotus_heroic',joined)[0];
-assertEqual(sourceStepGains(joined,joinedRow,0).map(s=>s.fdGain),[8,3],'combined row shows separate source gains');
-assertEqual(sourceStepGains(joined,joinedRow,2).map(s=>s.fdGain),[],'partial source range is not presented as remaining FD');
+assert(Math.abs(combinedSourceGain(joined,joinedRow,0)-11.24)<1e-8,'combined FD compounds complete source steps');
+assert(combinedSourceGain(joined,joinedRow,2)===null,'partial source range does not claim a whole gain');
+assert(combinedSourceGain([{skill:'Harmony',level:1,fdFrom:0,fdGain:8},{skill:'Harmony',level:6,fdFrom:1}],{...joinedRow,index:1,endIndex:2},0)===null,'missing source gain blocks a combined estimate');
 console.log('Data validation passed');
