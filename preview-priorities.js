@@ -1,14 +1,14 @@
 import { PRIORITY_SETTINGS } from './data.js';
 import { validateDraft } from './priority-draft.js';
-import { LOTUS_GAINS } from './source-gains.js';
+import { CAPTURED_GAINS } from './source-gains.js';
 
 export const PREVIEW_KEY = 'hexa-priority-preview-v1';
 
-// Legacy saved Lotus imports predate source FD storage. The captured gains
-// apply only if the entire live Scouter order matches its source capture.
+// Legacy saved imports predate source FD storage. Captured gains apply only
+// when the whole saved order and benchmark match the source capture.
 export function withCapturedGains(draft) {
-  const captured = LOTUS_GAINS[draft.sourceMode];
-  if (!captured || captured.length !== draft.steps.length || !captured.every(([skill, level], index) =>
+  const captured = CAPTURED_GAINS[draft.sourceMode];
+  if (!draft.source?.includes('benchmark 허수아비') || !captured || captured.length !== draft.steps.length || !captured.every(([skill, level], index) =>
     draft.steps[index].skill === skill && draft.steps[index].level === level)) return draft;
   return { ...draft, steps: draft.steps.map((step, index) => {
     if (step.fdGain !== undefined) return step;

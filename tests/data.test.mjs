@@ -110,7 +110,7 @@ import { compareDraft, currentDraft, parseSteps, validateDraft } from '../priori
 import { inspectScouterResponse, resolveScouterResponse } from '../scouter-import.js';
 import { extractScouterOrder } from '../scouter-extract.js';
 import { loadPreview, previewCatalog, matchingPriorityVersion, withCapturedGains } from '../preview-priorities.js';
-import { LOTUS_GAINS } from '../source-gains.js';
+import { CAPTURED_GAINS } from '../source-gains.js';
 const draft=validateDraft(currentDraft('taotie_heroic'));
 assert(draft.steps.length===PRIORITIES.taotie_heroic.length,'review draft includes the current priority');
 assert(compareDraft(draft).changedSteps===0,'unchanged draft has no step changes');
@@ -170,11 +170,15 @@ assertEqual(priorityRows({},localOrder.sourceMode,localCatalog.priorities[localO
 assertEqual(previewCatalog({}),{priorities:{},labels:{},settings:{},sources:{}},'empty or failed shared storage has no runtime priority baseline');
 assertEqual(Object.keys(previewCatalog({[localOrder.mode]:localOrder}).priorities),[localOrder.mode],'only saved imports are registered');
 assert(!previewCatalog({lotus_heroic:disabled}).settings.lotus_heroic.enabled,'disabled saved versions stay hidden');
-for (const mode of ['lotus_heroic','lotus_interactive']) {
-  const steps=LOTUS_GAINS[mode].map(([skill,level])=>({skill,level}));
-  const captured=withCapturedGains({sourceMode:mode,steps});
-  assert(Math.abs(captured.steps[0].fdGain-8.288333)<0.00001,`${mode} exact captured order gets the first source gain`);
-  assert(withCapturedGains({sourceMode:mode,steps:[...steps].reverse()}).steps[0].fdGain===undefined,`${mode} different order cannot inherit source gain`);
+for (const mode of ['lotus_heroic','lotus_interactive','taotie_heroic','taotie_interactive']) {
+  const steps=CAPTURED_GAINS[mode].map(([skill,level])=>({skill,level}));
+  const source='Maple Scouter order, benchmark 허수아비';
+  const captured=withCapturedGains({sourceMode:mode,source,steps});
+  const expected=mode.startsWith('lotus_')?8.288333:9.155;
+  assert(Math.abs(captured.steps[0].fdGain-expected)<0.00001,`${mode} exact captured order gets its own source gain`);
+  assert(withCapturedGains({sourceMode:mode,source,steps:[...steps].reverse()}).steps[0].fdGain===undefined,`${mode} different order cannot inherit source gain`);
+  assert(withCapturedGains({sourceMode:mode,source:'different benchmark',steps}).steps[0].fdGain===undefined,`${mode} different benchmark cannot inherit source gain`);
+  assert(withCapturedGains({sourceMode:mode,source,steps:[{...steps[0],fdFrom:0,fdGain:0.123},...steps.slice(1)]}).steps[0].fdGain===0.123,`${mode} fresh import retains its own Scouter gain`);
   const firstRow=displayPriorityRows({},mode,captured.steps)[0];
   assert(Math.abs(combinedSourceGain(captured.steps,firstRow,0).gain-captured.steps[0].fdGain)<1e-8,'full source transition has FD');
   assert(combinedSourceGain(captured.steps,firstRow,1)===null,'completed source transition has no remaining FD');
