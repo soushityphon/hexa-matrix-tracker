@@ -125,6 +125,14 @@ function highlightCurrentSkill(skill) {
   });
 }
 
+function upgradeAction(skill, target, label, nextLevel = false) {
+  return `<button type="button" data-upgrade-skill="${skill}" data-upgrade-level="${target}" ${nextLevel ? 'data-next-level="true"' : ''} aria-label="${label} for ${skill}">${label}</button>`;
+}
+
+function upgradeCost(label, cost, time, action = '') {
+  return `<div class="upgrade-cost"><div class="upgrade-cost-details"><span>${label}</span>${materials(cost, time)}</div>${action}</div>`;
+}
+
 function render() {
   const mode = syncPriorityOptions();
   if (!mode) {
@@ -165,7 +173,12 @@ function render() {
   $('#version-name').textContent = `${catalog.labels[mode]} / ${catalog.settings[mode].world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'}${previewDrafts[mode] ? ' / Test site preview' : ''}`;
   $('#progress').textContent = steps.length ? `${completed} / ${steps.length} complete` : 'Maple Scouter order pending';
   $('#next-upgrade').style.setProperty('--skill-accent', skillAccent(nextRow?.skill));
-  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><small>Next Upgrade</small><strong>${nextRow.skill} → ${nextRow.level}</strong>${nextIsStat ? `<div class="upgrade-cost"><span>${statUnlocked[next.skill] ? 'Level to 20' : 'Unlock and level to 20'}</span>${materials(nextRow.cost, null)}</div>` : `<div class="upgrade-cost"><span>Next level ${next.skill} → ${nextLevel}</span>${materials(levelCost, days(levelCost))}</div>${nextRow.level === nextLevel ? '' : `<div class="upgrade-cost"><span>To checkpoint ${nextRow.skill} → ${nextRow.level}</span>${materials(nextRow.cost, days(nextRow.cost))}</div>`}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
+  const nextIcon = nextRow && (previewDrafts[mode]?.statIcons[nextRow.skill] || STAT_ICONS[nextRow.skill] || nodeByShort[nextRow.skill]?.icon);
+  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><small>Next Upgrade</small><div class="upgrade-heading"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${nextRow.skill} → ${nextRow.level}</strong></div>${nextIsStat ? upgradeCost(statUnlocked[next.skill] ? 'Level to 20' : 'Unlock and level to 20', nextRow.cost, null) : `${upgradeCost(`Next level · ${nextLevel}`, levelCost, days(levelCost), upgradeAction(next.skill, nextLevel, `Mark level ${nextLevel}`, true))}${nextRow.level === nextLevel ? '' : upgradeCost(`Checkpoint · ${nextRow.level}`, nextRow.cost, days(nextRow.cost), upgradeAction(next.skill, nextRow.level, `Mark checkpoint ${nextRow.level}`))}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
+  $$('#next-upgrade .upgrade-heading img').forEach(img => {
+    img.addEventListener('error', () => { img.hidden = true; });
+    if (img.complete && !img.naturalWidth) img.hidden = true;
+  });
   if (catchUp) $('#next-upgrade').insertAdjacentHTML('beforeend', `<div class="metric catch-up"><small>Taotie catch-up</small><strong>Taotie → ${catchUp.target}</strong>${materials(catchUp.cost, days(catchUp.cost))}</div>`);
   let remainingIndex = 0;
   $('#priority').innerHTML = displayRows.map((row, rowIndex) => {
@@ -195,6 +208,17 @@ function render() {
 
 document.addEventListener('input', render);
 document.addEventListener('change', render);
+$('#next-upgrade').addEventListener('click', event => {
+  const button = event.target.closest('button[data-upgrade-skill]');
+  if (!button || !$('#next-upgrade').contains(button)) return;
+  const input = [...$$('[data-node]')].find(field => field.dataset.node === button.dataset.upgradeSkill);
+  if (!input) return;
+  const current = clamp(input.value, Number(input.max));
+  const target = button.dataset.nextLevel ? Math.min(current + 1, Number(input.max)) : clamp(button.dataset.upgradeLevel, Number(input.max));
+  if (target <= current) return;
+  input.value = target;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+});
 async function refreshSharedPriorities() {
   try {
     const drafts = await fetchSharedPreview();
