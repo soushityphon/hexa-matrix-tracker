@@ -1,0 +1,17 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Outgoing Scouter request audit</title><style>body{font:16px system-ui;max-width:1100px;margin:2rem auto;padding:1rem}table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:6px;border-bottom:1px solid #ccc;text-align:left;overflow-wrap:anywhere}code{overflow-wrap:anywhere}li{margin:.5rem 0}</style><h1>Outgoing Scouter request audit</h1><p>This read-only inspection prepares the configured requests without contacting Maple Scouter or saving priorities. Private values remain redacted. This page does not change browser progress.</p><p><a href="/priority-review.html">Back to Priority Review</a></p><div id="report" role="status">Inspecting configured requests.</div><script type="module">
+const root=document.querySelector('#report');
+const element=(tag,text)=>{const e=document.createElement(tag);e.textContent=text;return e;};
+try{
+ const response=await fetch('/api/scouter-request-diagnostic',{cache:'no-store'});
+ if(!response.ok)throw new Error('Owner access or request inspection is unavailable.');
+ const report=await response.json();root.replaceChildren();
+ for(const request of report.requests){
+ root.append(element('h2',request.mode));
+ if(request.error){root.append(element('p',request.error));continue;}
+ root.append(element('p',request.validatedForClassSubstitution?'Validated for the controlled test.':'Class substitution blocked pending schema review.'));
+ const list=element('ul','');for(const issue of request.issues)list.append(element('li',`${issue.path}: ${issue.reason}`));root.append(list);
+ const table=element('table',''),head=element('tr','');for(const label of ['Field path','Type','Outgoing value'])head.append(element('th',label));table.append(head);
+ for(const field of request.fields){const row=element('tr','');for(const value of [field.path,field.type,Object.hasOwn(field,'value')?JSON.stringify(field.value):''])row.append(element('td',value));table.append(row);}root.append(table);
+ }
+}catch(error){root.textContent=error.message;}
+</script></html>

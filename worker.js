@@ -72,11 +72,74 @@ function resetHexa(hexa, origin) {
       Object.entries(group).every(([key, value]) => value === (key === origin ? 1 : 0)));
 }
 
+export function prepareScouterRequest(mode, env) {
+  const kms = mode.startsWith('taotie_');
+  const part1 = kms ? env?.MAPLE_SCOUTER_KMS_REQUEST_PART_1 : env?.MAPLE_SCOUTER_REQUEST_PART_1;
+  const part2 = kms ? env?.MAPLE_SCOUTER_KMS_REQUEST_PART_2 : env?.MAPLE_SCOUTER_REQUEST_PART_2;
+  if (!part1 || !part2) throw new Error('Maple Scouter request is not configured for this update');
+  let payload;
+  try { payload = JSON.parse(part1 + part2); }
+  catch { throw new Error('Configured Maple Scouter request is invalid JSON'); }
+  if (payload?.myHexa?.character_class !== '호영' || payload?.userStat?.stat?.myClass !== '호영' || payload?.userStat?.isGMS !== !kms) throw new Error('Configured Hoyoung request has the wrong class or region');
+  if (!resetHexa(payload.myHexa, 'skillCore1') || !resetHexa(payload.userStat?.hexa, 'skillCore1')) throw new Error('Configured Hoyoung request cannot be reset to Origin 1, all other skills 0 and unopened HEXA Stats');
+  payload.sole = mode.endsWith('_interactive');
+  return payload;
+}
+
+// Values are allowlisted, not copied wholesale from a secret template. Unknown
+// fields retain their paths/types but never their private strings or statistics.
+export function inspectScouterRequest(payload) {
+  const fields = [], issues = [];
+  const type = value => value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value;
+  function walk(value, path = '') {
+    const key = path.split('.').at(-1);
+    const inHexa = /^(myHexa|userStat\.hexa)(\.|$)/.test(path);
+    const knownLevel = inHexa && coreKey.test(key);
+    const knownStat = inHexa && ['hexaStat', 'hexaStat_opened'].includes(key);
+    const row = { path: path || '$', type: type(value) };
+    if ((knownLevel || knownStat) && ['number', 'boolean'].includes(typeof value)) row.value = value;
+    else if (knownLevel && /^[0-9]+$/.test(value)) row.value = value;
+    else if (['sole','userStat.isGMS'].includes(path)) row.value = value;
+    else if (['myHexa.character_class','userStat.stat.myClass'].includes(path)) row.value = value === '호영' ? '호영' : '[redacted]';
+    else if (typeof value !== 'object' || value === null) row.value = '[redacted]';
+    fields.push(row);
+    if (!knownLevel && !knownStat && !['hexaSkill','hexaSkill_general','myHexa','userStat.hexa'].includes(key) &&
+        ((inHexa && /core|stat|level|opened|unlock/i.test(key)) || (!inHexa && /hexa|core|skill.*level/i.test(key)))) issues.push({ path, reason: 'Unrecognised HEXA or level field; value redacted, requires schema review' });
+    if (value && typeof value === 'object') for (const [child, item] of Object.entries(value)) walk(item, Array.isArray(value) ? `${path}[${child}]` : path ? `${path}.${child}` : child);
+  }
+  walk(payload);
+  const copies = ['myHexa','userStat.hexa'].map(path => {
+    const h = path === 'myHexa' ? payload.myHexa : payload.userStat?.hexa;
+    const cores = Object.keys(h || {}).filter(k => coreKey.test(k)).sort();
+    for (const key of cores) {
+      const group = key.startsWith('generalCore') ? 'hexaSkill_general' : 'hexaSkill';
+      if (!Object.hasOwn(h[group] || {}, key)) issues.push({ path: `${path}.${group}.${key}`, reason: 'Missing matching nested core' });
+    }
+    for (const group of ['hexaSkill','hexaSkill_general']) for (const key of Object.keys(h?.[group] || {})) if (!cores.includes(key)) issues.push({path:`${path}.${key}`,reason:'Missing matching top-level core'});
+    return { path, cores, origin: h?.skillCore1 === '1' && h?.hexaSkill?.skillCore1 === 1, presentSkillsReset: cores.every(k => h[k] === (k === 'skillCore1' ? '1' : '0')), scalarStatReset: h?.hexaStat === 0 && h?.hexaStat_opened === false };
+  });
+  if (JSON.stringify(copies[0].cores) !== JSON.stringify(copies[1].cores)) issues.push({ path:'userStat.hexa', reason:'Core inventories differ between copies' });
+  // Until the real schema is reviewed, a single scalar cannot prove Stats I-III.
+  issues.push({ path:'myHexa.hexaStat', reason:'Scalar Stat fields do not independently prove all three Stats are zero and unopened; schema confirmation required' });
+  return { fields, copies, issues, validatedForClassSubstitution: false, upstreamCalled: false, persisted: false };
+}
+
+async function requestDiagnostic(request, env) {
+  if (!isAdmin(request, env)) return new Response('Admin access required', {status:403, headers:noStore});
+  if (request.method !== 'GET') return new Response('Method not allowed', {status:405, headers:noStore});
+  const requests = ['lotus_heroic','lotus_interactive','taotie_heroic','taotie_interactive'].map(mode => {
+    try { return { mode, ...inspectScouterRequest(prepareScouterRequest(mode, env)) }; }
+    catch (error) { return {mode, error:error.message, validatedForClassSubstitution:false}; }
+  });
+  return Response.json({requests}, {headers:noStore});
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === '/api/scouter-request-diagnostic') return requestDiagnostic(request, env);
     if (url.pathname === '/api/priority-preview') return priorityPreview(request, env);
-    if (url.pathname === '/priority-review.html' && !isAdmin(request, env)) {
+    if (['/priority-review.html', '/scouter-request-diagnostic.html'].includes(url.pathname) && !isAdmin(request, env)) {
       return new Response('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Priority Review sign-in</title><main style="font:1rem system-ui;max-width:32rem;margin:12vh auto;padding:1.5rem"><h1>Priority Review</h1><p>Sign in as the site owner to edit priorities.</p><p><a href="/signin-with-chatgpt?return_to=%2Fpriority-review.html">Continue with ChatGPT</a></p><p><a href="/">Back to tracker</a></p></main></html>', { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
     }
     if (url.pathname === '/api/hexa-order') {
@@ -89,20 +152,9 @@ export default {
         selection = JSON.parse(body);
       } catch { return new Response('Invalid JSON', { status: 400 }); }
       if (!['lotus_heroic', 'lotus_interactive', 'taotie_heroic', 'taotie_interactive'].includes(selection?.mode)) return new Response('Supported Hoyoung mode required', { status: 400 });
-      const kms = selection.mode.startsWith('taotie_');
-      const part1 = kms ? env?.MAPLE_SCOUTER_KMS_REQUEST_PART_1 : env?.MAPLE_SCOUTER_REQUEST_PART_1;
-      const part2 = kms ? env?.MAPLE_SCOUTER_KMS_REQUEST_PART_2 : env?.MAPLE_SCOUTER_REQUEST_PART_2;
-      if (!env?.MAPLE_SCOUTER_API_KEY || !part1 || !part2) return new Response('Maple Scouter request is not configured for this update', { status: 503 });
-      try { payload = JSON.parse(part1 + part2); }
-      catch { return new Response('Configured Maple Scouter request is invalid JSON', { status: 503 }); }
-      if (payload?.myHexa?.character_class !== '호영' || payload?.userStat?.stat?.myClass !== '호영' || payload?.userStat?.isGMS !== !kms) {
-        return new Response('Configured Hoyoung request has the wrong class or region', { status: 503 });
-      }
-      const origin = originByClass[payload.myHexa.character_class];
-      if (!origin || !resetHexa(payload.myHexa, origin) || !resetHexa(payload.userStat?.hexa, origin)) {
-        return new Response('Configured Hoyoung request cannot be reset to Origin 1, all other skills 0 and unopened HEXA Stats', { status: 503 });
-      }
-      payload.sole = selection.mode.endsWith('_interactive');
+      if (!env?.MAPLE_SCOUTER_API_KEY) return new Response('Maple Scouter request is not configured for this update', { status: 503 });
+      try { payload = prepareScouterRequest(selection.mode, env); }
+      catch (error) { return new Response(error.message, { status: 503 }); }
       try {
         const upstream = await fetch(scouterUrl, {
           method: 'POST',

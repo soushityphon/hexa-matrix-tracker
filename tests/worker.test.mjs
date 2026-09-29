@@ -117,3 +117,47 @@ assert.equal((await worker.fetch(previewRequest('PUT', { draft: hidden }, { ...a
 assert.equal((await worker.fetch(previewRequest('PUT', { draft: hidden }, { ...adminHeaders, 'oai-authenticated-user-email': 'OWNER@example.test' }), adminEnv)).status, 200);
 
 console.log('Worker route validation passed');
+
+
+// Diagnostic reads the same prepared body, never calls Scouter or D1.
+const diagnosticUrl = 'https://preview.example/api/scouter-request-diagnostic';
+const diagnosticEnv = {...kmsEnv, ADMIN_EMAIL:'owner@example.test', DB:{prepare(){throw new Error('Diagnostic must not touch storage');}}};
+const oldDiagnosticFetch = globalThis.fetch;
+globalThis.fetch = () => {throw new Error('Diagnostic must not call upstream');};
+try {
+  assert.equal((await worker.fetch(new Request(diagnosticUrl), diagnosticEnv)).status,403);
+  assert.equal((await worker.fetch(new Request(diagnosticUrl,{headers:{'oai-authenticated-user-email':'other@example.test'}}), diagnosticEnv)).status,403);
+  const response = await worker.fetch(new Request(diagnosticUrl,{headers:adminHeaders}), diagnosticEnv);
+  assert.equal(response.status,200);
+  assert.equal(response.headers.get('Cache-Control'),'no-store');
+  const report = await response.json();
+  assert.equal(report.requests.length,4);
+  for (const r of report.requests) {
+    assert.equal(r.upstreamCalled,false);
+    assert.equal(r.validatedForClassSubstitution,false);
+    for (const path of ['myHexa','userStat.hexa']) {
+      assert.equal(r.fields.find(f=>f.path===path+'.skillCore1').value,'1');
+      assert.equal(r.fields.find(f=>f.path===path+'.hexaSkill.skillCore1').value,1);
+      assert.equal(r.fields.find(f=>f.path===path+'.hexaStat').value,0);
+      assert.equal(r.fields.find(f=>f.path===path+'.hexaStat_opened').value,false);
+    }
+    assert(r.issues.some(i=>/all three Stats/.test(i.reason)));
+  }
+  assert(!JSON.stringify(report).includes('test-key'));
+  const privatePayload = structuredClone(payload);
+  privatePayload.userStat.accountId='PRIVATE_ACCOUNT';
+  privatePayload.userStat.stat.attack=987654;
+  privatePayload.myHexa.hexaStat2=12;
+  privatePayload.myHexa.extraLevel=9;
+  privatePayload.myHexa.secretName='PRIVATE_CHARACTER';
+  privatePayload.myHexa.hexaSkill.masteryCore1=5;
+  delete privatePayload.myHexa.masteryCore1;
+  const raw = JSON.stringify(privatePayload);
+  const privateReport = await (await worker.fetch(new Request(diagnosticUrl,{headers:adminHeaders}), {...diagnosticEnv,MAPLE_SCOUTER_REQUEST_PART_1:raw,MAPLE_SCOUTER_REQUEST_PART_2:' '})).json();
+  const encoded = JSON.stringify(privateReport);
+  for(const secret of ['PRIVATE_ACCOUNT','PRIVATE_CHARACTER','987654']) assert(!encoded.includes(secret));
+  assert(privateReport.requests[0].issues.some(i=>i.path==='myHexa.hexaStat2'));
+  assert(privateReport.requests[0].issues.some(i=>i.path==='myHexa.extraLevel'));
+  assert(privateReport.requests[0].issues.some(i=>/Missing matching top-level/.test(i.reason)));
+} finally {globalThis.fetch=oldDiagnosticFetch;}
+console.log('Owner request diagnostic validation passed');
