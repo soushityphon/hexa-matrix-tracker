@@ -60,20 +60,25 @@ export function validateDraft(draft) {
   if (steps.some(step => step.skill === 'Taotie') && patch !== 'taotie') throw new Error('Taotie steps need the Taotie patch');
   if (steps.some(step => step.skill === 'Lotus') && patch === 'hecate') throw new Error('Lotus steps are not in the Hecate patch');
   const names = {};
+  const shortNames = {};
   for (const node of NODES) {
     const name = draft.names?.[node.short];
     if (typeof name !== 'string' || !name.trim()) throw new Error(`Enter a display name for ${node.short}`);
     names[node.short] = name.trim();
+    // Older saved imports did not have a separate priority-list label.
+    const shortName = draft.shortNames?.[node.short] ?? node.short;
+    if (typeof shortName !== 'string' || !shortName.trim()) throw new Error(`Enter a short display name for ${node.short}`);
+    shortNames[node.short] = shortName.trim();
   }
-  return { schema: 3, mode: draft.mode, sourceMode: draft.sourceMode || draft.mode, isNew: draft.isNew === true, enabled: draft.enabled === true, name: draft.name.trim(), source: String(draft.source || '').trim(), names, steps, newNodes, statIcons };
+  return { schema: 4, mode: draft.mode, sourceMode: draft.sourceMode || draft.mode, isNew: draft.isNew === true, enabled: draft.enabled === true, name: draft.name.trim(), source: String(draft.source || '').trim(), names, shortNames, steps, newNodes, statIcons };
 }
 
 export function currentDraft(mode) {
-  return { schema: 3, mode, sourceMode: mode, isNew: false, enabled: PRIORITY_SETTINGS[mode].enabled, name: PRIORITY_LABELS[mode], source: PRIORITY_SOURCES[mode], names: Object.fromEntries(NODES.map(node => [node.short, node.name])), steps: PRIORITIES[mode], newNodes: [], statIcons: {} };
+  return { schema: 4, mode, sourceMode: mode, isNew: false, enabled: PRIORITY_SETTINGS[mode].enabled, name: PRIORITY_LABELS[mode], source: PRIORITY_SOURCES[mode], names: Object.fromEntries(NODES.map(node => [node.short, node.name])), shortNames: Object.fromEntries(NODES.map(node => [node.short, node.short])), steps: PRIORITIES[mode], newNodes: [], statIcons: {} };
 }
 
 export function compareDraft(draft, current = PRIORITIES[draft.sourceMode || draft.mode] || []) {
-  const changedNames = NODES.filter(node => draft.names[node.short] !== node.name).length;
+  const changedNames = NODES.filter(node => draft.names[node.short] !== node.name || (draft.shortNames?.[node.short] ?? node.short) !== node.short).length;
   const changedSteps = draft.steps.filter((step, index) => step.skill !== current[index]?.skill || step.level !== current[index]?.level).length;
   return { changedNames, changedSteps, lengthDifference: draft.steps.length - current.length };
 }
