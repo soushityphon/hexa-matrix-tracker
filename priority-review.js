@@ -2,7 +2,7 @@ import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SETTINGS, PRIORITY_SOURCES
 import { compareDraft, currentDraft, parseSteps, validateDraft } from './priority-draft.js';
 import { inspectScouterResponse, resolveScouterResponse } from './scouter-import.js';
 import { extractScouterOrder } from './scouter-extract.js';
-import { loadPreview, previewCatalog, fetchSharedPreview, saveSharedPreview, removeSharedPreview } from './preview-priorities.js';
+import { loadPreview, previewCatalog, matchingPriorityVersion, fetchSharedPreview, saveSharedPreview, removeSharedPreview } from './preview-priorities.js';
 import { skillAccent } from './skill-colours.js';
 
 const $ = selector => document.querySelector(selector);
@@ -86,13 +86,8 @@ function renderRegistered() {
   }
 }
 
-function sameSteps(a, b) {
-  return a.length === b.length && a.every((step, index) => step.skill === b[index].skill && step.level === b[index].level);
-}
 function matchingVersion(steps, sourceMode) {
-  const settings = PRIORITY_SETTINGS[sourceMode];
-  return Object.keys(PRIORITIES).find(mode => PRIORITY_SETTINGS[mode].patch === settings.patch && PRIORITY_SETTINGS[mode].world === settings.world && PRIORITIES[mode].length && sameSteps(steps, PRIORITIES[mode]))
-    || Object.keys(previewDrafts).find(mode => catalog.settings[mode].patch === settings.patch && catalog.settings[mode].world === settings.world && sameSteps(steps, previewDrafts[mode].steps));
+  return matchingPriorityVersion(steps, sourceMode, previewDrafts);
 }
 function classifyOrder() {
   const sourceMode = $('#mode').value;
@@ -100,9 +95,9 @@ function classifyOrder() {
   const settings = PRIORITY_SETTINGS[sourceMode];
   const match = matchingVersion(steps, sourceMode);
   if (match) {
-    if (previewDrafts[match]?.isNew) {
+    if (previewDrafts[match]) {
       show(previewDrafts[match]);
-      message(`No new priority: ${steps.length} steps match your saved test site preview, ${previewDrafts[match].name}.`);
+      message(`No new priority: ${steps.length} steps match your saved test site version, ${previewDrafts[match].name}.`);
       return;
     }
     version = { sourceMode: match, mode: match, isNew: false };
