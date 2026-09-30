@@ -5,14 +5,15 @@ import { currentDraft } from '../priority-draft.js';
 const url = 'https://preview.example/api/hexa-order';
 const dirtyHexa = { character_class: '호영', hexaStat: 2, hexaStat_opened: true, skillCore1: '12', skillCore2: '5', masteryCore1: '4', reinCore1: '3', generalCore1: '2', hexaSkill: { skillCore1: 12, skillCore2: 5, masteryCore1: 4, reinCore1: 3 }, hexaSkill_general: { generalCore1: 2 } };
 const payload = { myHexa: structuredClone(dirtyHexa), userStat: { stat: { myClass: '호영' }, isGMS: true, hexa: structuredClone(dirtyHexa) }, sole: false };
-const request = mode => new Request(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }) });
+const request = mode => new Request(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'oai-authenticated-user-email':'owner@example.test' }, body: JSON.stringify({ mode }) });
 const template = JSON.stringify(payload);
-const env = { MAPLE_SCOUTER_API_KEY: 'test-key', MAPLE_SCOUTER_REQUEST_PART_1: template.slice(0, 30), MAPLE_SCOUTER_REQUEST_PART_2: template.slice(30) };
+const env = { ADMIN_EMAIL:'owner@example.test', MAPLE_SCOUTER_API_KEY: 'test-key', MAPLE_SCOUTER_REQUEST_PART_1: template.slice(0, 30), MAPLE_SCOUTER_REQUEST_PART_2: template.slice(30) };
 const kmsPayload = { ...payload, userStat: { ...payload.userStat, isGMS: false, hexa: structuredClone(dirtyHexa) }, myHexa: structuredClone(dirtyHexa) };
 const kmsTemplate = JSON.stringify(kmsPayload);
 const kmsEnv = { ...env, MAPLE_SCOUTER_KMS_REQUEST_PART_1: kmsTemplate.slice(0, 40), MAPLE_SCOUTER_KMS_REQUEST_PART_2: kmsTemplate.slice(40) };
 
-assert.equal((await worker.fetch(request('lotus_heroic'), {})).status, 503);
+assert.equal((await worker.fetch(request('lotus_heroic'), {})).status, 403);
+assert.equal((await worker.fetch(new Request(url,{method:'POST',body:JSON.stringify({mode:'lotus_heroic'})}),env)).status,403);
 assert.equal((await worker.fetch(request('taotie_heroic'), env)).status, 503);
 for (const mode of ['lotus_heroic', 'taotie_interactive']) {
   const base = mode.startsWith('lotus_') ? payload : kmsPayload;
@@ -32,7 +33,7 @@ for (const mode of ['lotus_heroic', 'taotie_interactive']) {
 }
 const invalidTemplate = JSON.stringify({ ...payload, userStat: { ...payload.userStat, isGMS: false } });
 assert.equal((await worker.fetch(request('lotus_heroic'), { ...env, MAPLE_SCOUTER_REQUEST_PART_1: invalidTemplate.slice(0, 30), MAPLE_SCOUTER_REQUEST_PART_2: invalidTemplate.slice(30) })).status, 503);
-assert.equal((await worker.fetch(new Request(url, { method: 'GET' }), env)).status, 405);
+assert.equal((await worker.fetch(new Request(url, { method: 'GET', headers:{'oai-authenticated-user-email':'owner@example.test'} }), env)).status, 405);
 
 const originalFetch = globalThis.fetch;
 try {
@@ -75,6 +76,7 @@ const DB = {
     let values = [];
     return {
       bind(...args) { values = args; return this; },
+      async first() { return null; },
       async all() { assert.match(sql, /^SELECT /); return { results: [...previews].map(([mode, draft_json]) => ({ mode, draft_json })) }; },
       async run() {
         if (sql.startsWith('DELETE ')) previews.delete(values[0]);

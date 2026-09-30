@@ -1,4 +1,5 @@
 // Bundled with the static files by scripts/build-worker.mjs.
+import { validateSkills, validatePair, applySkills } from './admin-panel-model.js';
 import { validateDraft } from './priority-draft.js';
 import { scouterRequestContext } from './scouter-request-context.js';
 import { acquireScouterCatalogue, catalogueSelection } from './scouter-catalogue-acquisition.js';
@@ -20,7 +21,8 @@ async function priorityPreview(request, env) {
           if (draft.mode === row.mode && !draft.newNodes.length) drafts[row.mode] = draft;
         } catch { /* An invalid saved version cannot be shown. */ }
       }
-      return Response.json({ drafts }, { headers: noStore });
+      const review = await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind('호영').first();
+      return Response.json({ drafts: applySkills(drafts, review ? JSON.parse(review.review_json) : null) }, { headers: noStore });
     }
     if (!['PUT', 'DELETE'].includes(request.method)) return new Response('Method not allowed', { status: 405 });
     if (!isAdmin(request, env)) return new Response('Admin access required', { status: 403 });
@@ -43,6 +45,50 @@ async function priorityPreview(request, env) {
     return Response.json({ saved: draft.mode }, { headers: noStore });
   } catch { return new Response('Priority preview storage failed. Try again later.', { status: 503 }); }
 }
+async function adminPanel(request, env) {
+  if (!isAdmin(request, env)) return new Response('Admin access required', {status:403,headers:noStore});
+  if (!env?.DB) return new Response('Admin storage is unavailable', {status:503,headers:noStore});
+  try {
+    const rows = await env.DB.prepare('SELECT mode, draft_json FROM priority_preview').all();
+    const drafts = Object.fromEntries((rows.results || []).map(row => [row.mode, validateDraft(JSON.parse(row.draft_json))]));
+    if (request.method === 'GET') {
+      const review = await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind('호영').first();
+      return Response.json({drafts, skills:review ? validateSkills(JSON.parse(review.review_json)) : null}, {headers:noStore});
+    }
+    if (!['PUT','POST','PATCH','DELETE'].includes(request.method)) return new Response('Method not allowed', {status:405});
+    if (Number(request.headers.get('content-length')) > 250000) return new Response('Payload too large', {status:413});
+    const text = await request.text();
+    if (text.length > 250000) return new Response('Payload too large', {status:413});
+    let value;
+    try { value = JSON.parse(text); } catch { return new Response('Invalid JSON', {status:400}); }
+    let changes;
+    try {
+      if (request.method === 'PUT') {
+        const review = validateSkills(value);
+        await env.DB.prepare('INSERT INTO admin_skills (job, review_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(job) DO UPDATE SET review_json = excluded.review_json, updated_at = excluded.updated_at').bind(review.job, JSON.stringify(review), new Date().toISOString()).run();
+        return Response.json({saved:true}, {headers:noStore});
+      }
+      if (request.method === 'POST') {
+        changes = value.legacyDraft ? [validateDraft(value.legacyDraft)] : validatePair(value);
+        if (changes.some(draft => Object.hasOwn(drafts,draft.mode))) throw new Error('This priority pair already exists');
+      } else {
+        const targets = Object.values(drafts).filter(draft => draft.pairId === value.id || (!draft.pairId && draft.mode === value.id));
+        if (!targets.length) throw new Error('Saved priority not found');
+        if (request.method === 'DELETE') {
+          await env.DB.batch(targets.map(draft => env.DB.prepare('DELETE FROM priority_preview WHERE mode = ?').bind(draft.mode)));
+          return Response.json({removed:value.id}, {headers:noStore});
+        }
+        if ((value.name !== undefined && (typeof value.name !== 'string' || !value.name.trim() || value.name.length > 120)) || (value.enabled !== undefined && typeof value.enabled !== 'boolean')) throw new Error('Invalid priority changes');
+        changes = targets.map(draft => validateDraft({...draft, ...(value.enabled === undefined ? {} : {enabled:value.enabled}), ...(value.name === undefined ? {} : draft.pairId ? {pairName:value.name.trim(), name:value.name.trim() + ' | ' + (draft.sourceMode.endsWith('_heroic') ? 'Heroic' : 'Interactive')} : {name:value.name.trim()})}));
+      }
+      if (changes.some(draft => draft.newNodes.length)) throw new Error('New skills still need tracker support before saving a priority');
+    } catch (error) { return new Response(error.message, {status:400,headers:noStore}); }
+    // Both variants commit together, or neither commits.
+    await env.DB.batch(changes.map(draft => env.DB.prepare('INSERT INTO priority_preview (mode, draft_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(mode) DO UPDATE SET draft_json = excluded.draft_json, updated_at = excluded.updated_at').bind(draft.mode,JSON.stringify(draft),new Date().toISOString())));
+    return Response.json({saved:changes.map(draft=>draft.mode)}, {headers:noStore});
+  } catch { return new Response('Admin storage failed. Your edits have not been discarded. Try again later.', {status:503,headers:noStore}); }
+}
+
 // Each Scouter request starts from the job's fixed Origin baseline, regardless of
 // the account levels in the saved template. Add other jobs' Origin IDs here only
 // when their request schema has been verified.
@@ -160,6 +206,7 @@ async function requestDiagnostic(request, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === '/api/admin-panel') return adminPanel(request, env);
     if (url.pathname === '/api/scouter-catalogue') {
       if (!isAdmin(request, env)) return new Response('Admin access required', {status:403, headers:noStore});
       if (request.method !== 'GET') return new Response('Method not allowed', {status:405, headers:noStore});
@@ -177,6 +224,7 @@ export default {
       return new Response('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Panel sign-in</title><main style="font:1rem system-ui;max-width:32rem;margin:12vh auto;padding:1.5rem"><h1>Admin Panel</h1><p>Sign in as the site owner to edit priorities.</p><p><a href="/signin-with-chatgpt?return_to=%2Fpriority-review.html">Continue with ChatGPT</a></p><p><a href="/">Back to tracker</a></p></main></html>', { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
     }
     if (url.pathname === '/api/hexa-order') {
+      if (!isAdmin(request, env)) return new Response('Admin access required', {status:403,headers:noStore});
       if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
       if (Number(request.headers.get('content-length')) > 1_000) return new Response('Payload too large', { status: 413 });
       let selection, payload;

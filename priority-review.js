@@ -1,469 +1,175 @@
-import { NODES, PRIORITY_SETTINGS, STAT_ICONS } from './data.js';
-import { compareDraft, parseSteps, validateDraft } from './priority-draft.js';
-import { inspectScouterResponse, resolveScouterResponse } from './scouter-import.js';
+import { NODES, STAT_ICONS } from './data.js';
+import { inspectScouterResponse } from './scouter-import.js';
 import { extractScouterOrder } from './scouter-extract.js';
-import { loadPreview, previewCatalog, matchingPriorityVersion, fetchSharedPreview, saveSharedPreview, removeSharedPreview } from './preview-priorities.js';
+import { categories, defaultTags, trackerSkill, mergeSkills, validateSkills, validatePair, priorityGroups, orderMatches } from './admin-panel-model.js';
 import { skillAccent } from './skill-colours.js';
-import { skillCostReview } from './skill-cost-review.js';
 
 const $ = selector => document.querySelector(selector);
-const key = 'hexa-priority-review-v1';
-let saved = {};
-let inspected = null;
-let importedNodes = [];
-let importedSteps = null;
-let importedStatIcons = {};
-let version = null;
-let previewDrafts = {};
-let catalog = previewCatalog(previewDrafts);
-let materialIssues = 0;
-let pendingSource = '';
-const recentOrders = new Map();
-const recentFailures = new Map();
-const recentOrderMs = 5 * 60 * 1000;
-const limitKey = 'hexa-scouter-pause-until';
+const el = (tag, text, className) => { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; };
+let drafts = {}, rows = [], orders = {}, captureRegion = null, skillDirty = false, loaded = false, busy = false;
+const cache = new Map();
+const pauseKey = 'hexa-scouter-pause-until';
 let pauseUntil = 0;
-try { pauseUntil = Number(sessionStorage.getItem(limitKey)) || 0; } catch { /* Session storage may be unavailable. */ }
-try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { saved = {}; }
-const registeredModes = () => Object.keys(catalog.priorities).filter(mode => catalog.priorities[mode].length);
-function contextLabel(mode) {
-  const settings = PRIORITY_SETTINGS[mode];
-  const update = { hecate: 'Historical Hecate', lotus: 'GMS Lotus', taotie: 'KMS Taotie' }[settings.patch];
-  const material = settings.world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)';
-  return `Hoyoung · ${update} · ${material}`;
+try { pauseUntil = Number(sessionStorage.getItem(pauseKey)) || 0; } catch { /* In-page fallback. */ }
+const sourceMode = (region, world) => `${region === 'KMS' ? 'taotie' : 'lotus'}_${world}`;
+function message(text, error = false) { $('#status').textContent = text; $('#status').classList.toggle('error', error); }
+async function request(url, method='GET', value) {
+  const response = await fetch(url,{method,cache:'no-store',...(value === undefined ? {} : {headers:{'Content-Type':'application/json'},body:JSON.stringify(value)})});
+  if (!response.ok) throw new Error((await response.text()).slice(0,200) || `Request returned ${response.status}`);
+  return response.json();
 }
-function sourceOptions() {
-  return Object.keys(PRIORITY_SETTINGS).map(mode => new Option(contextLabel(mode), mode));
+async function cachedRequest(key, url, method, value) {
+  const old = cache.get(key);
+  if (old && Date.now()-old.at < 300000) return structuredClone(old.value);
+  const result = await request(url,method,value); cache.set(key,{at:Date.now(),value:result}); return result;
 }
-function blankDraft(mode) {
-  return { mode, sourceMode: mode, isNew: false, enabled: false, name: '', source: '',
-    names: Object.fromEntries(NODES.map(node => [node.short, node.name])), shortNames: Object.fromEntries(NODES.map(node => [node.short, node.short])), steps: [], newNodes: [], statIcons: {} };
+function controls() {
+  $('#grab').disabled = !loaded || busy;
+  $('#save-skills').disabled = !loaded || busy || !rows.length;
+  $('#add-tags').disabled = !loaded || busy || !rows.length;
+  $('#save-pair').disabled = !loaded || busy || !orders.heroic || !orders.interactive || captureRegion !== $('#region').value;
+  $('#job').disabled = busy; $('#region').disabled = busy;
 }
-function refreshCatalog() {
-  catalog = previewCatalog(previewDrafts);
-  const selected = $('#mode').value;
-  $('#mode').replaceChildren(...sourceOptions());
-  $('#mode').value = selected || 'lotus_heroic';
-  renderRegistered();
+function tab(name) {
+  for (const key of ['skills','priorities']) { const selected = key === name; $(`#${key}-tab`).setAttribute('aria-selected', String(selected)); $(`#${key}-tab`).tabIndex = selected ? 0 : -1; $(`#${key}-panel`).hidden = !selected; }
 }
-function visibility(value) {
-  document.querySelectorAll('[name="visibility"]').forEach(input => { input.checked = value !== null && input.value === (value ? 'enabled' : 'disabled'); });
+for (const name of ['skills','priorities']) {
+  $(`#${name}-tab`).addEventListener('click',()=>tab(name));
+  $(`#${name}-tab`).addEventListener('keydown',event=>{if (['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) {event.preventDefault();const next=event.key==='Home'?'skills':event.key==='End'?'priorities':name==='skills'?'priorities':'skills';tab(next);$(`#${next}-tab`).focus();}});
 }
-function renderCostReview() {
-  const steps = importedSteps || [];
-  const stats = Object.keys(STAT_ICONS).map(short => ({ short, name: short, icon: importedStatIcons[short] || STAT_ICONS[short], type: 'HEXA Stat' }));
-  const rows = skillCostReview([...NODES, ...importedNodes.map(node => ({ ...node, unreviewed: true })), ...stats], steps);
-  const observations = rows.reduce((sum, row) => sum + row.observations.length, 0);
-  $('#cost-context').textContent = `${contextLabel(version.sourceMode)} · ${observations} exact fixed-cost transition${observations === 1 ? '' : 's'} saved in this draft. ${observations ? 'A multi-level total checks the range only.' : 'Older saved versions may have no cost observations. Run a new check to collect them.'}`;
-  const list = $('#cost-list'); list.replaceChildren();
+function icon(source) {
+  const box = el('span', source.sourceName?.[0] || '?', 'skill-icon');
+  const img = el('img'); img.src = source.effectiveIcon || source.icon; img.alt = ''; img.addEventListener('error',()=>{img.hidden=true;}); box.append(img); return box;
+}
+function field(label, row, key, options) {
+  const wrapper = el('label',label);
+  const input = el(options ? 'select' : 'input');
+  if (options) for (const value of ['',...options]) input.append(new Option(value || 'Choose category',value));
+  else {input.type='text';input.maxLength=120;}
+  input.value = row[key] || '';
+  input.addEventListener('input',()=>{row[key]=input.value;skillDirty=true;});
+  wrapper.append(input); return wrapper;
+}
+function renderSkills() {
+  $('#skill-count').textContent = `(${rows.length})`; $('#skills').replaceChildren();
+  if (!rows.length) {$('#skills').append(el('p','Grab Scouter info to load this class’s skills.','fine'));return;}
   for (const row of rows) {
-    const card = document.createElement('details'); card.className = `cost-skill cost-${row.state}`;
-    const summary = document.createElement('summary');
-    const iconBox = document.createElement('span'); iconBox.className = 'review-icon';
-    const fallback = document.createElement('span'); fallback.setAttribute('aria-hidden', 'true'); fallback.textContent = row.short[0] || '?';
-    const icon = document.createElement('img'); icon.src = row.icon; icon.alt = '';
-    icon.addEventListener('error', () => { icon.hidden = true; });
-    iconBox.append(fallback, icon);
-    const identity = document.createElement('span'); identity.className = 'cost-identity';
-    const name = document.createElement('strong'); name.textContent = version && document.querySelector(`[data-name="${CSS.escape(row.short)}"]`)?.value || row.name;
-    const meta = document.createElement('small'); meta.textContent = `${row.category} · ${row.short} · ${row.type}`;
-    identity.append(name, meta);
-    const status = document.createElement('span'); status.className = 'cost-status';
-    status.textContent = { rng: 'RNG levelling', pending: 'Cost review needed', missing: 'Schedule missing', mismatch: 'Cost mismatch', matches: `${row.observations.length} source match${row.observations.length === 1 ? '' : 'es'}`, unobserved: 'No source costs saved' }[row.state];
-    summary.append(iconBox, identity, status); card.append(summary);
-    const content = document.createElement('div'); content.className = 'cost-content';
-    const note = document.createElement('p');
-    note.textContent = row.state === 'rng' ? `Fixed unlock: ${row.unlock.erda} Sol Erda / ${row.unlock.frags} Fragments. Later rolls have no fixed cost.`
-      : row.state === 'pending' ? 'New skill. Its category and full cost schedule still need review before this order can be visible.'
-      : `Tracker schedule: ${row.type}, levels 1–30. ${row.oneLevelCount} observed one-level transitions; ${row.aggregateCount} aggregate transitions. An aggregate does not verify each level inside it.`;
-    content.append(note);
-    if (row.observations.length) {
-      const table = document.createElement('table'); table.className = 'cost-table';
-      const head = document.createElement('thead'); head.innerHTML = '<tr><th>Scouter step</th><th>Observed total</th><th>Tracker total</th><th>Check</th></tr>'; table.append(head);
-      const body = document.createElement('tbody');
-      for (const observation of row.observations) {
-        const tr = document.createElement('tr');
-        for (const value of [`${observation.from}→${observation.to}${observation.oneLevel ? '' : ' (range)'}`, `${observation.erda} / ${observation.frags}`, observation.expected ? `${observation.expected.erda} / ${observation.expected.frags}` : 'No verified schedule', observation.expected ? observation.matches ? 'Matches' : 'Mismatch' : 'Review needed']) {
-          const cell = document.createElement('td'); cell.textContent = value; tr.append(cell);
-        }
-        body.append(tr);
-      }
-      table.append(body); content.append(table);
+    const card=el('div',undefined,'skill-row');card.style.setProperty('--skill-accent',skillAccent(trackerSkill(row.source)?.short || row.coreId));
+    const identity=el('div',undefined,'skill-identity'), text=el('span');text.append(el('strong',row.source.sourceName),el('small',row.coreId));identity.append(icon(row.source),text);
+    card.append(identity,field('Long name',row,'name'),field('Short name',row,'shortName'),field('Category',row,'category',row.coreId.startsWith('hexastat') ? ['HEXA Stat'] : categories.filter(category=>category!=='HEXA Stat')),field('Tag',row,'tag'));
+    if (row.conflicts?.length) {
+      const conflict=el('label','Saved versions use different names. Choose one or enter your own.','skill-conflict'), select=el('select');select.append(new Option('Choose saved names',''));
+      row.conflicts.forEach((value,i)=>select.append(new Option(`${value.name} / ${value.shortName}`,String(i))));
+      select.addEventListener('change',()=>{if(select.value==='')return;Object.assign(row,row.conflicts[Number(select.value)],{conflicts:[]});skillDirty=true;renderSkills();});conflict.append(select);card.append(conflict);
     }
-    if (row.schedule) {
-      const schedule = document.createElement('details'); schedule.className = 'cost-schedule';
-      const label = document.createElement('summary'); label.textContent = 'View tracker costs for levels 1–30'; schedule.append(label);
-      const grid = document.createElement('div'); grid.className = 'cost-levels';
-      row.schedule.forEach((cost, index) => {
-        const level = document.createElement('span'); level.textContent = `${index + 1}: ${cost.erda} / ${cost.frags}`; grid.append(level);
-      });
-      schedule.append(grid); content.append(schedule);
-    }
-    card.append(content); list.append(card);
+    $('#skills').append(card);
   }
 }
-function renderRegistered() {
-  const modes = registeredModes();
-  $('#registered-count').textContent = `(${modes.length})`;
-  const list = $('#registered');
-  list.replaceChildren();
-  for (const mode of modes) {
-    const settings = catalog.settings[mode];
-    const row = document.createElement('article'); row.className = 'registered-row';
-    const details = document.createElement('div'); details.className = 'registered-details';
-    const title = document.createElement('strong'); title.textContent = catalog.labels[mode];
-    const source = document.createElement('small');
-    const date = catalog.sources[mode]?.match(/\b\d{4}-\d{2}-\d{2}\b/)?.[0] || 'Date not recorded';
-    source.textContent = `${contextLabel(previewDrafts[mode].sourceMode)} · ${catalog.priorities[mode].length} steps · ${date} · Saved on test site`;
-    const note = document.createElement('small'); note.textContent = catalog.sources[mode] || 'Source not recorded';
-    details.append(title, source, note);
-    const actions = document.createElement('div'); actions.className = 'registered-actions';
-    const badge = document.createElement('span'); badge.className = settings.enabled ? 'visible' : 'disabled'; badge.textContent = `${settings.enabled ? 'Visible' : 'Hidden'} on test site`;
-    const review = document.createElement('button'); review.type = 'button'; review.textContent = 'Review';
-    review.addEventListener('click', () => { $('#mode').value = previewDrafts[mode].sourceMode; show(previewDrafts[mode]); $('#draft-heading').scrollIntoView({ behavior: 'smooth' }); });
-    const rename = document.createElement('button'); rename.type = 'button'; rename.textContent = 'Rename';
-    rename.addEventListener('click', () => { review.click(); $('#name').focus(); });
-    const toggle = document.createElement('button'); toggle.type = 'button'; toggle.textContent = settings.enabled ? 'Disable' : 'Enable';
-    toggle.addEventListener('click', async () => {
-      try {
-        const draft = { ...previewDrafts[mode], enabled: !settings.enabled };
-        await saveSharedPreview(draft);
-        previewDrafts[draft.mode] = draft;
-        refreshCatalog();
-        show(draft);
-        message(`${draft.name} is ${draft.enabled ? 'visible' : 'hidden'} on the private test tracker. Public publishing is a separate step.`);
-      } catch (error) { message(error.message, true); }
-    });
-    actions.append(badge, review, rename, toggle);
-    const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'Remove saved version';
-    remove.addEventListener('click', async () => {
-      if (!confirm(`Remove ${previewDrafts[mode].name} from the private test site? This removes its saved order.`)) return;
-      try { const sourceMode = previewDrafts[mode].sourceMode; await removeSharedPreview(mode); delete previewDrafts[mode]; refreshCatalog(); show(blankDraft(sourceMode)); message('Saved version removed from the private test site.'); }
-      catch (error) { message(error.message, true); }
-    });
-    actions.append(remove);
-    row.append(details, actions); list.append(row);
-  }
+function draftFromResponse(response, region, world) {
+  const mode=sourceMode(region,world), extracted=extractScouterOrder(response,mode);
+  if (extracted.unknown.length) throw new Error(`${extracted.unknown.length} unfamiliar skills need tracker support. Their names can be reviewed in Skills.`);
+  if (extracted.validation.issues.length) throw new Error('The response did not pass the existing order checks. No priorities were changed.');
+  const inspected=inspectScouterResponse(response);
+  return {sourceMode:mode,steps:extracted.steps,statIcons:inspected.statIcons,newNodes:[],names:Object.fromEntries(NODES.map(node=>[node.short,node.name])),shortNames:Object.fromEntries(NODES.map(node=>[node.short,node.short])),source:`Maple Scouter ${region}, checked ${new Date().toISOString()}, benchmark ${String(response.standard || 'not recorded').slice(0,80)}`};
 }
-
-function matchingVersion(steps, sourceMode) {
-  return matchingPriorityVersion(steps, sourceMode, previewDrafts);
-}
-function classifyOrder() {
-  const sourceMode = $('#mode').value;
-  const steps = parseSteps($('#steps').value, importedNodes.map(node => node.short));
-  const settings = PRIORITY_SETTINGS[sourceMode];
-  const match = matchingVersion(steps, sourceMode);
-  if (match) {
-    const existing = previewDrafts[match];
-    const matched = importedSteps?.length === steps.length && importedSteps.every((step, index) => step.skill === steps[index].skill && step.level === steps[index].level);
-    show({ ...existing, steps: matched ? importedSteps : existing.steps });
-    message(`No new priority: ${steps.length} steps match your saved test site version, ${existing.name}. Save to retain newly captured source costs and FD.`);
-    return;
-  } else {
-    const stamp = new Date().toISOString().slice(0, 10).replaceAll('-', '');
-    const base = `${settings.patch}_${settings.world}_${stamp}`;
-    let mode = base;
-    for (let number = 2; Object.hasOwn(catalog.priorities, mode); number++) mode = `${base}_${number}`;
-    version = { sourceMode, mode, isNew: true };
-    $('#priority-id').value = mode;
-    $('#name').value = '';
-    $('#source').value = pendingSource;
-    visibility(null);
-    $('#version-state').textContent = 'New order. Name it and choose whether to show it on the tracker.';
-    message(`New priority: ${steps.length} steps. Name it, choose visibility, then save it to the preview tracker.`);
-  }
-}
-function compareResponse(response) {
-  const extracted = extractScouterOrder(response, $('#mode').value);
-  const issueCount = extracted.validation.issues.length;
-  pendingSource = `Maple Scouter ${$('#mode').value.startsWith('taotie_') ? 'KMS Taotie' : 'GMS Lotus'} ${$('#mode').value.endsWith('_heroic') ? 'Fragments' : 'Sol Erda'}, checked ${new Date().toISOString().slice(0, 10)}${extracted.source.standard ? `, benchmark ${String(extracted.source.standard).slice(0, 80)}` : ''}`;
-  inspected = inspectScouterResponse(response);
-  renderUnknown(inspected.unknown);
-  importedNodes = [];
-  importedStatIcons = inspected.statIcons;
-  if (!inspected.unknown.length) {
-    collectUnknown();
-    classifyOrder();
-    inspected = null;
-    persist();
-  } else {
-    message(`${inspected.unknown.length} new skill(s) need a name and type. Enter them, then review changes.`);
-    $('#unknown-list [data-field="short"]')?.focus();
-  }
-  // classifyOrder may show an existing draft, which clears the previous check state.
-  materialIssues = issueCount;
-  if (materialIssues) message(`${extracted.count} rows imported. ${materialIssues} material check(s) need review.`, true);
-  renderCostReview();
-}
-
-function read() {
-  const choice = document.querySelector('[name="visibility"]:checked');
-  if (!choice) throw new Error('Choose whether this priority will be visible on the tracker');
-  return validateDraft({
-    ...version,
-    name: $('#name').value,
-    enabled: choice.value === 'enabled',
-    source: $('#source').value,
-    names: Object.fromEntries([...document.querySelectorAll('[data-name]')].map(input => [input.dataset.name, input.value])),
-    shortNames: Object.fromEntries([...document.querySelectorAll('[data-short-name]')].map(input => [input.dataset.shortName, input.value])),
-    newNodes: importedNodes,
-    statIcons: importedStatIcons,
-    steps: parseSteps($('#steps').value, importedNodes.map(node => node.short)).map((step, index) => {
-      const source = importedSteps?.[index];
-      return source?.skill === step.skill && source.level === step.level ? { ...step,
-        ...(source.sourceCost === undefined ? {} : { sourceCost: source.sourceCost }),
-        ...(source.fdGain === undefined ? {} : { fdFrom: source.fdFrom, fdGain: source.fdGain }) } : step;
-    })
-  });
-}
-function show(draft) {
-  importedSteps = draft.steps;
-  version = { mode: draft.mode, sourceMode: draft.sourceMode || draft.mode, isNew: draft.isNew === true };
-  $('#mode').value = version.sourceMode;
-  $('#review-context').textContent = contextLabel(version.sourceMode);
-  inspected = null;
-  importedNodes = draft.newNodes || [];
-  importedStatIcons = draft.statIcons || {};
-  materialIssues = 0;
-  $('#unknown').hidden = true;
-  $('#unknown-list').replaceChildren();
-  $('#name').value = draft.name;
-  $('#priority-id').value = draft.mode;
-  visibility(draft.isNew && typeof draft.enabled !== 'boolean' ? null : draft.enabled === true);
-  $('#version-state').textContent = draft.isNew ? 'New order. Name it and choose whether to show it on the tracker.' : `${catalog.priorities[draft.mode]?.length || draft.steps.length} imported steps. Save to the private test tracker, then review before public publishing.`;
-  $('#source').value = draft.source || '';
-  $('#steps').value = draft.steps.map(step => `${step.skill}, ${step.level}`).join('\n');
-  $('#names').innerHTML = NODES.map(node => `<div class="review-name" style="--skill-accent:${skillAccent(node.short)}"><div class="review-identity"><span class="review-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span><strong>${node.short}</strong><small>${node.icon.split('/').at(-1).replace('.png', '')}</small></span></div><label>Short priority name<input data-short-name="${node.short}" type="text"></label><label>Long matrix name<input data-name="${node.short}" type="text"></label></div>`).join('');
-  document.querySelectorAll('.review-name img').forEach(img => {
-    img.addEventListener('error', () => { img.hidden = true; });
-    if (img.complete && !img.naturalWidth) img.hidden = true;
-  });
-  for (const input of document.querySelectorAll('[data-name]')) input.value = draft.names[input.dataset.name] || '';
-  for (const input of document.querySelectorAll('[data-short-name]')) input.value = draft.shortNames?.[input.dataset.shortName] ?? input.dataset.shortName;
-  $('#status').textContent = '';
-  $('#open-preview').hidden = true;
-  const historical = draft.sourceMode.startsWith('hecate_');
-  renderCostReview();
-  if (historical) message('Historical Hecate needs a pasted Maple Scouter response.');
-}
-function collectUnknown() {
-  if (!inspected) return;
-  const mappings = {};
-  for (const card of document.querySelectorAll('.unknown-card')) {
-    mappings[card.dataset.key] = Object.fromEntries(['short', 'name', 'type'].map(field => [field, card.querySelector(`[data-field="${field}"]`).value]));
-  }
-  const resolved = resolveScouterResponse(inspected, mappings);
-  importedSteps = resolved.steps;
-  importedNodes = resolved.newNodes;
-  importedStatIcons = resolved.statIcons;
-  $('#steps').value = resolved.steps.map(step => `${step.skill}, ${step.level}`).join('\n');
-  renderCostReview();
-}
-function renderUnknown(items) {
-  const list = $('#unknown-list');
-  list.replaceChildren();
-  $('#unknown').hidden = !items.length;
-  for (const item of items) {
-    const card = document.createElement('div');
-    card.className = 'unknown-card';
-    card.dataset.key = item.key;
-    const title = document.createElement('strong'); title.textContent = item.sourceName;
-    const meta = document.createElement('div'); meta.className = 'unknown-identity';
-    const iconBox = document.createElement('span'); iconBox.className = 'review-icon';
-    const fallback = document.createElement('span'); fallback.textContent = item.sourceName?.[0] || '?'; fallback.setAttribute('aria-hidden', 'true');
-    const icon = document.createElement('img'); icon.src = `https://maplescouter.com${item.icon}`; icon.alt = '';
-    icon.addEventListener('error', () => { icon.hidden = true; });
-    iconBox.append(fallback, icon);
-    const id = document.createElement('small'); id.textContent = `Scouter ${item.coreId} · ${item.sourceName}`;
-    meta.append(iconBox, id); card.append(title, meta);
-    for (const [field, label] of [['short', 'Short priority name'], ['name', 'Long matrix name'], ['type', 'Skill type']]) {
-      const wrapper = document.createElement('label'); wrapper.textContent = label;
-      const input = document.createElement(field === 'type' ? 'select' : 'input'); input.dataset.field = field;
-      if (field === 'type') for (const value of ['', 'Skill', 'Skill II', 'Mastery', 'V', 'Common', 'Common II']) {
-        const option = document.createElement('option'); option.value = value; option.textContent = value || 'Choose a type'; input.append(option);
-      }
-      wrapper.append(input); card.append(wrapper);
-    }
-    list.append(card);
-  }
-}
-function message(value, error = false) {
-  $('#status').textContent = value;
-  $('#status').classList.toggle('error', error);
-}
-function persist() {
-  try {
-    const draft = read();
-    saved[draft.sourceMode] = draft;
-    localStorage.setItem(key, JSON.stringify(saved));
-  } catch { /* Keep incomplete edits in the form until valid. */ }
-}
-$('#mode').addEventListener('change', () => show(saved[$('#mode').value] || blankDraft($('#mode').value)));
-document.addEventListener('input', persist);
-async function checkMode(mode) {
-  try {
-    const failure = recentFailures.get(mode);
-    if (failure && Date.now() - failure.at < 60_000) return { mode, error: `${failure.error} Try again in a minute.` };
-    const cached = recentOrders.get(mode);
-    let result;
-    if (cached && Date.now() - cached.at < recentOrderMs) result = cached.result;
+function renderOrders() {
+  $('#order-context').textContent = captureRegion ? `Hoyoung · ${captureRegion} source` : 'Grab Scouter info to review both orders.';
+  $('#order-results').replaceChildren();
+  for(const world of ['heroic','interactive']) {
+    const order=orders[world],card=el('article',undefined,'order-card');card.append(el('h3',world==='heroic'?'Heroic':'Interactive'));
+    if(!order) card.append(el('p','No order loaded.'));
     else {
-      const response = await fetch('/api/hexa-order', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode })
-      });
-      if (!response.ok) throw new Error((await response.text()).slice(0, 160) || `Request returned ${response.status}`);
-      result = await response.json();
-      recentOrders.set(mode, { at: Date.now(), result });
-      recentFailures.delete(mode);
+      const matches=orderMatches(order.steps,world,drafts);
+      card.append(el('p',`${order.steps.length} ordered checkpoints`),el('p',matches.length?`Matches ${matches.map(draft=>draft.name).join(', ')}`:'Different from saved orders.'));
+      const fd=order.steps.filter(step=>step.fdGain!==undefined).length;card.append(el('p',`${fd} checkpoints with source FD. HEXA Stats retain RNG treatment.`));
+      const details=el('details'),list=el('ol');details.append(el('summary','Inspect order'));
+      for(const step of order.steps) list.append(el('li',`${step.skill} → ${step.level}${step.fdGain===undefined?'':` · FD ${step.fdGain.toFixed(3)}%`}`));details.append(list);card.append(details);
     }
-    const extracted = extractScouterOrder(result, mode);
-    const match = extracted.unknown.length ? null : matchingVersion(extracted.steps, mode);
-    return { mode, result, steps: extracted.count, unknown: extracted.unknown.length, issues: extracted.validation.issues.length, match };
-  } catch (error) {
-    recentFailures.set(mode, { at: Date.now(), error: error.message });
-    const limited = /Maple Scouter returned (?:429|430)\b/.test(error.message);
-    if (limited) {
-      pauseUntil = Date.now() + 5 * 60 * 1000;
-      try { sessionStorage.setItem(limitKey, String(pauseUntil)); } catch { /* Keep the in-page pause. */ }
-    }
-    return { mode, error: error.message, limited };
+    $('#order-results').append(card);
+  }
+  controls();
+}
+function download(value,name) {
+  const blob=new Blob([JSON.stringify(value,null,2)+'\n'],{type:'application/json'}), url=URL.createObjectURL(blob), link=el('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function mutation(method,value) {await request('/api/admin-panel',method,value);await reload();}
+function renderRegistered() {
+  const groups=priorityGroups(drafts);$('#priority-count').textContent=`(${groups.length})`;$('#registered').replaceChildren();
+  if(!groups.length) $('#registered').append(el('p','No saved priorities.','fine'));
+  for(const group of groups) {
+    const card=el('article',undefined,'registered-row'),details=el('div',undefined,'registered-details'),actions=el('div',undefined,'registered-actions');
+    details.append(el('strong',group.name),el('small',group.drafts.map(draft=>`${draft.sourceMode.endsWith('_heroic')?'Heroic':'Interactive'} · ${draft.steps.length} steps · ${draft.enabled?'Available':'Unavailable'}`).join(' / ')),el('small',`${group.createdAt || 'Date not recorded'}${group.drafts[0].sourceRegion ? ` · ${group.drafts[0].sourceRegion} source` : ' · Existing saved version'}`));
+    const button=(label,handler)=>{const btn=el('button',label);btn.addEventListener('click',async()=>{btn.disabled=true;try{await handler();}catch(error){message(error.message,true);}finally{btn.disabled=false;}});actions.append(btn);return btn;};
+    const enabled=group.drafts.every(draft=>draft.enabled);
+    button(enabled?'Make unavailable':'Make available',()=>mutation('PATCH',{id:group.id,enabled:!enabled}));
+    button('Rename',async()=>{const name=prompt('Priority name',group.name);if(name?.trim())await mutation('PATCH',{id:group.id,name});});
+    button('Download',()=>download({schema:1,type:'hexa-priority-backup',name:group.name,drafts:group.drafts,skills:rows.length?{job:'호영',rows}:null},`hexa-${group.id}.json`));
+    button('Delete',async()=>{if(confirm(`Delete ${group.name} and its ${group.drafts.length} saved order(s)?`))await mutation('DELETE',{id:group.id});});
+    card.append(details,actions);$('#registered').append(card);
   }
 }
-function renderCheck(check) {
-  const row = document.createElement('div');
-  row.className = `check-result${check.error ? ' error' : ''}`;
-  const label = document.createElement('span');
-  const world = `${check.mode.startsWith('taotie_') ? 'KMS Taotie' : 'GMS Lotus'} ${check.mode.endsWith('_heroic') ? 'Fragments' : 'Sol Erda'}`;
-  label.textContent = check.error ? `${world}: ${check.error}`
-    : check.unknown ? `${world}: ${check.unknown} new skill(s) need setup.`
-    : check.match ? `${world}: matches ${catalog.labels[check.match]} (${check.steps} steps; ${check.issues} material checks).`
-    : `${world}: new order (${check.steps} steps; ${check.issues} material checks). Name and review it.`;
-  row.append(label);
-  if (!check.error) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.textContent = check.match ? 'Review source costs' : 'Review';
-    button.addEventListener('click', () => {
-      $('#mode').value = check.mode;
-      show(saved[check.mode] || blankDraft(check.mode));
-      $('#response').value = JSON.stringify(check.result);
-      try { compareResponse(check.result); }
-      catch (error) { message(error.message, true); }
-      if (!check.unknown) $('#name').focus();
-    });
-    row.append(button);
-  }
-  $('#checks').append(row);
+async function reload() {
+  const result=await request('/api/admin-panel');drafts=result.drafts;
+  if(!skillDirty) rows=result.skills?.rows || rows;
+  renderSkills();renderRegistered();renderOrders();
 }
-$('#retrieve').addEventListener('click', async () => {
-  if (Date.now() < pauseUntil) {
-    $('#checks').textContent = 'Maple Scouter refused a recent request. Please wait five minutes before checking again.';
-    return;
-  }
-  $('#retrieve').disabled = true;
-  $('#checks').replaceChildren();
-  const modes = ['lotus_heroic', 'lotus_interactive', 'taotie_heroic', 'taotie_interactive'];
-  for (const [index, mode] of modes.entries()) {
-    if (index && !recentOrders.has(mode)) await new Promise(resolve => setTimeout(resolve, 2000));
-    const result = await checkMode(mode);
-    renderCheck(result);
-    if (result.limited) {
-      const note = document.createElement('p');
-      note.textContent = 'The remaining orders were not requested. Maple Scouter refused this request, so checks are paused for five minutes.';
-      $('#checks').append(note);
-      break;
+$('#region').addEventListener('change',()=>{orders={};captureRegion=null;$('#capture-note').textContent='';renderOrders();});
+$('#grab').addEventListener('click',async()=>{
+  if(Date.now()<pauseUntil){message('Scouter refused a recent request. Wait five minutes before trying again.',true);return;}
+  busy=true;controls();const region=$('#region').value;orders={};captureRegion=region;renderOrders();
+  try {
+    message('Grabbing Scouter skills, icons and costs…');
+    const catalogue=await cachedRequest(`catalogue:${region}`,`/api/scouter-catalogue?job=${encodeURIComponent($('#job').value)}&region=${region}&world=Heroic`);
+    rows=mergeSkills(catalogue,rows,drafts);skillDirty=true;renderSkills();
+    for(const world of ['heroic','interactive']) {
+      message(`Grabbing ${world==='heroic'?'Heroic':'Interactive'} priority and FD…`);
+      const mode=sourceMode(region,world), response=await cachedRequest(mode,'/api/hexa-order','POST',{mode});
+      orders[world]=draftFromResponse(response,region,world);
+      const stats=Object.entries(orders[world].statIcons).map(([short,icon],i)=>({coreId:'hexastat'+(['HEXA Stat I','HEXA Stat II','HEXA Stat III'].indexOf(short)+1),sourceName:short,icon}));
+      rows=mergeSkills({skills:stats},rows,drafts);renderSkills();renderOrders();
     }
-  }
-  $('#retrieve').disabled = false;
+    $('#capture-note').textContent=`${region} · ${new Date().toISOString().slice(0,16).replace('T',' ')} UTC`;
+    message('Scouter info is ready. Review Skills, then name and save the priority pair.');
+  } catch(error) {
+    if(/429|430/.test(error.message)) {pauseUntil=Date.now()+300000;try{sessionStorage.setItem(pauseKey,String(pauseUntil));}catch{}}
+    message(`${error.message} The remaining requests were stopped. Saved data is unchanged.`,true);
+  } finally {busy=false;controls();renderOrders();}
 });
-$('#inspect').addEventListener('click', () => {
-  try {
-    compareResponse(JSON.parse($('#response').value));
-  } catch (error) { message(error.message, true); }
+$('#add-tags').addEventListener('click',()=>{for(const row of rows){const tag=defaultTags[trackerSkill(row.source)?.short];if(tag && !row.tag) row.tag=tag;}skillDirty=true;renderSkills();message('Standard tags added to empty fields. Save skills to keep them.');});
+$('#save-skills').addEventListener('click',async()=>{
+  busy=true;controls();
+  try {const review=validateSkills({job:'호영',rows});await request('/api/admin-panel','PUT',review);skillDirty=false;await reload();message('Skills saved for Hoyoung. Saved priority orders are unchanged.');}
+  catch(error){message(error.message,true);}finally{busy=false;controls();}
 });
-$('#response-file').addEventListener('change', async event => {
-  const file = event.target.files?.[0];
-  if (!file) return;
+$('#save-pair').addEventListener('click',async()=>{
+  busy=true;controls();
   try {
-    const content = await file.text();
-    $('#response').value = content;
-    compareResponse(JSON.parse(content));
-  } catch (error) { message(error.message, true); }
+    const choice=$('#pair-available').value;if(!choice)throw new Error('Choose availability');
+    const pair={id:'pair_'+crypto.randomUUID().replaceAll('-',''),name:$('#pair-name').value,enabled:choice==='true',region:captureRegion,orders};
+    validatePair(pair);await mutation('POST',pair);$('#pair-name').value='';$('#pair-available').value='';message('Heroic and Interactive saved together. Existing priorities kept their availability.');
+  }catch(error){message(error.message,true);}finally{busy=false;controls();}
 });
-$('#review').addEventListener('click', () => {
+$('#response-file').addEventListener('change',async event=>{
+  const file=event.target.files?.[0];if(!file)return;
+  try{if(file.size>250000)throw new Error('Response file is too large');const world=$('#import-world').value,region=$('#region').value;orders[world]=draftFromResponse(JSON.parse(await file.text()),region,world);captureRegion=region;renderOrders();message(`${world==='heroic'?'Heroic':'Interactive'} response loaded for review.`);}catch(error){message(error.message,true);}finally{event.target.value='';}
+});
+$('.upload-button').addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();$('#backup').click();}});
+$('#backup').addEventListener('change',async event=>{
+  const file=event.target.files?.[0];if(!file)return;
   try {
-    collectUnknown();
-    if (inspected) {
-      classifyOrder();
-      inspected = null;
+    if(file.size>250000)throw new Error('Backup file is too large');
+    const backup=JSON.parse(await file.text());
+    if(backup.type!=='hexa-priority-backup' || !Array.isArray(backup.drafts) || ![1,2].includes(backup.drafts.length))throw new Error('Upload a priority backup downloaded from this panel.');
+    if(backup.drafts.length===1) {
+      const name=prompt('Name for restored priority',backup.name);if(!name?.trim())return;
+      await mutation('POST',{legacyDraft:{...backup.drafts[0],pairId:undefined,pairName:undefined,sourceRegion:undefined,createdAt:undefined,mode:'restore_'+crypto.randomUUID().replaceAll('-',''),isNew:true,name,enabled:false}});
+      message('Saved version restored as unavailable. Existing data is unchanged.');return;
     }
-    const draft = read();
-    const changes = compareDraft(draft, previewDrafts[draft.mode]?.steps || []);
-    message(`${draft.steps.length} steps. ${changes.changedNames} display names changed. ${changes.changedSteps} steps changed at their position. ${changes.lengthDifference} net steps.`);
-  } catch (error) { message(error.message, true); }
+    const heroic=backup.drafts.find(draft=>draft.sourceMode.endsWith('_heroic')),interactive=backup.drafts.find(draft=>draft.sourceMode.endsWith('_interactive'));
+    if(!heroic || !interactive || heroic.sourceMode.split('_')[0]!==interactive.sourceMode.split('_')[0])throw new Error('Backup orders must belong to the same captured update');
+    const name=prompt('Name for restored priority pair',backup.name);if(!name?.trim())return;
+    const pair={id:'pair_'+crypto.randomUUID().replaceAll('-',''),name,enabled:false,region:heroic.sourceRegion || (heroic.sourceMode.startsWith('taotie_')?'KMS':'GMS'),orders:{heroic,interactive}};
+    validatePair(pair);await mutation('POST',pair);message('Backup restored as unavailable. Existing priorities and skill names are unchanged.');
+  }catch(error){message(error.message,true);}finally{event.target.value='';}
 });
-$('#save-preview').addEventListener('click', async () => {
-  try {
-    collectUnknown();
-    if (inspected) {
-      classifyOrder();
-      inspected = null;
-    }
-    if (materialIssues) throw new Error(`${materialIssues} material checks need review before saving this order to the preview tracker.`);
-    const draft = read();
-    await saveSharedPreview(draft);
-    previewDrafts[draft.mode] = draft;
-    saved[draft.sourceMode] = draft;
-    localStorage.setItem(key, JSON.stringify(saved));
-    refreshCatalog();
-    $('#open-preview').href = `index.html?mode=${encodeURIComponent(draft.mode)}`;
-    $('#open-preview').hidden = !draft.enabled;
-    message(`${draft.name} saved to the private test tracker as ${draft.enabled ? 'visible' : 'hidden'}. Public publishing is a separate step.`);
-  } catch (error) { message(error.message, true); }
-});
-$('#download').addEventListener('click', () => {
-  try {
-    collectUnknown();
-    if (inspected) {
-      classifyOrder();
-      inspected = null;
-    }
-    const draft = read();
-    const blob = new Blob([JSON.stringify(draft, null, 2) + '\n'], { type: 'application/json' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `hexa-${draft.mode}-draft.json`;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-    message('Draft downloaded for review.');
-  } catch (error) { message(error.message, true); }
-});
-$('#mode').replaceChildren(...sourceOptions());
-$('#mode').value = 'lotus_heroic';
-show(saved[$('#mode').value] || blankDraft($('#mode').value));
-message('Loading saved priorities from the private test site…');
-$('#save-preview').disabled = true;
-$('#retrieve').disabled = true;
-try {
-  previewDrafts = await fetchSharedPreview();
-  refreshCatalog();
-  message('Shared priorities are ready. Save applies changes to the private test tracker.');
-  const browserDrafts = loadPreview(localStorage);
-  const legacy = Object.values(browserDrafts).filter(draft => !previewDrafts[draft.mode]);
-  if (legacy.length) {
-    $('#move-browser').hidden = false;
-    $('#move-browser').textContent = `Move ${legacy.length} browser preview${legacy.length === 1 ? '' : 's'} to test site`;
-    $('#move-browser').addEventListener('click', async () => {
-      try {
-        for (const draft of legacy) { await saveSharedPreview(draft); previewDrafts[draft.mode] = draft; }
-        localStorage.removeItem('hexa-priority-preview-v1');
-        refreshCatalog();
-        $('#move-browser').hidden = true;
-        message(`${legacy.length} browser preview${legacy.length === 1 ? '' : 's'} saved to the private test site.`);
-      } catch (error) { message(`Some previews could not be moved: ${error.message}`, true); }
-    });
-  }
-  $('#save-preview').disabled = false;
-  $('#retrieve').disabled = false;
-} catch (error) { message(`Shared priorities could not be loaded: ${error.message}. Try reloading this page.`, true); }
+try {await reload();loaded=true;controls();message('Saved data is ready.');}catch(error){message(`Saved data could not load: ${error.message}`,true);}

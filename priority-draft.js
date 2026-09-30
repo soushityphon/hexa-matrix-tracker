@@ -89,7 +89,29 @@ export function validateDraft(draft) {
     if (typeof shortName !== 'string' || !shortName.trim()) throw new Error(`Enter a short display name for ${node.short}`);
     shortNames[node.short] = shortName.trim();
   }
-  return { schema: 4, mode: draft.mode, sourceMode: draft.sourceMode || draft.mode, isNew: draft.isNew === true, enabled: draft.enabled === true, name: draft.name.trim(), source: String(draft.source || '').trim(), names, shortNames, steps, newNodes, statIcons };
+  const metadata = {};
+  if (draft.pairId !== undefined) {
+    if (typeof draft.pairId !== 'string' || !/^[a-z0-9_]+$/.test(draft.pairId) || !['GMS','KMS'].includes(draft.sourceRegion) || typeof draft.pairName !== 'string' || !draft.pairName.trim() || typeof draft.createdAt !== 'string' || !Number.isFinite(Date.parse(draft.createdAt))) throw new Error('Invalid priority pair metadata');
+    Object.assign(metadata, {pairId:draft.pairId, pairName:draft.pairName.trim(), sourceRegion:draft.sourceRegion, createdAt:draft.createdAt});
+  }
+  for (const skill of statNames) {
+    for (const [field, target] of [['names', names], ['shortNames', shortNames]]) {
+      const value = draft[field]?.[skill];
+      if (value !== undefined) { if (typeof value !== 'string' || !value.trim() || value.length > 120) throw new Error('Invalid Stat display name'); target[skill] = value.trim(); }
+    }
+  }
+  const tags = {}, skillCategories = {};
+  for (const node of [...NODES, ...[...statNames].map(short=>({short}))]) {
+    if (draft.tags?.[node.short] !== undefined) {
+      if (typeof draft.tags[node.short] !== 'string' || draft.tags[node.short].length > 120) throw new Error('Invalid skill tag');
+      tags[node.short] = draft.tags[node.short];
+    }
+    if (draft.skillCategories?.[node.short] !== undefined) {
+      if (!['Skill','Mastery','Enhancement','Common','HEXA Stat'].includes(draft.skillCategories[node.short])) throw new Error('Invalid skill category');
+      skillCategories[node.short] = draft.skillCategories[node.short];
+    }
+  }
+  return { tags, skillCategories, ...metadata, schema: 4, mode: draft.mode, sourceMode: draft.sourceMode || draft.mode, isNew: draft.isNew === true, enabled: draft.enabled === true, name: draft.name.trim(), source: String(draft.source || '').trim(), names, shortNames, steps, newNodes, statIcons };
 }
 
 export function currentDraft(mode) {

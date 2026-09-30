@@ -1,64 +1,26 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin Panel | HEXA Matrix Tracker</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="priority-review.css">
-</head>
-<body>
-  <main class="shell review-shell">
-    <header class="masthead"><div><p class="kicker">Hoyoung</p><h1>Admin Panel</h1></div><a href="index.html">Tracker</a></header>
-    <div class="review-grid">
-      <section class="panel">
-        <div class="source-check">
-          <h2>Maple Scouter check</h2>
-          <p class="fine">Check GMS Lotus and KMS Taotie orders for both materials. Successful results are reused for five minutes when you check again.</p>
-          <button id="retrieve" type="button">Check for new priorities</button>
-          <div id="checks" role="status"></div>
-        </div>
-        <label class="review-context-select">Job, update and priority material
-          <select id="mode" aria-describedby="review-context"></select>
-        </label>
-        <h2 id="draft-heading">Priority draft</h2>
-        <p id="review-context" class="fine"></p>
-        <p id="version-state" class="fine"></p>
-        <label>Priority ID<input id="priority-id" type="text" readonly></label>
-        <label>Priority name<input id="name" type="text"></label>
-        <fieldset class="visibility"><legend>Tracker visibility</legend><label><input type="radio" name="visibility" value="enabled"> Enabled, show on tracker</label><label><input type="radio" name="visibility" value="disabled"> Disabled, keep for review</label></fieldset>
-        <label>Source link or note<input id="source" type="text"></label>
-        <div id="unknown" class="unknown-review" hidden><h3>New skills to name</h3><p>Confirm the short label, display name and skill type before reviewing the draft.</p><div id="unknown-list"></div></div>
-        <details id="manual-import" class="import-panel"><summary>Advanced: response JSON and draft download</summary>
-          <label>Response JSON file<input id="response-file" type="file" accept=".json,.txt,application/json,text/plain"></label>
-          <label>HEXA order response JSON<textarea id="response" spellcheck="false" placeholder="Paste the response from Maple Scouter Network → Response"></textarea></label>
-          <button id="inspect" type="button">Compare response</button>
-          <button id="download" type="button">Download draft for review</button>
-        </details>
-        <details class="order-editor"><summary>Inspect ordered checkpoints</summary><label>Upgrade order <small>One step per line: Harmony, 1</small><textarea id="steps" spellcheck="false"></textarea></label></details>
-        <div class="actions"><button id="review" type="button">Review changes</button><button id="save-preview" type="button">Save to private test site</button></div>
-        <p id="status" role="status"></p>
-        <a id="open-preview" href="index.html" hidden>Open saved priority on the tracker</a>
-        <p class="fine">Save applies to the private test tracker across devices. Public publishing is a separate step.</p>
-      </section>
-      <section class="panel">
-        <h2>Skill display names</h2>
-        <p class="fine">The Scouter skill key and icon stay fixed. Short names appear in Upgrade Priority, long names appear in Current HEXA Matrix.</p>
-        <div id="names"></div>
-      </section>
-    </div>
-    <section class="panel cost-review" aria-labelledby="cost-heading">
-      <h2 id="cost-heading">Skill &amp; Costs, Hoyoung</h2>
-      <p id="cost-context" class="fine"></p>
-      <div id="cost-list"></div>
-    </section>
-    <section class="panel registered-panel">
-      <div class="panel-head"><h2>Registered priorities <span id="registered-count"></span></h2></div>
-      <div id="registered" class="registered-list"></div><button id="move-browser" type="button" hidden></button>
-      <p class="fine">Saved changes apply to the private test tracker across devices. Public publishing is a separate step. Historical Hecate has no retrievable order.</p>
-    </section>
-  </main>
-  <script type="module" src="priority-review.js"></script>
-<p><a href="/scouter-request-diagnostic.html">Inspect outgoing Scouter requests, no upstream call</a></p>
-</body>
-</html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Admin Panel | HEXA Matrix Tracker</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="priority-review.css"></head>
+<body><main class="shell admin-shell">
+<header class="masthead"><div><p class="kicker">HEXA Matrix Tracker</p><h1>Admin Panel</h1></div><a href="index.html">Tracker</a></header>
+<section class="admin-toolbar" aria-label="Scouter selection">
+<label>Class<select id="job"><option value="호영">Hoyoung</option disabled>Ren, awaiting verified support</option></select></label>
+<label>Scouter<select id="region"><option>GMS</option><option>KMS</option></select></label>
+<button id="grab" disabled>Grab Scouter info</button><span id="capture-note"></span>
+</section>
+<p id="status" role="status" aria-live="polite">Loading saved data…</p>
+<nav class="admin-tabs" role="tablist" aria-label="Admin sections"><button id="skills-tab" role="tab" aria-selected="true" aria-controls="skills-panel" tabindex="0">Skills</button><button id="priorities-tab" role="tab" aria-selected="false" aria-controls="priorities-panel" tabindex="-1">Priorities</button></nav>
+<section id="skills-panel" role="tabpanel" aria-labelledby="skills-tab">
+<div class="panel"><div class="panel-head"><h2>Skills <span id="skill-count"></span></h2><div class="actions"><button id="add-tags" disabled>Add standard tags</button><button id="save-skills" disabled>Save skills</button></div></div>
+<p class="fine">Long names appear in Current HEXA Matrix. Short names appear in Upgrade Priority.</p>
+<div id="skills" class="skill-list"></div></div>
+</section>
+<section id="priorities-panel" role="tabpanel" aria-labelledby="priorities-tab" hidden>
+<div class="panel"><div class="panel-head"><h2>Scouter priorities</h2><span id="order-context" class="fine">Grab Scouter info to review both orders.</span></div>
+<div id="order-results" class="order-results"></div>
+<div class="pair-form"><label>Priority name<input id="pair-name" maxlength="120" placeholder="e.g. Ride or Die"></label><label>Availability<select id="pair-available"><option value="">Choose availability</option><option value="true">Available</option><option value="false">Unavailable</option></select></label><button id="save-pair" disabled>Save priority pair</button></div>
+<p class="fine">One name saves Heroic and Interactive together. Matches are for comparison. You choose which versions stay available.</p></div>
+<div class="panel"><div class="panel-head"><h2>Saved priorities <span id="priority-count"></span></h2><label class="upload-button" role="button" tabindex="0">Upload backup<input id="backup" type="file" accept="application/json,.json" class="visually-hidden"></label></div><div id="registered"></div></div>
+<details class="panel advanced"><summary>Advanced, import a Scouter response</summary><label>Order<select id="import-world"><option value="heroic">Heroic</option><option value="interactive">Interactive</option></select></label><label>Response file<input id="response-file" type="file" accept=".json,.txt,application/json"></label><p class="fine">Use a response for the selected Scouter region. Import both orders before saving a pair.</p></details>
+</section>
+</main><script type="module" src="priority-review.js"></script></body></html>

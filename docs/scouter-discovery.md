@@ -210,3 +210,16 @@ the concrete server policy with scoped evidence, then connect an owner-only
 review action. Do not expose this helper behind a client validation flag or
 replace the normal order route's existing policy without that work. Deployment
 waits for the complete reviewable owner flow, as recorded in issue #23.
+
+
+## 1 October, approved Admin Panel implementation
+
+Latest owner approval supersedes the former layout and matched-order deduplication requirement. Skills first, Priorities second; Class + GMS/KMS + Grab Scouter info; editable names/categories/tags; one named Heroic/Interactive pair; matches remain comparison only; newest-first availability/rename/backup/delete controls. No diagnostic or cost tables in this page. Existing validators remain in place; no speculative game cost-change feature was added.
+
+`admin-panel-model.js` and `/api/admin-panel` keep class review records in `admin_skills`, separate from unchanged raw `priority_preview` orders. `drizzle/0001_admin_skills.sql` is a schema-only additive migration generated from `db/schema.ts`; prior applied SQL is unchanged. Pair creation, rename, availability and removal use D1 batch transactions. Exact steps, source costs and FD pass through the existing draft validator. Skill overlays affect names, tags and displayed category only, never the material schedule, source order or player progress. Existing conflicting labels require a choice; absent/blank unknown fields do not guess working support. Source icon overrides are retained separately.
+
+The panel uses the existing Hoyoung fixed-reset order route, now owner-only, and the public catalogue provider. It requests only the selected region's two worlds, caches successes and stops at the first error. No new semantic evidence registry is fabricated, and the isolated reviewed-acquisition entry point is not silently bypassed or claimed to be connected. GMS reset semantics, genuine Ren benchmarks and the historical/fresh order difference remain investigation work. The owner may retain old orders or save matching/new named pairs. No automated calculation request was made for this increment.
+
+Before deployment, the live D1 row reader returned four saved versions, Lotus/Taotie Heroic/Interactive dated 28 September, not the earlier seven. Their full JSON cells are truncated by that tool. No migration, update, delete or backfill of those rows was performed. The new migration creates only an empty skill review table. The owner can review and save class fields in the deployed UI.
+
+Full repo tests and Worker build pass. The new SQLite-backed route tests cover owner access, atomic two-order saves, validation failure without writes, duplicate ID rejection, exact order/cost/FD preservation, rename/availability/delete, independent class overlays, name conflicts and unchanged legacy rows. A DOM harness checks tab controls, region-scoped two-order acquisition, success caching, independent names save and saving matched pairs. Browser installation was unavailable, so rendered desktop/mobile appearance remains owner review. New source costs retain their exact detected level values; the tracker retains its reviewed matching schedules.

@@ -60,7 +60,8 @@ function syncPriorityOptions() {
 function renderInputs() {
   const nodeRow = node => `<label class="node-row" style="--skill-accent:${skillAccent(node.short)}" data-node-row="${node.short}" data-node-id="${node.id}" title="${node.name}"><span class="node-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span class="node-label">${hoyoungSkillTags[node.id] ? `<span class="skill-tag">${hoyoungSkillTags[node.id]}</span>` : ''}<span class="node-name">${node.name}</span></span><input data-node="${node.short}" aria-label="${node.name} level" type="number" min="${node.short === 'Apotheosis' ? 1 : 0}" max="30" step="1" value="${clamp(saved.levels?.[node.short], 30, node.short === 'Apotheosis' ? 1 : 0)}"></label>`;
   const renderGroup = (group, label, descending) => {
-    const nodes = NODES.filter(node => node.group === group);
+    const category = {'Skill Nodes':'Skill','Mastery Nodes':'Mastery','Enhancement Nodes':'Enhancement','Common Nodes':'Common'}[group];
+    const nodes = NODES.filter(node => (previewDrafts[saved.mode]?.skillCategories?.[node.short] || {'Skill Nodes':'Skill','Mastery Nodes':'Mastery','Enhancement Nodes':'Enhancement','Common Nodes':'Common'}[node.group]) === category);
     if (descending) nodes.reverse();
     return `<section class="node-group"><h3 class="group-label">${label}</h3>${nodes.map(nodeRow).join('')}</section>`;
   };
@@ -182,7 +183,7 @@ function render() {
     return;
   }
   const sourceMode = previewDrafts[mode]?.sourceMode || mode;
-  const priorityName = skill => escapeHtml(previewDrafts[mode]?.shortNames?.[skill] || skill);
+  const priorityName = skill => `${previewDrafts[mode]?.tags?.[skill] ? `<span class="skill-tag">${escapeHtml(previewDrafts[mode].tags[skill])}</span> ` : ''}${escapeHtml(previewDrafts[mode]?.shortNames?.[skill] || skill)}`;
   const order = catalog.priorities[mode];
   const current = levels();
   const statUnlocked = {};
@@ -238,10 +239,19 @@ function render() {
   checkMaterialIcons();
   $('#time-estimate').hidden = !perday;
   if (perday) $('#time-estimate').innerHTML = `<small>Estimated time for remaining Fragments</small><strong>${days(matrix.remaining).toFixed(1)} days</strong>`;
+  $$('[data-stat]').forEach(input => {
+    const name = input.closest('.stat-row').querySelector('.stat-name');
+    if (name) name.textContent = previewDrafts[mode]?.names[input.dataset.stat] || input.dataset.stat;
+  });
   const available = new Set(activeNodes(sourceMode).map(node => node.short));
   $$('[data-node-row]').forEach(row => {
     row.hidden = !available.has(row.dataset.nodeRow);
     row.querySelector('.node-name').textContent = previewDrafts[mode]?.names[row.dataset.nodeRow] || nodeByShort[row.dataset.nodeRow].name;
+    const label = row.querySelector('.node-label');
+    let tag = label.querySelector('.skill-tag');
+    const tagText = previewDrafts[mode]?.tags?.[row.dataset.nodeRow] ?? hoyoungSkillTags[row.dataset.nodeId] ?? '';
+    if (tagText && !tag) { tag = document.createElement('span'); tag.className = 'skill-tag'; label.prepend(tag); }
+    if (tag) { tag.textContent = tagText; tag.hidden = !tagText; }
   });
   saved = { mode, levels: current, statUnlocked, owned, perday, hideDone: $('#hideDone').checked, includeJanus };
   localStorage.setItem(storageKey, JSON.stringify(saved));
