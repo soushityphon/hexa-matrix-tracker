@@ -16,7 +16,7 @@ function fetcher(entries = sources) {
   const calls = [];
   const fetchImpl = async (url, options) => {
     calls.push(url);
-    assert.equal(options.redirect,'error');
+    assert.equal(options.redirect,'manual');
     assert.equal(options.credentials,'omit');
     assert(!Object.keys(options.headers).some(key => /api-key|authorization|cookie/i.test(key)));
     assert(entries.has(url),`Unexpected source request ${url}`);

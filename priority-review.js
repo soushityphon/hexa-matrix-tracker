@@ -159,6 +159,10 @@ $('#backup').addEventListener('change',async event=>{
   try {
     if(file.size>250000)throw new Error('Backup file is too large');
     const backup=JSON.parse(await file.text());
+    if(backup.type==='hexa-tracker-backup') {
+      if(!confirm('Restore this tracker backup? Restored priorities start unavailable. Existing records will not be overwritten.'))return;
+      await mutation('POST',{restoreSnapshot:backup});message('Tracker backup restored. Review Skills before making priorities available.');return;
+    }
     if(backup.type!=='hexa-priority-backup' || !Array.isArray(backup.drafts) || ![1,2].includes(backup.drafts.length))throw new Error('Upload a priority backup downloaded from this panel.');
     if(backup.drafts.length===1) {
       const name=prompt('Name for restored priority',backup.name);if(!name?.trim())return;

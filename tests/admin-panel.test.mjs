@@ -14,9 +14,10 @@ const heroic=currentDraft('taotie_heroic'),interactive=currentDraft('taotie_inte
 await DB.prepare('INSERT INTO priority_preview VALUES (?, ?, ?)').bind(heroic.mode,JSON.stringify(heroic),'old-date').run();
 const original=sqlite.prepare('SELECT * FROM priority_preview').all();
 for(const method of ['GET','POST','PUT','PATCH','DELETE']) assert.equal((await call(method,method==='GET'?undefined:{},false)).status,403);
-const pair={id:'pair_test',name:'Ride or Die',region:'KMS',enabled:true,orders:{heroic,interactive}};
+const pair={id:'pair_test',name:'Ride or Die',region:'KMS',enabled:false,orders:{heroic,interactive}};
 assert.equal((await call('POST',{...pair,orders:{heroic,interactive:{...interactive,steps:[]}}})).status,400);
 assert.deepEqual(sqlite.prepare('SELECT * FROM priority_preview').all(),original);
+assert.equal((await call('POST',{...pair,enabled:true})).status,400);
 assert.equal((await call('POST',pair)).status,200);
 let state=await (await call('GET')).json();
 assert.equal(Object.keys(state.drafts).length,3);assert.equal(priorityGroups(state.drafts).length,2);
@@ -48,3 +49,26 @@ const conflicts=mergeSkills({skills:[source]},[],{a:heroic,b:differing});assert.
 assert.equal((await call('DELETE',{id:'pair_test'})).status,200);
 assert.deepEqual(sqlite.prepare('SELECT * FROM priority_preview').all(),original);
 console.log('Admin skills, exact pair preservation, backup validation and atomic routes passed');
+
+const catalogueRequest=()=>worker.fetch(new Request('https://test.example/api/tracker-catalogue'),env);
+let catalogue=await (await catalogueRequest()).json();assert.equal(catalogue.nodes.length,0);assert.equal(catalogue.pending,2);
+const costs={freeBaseLevel:0,levels:Array.from({length:30},(_,i)=>({level:i+1,erda:1,frags:10}))};
+const complete=validateSkills({job:'호영',rows:[{...rows[0],source:{...rows[0].source,costs}}]});
+assert.equal((await call('PUT',complete)).status,200);
+catalogue=await (await catalogueRequest()).json();assert.equal(catalogue.nodes.length,1);assert.equal(catalogue.nodes[0].name,'Long edited name');assert.equal(catalogue.nodes[0].tag,'M1');assert.equal(catalogue.stats.length,0);
+const maintenance=(method,body,token)=>worker.fetch(new Request('https://test.example/api/admin-maintenance',{method,headers:token?{Authorization:'Bearer '+token}:{},...(body?{body:JSON.stringify(body)}:{})}),{...env,ADMIN_MAINTENANCE_TOKEN:'x'.repeat(32)});
+assert.equal((await maintenance('GET')).status,403);
+const backup=await (await maintenance('GET',null,'x'.repeat(32))).json();assert.equal(backup.priorities.length,1);assert.equal(backup.skills.length,1);
+assert.equal((await maintenance('POST',{confirm:'clear-backed-up-priorities',priorities:[]},'x'.repeat(32))).status,409);
+assert.equal((await maintenance('POST',{confirm:'clear-backed-up-priorities',priorities:backup.priorities},'x'.repeat(32))).status,200);
+assert.equal(sqlite.prepare('SELECT count(*) AS n FROM priority_preview').get().n,0);
+assert.equal(sqlite.prepare('SELECT count(*) AS n FROM admin_skills').get().n,1);
+console.log('Admin catalogue authority and backup-before-reset protection passed');
+assert.equal((await call('POST',{restoreSnapshot:backup})).status,400);
+assert.equal(sqlite.prepare('SELECT count(*) AS n FROM priority_preview').get().n,0);
+sqlite.exec('DELETE FROM admin_skills');
+assert.equal((await call('POST',{restoreSnapshot:backup})).status,200);
+assert.equal(sqlite.prepare('SELECT count(*) AS n FROM priority_preview').get().n,1);
+assert.equal(JSON.parse(sqlite.prepare('SELECT draft_json FROM priority_preview').get().draft_json).enabled,false);
+assert.equal((await call('POST',{restoreSnapshot:backup})).status,400);
+console.log('Complete snapshot restoration, collision refusal and unavailable-by-default restoration passed');

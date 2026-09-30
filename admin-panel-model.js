@@ -20,7 +20,7 @@ export function mergeSkills(catalogue, previous = [], drafts = {}) {
     const node = trackerSkill(source);
     const values = node ? Object.values(drafts).map(draft => ({name:draft.names?.[node.short] || '', shortName:draft.shortNames?.[node.short] || node.short})) : [];
     const unique = [...new Set(values.map(value => JSON.stringify(value)))].map(value => JSON.parse(value));
-    rows.push({ coreId:source.coreId, source, name:unique.length === 1 ? unique[0].name : '', shortName:unique.length === 1 ? unique[0].shortName : '', category:node ? categoryFor(node) : '', tag:node ? defaultTags[node.short] || '' : '', conflicts:unique.length > 1 ? unique : [] });
+    rows.push({ coreId:source.coreId, source, name:unique.length === 1 ? unique[0].name : '', shortName:unique.length === 1 ? unique[0].shortName : '', category:values.length && node ? categoryFor(node) : (node?.group === 'HEXA Stat' ? 'HEXA Stat' : ''), tag:values.length && node ? defaultTags[node.short] || '' : '', conflicts:unique.length > 1 ? unique : [] });
   }
   return rows;
 }
@@ -34,7 +34,7 @@ export function validateSkills(value) {
     if (source?.coreId !== row.coreId || typeof source.sourceName !== 'string' || !(/^https:\/\/maplescouter\.com\/hexaskill\/[\w/.-]+\.png$/.test(source.icon) || (/^hexastat[123]$/.test(row.coreId) && /^https:\/\/open\.api\.nexon\.com\/static\/maplestory\/skill\/icon\/[A-Za-z0-9_-]+$/.test(source.icon)))) throw new Error('Invalid Scouter skill identity');
     for (const field of ['name','shortName','tag']) if (typeof row[field] !== 'string' || row[field].length > 120) throw new Error('Skill fields must be at most 120 characters');
     if ((/^hexastat/.test(row.coreId) && row.category !== 'HEXA Stat') || (!/^hexastat/.test(row.coreId) && row.category === 'HEXA Stat') || (row.category !== '' && !categories.includes(row.category))) throw new Error('Choose a valid skill category');
-    // Source costs stay source observations. They never replace verified costs.
+    // Retain every detected level cost for the reviewed catalogue.
     if (source.effectiveIcon && !/^https:\/\/maplescouter\.com\/hexaskill\/[\w/.-]+\.png$/.test(source.effectiveIcon)) throw new Error('Invalid source icon override');
     if (source.costs && (source.costs.levels?.length !== 30 || source.costs.levels.some((cost,i) => cost.level !== i+1 || !Number.isSafeInteger(cost.erda) || cost.erda < 0 || !Number.isSafeInteger(cost.frags) || cost.frags < 0))) throw new Error('Invalid source level costs');
     return {coreId:row.coreId, source, name:row.name.trim(), shortName:row.shortName.trim(), tag:row.tag.trim(), category:row.category};
@@ -73,4 +73,25 @@ export function priorityGroups(drafts) {
 }
 export function orderMatches(steps, world, drafts) {
   return Object.values(drafts).filter(draft => PRIORITY_SETTINGS[draft.sourceMode]?.world === world && draft.steps.length === steps.length && draft.steps.every((step,i)=>step.skill === steps[i].skill && step.level === steps[i].level));
+}
+
+export function trackerCatalogue(review) {
+  const result = {nodes:[], stats:[], pending:0};
+  if (!review) return result;
+  for (const row of validateSkills(review).rows) {
+    const known = trackerSkill(row.source);
+    if (!known || !row.name || !row.shortName || !row.category) {result.pending++; continue;}
+    if (row.category === 'HEXA Stat') {
+      result.stats.push({short:known.short,name:row.name,shortName:row.shortName,icon:row.source.icon,tag:row.tag}); continue;
+    }
+    if (!row.source.costs?.levels?.length) {result.pending++; continue;}
+    result.nodes.push({...known,name:row.name,shortName:row.shortName,icon:row.source.effectiveIcon || row.source.icon,tag:row.tag,
+      group:{Skill:'Skill Nodes',Mastery:'Mastery Nodes',Enhancement:'Enhancement Nodes',Common:'Common Nodes'}[row.category],
+      costs:row.source.costs.levels.map(({erda,frags})=>({erda,frags})),initialLevel:row.source.costs.freeBaseLevel});
+  }
+  return result;
+}
+export function requireOrderSkills(drafts, review) {
+  const model=trackerCatalogue(review), keys=new Set([...model.nodes,...model.stats].map(node=>node.short));
+  if (drafts.some(draft=>draft.enabled && draft.steps.some(step=>!keys.has(step.skill)))) throw new Error('Save Skills with long/short names, categories and detected costs before making this priority available');
 }

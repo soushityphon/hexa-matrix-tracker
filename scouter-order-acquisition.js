@@ -39,7 +39,7 @@ export async function acquireScouterOrder(payload, catalogue, {apiKey, validateP
     if (sourceCatalogue?.job !== requestContext.job || sourceCatalogue?.selection?.region !== requestContext.region || sourceCatalogue?.selection?.world !== requestContext.world) throw new Error('Scouter catalogue and prepared request differ');
     if (await bounded(Promise.resolve().then(() => validatePrepared(body, sourceCatalogue))) !== true) throw new Error('Scouter outgoing semantic validation required');
     const url = 'https://api.maplescouter.com/api/calc/hexa-order?class=' + encodeURIComponent(requestContext.job);
-    const response = await bounded(fetchImpl(url, {method:'POST', redirect:'error', credentials:'omit', signal:controller.signal,
+    const response = await bounded(fetchImpl(url, {method:'POST', redirect:'manual', credentials:'omit', signal:controller.signal,
       headers:{'Content-Type':'application/json', Accept:'application/json', 'api-key':apiKey, Origin:'https://maplescouter.com', Referer:'https://maplescouter.com/'}, body:JSON.stringify(body)}));
     if (!response.ok) throw new Error(`Scouter order returned ${response.status}; stop without retries`);
     if (response.url && response.url !== url) throw new Error('Unexpected Scouter order redirect');

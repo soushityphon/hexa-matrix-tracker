@@ -20,7 +20,7 @@ export async function acquireScouterCatalogue(job, region, world, {fetchImpl = g
   }, timeoutMs);
   const bounded = operation => Promise.race([operation, deadline]);
   async function read(url) {
-    const response = await bounded(fetchImpl(url, {signal:controller.signal, redirect:'error', credentials:'omit', headers:{Accept:'text/html, application/javascript, text/javascript'}}));
+    const response = await bounded(fetchImpl(url, {signal:controller.signal, redirect:'manual', credentials:'omit', headers:{Accept:'text/html, application/javascript, text/javascript'}}));
     if (!response.ok) throw new Error(`Scouter source returned ${response.status}; stop without retries`);
     if (response.url && response.url !== url) throw new Error('Unexpected Scouter source redirect');
     const length = Number(response.headers.get('Content-Length'));

@@ -1,6 +1,11 @@
 import { COSTS, NODES, PRIORITIES, PRIORITY_SETTINGS } from './data.js';
 
-const byShort = Object.fromEntries(NODES.map(node => [node.short, node]));
+let runtimeNodes = NODES;
+let configuredCatalogue = false;
+let byShort = Object.fromEntries(NODES.map(node => [node.short, node]));
+export function setTrackerCatalogue(nodes) {
+  configuredCatalogue = true; runtimeNodes = nodes; byShort = Object.fromEntries(nodes.map(node=>[node.short,node]));
+}
 // Unlock costs: https://maplestorywiki.net/w/HEXA_Matrix#HEXA_Stats
 export const STAT_UNLOCK_COSTS = {
   'HEXA Stat I': { erda: 5, frags: 10 },
@@ -16,8 +21,9 @@ export function statRemainingCost(skill, levels, unlocked = {}) {
 }
 export const priorityPatch = mode => PRIORITY_SETTINGS[mode]?.patch || mode.split('_')[0];
 export function activeNodes(mode) {
+  if (configuredCatalogue) return runtimeNodes;
   const patch = priorityPatch(mode);
-  return NODES.filter(node => (patch === 'taotie' || node.short !== 'Taotie') && (patch !== 'hecate' || node.short !== 'Lotus'));
+  return runtimeNodes.filter(node => (patch === 'taotie' || node.short !== 'Taotie') && (patch !== 'hecate' || node.short !== 'Lotus'));
 }
 
 export function taotieCatchUp(levels, mode, order = PRIORITIES[mode]) {
@@ -36,7 +42,7 @@ export function rangeCost(skill, from, to) {
   if (!node) return null;
   const result = { erda: 0, frags: 0 };
   for (let level = from + 1; level <= to; level++) {
-    const cost = COSTS[node.type]?.[level - 1];
+    const cost = node.costs ? node.costs[level - 1] : COSTS[node.type]?.[level - 1];
     if (!cost) throw new Error(`Missing cost for ${node.type} level ${level}`);
     result.erda += cost.erda;
     result.frags += cost.frags;

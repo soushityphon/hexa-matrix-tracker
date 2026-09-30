@@ -1,5 +1,5 @@
 // Bundled with the static files by scripts/build-worker.mjs.
-import { validateSkills, validatePair, applySkills } from './admin-panel-model.js';
+import { validateSkills, validatePair, applySkills, trackerCatalogue, requireOrderSkills } from './admin-panel-model.js';
 import { validateDraft } from './priority-draft.js';
 import { scouterRequestContext } from './scouter-request-context.js';
 import { acquireScouterCatalogue, catalogueSelection } from './scouter-catalogue-acquisition.js';
@@ -22,7 +22,10 @@ async function priorityPreview(request, env) {
         } catch { /* An invalid saved version cannot be shown. */ }
       }
       const review = await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind('호영').first();
-      return Response.json({ drafts: applySkills(drafts, review ? JSON.parse(review.review_json) : null) }, { headers: noStore });
+      const skills=review ? JSON.parse(review.review_json) : null;
+      const visible=applySkills(drafts,skills);
+      for (const draft of Object.values(visible)) {try {requireOrderSkills([draft],skills);} catch {draft.enabled=false;}}
+      return Response.json({ drafts:visible }, { headers:noStore });
     }
     if (!['PUT', 'DELETE'].includes(request.method)) return new Response('Method not allowed', { status: 405 });
     if (!isAdmin(request, env)) return new Response('Admin access required', { status: 403 });
@@ -44,6 +47,34 @@ async function priorityPreview(request, env) {
       .bind(draft.mode, JSON.stringify(draft), new Date().toISOString()).run();
     return Response.json({ saved: draft.mode }, { headers: noStore });
   } catch { return new Response('Priority preview storage failed. Try again later.', { status: 503 }); }
+}
+async function trackerSkills(request, env) {
+  if (request.method !== 'GET') return new Response('Method not allowed', {status:405});
+  try {
+    const row=await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind('호영').first();
+    return Response.json(trackerCatalogue(row ? JSON.parse(row.review_json) : null), {headers:noStore});
+  } catch { return new Response('Skills storage unavailable', {status:503,headers:noStore}); }
+}
+// Temporary service authorisation is limited to backing up and removing exact
+// saved priority rows. It never grants access to upstream requests or owner edits.
+async function adminMaintenance(request, env) {
+  const token=env?.ADMIN_MAINTENANCE_TOKEN;
+  if (!isAdmin(request,env) && !(typeof token==='string' && token.length>=32 && request.headers.get('Authorization')===`Bearer ${token}`)) return new Response('Admin access required',{status:403});
+  if (!['GET','POST'].includes(request.method)) return new Response('Method not allowed',{status:405});
+  try {
+    const priorities=(await env.DB.prepare('SELECT mode, draft_json, updated_at FROM priority_preview ORDER BY mode').all()).results || [];
+    const skills=(await env.DB.prepare('SELECT job, review_json, updated_at FROM admin_skills ORDER BY job').all()).results || [];
+    const snapshot={schema:1,type:'hexa-tracker-backup',priorities,skills};
+    if (request.method==='GET') return Response.json({...snapshot,createdAt:new Date().toISOString()},{headers:noStore});
+    const body=await request.text();
+    if(body.length>2000000) return new Response('Payload too large',{status:413});
+    const value=JSON.parse(body);
+    if(value.confirm!=='clear-backed-up-priorities' || JSON.stringify(value.priorities)!==JSON.stringify(priorities)) return new Response('Backup does not match current saved priorities',{status:409});
+    // Exact row predicates preserve any edit that arrives after the snapshot read.
+    await env.DB.batch(priorities.map(row=>env.DB.prepare('DELETE FROM priority_preview WHERE mode = ? AND draft_json = ? AND updated_at = ?').bind(row.mode,row.draft_json,row.updated_at)));
+    const remaining=(await env.DB.prepare('SELECT mode FROM priority_preview').all()).results || [];
+    return Response.json({removed:priorities.length-remaining.length,remaining:remaining.map(row=>row.mode)},{headers:noStore});
+  } catch { return new Response('Backup or reset failed',{status:503,headers:noStore}); }
 }
 async function adminPanel(request, env) {
   if (!isAdmin(request, env)) return new Response('Admin access required', {status:403,headers:noStore});
@@ -68,6 +99,16 @@ async function adminPanel(request, env) {
         await env.DB.prepare('INSERT INTO admin_skills (job, review_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(job) DO UPDATE SET review_json = excluded.review_json, updated_at = excluded.updated_at').bind(review.job, JSON.stringify(review), new Date().toISOString()).run();
         return Response.json({saved:true}, {headers:noStore});
       }
+      if (request.method === 'POST' && value.restoreSnapshot) {
+        const backup=value.restoreSnapshot;
+        if (backup.schema!==1 || backup.type!=='hexa-tracker-backup' || !Array.isArray(backup.priorities) || backup.priorities.length>100 || !Array.isArray(backup.skills) || backup.skills.length>10) throw new Error('Invalid tracker backup');
+        const restored=backup.priorities.map(row=>{const draft=validateDraft(JSON.parse(row.draft_json));if(draft.mode!==row.mode || Object.hasOwn(drafts,row.mode)) throw new Error('Backup priority already exists or has an invalid identity');return {...draft,enabled:false};});
+        if(new Set(restored.map(draft=>draft.mode)).size!==restored.length) throw new Error('Duplicate backup priority');
+        const reviews=backup.skills.map(row=>{const review=validateSkills(JSON.parse(row.review_json));if(review.job!==row.job)throw new Error('Invalid backup skill identity');return review;});
+        for(const review of reviews)if(await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind(review.job).first())throw new Error('Saved skills already exist. Restore into an empty catalogue.');
+        await env.DB.batch([...restored.map(draft=>env.DB.prepare('INSERT INTO priority_preview (mode, draft_json, updated_at) VALUES (?, ?, ?)').bind(draft.mode,JSON.stringify(draft),new Date().toISOString())),...reviews.map(review=>env.DB.prepare('INSERT INTO admin_skills (job, review_json, updated_at) VALUES (?, ?, ?)').bind(review.job,JSON.stringify(review),new Date().toISOString()))]);
+        return Response.json({restored:restored.length},{headers:noStore});
+      }
       if (request.method === 'POST') {
         changes = value.legacyDraft ? [validateDraft(value.legacyDraft)] : validatePair(value);
         if (changes.some(draft => Object.hasOwn(drafts,draft.mode))) throw new Error('This priority pair already exists');
@@ -81,6 +122,8 @@ async function adminPanel(request, env) {
         if ((value.name !== undefined && (typeof value.name !== 'string' || !value.name.trim() || value.name.length > 120)) || (value.enabled !== undefined && typeof value.enabled !== 'boolean')) throw new Error('Invalid priority changes');
         changes = targets.map(draft => validateDraft({...draft, ...(value.enabled === undefined ? {} : {enabled:value.enabled}), ...(value.name === undefined ? {} : draft.pairId ? {pairName:value.name.trim(), name:value.name.trim() + ' | ' + (draft.sourceMode.endsWith('_heroic') ? 'Heroic' : 'Interactive')} : {name:value.name.trim()})}));
       }
+      const review=await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind('호영').first();
+      requireOrderSkills(changes,review ? JSON.parse(review.review_json) : null);
       if (changes.some(draft => draft.newNodes.length)) throw new Error('New skills still need tracker support before saving a priority');
     } catch (error) { return new Response(error.message, {status:400,headers:noStore}); }
     // Both variants commit together, or neither commits.
@@ -206,6 +249,8 @@ async function requestDiagnostic(request, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === '/api/tracker-catalogue') return trackerSkills(request, env);
+    if (url.pathname === '/api/admin-maintenance') return adminMaintenance(request, env);
     if (url.pathname === '/api/admin-panel') return adminPanel(request, env);
     if (url.pathname === '/api/scouter-catalogue') {
       if (!isAdmin(request, env)) return new Response('Admin access required', {status:403, headers:noStore});

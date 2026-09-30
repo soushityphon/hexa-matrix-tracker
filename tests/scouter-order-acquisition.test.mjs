@@ -8,7 +8,7 @@ const payload={myHexa:structuredClone(hexa),userStat:{hexa:structuredClone(hexa)
 const catalogue={job:'테스트',selection:discoverySelection('KMS','Heroic'),skills:[{coreId:'skillCore1',sourceName:'Origin',icon:'https://maplescouter.com/hexaskill/Test_1.png',costs:{freeBaseLevel:1,levels:Array.from({length:30},(_,i)=>({level:i+1,erda:1,frags:3}))}}]};
 const response={class_hexa:[['Origin',3,'/hexaskill/Test_1.png',2,6,2,6,1.5,1.01,'skillCore1','Origin 1→3']],privateProfile:'PRIVATE_RESPONSE'};
 let calls=0, sent;
-const options={apiKey:'PRIVATE_KEY',validatePrepared:()=>true,fetchImpl:async(url,init)=>{calls++;sent=JSON.parse(init.body);assert.match(url,/class=/);assert.equal(init.credentials,'omit');assert.equal(init.redirect,'error');return Response.json(response);}};
+const options={apiKey:'PRIVATE_KEY',validatePrepared:()=>true,fetchImpl:async(url,init)=>{calls++;sent=JSON.parse(init.body);assert.match(url,/class=/);assert.equal(init.credentials,'omit');assert.equal(init.redirect,'manual');return Response.json(response);}};
 const result=await acquireScouterOrder(payload,catalogue,options);
 assert.equal(calls,1);
 assert.deepEqual(result.requestContext,await scouterRequestContext(sent));
@@ -34,7 +34,7 @@ await acquireScouterOrder(mutable,mutableCat,{...options,validatePrepared:async(
   mutable.userStat.stat.attack=999;mutableCat.skills[0].sourceName='changed';return true;
 }});
 assert.equal(sent.userStat.stat.attack,42);
-for(const status of [429,430,500]) {
+for(const status of [302,429,430,500]) {
   calls=0;
   await assert.rejects(()=>acquireScouterOrder(payload,catalogue,{...options,fetchImpl:async()=>{calls++;return new Response('PRIVATE_REJECTION',{status});}}),new RegExp(String(status)));
   assert.equal(calls,1);

@@ -1,4 +1,7 @@
-import { NODES, STAT_ICONS } from './data.js';
+let NODES = [], statNodes = [];
+let nodeByShort = {};
+import { setTrackerCatalogue } from './planner.js';
+setTrackerCatalogue([]);
 import { activeNodes, combinedSourceGain, displayPriorityRows, matrixTotals, nextCheckpoint, rangeCost, taotieCatchUp } from './planner.js';
 import { fetchSharedPreview, previewCatalog } from './preview-priorities.js';
 import { skillAccent } from './skill-colours.js';
@@ -58,20 +61,27 @@ function syncPriorityOptions() {
 }
 
 function renderInputs() {
-  const nodeRow = node => `<label class="node-row" style="--skill-accent:${skillAccent(node.short)}" data-node-row="${node.short}" data-node-id="${node.id}" title="${node.name}"><span class="node-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span class="node-label">${hoyoungSkillTags[node.id] ? `<span class="skill-tag">${hoyoungSkillTags[node.id]}</span>` : ''}<span class="node-name">${node.name}</span></span><input data-node="${node.short}" aria-label="${node.name} level" type="number" min="${node.short === 'Apotheosis' ? 1 : 0}" max="30" step="1" value="${clamp(saved.levels?.[node.short], 30, node.short === 'Apotheosis' ? 1 : 0)}"></label>`;
+  $('.stat-list').replaceChildren();
+  $('#stat-heading').hidden = !statNodes.length;
+  for (const node of statNodes) {
+    const row=document.createElement('div');row.className='stat-row';
+    row.innerHTML=`<img src="${escapeHtml(node.icon)}" alt=""><span class="stat-name">${escapeHtml(node.name)}</span><input data-stat="${escapeHtml(node.short)}" aria-label="${escapeHtml(node.name)} level" type="number" min="0" max="20" value="0"><label class="stat-unlocked"><input data-stat-unlocked="${escapeHtml(node.short)}" aria-label="${escapeHtml(node.name)} unlocked" type="checkbox"> Unlocked</label>`;
+    $('.stat-list').append(row);
+  }
+  const nodeRow = node => `<label class="node-row" style="--skill-accent:${skillAccent(node.short)}" data-node-row="${node.short}" data-node-id="${node.id}" title="${escapeHtml(node.name)}"><span class="node-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span class="node-label">${node.tag ? `<span class="skill-tag">${escapeHtml(node.tag)}</span>` : ''}<span class="node-name">${escapeHtml(node.name)}</span></span><input data-node="${node.short}" aria-label="${escapeHtml(node.name)} level" type="number" min="${node.short === 'Apotheosis' ? 1 : 0}" max="30" step="1" value="${clamp(saved.levels?.[node.short], 30, node.short === 'Apotheosis' ? 1 : 0)}"></label>`;
   const renderGroup = (group, label, descending) => {
     const category = {'Skill Nodes':'Skill','Mastery Nodes':'Mastery','Enhancement Nodes':'Enhancement','Common Nodes':'Common'}[group];
     const nodes = NODES.filter(node => (previewDrafts[saved.mode]?.skillCategories?.[node.short] || {'Skill Nodes':'Skill','Mastery Nodes':'Mastery','Enhancement Nodes':'Enhancement','Common Nodes':'Common'}[node.group]) === category);
     if (descending) nodes.reverse();
     return `<section class="node-group"><h3 class="group-label">${label}</h3>${nodes.map(nodeRow).join('')}</section>`;
   };
-  $('#nodes').innerHTML = `<div class="node-column">${renderGroup('Skill Nodes', 'Skill', true)}${renderGroup('Enhancement Nodes', 'Enhancement', false)}</div><div class="node-column">${renderGroup('Mastery Nodes', 'Mastery', true)}${renderGroup('Common Nodes', 'Common', false)}</div>`;
+  $('#nodes').innerHTML = NODES.length ? `<div class="node-column">${renderGroup('Skill Nodes', 'Skill', true)}${renderGroup('Enhancement Nodes', 'Enhancement', false)}</div><div class="node-column">${renderGroup('Mastery Nodes', 'Mastery', true)}${renderGroup('Common Nodes', 'Common', false)}</div>` : '<p class="fine">No skills saved. Populate and save Skills in the Admin Panel.</p>';
   $$('.node-icon img').forEach(img => {
     img.addEventListener('error', () => { img.hidden = true; });
     if (img.complete && !img.naturalWidth) img.hidden = true;
   });
   $$('[data-stat]').forEach(input => {
-    const icon = STAT_ICONS[input.dataset.stat];
+    const icon = statNodes.find(node=>node.short===input.dataset.stat)?.icon;
     if (!icon) return;
     const row = input.closest('.stat-row');
     if (row.querySelector('img')) return;
@@ -124,7 +134,7 @@ function checkMaterialIcons() {
   });
 }
 
-const nodeByShort = Object.fromEntries(NODES.map(node => [node.short, node]));
+
 function typeClass(skill) {
   if (skill.startsWith('HEXA Stat')) return 'stat';
   const type = nodeByShort[skill]?.type || '';
@@ -210,7 +220,7 @@ function render() {
   $('#version-name').textContent = `${catalog.labels[mode]} / ${catalog.settings[mode].world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'}${previewDrafts[mode] ? ' / Test site preview' : ''}`;
   $('#progress').textContent = steps.length ? `${completed} / ${steps.length} complete` : 'Maple Scouter order pending';
   $('#next-upgrade').style.setProperty('--skill-accent', skillAccent(nextRow?.skill));
-  const nextIcon = nextRow && (previewDrafts[mode]?.statIcons[nextRow.skill] || STAT_ICONS[nextRow.skill] || nodeByShort[nextRow.skill]?.icon);
+  const nextIcon = nextRow && (previewDrafts[mode]?.statIcons[nextRow.skill] || statNodes.find(node=>node.short===nextRow.skill)?.icon || nodeByShort[nextRow.skill]?.icon);
   const statStep = nextIsStat && (statUnlocked[next.skill]
     ? upgradeCost(`Completion · ${nextRow.level}`, nextRow.cost, null, statAction(next.skill, 'complete', 'Mark complete'))
     : upgradeCost('Unlock', { ...nextRow.cost, rng: false }, null, statAction(next.skill, 'unlock', 'Mark unlocked')));
@@ -226,7 +236,7 @@ function render() {
     const number = value => value === 0 ? '<span class="zero">0</span>' : value.toLocaleString();
     if (!row.done) remainingIndex++;
     const displayIndex = $('#hideDone').checked && !row.done ? remainingIndex : rowIndex + 1;
-    const icon = previewDrafts[mode]?.statIcons[row.skill] || STAT_ICONS[row.skill] || nodeByShort[row.skill]?.icon;
+    const icon = previewDrafts[mode]?.statIcons[row.skill] || statNodes.find(node=>node.short===row.skill)?.icon || nodeByShort[row.skill]?.icon;
     const isNext = row.index <= index + 1 && index + 1 <= row.endIndex;
     const gain = row.done || row.skill.startsWith('HEXA Stat') ? null : combinedSourceGain(order, row, current[row.skill] || 0);
     const fd = gain === null ? '' : fdText(gain);
@@ -249,7 +259,7 @@ function render() {
     row.querySelector('.node-name').textContent = previewDrafts[mode]?.names[row.dataset.nodeRow] || nodeByShort[row.dataset.nodeRow].name;
     const label = row.querySelector('.node-label');
     let tag = label.querySelector('.skill-tag');
-    const tagText = previewDrafts[mode]?.tags?.[row.dataset.nodeRow] ?? hoyoungSkillTags[row.dataset.nodeId] ?? '';
+    const tagText = nodeByShort[row.dataset.nodeRow]?.tag || '';
     if (tagText && !tag) { tag = document.createElement('span'); tag.className = 'skill-tag'; label.prepend(tag); }
     if (tag) { tag.textContent = tagText; tag.hidden = !tagText; }
   });
@@ -288,6 +298,9 @@ $('#next-upgrade').addEventListener('click', event => {
 });
 async function refreshSharedPriorities() {
   try {
+    const response=await fetch('/api/tracker-catalogue',{cache:'no-store'});
+    if(!response.ok) throw new Error('Saved skills are unavailable');
+    const model=await response.json();NODES=model.nodes;statNodes=model.stats;nodeByShort=Object.fromEntries(NODES.map(node=>[node.short,node]));setTrackerCatalogue(NODES);
     const drafts = await fetchSharedPreview();
     previewDrafts = drafts;
     catalog = previewCatalog(drafts);
@@ -298,6 +311,7 @@ async function refreshSharedPriorities() {
     render();
     $('#priority-sync').textContent = '';
   } catch (error) {
+    NODES=[];statNodes=[];nodeByShort={};setTrackerCatalogue([]);renderInputs();
     previewDrafts = {};
     catalog = previewCatalog({});
     render();
