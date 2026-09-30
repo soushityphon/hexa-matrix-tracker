@@ -18,14 +18,6 @@ const requestedMode = new URL(location.href).searchParams.get('mode');
 let initialSharedLoad = true;
 if (requestedMode && catalog.settings[requestedMode]?.enabled && catalog.priorities[requestedMode]?.length) saved.mode = requestedMode;
 
-const hoyoungSkillTags = {
-  apotheosis: 'Origin',
-  ascent: 'Ascent',
-  harmony: 'M1',
-  basics: 'M2',
-  talisman: 'M3',
-  scroll: 'M4'
-};
 const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 
 function clamp(value, max, min = 0) {
@@ -193,7 +185,10 @@ function render() {
     return;
   }
   const sourceMode = previewDrafts[mode]?.sourceMode || mode;
-  const priorityName = skill => `${previewDrafts[mode]?.tags?.[skill] ? `<span class="skill-tag">${escapeHtml(previewDrafts[mode].tags[skill])}</span> ` : ''}${escapeHtml(previewDrafts[mode]?.shortNames?.[skill] || skill)}`;
+  const priorityName = skill => {
+    const tag=nodeByShort[skill]?.tag || statNodes.find(node=>node.short===skill)?.tag || '';
+    return `${tag ? `<span class="skill-tag">${escapeHtml(tag)}</span> ` : ''}${escapeHtml(previewDrafts[mode]?.shortNames?.[skill] || skill)}`;
+  };
   const order = catalog.priorities[mode];
   const current = levels();
   const statUnlocked = {};

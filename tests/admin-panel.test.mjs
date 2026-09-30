@@ -36,6 +36,11 @@ let rows=mergeSkills({skills:[source]},[],state.drafts);assert.equal(rows[0].nam
 rows[0].name='Long edited name';rows[0].shortName='Short edited';rows[0].tag='M1';rows[0].category='Mastery';
 rows=mergeSkills({skills:[source,{coreId:'skillCore99',sourceName:'New source',icon:'https://maplescouter.com/hexaskill/new.png'}]},rows,state.drafts);
 assert.equal(rows[0].name,'Long edited name');assert.equal(rows[1].name,'');assert.equal(rows[1].category,'');
+const newDefaults=mergeSkills({skills:Object.entries({Apotheosis:'skillCore1',Ascent:'skillCore2',Harmony:'masteryCore1',Basics:'masteryCore2',Talisman:'masteryCore3',Scroll:'masteryCore4'}).map(([short,coreId])=>({coreId,sourceName:short,icon:NODES.find(node=>node.short===short).icon}))});
+assert.deepEqual(newDefaults.map(row=>row.tag),['Origin','Ascent','M1','M2','M3','M4']);
+newDefaults[2].tag='';
+const refreshed=mergeSkills({skills:newDefaults.map(row=>row.source)},newDefaults);
+assert.equal(refreshed[2].tag,'');
 const review=validateSkills({job:'호영',rows});
 assert.equal((await call('PUT',review)).status,200);
 const publicState=await (await worker.fetch(new Request('https://test.example/api/priority-preview'),env)).json();
@@ -72,3 +77,12 @@ assert.equal(sqlite.prepare('SELECT count(*) AS n FROM priority_preview').get().
 assert.equal(JSON.parse(sqlite.prepare('SELECT draft_json FROM priority_preview').get().draft_json).enabled,false);
 assert.equal((await call('POST',{restoreSnapshot:backup})).status,400);
 console.log('Complete snapshot restoration, collision refusal and unavailable-by-default restoration passed');
+
+const beforeClear=await (await call('GET')).json();
+const cleared=structuredClone(beforeClear.skills);cleared.rows[0].tag='';
+assert.equal((await call('PUT',cleared)).status,200);
+const afterClear=await (await call('GET')).json();assert.equal(afterClear.skills.rows[0].tag,'');
+assert.equal((await (await catalogueRequest()).json()).nodes[0].tag,'');
+const afterClearPublic=await (await worker.fetch(new Request('https://test.example/api/priority-preview'),env)).json();
+assert.equal(Object.values(afterClearPublic.drafts)[0].tags.Harmony,'');
+console.log('Default tags appear in admin fields; clearing survives refresh, save and public catalogue');

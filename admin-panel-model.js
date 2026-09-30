@@ -20,7 +20,7 @@ export function mergeSkills(catalogue, previous = [], drafts = {}) {
     const node = trackerSkill(source);
     const values = node ? Object.values(drafts).map(draft => ({name:draft.names?.[node.short] || '', shortName:draft.shortNames?.[node.short] || node.short})) : [];
     const unique = [...new Set(values.map(value => JSON.stringify(value)))].map(value => JSON.parse(value));
-    rows.push({ coreId:source.coreId, source, name:unique.length === 1 ? unique[0].name : '', shortName:unique.length === 1 ? unique[0].shortName : '', category:values.length && node ? categoryFor(node) : (node?.group === 'HEXA Stat' ? 'HEXA Stat' : ''), tag:values.length && node ? defaultTags[node.short] || '' : '', conflicts:unique.length > 1 ? unique : [] });
+    rows.push({ coreId:source.coreId, source, name:unique.length === 1 ? unique[0].name : '', shortName:unique.length === 1 ? unique[0].shortName : '', category:values.length && node ? categoryFor(node) : (node?.group === 'HEXA Stat' ? 'HEXA Stat' : ''), tag:node ? defaultTags[node.short] || '' : '', conflicts:unique.length > 1 ? unique : [] });
   }
   return rows;
 }
