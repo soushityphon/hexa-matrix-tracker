@@ -1,6 +1,7 @@
 // Bundled with the static files by scripts/build-worker.mjs.
 import { validateDraft } from './priority-draft.js';
 import { scouterRequestContext } from './scouter-request-context.js';
+import { acquireScouterCatalogue, catalogueSelection } from './scouter-catalogue-acquisition.js';
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png' };
 const scouterUrl = 'https://api.maplescouter.com/api/calc/hexa-order?class=%ED%98%B8%EC%98%81';
 const noStore = { 'Cache-Control': 'no-store' };
@@ -159,6 +160,17 @@ async function requestDiagnostic(request, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === '/api/scouter-catalogue') {
+      if (!isAdmin(request, env)) return new Response('Admin access required', {status:403, headers:noStore});
+      if (request.method !== 'GET') return new Response('Method not allowed', {status:405, headers:noStore});
+      const keys = ['job','region','world'];
+      if ([...url.searchParams.keys()].some(key => !keys.includes(key)) || keys.some(key => url.searchParams.getAll(key).length !== 1)) return new Response('Choose one job, region and world', {status:400, headers:noStore});
+      const args = keys.map(key => url.searchParams.get(key));
+      try { catalogueSelection(...args); }
+      catch { return new Response('Choose a Scouter job name, GMS/KMS and Heroic/Interactive', {status:400, headers:noStore}); }
+      try { return Response.json(await acquireScouterCatalogue(...args), {headers:noStore}); }
+      catch { return new Response('Scouter source acquisition failed. Review the current source schema or try later.', {status:502, headers:noStore}); }
+    }
     if (url.pathname === '/api/scouter-request-diagnostic') return requestDiagnostic(request, env);
     if (url.pathname === '/api/priority-preview') return priorityPreview(request, env);
     if (['/priority-review.html', '/scouter-request-diagnostic.html'].includes(url.pathname) && !isAdmin(request, env)) {
