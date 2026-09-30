@@ -149,6 +149,8 @@ export function discoverySelection(region, world) {
 export function reconstructScouterOrder(response, catalogue, selection, iconOverrides = {}) {
   if (!Array.isArray(response?.class_hexa) || !response.class_hexa.length) throw new Error('Missing Scouter order');
   selection = discoverySelection(selection?.region, selection?.world);
+  if (catalogue.selection && (catalogue.selection.region !== selection.region || catalogue.selection.world !== selection.world)) throw new Error('Catalogue selection differs from order selection');
+  if (typeof catalogue.job !== 'string' || !catalogue.job || !Array.isArray(catalogue.skills) || new Set(catalogue.skills.map(s=>s.coreId)).size !== catalogue.skills.length) throw new Error('Invalid candidate catalogue');
   for (const field of ['standard','patch','class','character_class']) {
     if (response[field] != null && typeof response[field] !== 'string') throw new Error('Invalid source context');
   }
@@ -169,6 +171,8 @@ export function reconstructScouterOrder(response, catalogue, selection, iconOver
     const from = previous.get(coreId) || 0;
     const level = stat ? 20 : rawLevel;
     if (!Number.isInteger(rawLevel)) throw new Error('Invalid raw checkpoint level');
+    const sourceRange = /(?:^|\s)(\d+)→(\d+)$/.exec(transition);
+    if (!sourceRange || Number(sourceRange[1]) !== from || Number(sourceRange[2]) !== level) issues.push({position:index+1,kind:'transition-baseline'});
     const validFD = Number.isFinite(efficiency) && efficiency >= 0 && Number.isFinite(multiplier) && multiplier > 0;
     if (!validFD) issues.push({position:index+1,kind:'invalid-fd-fields'});
     const step = {position:index+1,coreId,sourceName,icon,from,level,rawLevel,transition,
@@ -186,12 +190,16 @@ export function reconstructScouterOrder(response, catalogue, selection, iconOver
       if (!costs || costs.length!==level-from) issues.push({position:index+1,kind:'missing-level-costs'});
       else if (costs.reduce((n,c)=>n+c.erda,0)!==erda || costs.reduce((n,c)=>n+c.frags,0)!==frags) issues.push({position:index+1,kind:'checkpoint-cost'});
       step.materialBasis='fixed checkpoint';
-      if (validFD) step.fd.checkpointGainPercent=efficiency*frags/30;
+      if (validFD) {
+        const gain=efficiency*frags/30;
+        step.fd.checkpointGainPercent=Number.isFinite(gain)?gain:null;
+        if (!Number.isFinite(gain)) issues.push({position:index+1,kind:'invalid-fd-gain'});
+      }
     }
     previous.set(coreId,level); steps.push(step);
   });
   const reportedClass=response.class??response.character_class??null;
-  if (reportedClass!==null && reportedClass!==catalogue.job) issues.push({kind:'returned-class'});
+  for (const field of ['class','character_class']) if (response[field]!=null && response[field]!==catalogue.job) issues.push({kind:'returned-class',field});
   return {schema:1,namespace:'isolated-scouter-discovery',job:catalogue.job,selection,
     source:{standard:response.standard??null,patch:response.patch??null,hexaUpdated:response.hexa_updated??null,reportedClass},
     steps,issues,reviewedOverrides:{},publishable:false};

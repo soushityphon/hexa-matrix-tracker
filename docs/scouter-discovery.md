@@ -63,3 +63,28 @@ Original metadata/cost captures were 03:30 UTC; the acquisition command independ
 5. Record an explicit patch/version label when a Scouter source supports one. A candidate skill table alone cannot prove region availability. No alternative source is currently required for fixed skill costs; Stat RNG and patch metadata remain open.
 
 Tests cover synthetic source parsing and schema drift, exact nonuniform cumulative differences, unknown jobs, malicious expressions, duplicate keys, icon overrides, selectors, Origin baseline, checkpoint identities/materials/FD, Stat normalisation and evidence redaction. Existing data, Worker routes and owner diagnostic tests must also pass. No deployment is needed for these offline tools.
+
+## Continuation, context comparison and reconstruction integrity
+
+The ranking and two controlled order calls above were already complete when this continuation began. They were not repeated. No new order request was justified while the source of the 104-position drift remains unsettled.
+
+`scouter-comparison.js` compares isolated candidates by Scouter core ID and target, without importing `data.js`, reviewed aliases or saved tracker data. It reports exact sequence differences, baseline/material/FD differences for matching full sequences, and each context field as same, different or unknown. Missing values on both sides are unknown. Matching training-dummy labels or generic `patch` strings do not prove equal character calculations or patch versions. Ren substitution still does not establish a genuine Ren benchmark.
+
+```sh
+node scripts/compare-scouter-candidates.mjs before.json after.json
+```
+
+Inputs use the reconstruction shape: `job`, `selection`, `source`, `steps`, and optional `provenance.response.capturedAt`. Optional `requestContext` fields are `patchVersion`, `benchmarkFingerprint` and `resetFingerprint`. Fingerprints must be SHA-256 strings generated in a trusted server workflow, never raw private character stats. This comparison does not generate or verify the fingerprints, acquire private templates or perform a calculation. It cannot establish missing provenance from old fixtures. Capture dates are compared and reported separately from benchmark compatibility.
+
+Checkpoint FD is compared only for an exact full-order match, with matching baselines and complete context for `fdComparable`. Different FD values remain visible as differences. Stats have no fixed checkpoint FD and are excluded from that comparison. Their source material observations remain estimates. Reviewed name and visibility overlays do not participate in source matching or leave through this report. Every report remains `publishable:false`.
+
+Reconstruction now flags transition labels that disagree with the Origin/previous checkpoint baseline or target, conflicting returned class fields, repeated Stat baselines and FD multiplication overflow. It rejects duplicate catalogue core IDs and a selection that differs from the catalogue. Both returned class fields are checked if present, rather than letting one mask the other. This does not clear the runtime request diagnostic or prove full outgoing-body semantics.
+
+Validation in this continuation:
+
+- Fresh public frontend acquisition again returned 14 Hoyoung skills and four placeholders. Metadata, cost and icon-override SHA-256 values match those above. No calculation endpoint was called.
+- All 420 source level costs match the reviewed tracker by source icon identity, including the explicit Hecate override. All 203 fixed transitions in the retained 206-row KMS evidence match freshly discovered schedules and source names, with zero mismatches. This is a dated evidence check, not a new order or FD measurement.
+- Comparing that retained evidence with itself gives exact 206-checkpoint identity but unknown patch version, benchmark fingerprint, reset fingerprint and capture timestamp; its 203 fixed FD observations are absent. The report correctly remains non-comparable for FD and non-publishable. No private request provenance was reconstructed from labels or filenames.
+- `npm test`, Worker build and syntax checks pass. Added synthetic tests cover conflicting class fields, baseline drift, duplicate inventory, selection drift, overflowing FD, repeated Stat transitions, missing provenance, world/benchmark differences, ignored display overrides, changed full-order FD and rejection of raw private strings as fingerprints.
+
+No runtime route, request preparation, D1 access, browser progress, secret or deployment was changed. The test Site stays at version 64. Next work is the owner-only server acquisition and provenance workflow already listed above, then comparison of actual saved/fresh request contexts before reviewed promotion. The isolated comparison is ready for that workflow; it is not yet an admin UI or a complete any-job acquisition system.
