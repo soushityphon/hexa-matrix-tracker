@@ -133,6 +133,12 @@ try {
   const report = await response.json();
   assert.equal(report.requests.length,4);
   for (const r of report.requests) {
+    assert.match(r.requestContext.benchmarkFingerprint,/^[a-f0-9]{64}$/);
+    assert.match(r.requestContext.resetFingerprint,/^[a-f0-9]{64}$/);
+    assert.match(r.requestContext.preparedBodyFingerprint,/^[a-f0-9]{64}$/);
+    assert.equal(r.requestContext.region,r.mode.startsWith('taotie_')?'KMS':'GMS');
+    assert.equal(r.requestContext.world,r.mode.endsWith('_interactive')?'Interactive':'Heroic');
+    assert.equal(r.requestContext.semanticValidation,'not-established-by-fingerprints');
     assert.equal(r.upstreamCalled,false);
     assert.equal(r.validatedForClassSubstitution,false);
     for (const path of ['myHexa','userStat.hexa']) {
@@ -144,6 +150,8 @@ try {
     assert(r.issues.some(i=>/all three Stats/.test(i.reason)));
   }
   assert(!JSON.stringify(report).includes('test-key'));
+  assert.equal(report.requests[0].requestContext.benchmarkFingerprint,report.requests[1].requestContext.benchmarkFingerprint);
+  assert.equal(report.requests[0].requestContext.resetFingerprint,report.requests[1].requestContext.resetFingerprint);
   const privatePayload = structuredClone(payload);
   privatePayload.userStat.accountId='PRIVATE_ACCOUNT';
   privatePayload.userStat.stat.attack=987654;

@@ -80,11 +80,25 @@ Checkpoint FD is compared only for an exact full-order match, with matching base
 
 Reconstruction now flags transition labels that disagree with the Origin/previous checkpoint baseline or target, conflicting returned class fields, repeated Stat baselines and FD multiplication overflow. It rejects duplicate catalogue core IDs and a selection that differs from the catalogue. Both returned class fields are checked if present, rather than letting one mask the other. This does not clear the runtime request diagnostic or prove full outgoing-body semantics.
 
-Validation in this continuation:
+## Prepared request fingerprints, 30 September continuation
+
+`scouter-request-context.js` is a server-only helper used by the existing owner-only request diagnostic. It hashes the actual prepared body returned by `prepareScouterRequest`, after reset and material selection. It makes no calculation request or storage write. It does not export templates, account identifiers, character statistics, efficiencies or API keys. The build copies the module as a server dependency and does not expose it as a browser asset.
+
+The report's `requestContext` contains schema-1 SHA-256 fingerprints using sorted JSON keys and scope separation:
+
+- `benchmarkFingerprint` hashes the complete prepared body except both HEXA copies and `sole`. All other fields, including benchmark options, efficiencies, character statistics, region and identifiers, remain inside the hash. This is conservative: changes to an identifier may mark equivalent calculations as different, but are not silently ignored.
+- `resetFingerprint` hashes the present top-level/nested core inventory, values and scalar Stat reset fields in both copies. It excludes names and material-price fields. Only Origin 1, other present cores 0, scalar 0/opened false are accepted. It does not prove inventory completeness, unknown-field semantics or all-three-Stat backend behaviour.
+- `preparedBodyFingerprint` hashes the full exact JSON body, including prices and every unknown field. Key order is canonical; numeric/string types remain distinct.
+
+Class fields must agree and selectors must be booleans. Non-finite/non-JSON input and dirty present reset values are rejected. No fingerprint clears the existing diagnostic gate. `provenance:configured-server-template` states how the body was obtained; it does not certify that the private template is a genuine job-specific benchmark. `semanticValidation:not-established-by-fingerprints` makes this limit explicit. No patch version or response capture timestamp is invented.
+
+The helper is the provenance portion of the server acquisition work, not a complete acquisition endpoint. The normal order route and saved D1 schema are unchanged. Next, attach trusted context to the same validated response during owner-only bounded acquisition, retain explicit capture time, and feed it to isolated reconstruction/comparison. Do not attach diagnostic hashes from a separate request to an old capture, backfill missing historical context or promote a candidate based on hashes alone. GMS semantics and a genuine Ren benchmark remain unverified. This continuation does not make additional live calls or deploy the changed diagnostic.
+
+Validation in the preceding context-comparison continuation:
 
 - Fresh public frontend acquisition again returned 14 Hoyoung skills and four placeholders. Metadata, cost and icon-override SHA-256 values match those above. No calculation endpoint was called.
 - All 420 source level costs match the reviewed tracker by source icon identity, including the explicit Hecate override. All 203 fixed transitions in the retained 206-row KMS evidence match freshly discovered schedules and source names, with zero mismatches. This is a dated evidence check, not a new order or FD measurement.
 - Comparing that retained evidence with itself gives exact 206-checkpoint identity but unknown patch version, benchmark fingerprint, reset fingerprint and capture timestamp; its 203 fixed FD observations are absent. The report correctly remains non-comparable for FD and non-publishable. No private request provenance was reconstructed from labels or filenames.
 - `npm test`, Worker build and syntax checks pass. Added synthetic tests cover conflicting class fields, baseline drift, duplicate inventory, selection drift, overflowing FD, repeated Stat transitions, missing provenance, world/benchmark differences, ignored display overrides, changed full-order FD and rejection of raw private strings as fingerprints.
 
-No runtime route, request preparation, D1 access, browser progress, secret or deployment was changed. The test Site stays at version 64. Next work is the owner-only server acquisition and provenance workflow already listed above, then comparison of actual saved/fresh request contexts before reviewed promotion. The isolated comparison is ready for that workflow; it is not yet an admin UI or a complete any-job acquisition system.
+That context-comparison continuation changed no runtime route, request preparation, D1 access, browser progress, secret or deployment. The test Site stays at version 64. Next work is the owner-only server acquisition and provenance workflow already listed above, then comparison of actual saved/fresh request contexts before reviewed promotion. The isolated comparison is ready for that workflow; it is not yet an admin UI or a complete any-job acquisition system.

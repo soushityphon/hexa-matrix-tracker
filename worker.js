@@ -1,5 +1,6 @@
 // Bundled with the static files by scripts/build-worker.mjs.
 import { validateDraft } from './priority-draft.js';
+import { scouterRequestContext } from './scouter-request-context.js';
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png' };
 const scouterUrl = 'https://api.maplescouter.com/api/calc/hexa-order?class=%ED%98%B8%EC%98%81';
 const noStore = { 'Cache-Control': 'no-store' };
@@ -145,10 +146,13 @@ async function requestDiagnostic(request, env) {
   const ownerService = typeof serviceToken === 'string' && serviceToken.length >= 32 && request.headers.get('Authorization') === `Bearer ${serviceToken}`;
   if (!isAdmin(request, env) && !ownerService) return new Response('Admin access required', {status:403, headers:noStore});
   if (request.method !== 'GET') return new Response('Method not allowed', {status:405, headers:noStore});
-  const requests = ['lotus_heroic','lotus_interactive','taotie_heroic','taotie_interactive'].map(mode => {
-    try { return { mode, ...inspectScouterRequest(prepareScouterRequest(mode, env)) }; }
+  const requests = await Promise.all(['lotus_heroic','lotus_interactive','taotie_heroic','taotie_interactive'].map(async mode => {
+    try {
+      const payload = prepareScouterRequest(mode, env);
+      return { mode, ...inspectScouterRequest(payload), requestContext:await scouterRequestContext(payload) };
+    }
     catch (error) { return {mode, error:error.message, validatedForClassSubstitution:false}; }
-  });
+  }));
   return Response.json({requests}, {headers:noStore});
 }
 
