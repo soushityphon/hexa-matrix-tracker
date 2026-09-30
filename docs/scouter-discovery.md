@@ -118,3 +118,55 @@ Tests cover alternate synthetic jobs, exact nonuniform per-level costs, source p
 This is **committed server acquisition groundwork, not yet deployed or exposed in the admin UI**. Candidate output still has empty reviewed overrides/orders/FD and `publishable:false`. A source job catalogue does not establish regional availability, genuine benchmark validity or correct order/FD. Existing configured-template fingerprinting and Stat semantic gates remain unchanged. The normal order endpoint and shared priority schema are unchanged.
 
 Next: connect this provider and the prepared-request context to owner-reviewed, bounded order acquisition only after full request validation, record hashes for the same sent body and response capture, and reconstruct/compare the candidate. Then add the admin setup/review flow with independent reviewed names and visibility. Preserve all seven saved priority records. Do not backfill old provenance or treat this endpoint as supporting new jobs on the tracker. GMS reset semantics, genuine Ren benchmark construction and the 104-position order drift remain open. Deploy with the complete reviewable acquisition flow; test Site version 64 remains the last recorded deployment.
+
+## Bounded order capture building block, 30 September continuation
+
+`scouter-order-acquisition.js` connects an already prepared private request to one
+bounded calculation attempt and isolated reconstruction. It is a server-only
+building block, copied as a server dependency by the Worker build. **No runtime
+route or admin action calls it yet. No existing live template is cleared by it.**
+
+The caller must supply a trusted server `validatePrepared` policy. That policy
+must validate complete inventory, unknown fields, reset semantics for the chosen
+region, genuine job-specific benchmark/efficiency provenance and request options.
+It receives frozen snapshots of the exact body and catalogue and must return
+`true`; missing, false, throwing or stalled policies stop before transport.
+A browser assertion is not a policy. The synthetic test policy establishes no
+live job support. The existing diagnostic remains fail-closed. Fingerprints still
+say `not-established-by-fingerprints`, even after this external policy passes.
+
+The helper takes a synchronous snapshot before awaiting hashes or policy work.
+The body fingerprint and benchmark/reset context describe the same snapshot
+serialised into the POST. Catalogue job/region/world must match before sending.
+It uses a fixed API origin/path and encoded job, server API key, no credentials
+or redirects, one 25-second total deadline including validation, headers, body,
+hashing and reconstruction, and a 3 MB streamed response limit. It never retries,
+including 429/430. Injected transport that ignores abort still meets the deadline;
+a stalled body is cancelled. Exceptions are reduced to fixed safe messages,
+never raw transport, policy or JSON errors.
+
+Only a reconstruction with zero issues is returned. The output includes exact
+checkpoints, source material/FD observations, empty reviewed overrides,
+`publishable:false`, catalogue provenance and the actual response bytes' SHA-256
+and body-completion timestamp. Extra response fields such as character profiles
+are discarded. Private body, key and validator output are not returned. No patch
+version, historical provenance or genuine benchmark validity is invented.
+The helper does not acquire templates, fetch a catalogue, access D1, compare or
+promote saved orders, or change browser progress. The catalogue provider and
+comparison modules supply those independent parts for a future owner workflow.
+
+Validation uses synthetic requests/responses for both regions and material modes,
+exact transmitted-body fingerprint equality, immutable input snapshots, response
+byte hashing, redaction, policy rejection/stalls, selector/class drift, dirty
+reset, rejected status without retry, wrong response identity/costs, malformed
+JSON, stalled headers/bodies, misleading/missing length headers and byte limits.
+A separate built-Worker check returns 404 for the module URL. The normal
+`npm test` suite does not rely on a pre-existing build.
+
+No new live calculation/profile/public-source call was made for this increment.
+The previous two-call stop remains in force. GMS reset semantics, genuine Ren
+benchmark construction and the 104-position drift remain open. Next implement
+the concrete server policy with scoped evidence, then connect an owner-only
+review action. Do not expose this helper behind a client validation flag or
+replace the normal order route's existing policy without that work. Deployment
+waits for the complete reviewable owner flow, as recorded in issue #23.
