@@ -1,10 +1,22 @@
 // Server-only building block. No runtime route is enabled by this module.
 import {scouterRequestContext} from './scouter-request-context.js';
 import {reconstructScouterOrder} from './scouter-discovery.js';
+import {createScouterRequestPolicy} from './scouter-request-policy.js';
 
 function freeze(value) {
   if (value && typeof value === 'object') {Object.values(value).forEach(freeze); Object.freeze(value);}
   return value;
+}
+
+// Prefer this entry point for the future owner workflow. It always uses the
+// concrete server policy, even if an options object contains validatePrepared.
+// A review records past evidence; it is not a live-request budget/authorisation.
+export async function acquireReviewedScouterOrder(payload, catalogue, {review, ...options} = {}) {
+  const result = await acquireScouterOrder(payload, catalogue, {...options,validatePrepared:createScouterRequestPolicy(review)});
+  const stats = result.steps.filter(step => /^hexaStat[1-3]$/i.test(step.coreId));
+  if (stats.length !== 3 || new Set(stats.map(step => step.coreId.toLowerCase())).size !== 3 ||
+      stats.some(step => step.from !== 0 || step.level !== 20)) throw new Error('Scouter response failed reconstruction validation');
+  return {...result, semanticReview:'matched-server-review', publishable:false};
 }
 // validatePrepared is a trusted server policy, never a client assertion. It must
 // establish genuine benchmark provenance and full outgoing semantics. Hashes

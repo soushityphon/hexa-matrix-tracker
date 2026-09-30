@@ -2,6 +2,32 @@
 
 Issue #23 is the continuation authority. This investigation extends draft PR #22; test Site version 64 is unchanged. No D1 write, display-name edit, visibility change or browser-progress change was made.
 
+## Concrete server request policy, latest continuation
+
+`scouter-request-policy.js` implements the concrete review gate for the isolated capture path. `acquireReviewedScouterOrder` always installs that policy, ignoring a supplied `validatePrepared` callback, then requires exactly one zero-to-20 transition for each Stat I, II and III in the reconstructed response. The lower-level transport helper remains available for tests and specialised server policies; the future owner workflow should use the reviewed entry point.
+
+The policy snapshots the body, catalogue and server review before asynchronous work. It checks all three class fields and reset values through the existing context helper, explicit region/world/material selectors, and complete core inventories derived from the discovered active skills and empty placeholders. Under the inspected frontend construction, top level intentionally omits General 1; nested groups contain active metadata cores and omit placeholders. Those asymmetries are valid, not missing-counterpart errors. Changed construction needs new source review. This does not change the existing runtime diagnostic's conservative warnings or gate.
+
+Current wrapper policy requires exactly `myHexa`, `specEff`, `sole`, `merType`, `start`, `cycle`, `userStat` and `id`, with the observed current-enhancement options (`start:true`, `merType:1`, `cycle:"3"`), a nonempty ID and finite numeric efficiencies. It does not modify passive-skill statistics, character world, material prices or unknown fields. A different wrapper option requires investigated evidence and a policy update rather than silently accepting it.
+
+Each private server review contains:
+
+- Schema 1 and an explicit job, region and world scope.
+- The complete inspected request path/type map, using JSON-quoted key segments to avoid path collisions. Unknown, removed or changed fields block even when they are not named like levels.
+- Matching prepared-body, benchmark and reset fingerprints from the same body, plus a schema-scoped fingerprint of the full source catalogue. This binds source names, icons, schedules, placeholders and provenance, including capture dates. New acquisition provenance requires a new review even when skill data is unchanged.
+- `benchmarkEvidence` with kind `genuine-job-profile-and-efficiencies`, matching job/region/benchmark fingerprint, capture time and separate genuine profile/efficiency evidence SHA-256 identifiers.
+- `resetEvidence` with kind `controlled-all-three-stat-reset`, matching job/region/world and the exact prepared-body/reset fingerprints, response capture time/hash and `zeroToTwentyStats:[1,2,3]`.
+
+`scouterPolicySnapshot` produces inspection inputs only. **It must not automatically approve them.** The review registry is a trusted server configuration boundary. Hashes prove equality, not authenticity: the developer must inspect genuine profile/efficiency construction, every field's semantics and the controlled response before installing a review. Never accept a browser review, turn an uploaded assertion into server evidence, or populate a review from a synthetic test. Policy results return fixed blocker codes only, without raw request values, field paths, identifiers or review records. Candidates remain `publishable:false`; semantic review does not grant a live-request budget or permission to save/publish.
+
+No live review is seeded and no runtime endpoint invokes this entry point. Existing private templates are not cleared. Earlier KMS observations have response hashes but lack the new same-body and genuine benchmark evidence bindings; do not backfill those from labels or separate diagnostics. GMS semantics, genuine Ren benchmark construction and the 104-position Hoyoung drift remain unresolved. The normal request route, diagnostic gate and saved schema are unchanged. Both new policy and reviewed acquisition stay server-only in the build.
+
+Validation: full `npm test`, Worker build, server-module syntax and whitespace checks pass. New synthetic tests cover expected asymmetries, missing/extra cores in either copy, unfamiliar fields, changed stats/efficiencies/prices/options/identity, scoped evidence mismatch, source drift, missing or incomplete Stat proof, immutable review snapshots, callback-bypass rejection before POST, private-output redaction and missing Stats after response. Four synthetic region/world reviews exercise scoping, not live regional or job support.
+
+No new source/profile/calculation request, D1 access/write, secret operation, progress edit, deployment or merge occurred. Sites listing confirms test version 64 and public viewing with owner-restricted editing. No new owner UI test is required for this server increment. Deploy after the complete owner acquisition/review flow is ready, as recorded in #23.
+
+Next: establish genuine request construction and reviewed field semantics from inspected public frontend/profile evidence, install only justified scoped server evidence, then connect catalogue acquisition and this reviewed capture to owner-only isolated comparison. Keep the two-call stop until a specific new experiment is justified. Old saved provenance remains unknown; preserve all seven records and separate display/visibility overlays during later reviewed promotion.
+
 ## Reusable isolated acquisition
 
 `scouter-discovery.js` does not import the tracker catalogue, reviewed names, priority fixtures or Google Sheets. It reads public frontend metadata and exact cumulative cost arrays as literal data without evaluating downloaded JavaScript. It discovers job and shared core IDs, Korean source names, icons, categories, Origin/Ascent/Mastery tags, empty placeholders and complete level costs. Adjacent cumulative differences yield exact individual costs; aggregate checkpoint costs are never divided.
