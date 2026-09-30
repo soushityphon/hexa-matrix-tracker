@@ -1,1 +1,1 @@
-{"name":"hexa-matrix-tracker","private":true,"type":"module","scripts":{"test":"node tests/data.test.mjs && node tests/worker.test.mjs"}}
+{"name":"hexa-matrix-tracker","private":true,"type":"module","scripts":{"test":"node tests/data.test.mjs && node tests/worker.test.mjs && node tests/scouter-discovery.test.mjs"}}
