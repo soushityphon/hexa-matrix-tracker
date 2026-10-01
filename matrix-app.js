@@ -129,7 +129,7 @@ function levels() {
 
 function syncStatSelection(available) {
   const choices=statNodes.filter(node=>available.has(node.short));
-  if(selectedStats[activeClass]!==null&&!choices.some(node=>node.short===selectedStats[activeClass]))selectedStats[activeClass]=choices[0]?.short;
+  if(selectedStats[activeClass]!==null&&!choices.some(node=>node.short===selectedStats[activeClass]))selectedStats[activeClass]=null;
   $$('.stat-selector').forEach(selector=>{
     const skill=selector.dataset.statSelector,selected=skill===selectedStats[activeClass];
     selector.hidden=!available.has(skill);
@@ -470,7 +470,7 @@ async function refreshSharedPriorities({force=false}={}) {
   }
 }
 $('#class').addEventListener('change',()=>{
-  activeClass=$('#class').value;document.documentElement.dataset.class=activeClass;storageKey='hexa-tracker-'+activeClass+'-v1';
+  activeClass=$('#class').value;selectedStats[activeClass]=null;document.documentElement.dataset.class=activeClass;storageKey='hexa-tracker-'+activeClass+'-v1';
   localStorage.setItem('hexa-tracker-class-v1',activeClass);
   try{saved=JSON.parse(localStorage.getItem(storageKey) || '{}') || {};}catch{saved={};}
   classLoading=true;classLoadFailed=false;$('#priority-sync').textContent='';

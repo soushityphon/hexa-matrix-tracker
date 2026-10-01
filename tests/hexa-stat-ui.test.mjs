@@ -58,7 +58,7 @@ const snapshot=()=>Object.fromEntries([hyKey,renKey,'hexa-tracker-class-v1'].map
 await boot({[hyKey]:JSON.stringify({mode:'pair_lines_heroic',levels:{'HEXA Stat I':20,'HEXA Stat II':12,Harmony:1},statUnlocked:{'HEXA Stat III':true},owned:42})});
 assert.equal(document.querySelectorAll('[data-stat-line]').length,9);
 assert.equal(document.querySelectorAll('[data-stat-select]').length,3);
-assert.equal(row(stats[0]).hidden,false);
+assert.equal(row(stats[0]).hidden,true);
 assert.equal(row(stats[1]).hidden,true);
 assert.equal(row(stats[0]).querySelector('[data-stat-unlocked]').hidden,true);
 assert.deepEqual([...row(stats[0]).querySelectorAll('.stat-line-heading')].map(el=>el.textContent),['Main Stat','Additional Stats']);
@@ -69,7 +69,7 @@ selector(stats[2]).querySelector('[data-stat-cancel]').click();
 assert.equal(state(hyKey).statUnlocked[stats[2]],false);
 assert.equal(selector(stats[2]).querySelector('.stat-unlock-icon').classList.contains('is-unlocked'),false);
 assert.equal(selector(stats[2]).querySelector('[data-stat-cancel]').hidden,true);
-assert.equal(row(stats[0]).hidden,false); // Cancel does not change the editor.
+assert.equal(row(stats[0]).hidden,true); // Cancel does not open the editor.
 selector(stats[2]).click();
 assert.equal(row(stats[2]).hidden,false);
 assert.equal(state(hyKey).statUnlocked[stats[2]],false); // Tile selection never unlocks.
@@ -114,6 +114,7 @@ assert.equal(state(hyKey).levels[stats[0]],20);
 assert.deepEqual(state(hyKey).statLines[stats[0]],[6,null,6]);
 assert.equal(row(stats[0]).querySelector('.stat-fd').textContent,'');
 await boot(snapshot());
+assert.ok(stats.every(skill=>row(skill).hidden));
 assert.deepEqual(fields(stats[0]).map(el=>el.value),['6','','6']);
 enter(stats[0],1,7);
 assert.equal(state(hyKey).levels[stats[0]],19);
@@ -160,6 +161,8 @@ assert.equal(pending.length,2);
 for(const request of pending)request.resolve(await realFetch(request.url));
 await tick();globalThis.fetch=realFetch;
 assert.doesNotMatch($('#nodes').textContent,/Loading/);
+assert.ok(stats.every(skill=>row(skill).hidden));
+selector(stats[0]).click();
 assert.deepEqual(fields(stats[0]).map(el=>el.value),['0','0','0']);
 assert.equal(state(renKey).levels.ren_skillCore1,1);
 assert.equal(selector(stats[0]).querySelector('.stat-unlock-icon').classList.contains('is-unlocked'),false);
