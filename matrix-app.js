@@ -5,6 +5,7 @@ setTrackerCatalogue([]);
 import { combinedSourceGain, displayPriorityRows, matrixTotals, nextCheckpoint, rangeCost } from './planner.js';
 import { fetchSharedPreview, previewCatalog } from './preview-priorities.js';
 import { skillAccent } from './skill-colours.js';
+import { restoreStatLines, statProgress, validateStatLines } from './hexa-stat.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -66,7 +67,10 @@ function renderInputs() {
   $('#stat-heading').hidden = !statNodes.length;
   for (const node of statNodes) {
     const row=document.createElement('div');row.className='stat-row';
-    row.innerHTML=`<img src="${escapeHtml(node.icon)}" alt=""><span class="stat-name">${escapeHtml(node.name)}</span><input data-stat="${escapeHtml(node.short)}" aria-label="${escapeHtml(node.name)} level" type="number" min="0" max="20" value="0"><label class="stat-unlocked"><input data-stat-unlocked="${escapeHtml(node.short)}" aria-label="${escapeHtml(node.name)} unlocked" type="checkbox"> Unlocked</label>`;
+    const skill=escapeHtml(node.short);
+    const lines=restoreStatLines(saved.statLines?.[node.short], clamp(saved.levels?.[node.short],20));
+    saved.statLines={...saved.statLines,[node.short]:lines};
+    row.innerHTML=`<div class="stat-header"><img src="${escapeHtml(node.icon)}" alt=""><span class="stat-name">${escapeHtml(node.name)}</span><label class="stat-unlocked"><input data-stat-unlocked="${skill}" aria-label="${escapeHtml(node.name)} unlocked" type="checkbox"> Unlocked</label></div><div class="stat-lines">${['Primary','2nd','3rd'].map((label,index)=>`<label class="stat-line">${label}<input data-stat-line="${skill}" data-line-index="${index}" aria-label="${escapeHtml(node.name)} ${label} level" aria-describedby="stat-note-${statNodes.indexOf(node)}" type="number" min="0" max="10" step="1" value="${lines[index] ?? ''}"></label>`).join('')}</div><div class="stat-summary"><span data-stat="${skill}"></span><span class="stat-fd" title="General average from the owner-supplied HEXA Stat table, not personalised FD."></span></div><p class="stat-note" id="stat-note-${statNodes.indexOf(node)}" aria-live="polite"></p>`;
     $('.stat-list').append(row);
   }
   const nodeRow = node => `<label class="node-row" style="--skill-accent:${skillAccent(node.short)}" data-node-row="${node.short}" data-node-id="${node.id}" title="${escapeHtml(node.name)}"><span class="node-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span class="node-label">${node.tag ? `<span class="skill-tag">${escapeHtml(node.tag)}</span>` : ''}<span class="node-name">${escapeHtml(node.name)}</span></span><input data-node="${node.short}" aria-label="${escapeHtml(node.name)} level" type="number" min="${initialLevel(node)}" max="30" step="1" value="${clamp(saved.levels?.[node.short], 30, initialLevel(node))}"></label>`;
@@ -86,14 +90,16 @@ function renderInputs() {
     if (!icon) return;
     const row = input.closest('.stat-row');
     row.style.setProperty('--skill-accent', skillAccent(input.dataset.stat));
-    if (row.querySelector('img')) return;
+    if (row.querySelector('img')) {
+      row.querySelector('img').addEventListener('error', event => { event.target.hidden=true; });
+      return;
+    }
     const image = document.createElement('img');
     image.src = icon;
     image.alt = '';
     image.addEventListener('error', () => { image.hidden = true; });
     row.prepend(image);
   });
-  $$('[data-stat]').forEach(input => { input.value = clamp(saved.levels?.[input.dataset.stat], 20); });
   $$('[data-stat-unlocked]').forEach(input => {
     const skill = input.dataset.statUnlocked;
     const level = clamp(saved.levels?.[skill], 20);
@@ -111,7 +117,10 @@ function renderInputs() {
 function levels() {
   const result = { ...saved.levels };
   $$('[data-node]').forEach(input => { result[input.dataset.node] = validLevel(input); });
-  $$('[data-stat]').forEach(input => { result[input.dataset.stat] = validLevel(input); });
+  $$('[data-stat]').forEach(output => {
+    const skill=output.dataset.stat;
+    result[skill]=statProgress(saved.statLines?.[skill], clamp(saved.levels?.[skill],20)).total;
+  });
   return result;
 }
 
@@ -241,7 +250,7 @@ function render() {
   $('#next-upgrade').style.setProperty('--skill-accent', skillAccent(nextRow?.skill));
   const nextIcon = nextRow && (previewDrafts[mode]?.statIcons[nextRow.skill] || statNodes.find(node=>node.short===nextRow.skill)?.icon || nodeByShort[nextRow.skill]?.icon);
   const statStep = nextIsStat && (statUnlocked[next.skill]
-    ? upgradeCost(`Completion · ${nextRow.level}`, nextRow.cost, null, statAction(next.skill, 'complete', 'Mark complete'))
+    ? upgradeCost(`Completion · ${nextRow.level}`, nextRow.cost, null, statAction(next.skill, 'lines', 'Enter line levels'))
     : upgradeCost('Unlock', { ...nextRow.cost, rng: false }, null, statAction(next.skill, 'unlock', 'Mark unlocked')));
   $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><div class="upgrade-top"><small>Next Upgrade</small></div><div class="upgrade-heading"><div class="upgrade-label"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${priorityName(nextRow.skill)} → ${nextRow.level}</strong></div>${nextRowGain === null ? '' : fdText(nextRowGain)}</div>${nextIsStat ? statStep : `${upgradeCost(`Next level · ${nextLevel}`, levelCost, days(levelCost), upgradeAction(next.skill, nextLevel, `Mark level ${nextLevel}`, true))}${nextRow.level === nextLevel ? '' : upgradeCost(`Checkpoint · ${nextRow.level}`, nextRow.cost, days(nextRow.cost), upgradeAction(next.skill, nextRow.level, `Mark checkpoint ${nextRow.level}`))}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
   $$('#next-upgrade .upgrade-heading img').forEach(img => {
@@ -268,8 +277,13 @@ function render() {
   $('#time-estimate').hidden = !perday;
   if (perday) $('#time-estimate').innerHTML = `<small>Estimated time for remaining Fragments</small><strong>${days(matrix.remaining).toFixed(1)} days</strong>`;
   $$('[data-stat]').forEach(input => {
-    const name = input.closest('.stat-row').querySelector('.stat-name');
+    const row=input.closest('.stat-row');
+    const name = row.querySelector('.stat-name');
     if (name) name.textContent = previewDrafts[mode]?.names[input.dataset.stat] || input.dataset.stat;
+    const progress=statProgress(saved.statLines?.[input.dataset.stat], current[input.dataset.stat]);
+    input.textContent=`${progress.total} / 20`;
+    row.querySelector('.stat-fd').textContent=progress.fd === null || row.querySelector('[aria-invalid="true"]') ? '' : `Approx. FD ${progress.fd.toFixed(3)}%`;
+    if (!row.querySelector('[aria-invalid="true"]')) row.querySelector('.stat-note').textContent=progress.hasLines ? '' : `Saved total ${progress.total} / 20. Enter all three line levels to update it.`;
   });
   $$('[data-node-row]').forEach(row => {
     row.querySelector('.node-name').textContent = previewDrafts[mode]?.names[row.dataset.nodeRow] || nodeByShort[row.dataset.nodeRow].name;
@@ -279,14 +293,35 @@ function render() {
     if (tagText && !tag) { tag = document.createElement('span'); tag.className = 'skill-tag'; label.prepend(tag); }
     if (tag) { tag.textContent = tagText; tag.hidden = !tagText; }
   });
-  saved = { mode, levels: current, statUnlocked, owned, perday, hideDone: $('#hideDone').checked, includeJanus };
+  saved = { mode, levels: current, statUnlocked: {...saved.statUnlocked,...statUnlocked}, statLines: saved.statLines || {}, owned, perday, hideDone: $('#hideDone').checked, includeJanus };
   localStorage.setItem(storageKey, JSON.stringify(saved));
 }
 
-document.addEventListener('input', event=>{if(event.target.id!=='class')render();});
+function updateStatLine(input) {
+  const skill=input.dataset.statLine, row=input.closest('.stat-row');
+  const lines=[...row.querySelectorAll('[data-stat-line]')].map(field => field.value === '' ? (field.validity.badInput ? NaN : null) : Number(field.value));
+  const checked=validateStatLines(lines);
+  row.querySelectorAll('[data-stat-line]').forEach(field => {
+    field.setCustomValidity(checked.valid ? '' : checked.error);
+    field.setAttribute('aria-invalid', String(!checked.valid));
+  });
+  if (!checked.valid) {
+    row.querySelector('.stat-note').textContent=checked.error;
+    // Invalid drafts never change saved progress or display a stale FD.
+    row.querySelector('.stat-fd').textContent='';
+    return;
+  }
+  saved.statLines={...saved.statLines,[skill]:lines};
+  render();
+}
+document.addEventListener('input', event=>{
+  if(event.target.matches('[data-stat-line]'))updateStatLine(event.target);
+  else if(event.target.id!=='class')render();
+});
 document.addEventListener('change', event => {
   if(event.target.id==='class')return;
-  if (event.target.matches('[data-node], [data-stat]')) event.target.value = validLevel(event.target);
+  if(event.target.matches('[data-stat-line]')) { updateStatLine(event.target); return; }
+  if (event.target.matches('[data-node]')) event.target.value = validLevel(event.target);
   render();
 });
 $('#next-upgrade').addEventListener('click', event => {
@@ -299,9 +334,10 @@ $('#next-upgrade').addEventListener('click', event => {
     if (button.dataset.statAction === 'unlock' && !unlocked.checked && !unlocked.disabled) {
       unlocked.checked = true;
       unlocked.dispatchEvent(new Event('change', { bubbles: true }));
-    } else if (button.dataset.statAction === 'complete' && unlocked.checked) {
-      stat.value = Math.min(20, Number(stat.max));
-      stat.dispatchEvent(new Event('input', { bubbles: true }));
+    } else if (button.dataset.statAction === 'lines' && unlocked.checked) {
+      const primary=stat.closest('.stat-row').querySelector('[data-stat-line]');
+      primary.scrollIntoView?.({block:'center',behavior:'smooth'});
+      primary.focus();
     }
     return;
   }

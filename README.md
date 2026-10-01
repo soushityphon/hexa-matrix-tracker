@@ -72,4 +72,14 @@ Ren priorities use stable class/core IDs rather than edited names. Each saved wo
 
 Ren progress uses `hexa-tracker-ren-v1`; existing Hoyoung progress keeps `hexa-tracker-hoyoung-v1`. World/update switching retains hidden skills’ levels, while the visible matrix and calculations use only the selected order. Ren Origin starts at level 1 from its captured free baseline. Class switching and Reset affect only the selected class.
 
+## HEXA Stat line levels, 1 October 2026
+
+Each visible Stat node has Primary, 2nd and 3rd integer inputs, each 0–10 with a combined maximum of 20. A complete set of inputs supplies the total used by existing priority progress. At total 20, `hexa-stat.js` looks up the owner's exact 36-row general-average FD table from issue #23, sourced from hexastat-0 columns A/B/C/E. Values are stored as percentage points, so 6/8/6 shows Approx. FD 3.295%. Additional lines are interchangeable for lookup; entered order is retained. Below total 20, FD is blank. This table is shared by both classes and all three Stats; it does not change Scouter skill FD.
+
+The existing class-specific storage keys gain a separate `statLines` map. Legacy totals and unlock flags remain intact. A legacy non-zero total starts with blank line inputs; no split is invented. Partly entered details are saved, but the last total stays in use until all three inputs contain valid levels. Invalid bounds, fractions or combined totals show an error and do not change saved progress or adjust another line. FD stays blank while line details are missing or invalid. Clearing a line retains the last total until a full replacement split is entered.
+
+Mark unlocked retains its existing behaviour. Enter line levels replaces Mark complete and focuses Primary without changing progress. Hidden nodes retain their lines and unlocks through update/world/class changes and reloads. Reset clears only the selected class. Fixed unlock costs, RNG material presentation and the skill Fragment-based completion formula stay intact. There is no stat-type selection, RNG simulation, roll-cost estimate or combined FD total.
+
+Run `npm ci` then `npm test` with Node 24 for calculation, route and DOM checks. The new tests verify the 36 exact averages, all 66 ordered level-20 distributions, validation, legacy/partial migration, both classes' storage, hidden nodes, next-priority changes, unlock controls and unchanged skill costs/FD/completion. Happy DOM is a development dependency only and is not bundled into the Worker.
+
 Tracker Update choices use saved priority pair IDs and the owner’s pair names. A pair named Lotus appears as Lotus regardless of GMS/KMS provenance. Heroic/Interactive switches within that selected pair. Separate pairs with the same name remain separate by ID. Source region/patch remain internal capture metadata, and renaming a saved pair updates the dropdown label without changing order, costs, FD or player levels.

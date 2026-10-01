@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
-const files = ['scouter-request-diagnostic.html', 'index.html', 'app.js', 'matrix-app.js', 'planner.js', 'styles.css', 'data.js', 'skill-colours.js', 'priority-review.html', 'priority-review.css', 'priority-review.js', 'admin-panel-model.js', 'priority-draft.js', 'preview-priorities.js', 'scouter-import.js', 'scouter-extract.js', 'skill-cost-review.js', 'ren-priority.js'];
+const files = ['scouter-request-diagnostic.html', 'index.html', 'app.js', 'matrix-app.js', 'hexa-stat.js', 'planner.js', 'styles.css', 'data.js', 'skill-colours.js', 'priority-review.html', 'priority-review.css', 'priority-review.js', 'admin-panel-model.js', 'priority-draft.js', 'preview-priorities.js', 'scouter-import.js', 'scouter-extract.js', 'skill-cost-review.js', 'ren-priority.js'];
 const assets = Object.fromEntries(files.map(file => [`/${file}`, readFileSync(resolve(root, file), 'utf8')]));
 for (const file of ['assets/sol-erda.png', 'assets/sol-erda-fragment.png']) {
   assets[`/${file}`] = readFileSync(resolve(root, file)).toString('base64');
