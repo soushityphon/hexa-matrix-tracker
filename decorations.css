@@ -4,6 +4,14 @@ body { isolation: isolate; }
 .shell { position: relative; }
 .shell .panel, #priority-sync { position: relative; z-index: 1; }
 .shell .masthead, .shell .toolbar { position: relative; z-index: 3; }
+.header-actions { display: grid; justify-items: end; gap: 8px; align-self: start; margin-left: auto; }
+/* Let background artwork pass through every public section and nested card. */
+.shell .panel, .shell .next-upgrade, .shell .stat-selector,
+.shell .priority-table tr:nth-child(even), .shell .priority-table th { background: transparent; }
+.shell .node-row.next-skill, .shell .stat-list .stat-row.next-skill,
+.shell .priority-table tr.next, .shell .stat-selector.selected { background: color-mix(in srgb, var(--skill-accent, var(--ui-accent)) 17%, transparent); }
+.shell .node-row:hover, .shell .stat-list label:hover { background: rgb(255 255 255 / 4%); }
+@media (max-width: 450px) { .masthead { gap: 10px; } #animations { padding-inline: 6px; font-size: 11px; } }
 .decoration-layer { position: fixed; inset: 0; overflow: hidden; pointer-events: none; user-select: none; z-index: 0; contain: strict; }
 .decoration-foreground { z-index: 2; }
 .decoration-layer * { pointer-events: none; }
@@ -27,12 +35,12 @@ body { isolation: isolate; }
   from { transform: translateX(-3px) rotate(calc(-1 * var(--turn))); }
   to { transform: translateX(3px) rotate(var(--turn)); }
 }
-/* One front element, visible for part of its long cycle, then a quiet gap. */
+/* Each front petal is visible for part of its long cycle, then has a quiet gap. */
 @keyframes foreground-drift {
-  0%, 10% { transform: translate3d(110vw, -15vh, 0); opacity: 0; }
+  0%, 10% { transform: translate3d(var(--start-x), -15vh, 0); opacity: 0; }
   15% { opacity: var(--alpha); }
   55% { opacity: var(--alpha); }
-  65%, 100% { transform: translate3d(-20vw, 115vh, 0); opacity: 0; }
+  65%, 100% { transform: translate3d(calc(var(--start-x) - 130vw), 115vh, 0); opacity: 0; }
 }
 .petal-front:not(.is-loaded) { visibility: hidden; }
 @media (max-width: 640px) { .petal-front { --alpha: .22 !important; } }

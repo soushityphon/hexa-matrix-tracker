@@ -2,8 +2,8 @@ import { decorationAssets } from './decoration-assets.js';
 
 const preferenceKey = 'hexa-tracker-animations-v1';
 const settings = {
-  hoyoung: { desktop: 5, mobile: 3, duration: 110, variation: 55 },
-  ren: { desktop: 12, mobile: 6, duration: 32, variation: 18 }
+  hoyoung: { desktop: 8, mobile: 5, duration: 120, variation: 35 },
+  ren: { desktop: 18, mobile: 9, duration: 32, variation: 18 }
 };
 
 // Decoration owns no tracker state, data requests, timers or frame loop.
@@ -21,18 +21,20 @@ export function createDecorations({ document, window, control, className }) {
     return layer;
   });
 
-  function particle(asset, index, count, foreground = false) {
+  function particle(asset, index, count, foreground = false, cloudSpeed = 'normal') {
     const config = settings[className];
     const wrapper = document.createElement('span');
     wrapper.className = `decoration-particle ${className === 'hoyoung' ? 'cloud' : 'petal'}${foreground ? ' petal-front' : ''}`;
-    const duration = foreground ? 75 : config.duration + Math.random() * config.variation;
+    const duration = foreground ? 70 + Math.random() * 20 : className === 'hoyoung' && cloudSpeed === 'fast' ? 90 + Math.random() * 20 : className === 'hoyoung' && cloudSpeed === 'slow' ? 170 + Math.random() * 25 : config.duration + Math.random() * config.variation;
     wrapper.style.setProperty('--duration', `${duration.toFixed(2)}s`);
-    // Evenly spread phases, with some variety. Populate the scene at first paint.
-    wrapper.style.setProperty('--delay', `${(-duration * (index + Math.random() * .4) / count).toFixed(2)}s`);
+    // Cloud height and phase are independent, so they never form an ordered diagonal.
+    // Front petals use staggered phases to avoid moving as one group.
+    const phase = className === 'hoyoung' ? Math.random() : (index + Math.random() * .8) / count;
+    wrapper.style.setProperty('--delay', `${(-duration * phase).toFixed(2)}s`);
     const scale = className === 'hoyoung' ? (narrowScreen?.matches ? .4 : .65) : (foreground ? .6 : .85);
     wrapper.style.setProperty('--size', `${Math.round(asset.width * scale)}px`);
     wrapper.style.setProperty('--alpha', foreground ? '.30' : className === 'hoyoung' ? '.18' : '.40');
-    wrapper.style.setProperty('--top', `${8 + (index + .5) / count * 76}%`);
+    wrapper.style.setProperty('--top', `${6 + Math.random() * 84}%`);
     wrapper.style.setProperty('--start-x', `${25 + Math.random() * 100}vw`);
     wrapper.style.setProperty('--turn', `${20 + Math.random() * 65}deg`);
     const image = document.createElement('img');
@@ -59,16 +61,29 @@ export function createDecorations({ document, window, control, className }) {
     // Keep tiny sprites near native size. Larger artwork supplies the front detail.
     const background = className === 'ren' ? all.filter(asset => asset.width <= 28) : all;
     const count = mobile ? config.mobile : config.desktop;
+    // Shuffle speed groups independently of height and starting phase.
+    const speeds = Array(count).fill('normal');
+    if (className === 'hoyoung') {
+      const fast = mobile ? 2 : 2 + Math.floor(Math.random() * 2);
+      const slow = mobile ? 1 : 1 + Math.floor(Math.random() * 2);
+      speeds.fill('fast', 0, fast); speeds.fill('slow', fast, fast + slow);
+      for (let i = speeds.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [speeds[i], speeds[j]] = [speeds[j], speeds[i]];
+      }
+    }
     const offset = Math.floor(Math.random() * background.length);
     for (let index = 0; index < count; index++) {
-      layers[0].append(particle(background[(index + offset) % background.length], index, count));
+      layers[0].append(particle(background[(index + offset) % background.length], index, count, false, speeds[index]));
     }
     if (className === 'ren') {
       const large = all.filter(asset => asset.width > 28);
-      const front = particle(large[Math.floor(Math.random() * large.length)], 0, 1, true);
-      front.style.setProperty('--delay', '-20s');
-      if (mobile) front.style.setProperty('--size', `${Math.round(parseFloat(front.style.getPropertyValue('--size')) * .7)}px`);
-      layers[1].append(front);
+      for (let index = 0; index < 3; index++) {
+        const front = particle(large[Math.floor(Math.random() * large.length)], index, 3, true);
+        front.style.setProperty('--start-x', `${85 + Math.random() * 35}vw`);
+        if (mobile) front.style.setProperty('--size', `${Math.round(parseFloat(front.style.getPropertyValue('--size')) * .7)}px`);
+        layers[1].append(front);
+      }
     }
   }
 

@@ -14,7 +14,10 @@
         <p class="kicker">MapleStory / HEXA Matrix</p>
         <h1>HEXA Matrix Tracker</h1>
       </div>
-      <div class="version"><span id="version-name">Select a saved priority</span></div>
+      <div class="header-actions">
+        <button id="animations" type="button" aria-pressed="false">Animations: Off</button>
+        <div class="version"><span id="version-name">Select a saved priority</span></div>
+      </div>
     </header><p id="priority-sync" role="status" class="fine"></p>
 
     <div class="toolbar">
@@ -22,7 +25,6 @@
       <label>Update<select id="patch"></select></label>
       <fieldset class="world-picker"><legend>Priority (World)</legend><label><input type="radio" name="world" value="heroic" checked><span>Fragments (Heroic)</span></label><label><input type="radio" name="world" value="interactive"><span>Sol Erda (Interactive)</span></label></fieldset>
       <label id="version-picker" hidden>Priority version<select id="priority-version"></select></label>
-      <button id="animations" type="button" aria-pressed="false">Animations: Off</button>
     </div>
 
     <div class="workspace">

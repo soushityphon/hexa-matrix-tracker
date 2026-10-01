@@ -21,19 +21,34 @@ win.localStorage.setItem('hexa-tracker-hoyoung-v1', storageBefore);
 const boot = className => createDecorations({ document: doc, window: win, control, className });
 const layers = () => [...doc.querySelectorAll('.decoration-layer')];
 const count = selector => doc.querySelectorAll(selector).length;
+// Fixed varied random sequence gives a reproducible scene without relying on chance.
+const random = Math.random; let seed = 43;
+Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
 let renderer = boot('hoyoung');
-assert.equal(count('.cloud'), 5); assert.equal(count('.petal'), 0);
+assert.equal(count('.cloud'), 8); assert.equal(count('.petal'), 0);
+const cloudStyles = [...doc.querySelectorAll('.cloud')].map(node => ({
+  duration: parseFloat(node.style.getPropertyValue('--duration')),
+  top: parseFloat(node.style.getPropertyValue('--top')),
+  phase: -parseFloat(node.style.getPropertyValue('--delay')) / parseFloat(node.style.getPropertyValue('--duration'))
+}));
+assert.ok([2,3].includes(cloudStyles.filter(node => node.duration < 120).length));
+assert.ok([1,2].includes(cloudStyles.filter(node => node.duration >= 170).length));
+assert.ok(cloudStyles.some((node,i) => i && node.top < cloudStyles[i-1].top));
+assert.ok(cloudStyles.some((node,i) => i && node.top > cloudStyles[i-1].top));
+assert.ok(cloudStyles.some((node,i) => i && node.phase < cloudStyles[i-1].phase));
 assert.ok(layers().every(layer => layer.getAttribute('aria-hidden') === 'true'));
 assert.equal(control.getAttribute('aria-pressed'), 'true');
 const original = doc.querySelector('.cloud');
 renderer.setClass('hoyoung'); assert.equal(doc.querySelector('.cloud'), original);
 renderer.setClass('ren');
-assert.equal(count('.cloud'), 0); assert.equal(count('.decoration-background .petal'), 12);
-assert.equal(count('.petal-front'), 1);
+assert.equal(count('.cloud'), 0); assert.equal(count('.decoration-background .petal'), 18);
+assert.equal(count('.petal-front'), 3);
+assert.equal(parseFloat(doc.querySelector('.petal').style.getPropertyValue('--size')), Math.round(doc.querySelector('.petal img').width * .85));
+assert.equal(parseFloat(doc.querySelector('.petal-front').style.getPropertyValue('--size')), Math.round(doc.querySelector('.petal-front img').width * .6));
 for (let i = 0; i < 50; i++) renderer.setClass(i % 2 ? 'ren' : 'hoyoung');
-assert.equal(layers().length, 2); assert.equal(count('.petal'), 13);
-mobile.set(true); assert.equal(count('.decoration-background .petal'), 6);
-assert.equal(count('.petal-front'), 1);
+assert.equal(layers().length, 2); assert.equal(count('.petal'), 21);
+mobile.set(true); assert.equal(count('.decoration-background .petal'), 9);
+assert.equal(count('.petal-front'), 3);
 const broken = doc.querySelector('.petal');
 broken.querySelector('img').dispatchEvent(new win.Event('error')); assert.equal(broken.hidden, true);
 const loaded = doc.querySelector('.petal-front');
@@ -44,7 +59,7 @@ assert.equal(win.localStorage.getItem('hexa-tracker-hoyoung-v1'), storageBefore)
 renderer.destroy(); assert.equal(layers().length, 0);
 renderer = boot('ren'); assert.ok(layers().every(layer => layer.hidden));
 assert.equal(count('.petal'), 0); // Saved Off does not request decoration images.
-renderer.setClass('hoyoung'); control.click(); assert.equal(count('.cloud'), 3);
+renderer.setClass('hoyoung'); control.click(); assert.equal(count('.cloud'), 5);
 reduced.set(true); assert.ok(layers().every(layer => layer.hidden)); assert.equal(control.disabled, true);
 assert.equal(win.localStorage.getItem(key), 'on'); // OS preference does not overwrite the choice.
 reduced.set(false); assert.ok(layers().every(layer => !layer.hidden));
@@ -65,7 +80,14 @@ reduced.set(storedMediaState);
 Object.defineProperty(win, 'localStorage', { configurable: true, get() { throw new Error('Storage denied'); } });
 renderer = boot('hoyoung'); control.click(); assert.ok(layers().every(layer => layer.hidden));
 renderer.destroy(); assert.equal(layers().length, 0);
+Math.random = random;
 await win.happyDOM.abort();
+
+const layoutWindow = new Window();
+layoutWindow.document.write(readFileSync(new URL('../index.html', import.meta.url), 'utf8').replace(/<script[^>]*>[\s\S]*?<\/script>/g, ''));
+assert.ok(layoutWindow.document.querySelector('.masthead .header-actions #animations'));
+assert.equal(layoutWindow.document.querySelector('.toolbar #animations'), null);
+await layoutWindow.happyDOM.abort();
 
 // Test actual compiled Worker delivery, not just files copied into a directory.
 execFileSync(process.execPath, ['scripts/build-worker.mjs'], { cwd: new URL('..', import.meta.url), stdio: 'pipe' });
