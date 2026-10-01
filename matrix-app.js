@@ -16,6 +16,7 @@ $('#class').value=activeClass;
 document.documentElement.dataset.class=activeClass;
 let storageKey='hexa-tracker-'+activeClass+'-v1';
 let refreshSequence=0;
+const selectedStats={};
 const initialLevel=node=>node.initialLevel ?? (node.short==='Apotheosis'?1:0);
 let saved;
 try { saved = JSON.parse(localStorage.getItem(storageKey) || '{}') || {}; }
@@ -64,13 +65,21 @@ function syncPriorityOptions() {
 
 function renderInputs() {
   $('.stat-list').replaceChildren();
+  const selectors=document.createElement('div');selectors.className='stat-selectors';
+  $('.stat-list').append(selectors);
   $('#stat-heading').hidden = !statNodes.length;
   for (const node of statNodes) {
     const row=document.createElement('div');row.className='stat-row';
+    row.style.setProperty('--skill-accent','var(--ui-accent)');
     const skill=escapeHtml(node.short);
     const lines=restoreStatLines(saved.statLines?.[node.short], clamp(saved.levels?.[node.short],20));
     saved.statLines={...saved.statLines,[node.short]:lines};
-    row.innerHTML=`<div class="stat-header"><img src="${escapeHtml(node.icon)}" alt=""><span class="stat-name">${escapeHtml(node.name)}</span><label class="stat-unlocked"><input data-stat-unlocked="${skill}" aria-label="${escapeHtml(node.name)} unlocked" type="checkbox"> Unlocked</label></div><div class="stat-lines">${['Primary','2nd','3rd'].map((label,index)=>`<label class="stat-line">${label}<input data-stat-line="${skill}" data-line-index="${index}" aria-label="${escapeHtml(node.name)} ${label} level" aria-describedby="stat-note-${statNodes.indexOf(node)}" type="number" min="0" max="10" step="1" value="${lines[index] ?? ''}"></label>`).join('')}</div><div class="stat-summary"><span data-stat="${skill}"></span><span class="stat-fd" title="General average from the owner-supplied HEXA Stat table, not personalised FD."></span></div><p class="stat-note" id="stat-note-${statNodes.indexOf(node)}" aria-live="polite"></p>`;
+    const index=statNodes.indexOf(node);
+    const selector=document.createElement('div');selector.className='stat-selector';selector.dataset.statSelector=node.short;
+    selector.innerHTML=`<button type="button" class="stat-unlock-icon" data-stat-toggle="${skill}" aria-label="Unlock ${escapeHtml(node.name)}" aria-pressed="false"><span aria-hidden="true">${index+1}</span><img src="${escapeHtml(node.icon)}" alt=""></button><button type="button" class="stat-select" data-stat-select="${skill}" aria-controls="stat-panel-${index}" aria-pressed="false"><span class="stat-selector-name">${escapeHtml(node.name)}</span><span class="stat-selector-summary"></span></button>`;
+    selectors.append(selector);
+    row.id=`stat-panel-${index}`;
+    row.innerHTML=`<span class="stat-name visually-hidden">${escapeHtml(node.name)}</span><input data-stat-unlocked="${skill}" type="checkbox" hidden tabindex="-1" aria-hidden="true"><h3 class="stat-line-heading">Main Stat</h3><div class="stat-lines">${['Main Stat','2nd additional stat','3rd additional stat'].map((label,index)=>`${index===1?'<h3 class="stat-line-heading">Additional Stats</h3>':''}<label class="stat-line ${index===0?'stat-main':'stat-additional'}"><span class="visually-hidden">${label}</span><span class="stat-bar" aria-hidden="true">${Array.from({length:10},()=>'<i></i>').join('')}</span><input data-stat-line="${skill}" data-line-index="${index}" aria-label="${escapeHtml(node.name)} ${label} level" aria-describedby="stat-note-${statNodes.indexOf(node)}" type="number" min="0" max="10" step="1" value="${lines[index] ?? ''}"></label>`).join('')}</div><div class="stat-summary" hidden><span data-stat="${skill}"></span><span class="stat-fd"></span></div><p class="stat-note" id="stat-note-${statNodes.indexOf(node)}" aria-live="polite"></p>`;
     $('.stat-list').append(row);
   }
   const nodeRow = node => `<label class="node-row" style="--skill-accent:${skillAccent(node.short)}" data-node-row="${node.short}" data-node-id="${node.id}" title="${escapeHtml(node.name)}"><span class="node-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span class="node-label">${node.tag ? `<span class="skill-tag">${escapeHtml(node.tag)}</span>` : ''}<span class="node-name">${escapeHtml(node.name)}</span></span><input data-node="${node.short}" aria-label="${escapeHtml(node.name)} level" type="number" min="${initialLevel(node)}" max="30" step="1" value="${clamp(saved.levels?.[node.short], 30, initialLevel(node))}"></label>`;
@@ -85,20 +94,8 @@ function renderInputs() {
     img.addEventListener('error', () => { img.hidden = true; });
     if (img.complete && !img.naturalWidth) img.hidden = true;
   });
-  $$('[data-stat]').forEach(input => {
-    const icon = statNodes.find(node=>node.short===input.dataset.stat)?.icon;
-    if (!icon) return;
-    const row = input.closest('.stat-row');
-    row.style.setProperty('--skill-accent', skillAccent(input.dataset.stat));
-    if (row.querySelector('img')) {
-      row.querySelector('img').addEventListener('error', event => { event.target.hidden=true; });
-      return;
-    }
-    const image = document.createElement('img');
-    image.src = icon;
-    image.alt = '';
-    image.addEventListener('error', () => { image.hidden = true; });
-    row.prepend(image);
+  $$('.stat-unlock-icon img').forEach(image => {
+    image.addEventListener('error',()=>{image.hidden=true;});
   });
   $$('[data-stat-unlocked]').forEach(input => {
     const skill = input.dataset.statUnlocked;
@@ -123,6 +120,50 @@ function levels() {
   });
   return result;
 }
+
+function syncStatSelection(available) {
+  const choices=statNodes.filter(node=>available.has(node.short));
+  if(!choices.some(node=>node.short===selectedStats[activeClass]))selectedStats[activeClass]=choices[0]?.short;
+  $$('.stat-selector').forEach(selector=>{
+    const skill=selector.dataset.statSelector,selected=skill===selectedStats[activeClass];
+    selector.hidden=!available.has(skill);
+    selector.classList.toggle('selected',selected);
+    selector.querySelector('[data-stat-select]').setAttribute('aria-pressed',String(selected));
+  });
+  $$('[data-stat]').forEach(output=>{output.closest('.stat-row').hidden=!available.has(output.dataset.stat)||output.dataset.stat!==selectedStats[activeClass];});
+}
+
+function syncStatVisuals(skill,row) {
+  const selector=$$('.stat-selector').find(item=>item.dataset.statSelector===skill);
+  const unlocked=row.querySelector('[data-stat-unlocked]');
+  const toggle=selector.querySelector('[data-stat-toggle]');
+  selector.querySelector('.stat-selector-name').textContent=row.querySelector('.stat-name').textContent;
+  toggle.classList.toggle('is-unlocked',unlocked.checked);
+  toggle.setAttribute('aria-pressed',String(unlocked.checked));
+  toggle.setAttribute('aria-disabled',String(unlocked.disabled));
+  toggle.setAttribute('aria-label',`${unlocked.checked?'Lock':'Unlock'} ${skill}`);
+  toggle.title=unlocked.disabled ? 'Unlocked. Clear all line levels before locking.' : unlocked.checked ? 'Unlocked. Click to lock.' : 'Locked. Click to unlock.';
+  selector.querySelector('.stat-selector-summary').textContent=[row.querySelector('[data-stat]').textContent,row.querySelector('.stat-fd').textContent].filter(Boolean).join(' ');
+  selector.querySelector('.stat-selector-summary').setAttribute('aria-label',`${row.querySelector('[data-stat]').getAttribute('aria-label')}. ${row.querySelector('.stat-fd').textContent}`);
+  selector.querySelector('.stat-selector-summary').title='General average from the owner-supplied HEXA Stat table, not personalised FD.';
+  row.querySelectorAll('[data-stat-line]').forEach(field=>{
+    const level=field.value === '' ? null : Number(field.value);
+    const valid=Number.isInteger(level)&&level>=0&&level<=10;
+    field.closest('.stat-line').querySelectorAll('.stat-bar i').forEach((segment,index)=>segment.classList.toggle('filled',valid&&index<level));
+  });
+}
+
+$('.stat-list').addEventListener('click',event=>{
+  const button=event.target.closest('button[data-stat-select],button[data-stat-toggle]');
+  if(!button)return;
+  const skill=button.dataset.statSelect || button.dataset.statToggle;
+  selectedStats[activeClass]=skill;
+  if(button.dataset.statToggle){
+    const unlocked=$$('[data-stat-unlocked]').find(field=>field.dataset.statUnlocked===skill);
+    if(!unlocked.disabled)unlocked.checked=!unlocked.checked;
+  }
+  render();
+});
 
 function materials(cost, days) {
   return `<div class="materials">${materialAmount(cost.erda, 'erda')} ${materialAmount(cost.frags, 'frags', cost.rng)}${days === null || cost.rng ? '' : ` <span class="material-days">/ ${days.toFixed(1)} days</span>`}</div>`;
@@ -196,7 +237,7 @@ function render() {
   const available = new Set(order.map(step => step.skill));
   $$('[data-node-row]').forEach(row => { row.hidden = !available.has(row.dataset.nodeRow); });
   $$('.node-group').forEach(group => { group.hidden = !group.querySelector('[data-node-row]:not([hidden])'); });
-  $$('[data-stat]').forEach(input => { input.closest('.stat-row').hidden = !available.has(input.dataset.stat); });
+  syncStatSelection(available);
   $('#stat-heading').hidden = !statNodes.some(node => available.has(node.short));
   $('#includeJanus').closest('.include-option').hidden = !available.has('Janus');
   setTrackerCatalogue([]);
@@ -281,9 +322,11 @@ function render() {
     const name = row.querySelector('.stat-name');
     if (name) name.textContent = previewDrafts[mode]?.names[input.dataset.stat] || input.dataset.stat;
     const progress=statProgress(saved.statLines?.[input.dataset.stat], current[input.dataset.stat]);
-    input.textContent=`${progress.total} / 20`;
-    row.querySelector('.stat-fd').textContent=progress.fd === null || row.querySelector('[aria-invalid="true"]') ? '' : `Approx. FD ${progress.fd.toFixed(3)}%`;
+    input.textContent=progress.total < 20 ? `${progress.total} / 20` : '✓';
+    input.setAttribute('aria-label', `${progress.total} of 20 levels`);
+    row.querySelector('.stat-fd').textContent=progress.fd === null || row.querySelector('[aria-invalid="true"]') ? '' : `~${progress.fd.toFixed(3)}% FD`;
     if (!row.querySelector('[aria-invalid="true"]')) row.querySelector('.stat-note').textContent=progress.hasLines ? '' : `Saved total ${progress.total} / 20. Enter all three line levels to update it.`;
+    syncStatVisuals(input.dataset.stat, row);
   });
   $$('[data-node-row]').forEach(row => {
     row.querySelector('.node-name').textContent = previewDrafts[mode]?.names[row.dataset.nodeRow] || nodeByShort[row.dataset.nodeRow].name;
@@ -309,6 +352,7 @@ function updateStatLine(input) {
     row.querySelector('.stat-note').textContent=checked.error;
     // Invalid drafts never change saved progress or display a stale FD.
     row.querySelector('.stat-fd').textContent='';
+    syncStatVisuals(skill,row);
     return;
   }
   saved.statLines={...saved.statLines,[skill]:lines};
@@ -335,6 +379,8 @@ $('#next-upgrade').addEventListener('click', event => {
       unlocked.checked = true;
       unlocked.dispatchEvent(new Event('change', { bubbles: true }));
     } else if (button.dataset.statAction === 'lines' && unlocked.checked) {
+      selectedStats[activeClass]=button.dataset.upgradeSkill;
+      syncStatSelection(new Set((catalog.priorities[saved.mode] || []).map(step=>step.skill)));
       const primary=stat.closest('.stat-row').querySelector('[data-stat-line]');
       primary.scrollIntoView?.({block:'center',behavior:'smooth'});
       primary.focus();
