@@ -57,8 +57,8 @@ for (const node of petals) {
   assert.ok(value(node, '--x1') > value(node, '--x2'));
   assert.ok(value(node, '--x2') > value(node, '--end-x'));
   assert.ok(value(node, '--y1') < value(node, '--y2'));
-  assert.ok(value(node, '--alpha') >= (front ? .18 : .22));
-  assert.ok(value(node, '--alpha') <= (front ? .34 : .48));
+  assert.ok(value(node, '--alpha') >= (front ? .36 : .44));
+  assert.ok(value(node, '--alpha') <= (front ? .60 : .72));
   assert.ok(value(node, '--blur') <= (front ? .8 : .35));
   assert.ok(value(node, '--duration') >= (front ? 70 : 32));
   assert.ok(value(node, '--duration') <= (front ? 90 : 50));
@@ -92,8 +92,8 @@ mobile.set(true); assert.equal(count('.decoration-background .petal'), 18);
 assert.equal(count('.petal-front'), 6);
 for (const node of doc.querySelectorAll('.petal')) {
   const front = node.classList.contains('petal-front');
-  assert.ok(value(node, '--alpha') >= (front ? .12 : .18));
-  assert.ok(value(node, '--alpha') <= (front ? .24 : .40));
+  assert.ok(value(node, '--alpha') >= (front ? .28 : .36));
+  assert.ok(value(node, '--alpha') <= (front ? .48 : .62));
 }
 const broken = doc.querySelector('.petal');
 broken.querySelector('img').dispatchEvent(new win.Event('error')); assert.equal(broken.hidden, true);

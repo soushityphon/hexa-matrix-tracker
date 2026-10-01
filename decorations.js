@@ -49,9 +49,9 @@ export function createDecorations({ document, window, control, className }) {
         set('--end-x', start - travel, 'vw');
         set('--y1', 20 + Math.random() * 10, 'vh');
         set('--y2', (foreground ? 76 : 58) + Math.random() * 14, 'vh');
-        const alpha = foreground ? (mobile ? .12 : .18) + Math.random() * (mobile ? .12 : .16) : (mobile ? .18 : .22) + Math.random() * (mobile ? .22 : .26);
+        const alpha = foreground ? (mobile ? .28 : .36) + Math.random() * (mobile ? .20 : .24) : (mobile ? .36 : .44) + Math.random() * (mobile ? .26 : .28);
         set('--alpha', alpha);
-        set('--alpha-low', alpha * (.65 + Math.random() * .20));
+        set('--alpha-low', alpha * (.75 + Math.random() * .15));
         // Blur is fixed for a pass, sparse and slight, never animated.
         set('--blur', Math.random() < .25 ? (foreground ? .3 : .15) + Math.random() * (foreground ? .5 : .2) : 0, 'px');
         set('--sway', 2 + Math.random() * (foreground ? 10 : 5), 'px');

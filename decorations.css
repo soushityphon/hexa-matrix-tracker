@@ -18,7 +18,7 @@ body { isolation: isolate; }
 }
 /* Background fills are 80% opaque; text and controls keep their full opacity. */
 .shell .panel, .shell .next-upgrade, .shell .stat-selector,
-.shell .priority-table tr:nth-child(even), .shell .priority-table th { background: color-mix(in srgb, var(--ui-panel) 80%, transparent); }
+.shell .priority-table tr:nth-child(even), .shell .priority-table th { background: var(--ui-panel-surface); }
 .shell .node-row.next-skill, .shell .stat-list .stat-row.next-skill,
 .shell .priority-table tr.next, .shell .stat-selector.selected { background: color-mix(in srgb, color-mix(in srgb, var(--skill-accent, var(--ui-accent)) 17%, var(--ui-panel)) 80%, transparent); }
 .shell .node-row:hover, .shell .stat-list label:hover { background: rgb(255 255 255 / 4%); }
