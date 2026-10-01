@@ -321,7 +321,7 @@ for(const width of [240,280,390,640,1000]){
   assert.ok(routes.filter(d=>d.includes(' V ')).every(d=>d.includes(' H 5 V ')));
 }
 const css=readFileSync(new URL('../infographic.css',import.meta.url),'utf8');
-assert.match(css,/grid-template-columns:minmax\(0,2fr\) minmax\(0,1fr\)/);
+assert.match(css,/grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\)/);
 assert.match(css,/@media\(max-width:780px\)/);assert.match(css,/pointer-events:none/);
 assert.equal(document.querySelectorAll('.infographic-connectors').length,1);
 const style=document.createElement('style');style.textContent=css;document.head.append(style);
