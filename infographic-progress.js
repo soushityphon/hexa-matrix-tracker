@@ -52,9 +52,13 @@ export function infographicDisplayCheckpoints(entries, saved, context) {
   const recorded=new Set(history?.sequence===context.sequence
     ? Object.values(history.skills || {}).flatMap(stack=>Array.isArray(stack)?stack.map(record=>record.key):[]) : []);
   const rows=entries.map(entry=>({...entry,done:infographicDone(saved,entry)}));
+  // A condensed run uses its final target's source position, not the first
+  // remaining step's position. Completed tiles must not be overtaken by MAX.
+  const endpoints=new Set(priorityCheckpointGroups(rows).map(group=>group.at(-1).key));
   const display=[];
-  for(const group of priorityCheckpointGroups(rows)) {
-    const endpoint=group.at(-1),previous=display.at(-1);
+  for(const endpoint of rows) {
+    if(!endpoints.has(endpoint.key))continue;
+    const previous=display.at(-1);
     // Pre-existing adjacent completed levels need only their last endpoint.
     // Preserve every recorded click, including earlier locked undo steps.
     if(endpoint.done && previous?.done && previous.skill===endpoint.skill &&

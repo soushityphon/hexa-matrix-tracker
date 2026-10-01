@@ -79,6 +79,28 @@ const bridgeState={levels:{'Future Skill':7}},bridgeScope=infographicContext('br
 assert.deepEqual(targets(entries,bridgeState,bridgeScope),[['Future Skill',10],['Extra',1],['Future Skill',30],['Future Stat',20]]);
 bridgeState.levels.Extra=1;
 assert.deepEqual(targets(entries,bridgeState,bridgeScope),[['Future Skill',30],['Future Stat',20]]);
+// A combined MAX must remain at its final source position in the full guide.
+// Completed intervening skills let its remaining run merge, but cannot move
+// that endpoint ahead of their faded checkpoints.
+const positionOrder=[{skill:'Future Lotus',level:14},{skill:'Future Origin',level:20},
+  {skill:'Future Lotus',level:15},{skill:'Future Origin',level:21},
+  {skill:'Future Ascent',level:29},{skill:'Future Lotus',level:30}];
+const positioned=infographicCheckpoints(positionOrder,guideNodes),positionScope=infographicContext('position',positioned);
+const oneLeft={levels:{'Future Origin':30,'Future Ascent':30,'Future Lotus':0}};
+assert.deepEqual(infographicDisplayCheckpoints(positioned,oneLeft,positionScope).map(entry=>[entry.skill,entry.target]),
+  [['Future Origin',21],['Future Ascent',29],['Future Lotus',30]]);
+oneLeft.levels['Future Origin']=0;
+let positionedView=infographicDisplayCheckpoints(positioned,oneLeft,positionScope);
+assert.equal(positionedView.at(-1).key,positioned.at(-1).key);
+assert.deepEqual(positionedView.filter(entry=>entry.skill==='Future Lotus').map(entry=>entry.target),[14,15,30]);
+oneLeft.levels['Future Origin']=30;oneLeft.levels['Future Lotus']=28;
+assert.equal(infographicDisplayCheckpoints(positioned,oneLeft,positionScope).at(-1).key,positioned.at(-1).key);
+clickInfographicCheckpoint(oneLeft,positionScope,positioned,positioned.at(-1).key);
+let positionReload=JSON.parse(JSON.stringify(oneLeft));
+assert.equal(infographicDisplayCheckpoints(positioned,positionReload,positionScope).at(-1).key,positioned.at(-1).key);
+assert.equal(clickInfographicCheckpoint(positionReload,positionScope,positioned,positioned.at(-1).key),true);
+assert.equal(positionReload.levels['Future Lotus'],28);
+assert.equal(infographicDisplayCheckpoints(positioned,positionReload,positionScope).at(-1).key,positioned.at(-1).key);
 // Clicking one checkpoint can join later remaining runs, without losing its
 // faded undo button or invalidating the stable source context.
 const joinOrder=[{skill:'Future Skill',level:10},{skill:'Extra',level:1},{skill:'Future Skill',level:15},
@@ -191,6 +213,9 @@ for(const capture of [{region:'KMS',world:'Heroic',response:evidence.response},.
   const scope=infographicContext('verified',checkpoints);
   for(let seed=0;seed<31;seed++) {
     const levels=Object.fromEntries(checkpoints.map((entry,index)=>[entry.skill,entry.stat ? (seed+index)%21 : Math.max(entry.min,(seed*7+index*11)%31)]));
+    const view=infographicDisplayCheckpoints(checkpoints,{levels},scope);
+    const sourcePositions=view.map(entry=>checkpoints.findIndex(source=>source.key===entry.key));
+    assert.ok(sourcePositions.every((position,index)=>index===0||position>sourcePositions[index-1]),'all displayed endpoints retain source order');
     const visible=targets(checkpoints,{levels},scope);
     const tracker=displayPriorityRows(levels,'verified',draft.steps).filter(row=>!row.done).map(row=>[row.skill,row.level]);
     assert.deepEqual(visible,tracker,`${capture.region} ${capture.world}, level set ${seed}`);
@@ -310,6 +335,7 @@ const weirdProgress=savedState(hyKey).levels.Harmony;
 change('#class','ren');await tick();change('#class','hoyoung');await tick();
 assert.equal(savedState(hyKey).levels.Harmony,weirdProgress);
 assert.equal(button('Harmony',30).getAttribute('aria-current'),'step');
+assert.equal(buttons().at(-1).dataset.checkpoint,button('Harmony',30).dataset.checkpoint);
 // Narrow-width geometry checks cover row return routes and reflow counts. Happy
 // DOM has no rendering engine, so phone touch/readability remains owner review.
 for(const width of [240,280,390,640,1000]){
