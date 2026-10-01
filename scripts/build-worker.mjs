@@ -11,5 +11,5 @@ const output = `const ASSETS = ${JSON.stringify(assets)};\n${readFileSync(resolv
 const outDir = resolve(root, 'dist/server');
 mkdirSync(outDir, { recursive: true });
 writeFileSync(resolve(outDir, 'index.js'), output);
-for (const file of ['data.js', 'priority-draft.js', 'admin-panel-model.js', 'scouter-request-context.js', 'scouter-request-policy.js', 'scouter-discovery.js', 'scouter-catalogue-acquisition.js', 'scouter-order-acquisition.js', 'scouter-review-overlays.js']) copyFileSync(resolve(root, file), resolve(outDir, file));
+for (const file of ['data.js', 'priority-draft.js', 'admin-panel-model.js', 'scouter-request-context.js', 'scouter-profile-request.js', 'scouter-request-policy.js', 'scouter-discovery.js', 'scouter-catalogue-acquisition.js', 'scouter-order-acquisition.js', 'scouter-review-overlays.js']) copyFileSync(resolve(root, file), resolve(outDir, file));
 console.log(`Bundled ${files.length} assets and HEXA route`);

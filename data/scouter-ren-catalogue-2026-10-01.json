@@ -1,0 +1,3347 @@
+{
+  "job": "렌",
+  "skills": [
+    {
+      "coreId": "generalCore1",
+      "sourceName": "솔 야누스",
+      "icon": "https://maplescouter.com/hexaskill/General/General_1_0.png",
+      "category": "Common",
+      "coreNumber": 1,
+      "tag": null,
+      "shared": true,
+      "availability": "frontend-candidate",
+      "costs": {
+        "coreId": "generalCore1",
+        "freeBaseLevel": 0,
+        "affectsBossing": false,
+        "cumulative": {
+          "erda": [
+            0,
+            7,
+            9,
+            11,
+            13,
+            16,
+            19,
+            22,
+            27,
+            32,
+            46,
+            51,
+            56,
+            62,
+            68,
+            74,
+            80,
+            86,
+            92,
+            99,
+            116,
+            123,
+            130,
+            137,
+            144,
+            151,
+            160,
+            169,
+            178,
+            188,
+            208
+          ],
+          "frags": [
+            0,
+            125,
+            163,
+            207,
+            257,
+            314,
+            377,
+            446,
+            521,
+            603,
+            903,
+            1013,
+            1137,
+            1275,
+            1427,
+            1592,
+            1771,
+            1964,
+            2171,
+            2391,
+            2916,
+            3150,
+            3398,
+            3660,
+            3935,
+            4224,
+            4527,
+            4844,
+            5174,
+            5518,
+            6268
+          ]
+        },
+        "levels": [
+          {
+            "level": 1,
+            "erda": 7,
+            "frags": 125
+          },
+          {
+            "level": 2,
+            "erda": 2,
+            "frags": 38
+          },
+          {
+            "level": 3,
+            "erda": 2,
+            "frags": 44
+          },
+          {
+            "level": 4,
+            "erda": 2,
+            "frags": 50
+          },
+          {
+            "level": 5,
+            "erda": 3,
+            "frags": 57
+          },
+          {
+            "level": 6,
+            "erda": 3,
+            "frags": 63
+          },
+          {
+            "level": 7,
+            "erda": 3,
+            "frags": 69
+          },
+          {
+            "level": 8,
+            "erda": 5,
+            "frags": 75
+          },
+          {
+            "level": 9,
+            "erda": 5,
+            "frags": 82
+          },
+          {
+            "level": 10,
+            "erda": 14,
+            "frags": 300
+          },
+          {
+            "level": 11,
+            "erda": 5,
+            "frags": 110
+          },
+          {
+            "level": 12,
+            "erda": 5,
+            "frags": 124
+          },
+          {
+            "level": 13,
+            "erda": 6,
+            "frags": 138
+          },
+          {
+            "level": 14,
+            "erda": 6,
+            "frags": 152
+          },
+          {
+            "level": 15,
+            "erda": 6,
+            "frags": 165
+          },
+          {
+            "level": 16,
+            "erda": 6,
+            "frags": 179
+          },
+          {
+            "level": 17,
+            "erda": 6,
+            "frags": 193
+          },
+          {
+            "level": 18,
+            "erda": 6,
+            "frags": 207
+          },
+          {
+            "level": 19,
+            "erda": 7,
+            "frags": 220
+          },
+          {
+            "level": 20,
+            "erda": 17,
+            "frags": 525
+          },
+          {
+            "level": 21,
+            "erda": 7,
+            "frags": 234
+          },
+          {
+            "level": 22,
+            "erda": 7,
+            "frags": 248
+          },
+          {
+            "level": 23,
+            "erda": 7,
+            "frags": 262
+          },
+          {
+            "level": 24,
+            "erda": 7,
+            "frags": 275
+          },
+          {
+            "level": 25,
+            "erda": 7,
+            "frags": 289
+          },
+          {
+            "level": 26,
+            "erda": 9,
+            "frags": 303
+          },
+          {
+            "level": 27,
+            "erda": 9,
+            "frags": 317
+          },
+          {
+            "level": 28,
+            "erda": 9,
+            "frags": 330
+          },
+          {
+            "level": 29,
+            "erda": 10,
+            "frags": 344
+          },
+          {
+            "level": 30,
+            "erda": 20,
+            "frags": 750
+          }
+        ],
+        "verification": "frontend-observed"
+      }
+    },
+    {
+      "coreId": "generalCore2",
+      "sourceName": "솔 헤카테",
+      "icon": "https://maplescouter.com/hexaskill/General/General_2_0.png",
+      "category": "Common",
+      "coreNumber": 2,
+      "tag": null,
+      "shared": true,
+      "availability": "frontend-candidate",
+      "costs": {
+        "coreId": "generalCore2",
+        "freeBaseLevel": 0,
+        "affectsBossing": true,
+        "cumulative": {
+          "erda": [
+            0,
+            7,
+            9,
+            11,
+            13,
+            16,
+            19,
+            22,
+            27,
+            32,
+            46,
+            51,
+            56,
+            62,
+            68,
+            74,
+            80,
+            86,
+            92,
+            99,
+            116,
+            123,
+            130,
+            137,
+            144,
+            151,
+            160,
+            169,
+            178,
+            188,
+            208
+          ],
+          "frags": [
+            0,
+            125,
+            163,
+            207,
+            257,
+            314,
+            377,
+            446,
+            521,
+            603,
+            903,
+            1013,
+            1137,
+            1275,
+            1427,
+            1592,
+            1771,
+            1964,
+            2171,
+            2391,
+            2916,
+            3150,
+            3398,
+            3660,
+            3935,
+            4224,
+            4527,
+            4844,
+            5174,
+            5518,
+            6268
+          ]
+        },
+        "levels": [
+          {
+            "level": 1,
+            "erda": 7,
+            "frags": 125
+          },
+          {
+            "level": 2,
+            "erda": 2,
+            "frags": 38
+          },
+          {
+            "level": 3,
+            "erda": 2,
+            "frags": 44
+          },
+          {
+            "level": 4,
+            "erda": 2,
+            "frags": 50
+          },
+          {
+            "level": 5,
+            "erda": 3,
+            "frags": 57
+          },
+          {
+            "level": 6,
+            "erda": 3,
+            "frags": 63
+          },
+          {
+            "level": 7,
+            "erda": 3,
+            "frags": 69
+          },
+          {
+            "level": 8,
+            "erda": 5,
+            "frags": 75
+          },
+          {
+            "level": 9,
+            "erda": 5,
+            "frags": 82
+          },
+          {
+            "level": 10,
+            "erda": 14,
+            "frags": 300
+          },
+          {
+            "level": 11,
+            "erda": 5,
+            "frags": 110
+          },
+          {
+            "level": 12,
+            "erda": 5,
+            "frags": 124
+          },
+          {
+            "level": 13,
+            "erda": 6,
+            "frags": 138
+          },
+          {
+            "level": 14,
+            "erda": 6,
+            "frags": 152
+          },
+          {
+            "level": 15,
+            "erda": 6,
+            "frags": 165
+          },
+          {
+            "level": 16,
+            "erda": 6,
+            "frags": 179
+          },
+          {
+            "level": 17,
+            "erda": 6,
+            "frags": 193
+          },
+          {
+            "level": 18,
+            "erda": 6,
+            "frags": 207
+          },
+          {
+            "level": 19,
+            "erda": 7,
+            "frags": 220
+          },
+          {
+            "level": 20,
+            "erda": 17,
+            "frags": 525
+          },
+          {
+            "level": 21,
+            "erda": 7,
+            "frags": 234
+          },
+          {
+            "level": 22,
+            "erda": 7,
+            "frags": 248
+          },
+          {
+            "level": 23,
+            "erda": 7,
+            "frags": 262
+          },
+          {
+            "level": 24,
+            "erda": 7,
+            "frags": 275
+          },
+          {
+            "level": 25,
+            "erda": 7,
+            "frags": 289
+          },
+          {
+            "level": 26,
+            "erda": 9,
+            "frags": 303
+          },
+          {
+            "level": 27,
+            "erda": 9,
+            "frags": 317
+          },
+          {
+            "level": 28,
+            "erda": 9,
+            "frags": 330
+          },
+          {
+            "level": 29,
+            "erda": 10,
+            "frags": 344
+          },
+          {
+            "level": 30,
+            "erda": 20,
+            "frags": 750
+          }
+        ],
+        "verification": "frontend-observed"
+      }
+    },
+    {
+      "coreId": "skillCore1",
+      "sourceName": "창룡파천검 : 승천",
+      "icon": "https://maplescouter.com/hexaskill/Len_1.png",
+      "category": "Skill",
+      "coreNumber": 1,
+      "tag": "Origin",
+      "shared": false,
+      "availability": "frontend-candidate",
+      "costs": {
+        "coreId": "skillCore1",
+        "freeBaseLevel": 1,
+        "affectsBossing": true,
+        "cumulative": {
+          "erda": [
+            0,
+            5,
+            6,
+            7,
+            8,
+            10,
+            12,
+            14,
+            17,
+            20,
+            30,
+            33,
+            36,
+            40,
+            44,
+            48,
+            52,
+            56,
+            60,
+            65,
+            80,
+            85,
+            90,
+            95,
+            100,
+            105,
+            111,
+            117,
+            123,
+            130,
+            150
+          ],
+          "frags": [
+            0,
+            100,
+            130,
+            165,
+            205,
+            250,
+            300,
+            355,
+            415,
+            480,
+            680,
+            760,
+            850,
+            950,
+            1060,
+            1180,
+            1310,
+            1450,
+            1600,
+            1760,
+            2110,
+            2280,
+            2460,
+            2650,
+            2850,
+            3060,
+            3280,
+            3510,
+            3750,
+            4000,
+            4500
+          ]
+        },
+        "levels": [
+          {
+            "level": 1,
+            "erda": 5,
+            "frags": 100
+          },
+          {
+            "level": 2,
+            "erda": 1,
+            "frags": 30
+          },
+          {
+            "level": 3,
+            "erda": 1,
+            "frags": 35
+          },
+          {
+            "level": 4,
+            "erda": 1,
+            "frags": 40
+          },
+          {
+            "level": 5,
+            "erda": 2,
+            "frags": 45
+          },
+          {
+            "level": 6,
+            "erda": 2,
+            "frags": 50
+          },
+          {
+            "level": 7,
+            "erda": 2,
+            "frags": 55
+          },
+          {
+            "level": 8,
+            "erda": 3,
+            "frags": 60
+          },
+          {
+            "level": 9,
+            "erda": 3,
+            "frags": 65
+          },
+          {
+            "level": 10,
+            "erda": 10,
+            "frags": 200
+          },
+          {
+            "level": 11,
+            "erda": 3,
+            "frags": 80
+          },
+          {
+            "level": 12,
+            "erda": 3,
+            "frags": 90
+          },
+          {
+            "level": 13,
+            "erda": 4,
+            "frags": 100
+          },
+          {
+            "level": 14,
+            "erda": 4,
+            "frags": 110
+          },
+          {
+            "level": 15,
+            "erda": 4,
+            "frags": 120
+          },
+          {
+            "level": 16,
+            "erda": 4,
+            "frags": 130
+          },
+          {
+            "level": 17,
+            "erda": 4,
+            "frags": 140
+          },
+          {
+            "level": 18,
+            "erda": 4,
+            "frags": 150
+          },
+          {
+            "level": 19,
+            "erda": 5,
+            "frags": 160
+          },
+          {
+            "level": 20,
+            "erda": 15,
+            "frags": 350
+          },
+          {
+            "level": 21,
+            "erda": 5,
+            "frags": 170
+          },
+          {
+            "level": 22,
+            "erda": 5,
+            "frags": 180
+          },
+          {
+            "level": 23,
+            "erda": 5,
+            "frags": 190
+          },
+          {
+            "level": 24,
+            "erda": 5,
+            "frags": 200
+          },
+          {
+            "level": 25,
+            "erda": 5,
+            "frags": 210
+          },
+          {
+            "level": 26,
+            "erda": 6,
+            "frags": 220
+          },
+          {
+            "level": 27,
+            "erda": 6,
+            "frags": 230
+          },
+          {
+            "level": 28,
+            "erda": 6,
+            "frags": 240
+          },
+          {
+            "level": 29,
+            "erda": 7,
+            "frags": 250
+          },
+          {
+            "level": 30,
+            "erda": 20,
+            "frags": 500
+          }
+        ],
+        "verification": "frontend-observed"
+      }
+    },
+    {
+      "coreId": "skillCore2",
+      "sourceName": "창룡파천검 : 일매낙화 천비인적",
+      "icon": "https://maplescouter.com/hexaskill/Len_10.png",
+      "category": "Skill",
+      "coreNumber": 2,
+      "tag": "Ascent",
+      "shared": false,
+      "availability": "frontend-candidate",
+      "costs": {
+        "coreId": "skillCore2",
+        "freeBaseLevel": 0,
+        "affectsBossing": true,
+        "cumulative": {
+          "erda": [
+            0,
+            5,
+            6,
+            7,
+            8,
+            10,
+            12,
+            14,
+            17,
+            20,
+            30,
+            33,
+            36,
+            40,
+            44,
+            48,
+            52,
+            56,
+            60,
+            65,
+            80,
+            85,
+            90,
+            95,
+            100,
+            105,
+            111,
+            117,
+            123,
+            130,
+            150
+          ],
+          "frags": [
+            0,
+            100,
+            130,
+            165,
+            205,
+            250,
+            300,
+            355,
+            415,
+            480,
+            680,
+            760,
+            850,
+            950,
+            1060,
+            1180,
+            1310,
+            1450,
+            1600,
+            1760,
+            2110,
+            2280,
+            2460,
+            2650,
+            2850,
+            3060,
+            3280,
+            3510,
+            3750,
+            4000,
+            4500
+          ]
+        },
+        "levels": [
+          {
+            "level": 1,
+            "erda": 5,
+            "frags": 100
+          },
+          {
+            "level": 2,
+            "erda": 1,
+            "frags": 30
+          },
+          {
+            "level": 3,
+            "erda": 1,
+            "frags": 35
+          },
+          {
+            "level": 4,
+            "erda": 1,
+            "frags": 40
+          },
+          {
+            "level": 5,
+            "erda": 2,
+            "frags": 45
+          },
+          {
+            "level": 6,
+            "erda": 2,
+            "frags": 50
+          },
+          {
+            "level": 7,
+            "erda": 2,
+            "frags": 55
+          },
+          {
+            "level": 8,
+            "erda": 3,
+            "frags": 60
+          },
+          {
+            "level": 9,
+            "erda": 3,
+            "frags": 65
+          },
+          {
+            "level": 10,
+            "erda": 10,
+            "frags": 200
+          },
+          {
+            "level": 11,
+            "erda": 3,
+            "frags": 80
+          },
+          {
+            "level": 12,
+            "erda": 3,
+            "frags": 90
+          },
+          {
+            "level": 13,
+            "erda": 4,
+            "frags": 100
+          },
+          {
+            "level": 14,
+            "erda": 4,
+            "frags": 110
+          },
+          {
+            "level": 15,
+            "erda": 4,
+            "frags": 120
+          },
+          {
+            "level": 16,
+            "erda": 4,
+            "frags": 130
+          },
+          {
+            "level": 17,
+            "erda": 4,
+            "frags": 140
+          },
+          {
+            "level": 18,
+            "erda": 4,
+            "frags": 150
+          },
+          {
+            "level": 19,
+            "erda": 5,
+            "frags": 160
+          },
+          {
+            "level": 20,
+            "erda": 15,
+            "frags": 350
+          },
+          {
+            "level": 21,
+            "erda": 5,
+            "frags": 170
+          },
+          {
+            "level": 22,
+            "erda": 5,
+            "frags": 180
+          },
+          {
+            "level": 23,
+            "erda": 5,
+            "frags": 190
+          },
+          {
+            "level": 24,
+            "erda": 5,
+            "frags": 200
+          },
+          {
+            "level": 25,
+            "erda": 5,
+            "frags": 210
+          },
+          {
+            "level": 26,
+            "erda": 6,
+            "frags": 220
+          },
+          {
+            "level": 27,
+            "erda": 6,
+            "frags": 230
+          },
+          {
+            "level": 28,
+            "erda": 6,
+            "frags": 240
+          },
+          {
+            "level": 29,
+            "erda": 7,
+            "frags": 250
+          },
+          {
+            "level": 30,
+            "erda": 20,
+            "frags": 500
+          }
+        ],
+        "verification": "frontend-observed"
+      }
+    },
+    {
+      "coreId": "skillCore3",
+      "sourceName": "창룡파천검 : 만참",
+      "icon": "https://maplescouter.com/hexaskill/Len_12.png",
+      "category": "Skill",
+      "coreNumber": 3,
+      "tag": null,
+      "shared": false,
+      "availability": "frontend-candidate",
+      "costs": {
+        "coreId": "skillCore3",
+        "freeBaseLevel": 0,
+        "affectsBossing": true,
+        "cumulative": {
+          "erda": [
+            0,
+            7,
+            8,
+            9,
+            10,
+            11,
+            13,
+            15,
+            17,
+            19,
+            27,
+            29,
+            31,
+            34,
+            37,
+            40,
+            43,
+            46,
+            49,
+            52,
+            64,
+            68,
+            72,
+            76,
+            80,
+            84,
+            88,
+            93,
+            98,
+            103,
+            117
+          ],
+          "frags": [
+            0,
+            140,
+            161,
+            187,
+            217,
+            251,
+            289,
+            332,
+            379,
+            430,
+            572,
+            634,
+            703,
+            780,
+            863,
+            954,
+            1052,
+            1157,
+            1269,
+            1389,
+            1641,
+            1769,
+            1905,
+            2050,
+            2202,
+            2363,
+            2531,
+            2708,
+            2892,
+            3085,
+            3442
+          ]
+        },
+        "levels": [
+          {
+            "level": 1,
+            "erda": 7,
+            "frags": 140
+          },
+          {
+            "level": 2,
+            "erda": 1,
+            "frags": 21
+          },
+          {
+            "level": 3,
+            "erda": 1,
+            "frags": 26
+          },
+          {
+            "level": 4,
+            "erda": 1,
+            "frags": 30
+          },
+          {
+            "level": 5,
+            "erda": 1,
+            "frags": 34
+          },
+          {
+            "level": 6,
+            "erda": 2,
+            "frags": 38
+          },
+          {
+            "level": 7,
+            "erda": 2,
+            "frags": 43
+          },
+          {
+            "level": 8,
+            "erda": 2,
+            "frags": 47
+          },
+          {
+            "level": 9,
+            "erda": 2,
+            "frags": 51
+          },
+          {
+            "level": 10,
+            "erda": 8,
+            "frags": 142
+          },
+          {
+            "level": 11,
+            "erda": 2,
+            "frags": 62
+          },
+          {
+            "level": 12,
+            "erda": 2,
+            "frags": 69
+          },
+          {
+            "level": 13,
+            "erda": 3,
+            "frags": 77
+          },
+          {
+            "level": 14,
+            "erda": 3,
+            "frags": 83
+          },
+          {
+            "level": 15,
+            "erda": 3,
+            "frags": 91
+          },
+          {
+            "level": 16,
+            "erda": 3,
+            "frags": 98
+          },
+          {
+            "level": 17,
+            "erda": 3,
+            "frags": 105
+          },
+          {
+            "level": 18,
+            "erda": 3,
+            "frags": 112
+          },
+          {
+            "level": 19,
+            "erda": 3,
+            "frags": 120
+          },
+          {
+            "level": 20,
+            "erda": 12,
+            "frags": 252
+          },
+          {
+            "level": 21,
+            "erda": 4,
+            "frags": 128
+          },
+          {
+            "level": 22,
+            "erda": 4,
+            "frags": 136
+          },
+          {
+            "level": 23,
+            "erda": 4,
+            "frags": 145
+          },
+          {
+            "level": 24,
+            "erda": 4,
+            "frags": 152
+          },
+          {
+            "level": 25,
+            "erda": 4,
+            "frags": 161
+          },
+          {
+            "level": 26,
+            "erda": 4,
+            "frags": 168
+          },
+          {
+            "level": 27,
+            "erda": 5,
+            "frags": 177
+          },
+          {
+            "level": 28,
+            "erda": 5,
+            "frags": 184
+          },
+          {
+            "level": 29,
+            "erda": 5,
+            "frags": 193
+          },
+          {
+            "level": 30,
+            "erda": 14,
+            "frags": 357
+          }
+        ],
+        "verification": "frontend-observed"
+      }
+    },
+    {
+      "coreId": "masteryCore1",
+      "sourceName": "매화검 본초 : 선참 VI",
+      "icon": "https://maplescouter.com/hexaskill/Len_2.png",
+      "category": "Mastery",
+      "coreNumber": 1,
+      "tag": "M1",
+      "shared": false,
+      "availability": "frontend-candidate",
+      "costs": {
+        "coreId": "masteryCore1",
+        "freeBaseLevel": 0,
+        "affectsBossing": true,
+        "cumulative": {
+          "erda": [
+            0,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            11,
+            13,
+            18,
+            20,
+            22,
+            24,
+            26,
+            28,
+            30,
+            32,
+            34,
+            37,
+            45,
+            48,
+            51,
+            54,
+            57,
+            60,
+            63,
+            66,
+            69,
+            73,
+            83
+          ],
+          "frags": [
+            0,
+            50,
+            65,
+            83,
+            103,
+            126,
+            151,
+            179,
+            209,
+            242,
+            342,
+            382,
+            427,
+            477,
+            532,
+            592,
+            657,
+            727,
+            802,
+            882,
+            1057,
+            1142,
+            1232,
+            1327,
+            1427,
+            1532,
+            1642,
+            1757,
+            1877,
+            2002,
+            2252
+          ]
+        },
+        "levels": [
+          {
+            "level": 1,
+            "erda": 3,
+            "frags": 50
+          },
+          {
+            "level": 2,
+            "erda": 1,
+            "frags": 15
+          },
+          {
+            "level": 3,
+            "erda": 1,
+            "frags": 18
+          },
+          {
+            "level": 4,
+            "erda": 1,
+            "frags": 20
+          },
+          {
+            "level": 5,
+            "erda": 1,
+            "frags": 23
+          },
+          {
+            "level": 6,
+            "erda": 1,
+            "frags": 25
+          },
+          {
+            "level": 7,
+            "erda": 1,
+            "frags": 28
+          },
+          {
+            "level": 8,
+            "erda": 2,
+            "frags": 30
+          },
+          {
+            "level": 9,
+            "erda": 2,
+            "frags": 33
+          },
+          {
+            "level": 10,
+            "erda": 5,
+            "frags": 100
+          },
+          {
+            "level": 11,
+            "erda": 2,
+            "frags": 40
+          },
+          {
+            "level": 12,
+            "erda": 2,
+            "frags": 45
+          },
+          {
+            "level": 13,
+            "erda": 2,
+            "frags": 50
+          },
+          {
+            "level": 14,
+            "erda": 2,
+            "frags": 55
+          },
+          {
+            "level": 15,
+            "erda": 2,
+            "frags": 60
+          },
+          {
+            "level": 16,
+            "erda": 2,
+            "frags": 65
+          },
+          {
+            "level": 17,
+            "erda": 2,
+            "frags": 70
+          },
+          {
+            "level": 18,
+            "erda": 2,
+            "frags": 75
+          },
+          {
+            "level": 19,
+            "erda": 3,
+            "frags": 80
+          },
+          {
+            "level": 20,
+            "erda": 8,
+            "frags": 175
+          },
+          {
+            "level": 21,
+            "erda": 3,
+            "frags": 85
+          },
+          {
+            "level": 22,
+            "erda": 3,
+            "frags": 90
+          },
+          {
+            "level": 23,
+            "erda": 3,
+            "frags": 95
+          },
+          {
+            "level": 24,
+            "erda": 3,
+            "frags": 100
+          },
+          {
+            "level": 25,
+            "erda": 3,
+            "frags": 105
+          },
+          {
+            "level": 26,
+            "erda": 3,
+            "frags": 110
+          },
+          {
+            "level": 27,
+            "erda": 3,
+            "frags": 115
+          },
+          {
+            "level": 28,
+            "erda": 3,
+            "frags": 120
+          },
+          {
+            "level": 29,
+            "erda": 4,
+            "frags": 125
+          },
+          {
+            "level": 30,
+            "erda": 10,
+            "frags": 250
+          }
+        ],
+        "verification": "frontend-observed"
+      }
+    },
+    {
+      "coreId": "masteryCore2",
+      "sourceName": "망혼검 본초 : 영격 VI/망혼검 2초식 : 연참 VI",
+      "icon": "https://maplescouter.com/hexaskill/Len_7.png",
+      "category": "Mastery",
+      "coreNumber": 2,
+      "tag": "M2",
+      "shared": false,
+      "availability": "frontend-candidate",
+      "costs": {
+        "coreId": "masteryCore2",
+        "freeBaseLevel": 0,
+        "affectsBossing": true,
+        "cumulative": {
+          "erda": [
+            0,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            11,
+            13,
+            18,
+            20,
+            22,
+            24,
+            26,
+            28,
+            30,
+            32,
+            34,
+            37,
+            45,
+            48,
+            51,
+            54,
+            57,
+            60,
+            63,
+            66,
+            69,
+            73,
+            83
+          ],
+          "frags": [
+            0,
+            50,
+            65,
+            83,
+            103,
+            126,
+            151,
+            179,
+            209,
+            242,
+            342,
+            382,
+            427,
+            477,
+            532,
+            592,
+            657,
+            727,
+            802,
+            882,
+            1057,
+            1142,
+            1232,
+            1327,
+            1427,
+            1532,
+            1642,
+            1757,
+            1877,
+            2002,
+            2252
+          ]
+        },
+        "levels": [
+          {
+            "level": 1,
+            "erda": 3,
+            "frags": 50
+          },
+          {
+            "level": 2,
+            "erda": 1,
+            "frags": 15
+          },
+          {
+            "level": 3,
+            "erda": 1,
+            "frags": 18
+          },
+          {
+            "level": 4,
+            "erda": 1,
+            "frags": 20
+          },
+          {
+            "level": 5,
+            "erda": 1,
+            "frags": 23
+          },
+          {
+            "level": 6,
+            "erda": 1,
+            "frags": 25
+          },
+          {
+            "level": 7,
+            "erda": 1,
+            "frags": 28
+          },
+          {
+            "level": 8,
+            "erda": 2,
+            "frags": 30
+          },
+          {
+            "level": 9,
+            "erda": 2,
+            "frags": 33
+          },
+          {
+            "level": 10,
+            "erda": 5,
+            "frags": 100
+          },
+          {
+            "level": 11,
+            "erda": 2,
+            "frags": 40
+          },
+          {
+            "level": 12,
+            "erda": 2,
+            "frags": 45
+          },
+          {
+            "level": 13,
+            "erda": 2,
+            "frags": 50
+          },
+          {
+            "level": 14,
+            "erda": 2,
+            "frags": 55
+          },
+          {
+            "level": 15,
+            "erda": 2,
+            "frags": 60
+          },
+          {
+            "level": 16,
+            "erda": 2,
+            "frags": 65
+          },
+          {
+            "level": 17,
+            "erda": 2,
+            "frags": 70
+          },
+          {
+            "level": 18,
+            "erda": 2,
+            "frags": 75
+          },
+          {
+            "level": 19,
+            "erda": 3,
+            "frags": 80
+          },
+          {
+            "level": 20,
+            "erda": 8,
+            "frags": 175
+          },
+          {
+            "level": 21,
+            "erda": 3,
+            "frags": 85
+          },
+          {
+            "level": 22,
+            "erda": 3,
+            "frags": 90
+          },
+          {
+            "level": 23,
+            "erda": 3,
+            "frags": 95
+          },
+          {
+            "level": 24,
+            "erda": 3,
+            "frags": 100
+          },
+          {
+            "level": 25,
+            "erda": 3,
+            "frags": 105
+          },
+          {
+            "level": 26,
+            "erda": 3,
+            "frags": 110
+          },
+          {
+            "level": 27,
+            "erda": 3,
+            "frags": 115
+          },
+          {
+            "level": 28,
+            "erda": 3,
+            "frags": 120
+          },
+          {
+            "level": 29,
+            "erda": 4,
+            "frags": 125
+          },
+          {
+            "level": 30,
+            "erda": 10,
+            "frags": 250
+          }
+        ],
+        "verification": "frontend-observed"
+      }
+    },
+    {
+      "coreId": "masteryCore3",
+      "sourceName": "망혼강림 VI/망혼검 절기 : 열지 VI/망혼검 절기 : 망탄 VI/망혼검 절기 : 무량겁 VI",
+      "icon": "https://maplescouter.com/hexaskill/Len_8.png",
+      "category": "Mastery",
+      "coreNumber": 3,
+      "tag": "M3",
+      "shared": false,
+      "availability": "frontend-candidate",
+      "costs": {
+        "coreId": "masteryCore3",
+        "freeBaseLevel": 0,
+        "affectsBossing": true,
+        "cumulative": {
+          "erda": [
+            0,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            11,
+            13,
+            18,
+            20,
+            22,
+            24,
+            26,
+            28,
+            30,
+            32,
+            34,
+            37,
+            45,
+            48,
+            51,
+            54,
+            57,
+            60,
+            63,
+            66,
+            69,
+            73,
+            83
+          ],
+          "frags": [
+            0,
+            50,
+            65,
+            83,
+            103,
+            126,
+            151,
+            179,
+            209,
+            242,
+            342,
+            382,
+            427,
+            477,
+            532,
+            592,
+            657,
+            727,
+            802,
+            882,
+            1057,
+            1142,
+            1232,
+            1327,
+            1427,
+            1532,
+            1642,
+            1757,
+            1877,
+            2002,
+            2252
+          ]
+        },
+        "levels": [
+          {
+            "level": 1,
+            "erda": 3,
+            "frags": 50
+          },
+          {
+            "level": 2,
+            "erda": 1,
+            "frags": 15
+          },
+          {
+            "level": 3,
+            "erda": 1,
+            "frags": 18
+          },
+          {
+            "level": 4,
+            "erda": 1,
+            "frags": 20
+          },
+          {
+            "level": 5,
+            "erda": 1,
+            "frags": 23
+          },
+          {
+            "level": 6,
+            "erda": 1,
+            "frags": 25
+          },
+          {
+            "level": 7,
+            "erda": 1,
+            "frags": 28
+          },
+          {
+            "level": 8,
+            "erda": 2,
+            "frags": 30
+          },
+          {
+            "level": 9,
+            "erda": 2,
+            "frags": 33
+          },
+          {
+            "level": 10,
+            "erda": 5,
+            "frags": 100
+          },
+          {
+            "level": 11,
+            "erda": 2,
+            "frags": 40
+          },
+          {
+            "level": 12,
+            "erda": 2,
+            "frags": 45
+          },
+          {
+            "level": 13,
+            "erda": 2,
+            "frags": 50
+          },
+          {
+            "level": 14,
+            "erda": 2,
+            "frags": 55
+          },
+          {
+            "level": 15,
+            "erda": 2,
+            "frags": 60
+          },
+          {
+            "level": 16,
+            "erda": 2,
+            "frags": 65
+          },
+          {
+            "level": 17,
+            "erda": 2,
+            "frags": 70
+          },
+          {
+            "level": 18,
+            "erda": 2,
+            "frags": 75
+          },
+          {
+            "level": 19,
+            "erda": 3,
+            "frags": 80
+          },
+          {
+            "level": 20,
+            "erda": 8,
+            "frags": 175
+          },
+          {
+            "level": 21,
+            "erda": 3,
+            "frags": 85
+          },
+          {
+            "level": 22,
+            "erda": 3,
+            "frags": 90
+          },
+          {
+            "level": 23,
+            "erda": 3,
+            "frags": 95
+          },
+          {
+            "level": 24,
+            "erda": 3,
+            "frags": 100
+          },
+          {
+            "level": 25,
+            "erda": 3,
+            "frags": 105
+          },
+          {
+            "level": 26,
+            "erda": 3,
+            "frags": 110
+          },
+          {
+            "level": 27,
+            "erda": 3,
+            "frags": 115
+          },
+          {
+            "level": 28,
+            "erda": 3,
+            "frags": 120
+          },
+          {
+            "level": 29,
+            "erda": 4,
+            "frags": 125
+          },
+          {
+            "level": 30,
+            "erda": 10,
+            "frags": 250
+          }
+        ],
+        "verification": "frontend-observed"
+      }
+    },
+    {
+      "coreId": "masteryCore4",
+      "sourceName": "매화검 2초식 : 쇄매 VI/매화검 3초식 : 예인 VI",
+      "icon": "https://maplescouter.com/hexaskill/Len_9.png",
+      "category": "Mastery",
+      "coreNumber": 4,
+      "tag": "M4",
+      "shared": false,
+      "availability": "frontend-candidate",
+      "costs": {
+        "coreId": "masteryCore4",
+        "freeBaseLevel": 0,
+        "affectsBossing": true,
+        "cumulative": {
+          "erda": [
+            0,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            11,
+            13,
+            18,
+            20,
+            22,
+            24,
+            26,
+            28,
+            30,
+            32,
+            34,
+            37,
+            45,
+            48,
+            51,
+            54,
+            57,
+            60,
+            63,
+            66,
+            69,
+            73,
+            83
+          ],
+          "frags": [
+            0,
+            50,
+            65,
+            83,
+            103,
+            126,
+            151,
+            179,
+            209,
+            242,
+            342,
+            382,
+            427,
+            477,
+            532,
+            592,
+            657,
+            727,
+            802,
+            882,
+            1057,
+            1142,
+            1232,
+            1327,
+            1427,
+            1532,
+            1642,
+            1757,
+            1877,
+            2002,
+            2252
+          ]
+        },
+        "levels": [
+          {
+            "level": 1,
+            "erda": 3,
+            "frags": 50
+          },
+          {
+            "level": 2,
+            "erda": 1,
+            "frags": 15
+          },
+          {
+            "level": 3,
+            "erda": 1,
+            "frags": 18
+          },
+          {
+            "level": 4,
+            "erda": 1,
+            "frags": 20
+          },
+          {
+            "level": 5,
+            "erda": 1,
+            "frags": 23
+          },
+          {
+            "level": 6,
+            "erda": 1,
+            "frags": 25
+          },
+          {
+            "level": 7,
+            "erda": 1,
+            "frags": 28
+          },
+          {
+            "level": 8,
+            "erda": 2,
+            "frags": 30
+          },
+          {
+            "level": 9,
+            "erda": 2,
+            "frags": 33
+          },
+          {
+            "level": 10,
+            "erda": 5,
+            "frags": 100
+          },
+          {
+            "level": 11,
+            "erda": 2,
+            "frags": 40
+          },
+          {
+            "level": 12,
+            "erda": 2,
+            "frags": 45
+          },
+          {
+            "level": 13,
+            "erda": 2,
+            "frags": 50
+          },
+          {
+            "level": 14,
+            "erda": 2,
+            "frags": 55
+          },
+          {
+            "level": 15,
+            "erda": 2,
+            "frags": 60
+          },
+          {
+            "level": 16,
+            "erda": 2,
+            "frags": 65
+          },
+          {
+            "level": 17,
+            "erda": 2,
+            "frags": 70
+          },
+          {
+            "level": 18,
+            "erda": 2,
+            "frags": 75
+          },
+          {
+            "level": 19,
+            "erda": 3,
+            "frags": 80
+          },
+          {
+            "level": 20,
+            "erda": 8,
+            "frags": 175
+          },
+          {
+            "level": 21,
+            "erda": 3,
+            "frags": 85
+          },
+          {
+            "level": 22,
+            "erda": 3,
+            "frags": 90
+          },
+          {
+            "level": 23,
+            "erda": 3,
+            "frags": 95
+          },
+          {
+            "level": 24,
+            "erda": 3,
+            "frags": 100
+          },
+          {
+            "level": 25,
+            "erda": 3,
+            "frags": 105
+          },
+          {
+            "level": 26,
+            "erda": 3,
+            "frags": 110
+          },
+          {
+            "level": 27,
+            "erda": 3,
+            "frags": 115
+          },
+          {
+            "level": 28,
+            "erda": 3,
+            "frags": 120
+          },
+          {
+            "level": 29,
+            "erda": 4,
+            "frags": 125
+          },
+          {
+            "level": 30,
+            "erda": 10,
+            "frags": 250
+          }
+        ],
+        "verification": "frontend-observed"
+      }
+    },
+    {
+      "coreId": "reinCore1",
+      "sourceName": "매화검 절기 : 만리향",
+      "icon": "https://maplescouter.com/hexaskill/Len_3.png",
+      "category": "Enhancement",
+      "coreNumber": 1,
+      "tag": null,
+      "shared": false,
+      "availability": "frontend-candidate",
+      "costs": {
+        "coreId": "reinCore1",
+        "freeBaseLevel": 0,
+        "affectsBossing": true,
+        "cumulative": {
+          "erda": [
+            0,
+            4,
+            5,
+            6,
+            7,
+            9,
+            11,
+            13,
+            16,
+            19,
+            27,
+            30,
+            33,
+            36,
+            39,
+            42,
+            45,
+            48,
+            51,
+            55,
+            67,
+            71,
+            75,
+            79,
+            83,
+            87,
+            92,
+            97,
+            102,
+            108,
+            123
+          ],
+          "frags": [
+            0,
+            75,
+            98,
+            125,
+            155,
+            189,
+            227,
+            269,
+            314,
+            363,
+            513,
+            573,
+            641,
+            716,
+            799,
+            889,
+            987,
+            1092,
+            1205,
+            1325,
+            1588,
+            1716,
+            1851,
+            1994,
+            2144,
+            2302,
+            2467,
+            2640,
+            2820,
+            3008,
+            3383
+          ]
+        },
+        "levels": [
+          {
+            "level": 1,
+            "erda": 4,
+            "frags": 75
+          },
+          {
+            "level": 2,
+            "erda": 1,
+            "frags": 23
+          },
+          {
+            "level": 3,
+            "erda": 1,
+            "frags": 27
+          },
+          {
+            "level": 4,
+            "erda": 1,
+            "frags": 30
+          },
+          {
+            "level": 5,
+            "erda": 2,
+            "frags": 34
+          },
+          {
+            "level": 6,
+            "erda": 2,
+            "frags": 38
+          },
+          {
+            "level": 7,
+            "erda": 2,
+            "frags": 42
+          },
+          {
+            "level": 8,
+            "erda": 3,
+            "frags": 45
+          },
+          {
+            "level": 9,
+            "erda": 3,
+            "frags": 49
+          },
+          {
+            "level": 10,
+            "erda": 8,
+            "frags": 150
+          },
+          {
+            "level": 11,
+            "erda": 3,
+            "frags": 60
+          },
+          {
+            "level": 12,
+            "erda": 3,
+            "frags": 68
+          },
+          {
+            "level": 13,
+            "erda": 3,
+            "frags": 75
+          },
+          {
+            "level": 14,
+            "erda": 3,
+            "frags": 83
+          },
+          {
+            "level": 15,
+            "erda": 3,
+            "frags": 90
+          },
+          {
+            "level": 16,
+            "erda": 3,
+            "frags": 98
+          },
+          {
+            "level": 17,
+            "erda": 3,
+            "frags": 105
+          },
+          {
+            "level": 18,
+            "erda": 3,
+            "frags": 113
+          },
+          {
+            "level": 19,
+            "erda": 4,
+            "frags": 120
+          },
+          {
+            "level": 20,
+            "erda": 12,
+            "frags": 263
+          },
+          {
+            "level": 21,
+            "erda": 4,
+            "frags": 128
+          },
+          {
+            "level": 22,
+            "erda": 4,
+            "frags": 135
+          },
+          {
+            "level": 23,
+            "erda": 4,
+            "frags": 143
+          },
+          {
+            "level": 24,
+            "erda": 4,
+            "frags": 150
+          },
+          {
+            "level": 25,
+            "erda": 4,
+            "frags": 158
+          },
+          {
+            "level": 26,
+            "erda": 5,
+            "frags": 165
+          },
+          {
+            "level": 27,
+            "erda": 5,
+            "frags": 173
+          },
+          {
+            "level": 28,
+            "erda": 5,
+            "frags": 180
+          },
+          {
+            "level": 29,
+            "erda": 6,
+            "frags": 188
+          },
+          {
+            "level": 30,
+            "erda": 15,
+            "frags": 375
+          }
+        ],
+        "verification": "frontend-observed"
+      }
+    },
+    {
+      "coreId": "reinCore2",
+      "sourceName": "망혼각성",
+      "icon": "https://maplescouter.com/hexaskill/Len_4.png",
+      "category": "Enhancement",
+      "coreNumber": 2,
+      "tag": null,
+      "shared": false,
+      "availability": "frontend-candidate",
+      "costs": {
+        "coreId": "reinCore2",
+        "freeBaseLevel": 0,
+        "affectsBossing": true,
+        "cumulative": {
+          "erda": [
+            0,
+            4,
+            5,
+            6,
+            7,
+            9,
+            11,
+            13,
+            16,
+            19,
+            27,
+            30,
+            33,
+            36,
+            39,
+            42,
+            45,
+            48,
+            51,
+            55,
+            67,
+            71,
+            75,
+            79,
+            83,
+            87,
+            92,
+            97,
+            102,
+            108,
+            123
+          ],
+          "frags": [
+            0,
+            75,
+            98,
+            125,
+            155,
+            189,
+            227,
+            269,
+            314,
+            363,
+            513,
+            573,
+            641,
+            716,
+            799,
+            889,
+            987,
+            1092,
+            1205,
+            1325,
+            1588,
+            1716,
+            1851,
+            1994,
+            2144,
+            2302,
+            2467,
+            2640,
+            2820,
+            3008,
+            3383
+          ]
+        },
+        "levels": [
+          {
+            "level": 1,
+            "erda": 4,
+            "frags": 75
+          },
+          {
+            "level": 2,
+            "erda": 1,
+            "frags": 23
+          },
+          {
+            "level": 3,
+            "erda": 1,
+            "frags": 27
+          },
+          {
+            "level": 4,
+            "erda": 1,
+            "frags": 30
+          },
+          {
+            "level": 5,
+            "erda": 2,
+            "frags": 34
+          },
+          {
+            "level": 6,
+            "erda": 2,
+            "frags": 38
+          },
+          {
+            "level": 7,
+            "erda": 2,
+            "frags": 42
+          },
+          {
+            "level": 8,
+            "erda": 3,
+            "frags": 45
+          },
+          {
+            "level": 9,
+            "erda": 3,
+            "frags": 49
+          },
+          {
+            "level": 10,
+            "erda": 8,
+            "frags": 150
+          },
+          {
+            "level": 11,
+            "erda": 3,
+            "frags": 60
+          },
+          {
+            "level": 12,
+            "erda": 3,
+            "frags": 68
+          },
+          {
+            "level": 13,
+            "erda": 3,
+            "frags": 75
+          },
+          {
+            "level": 14,
+            "erda": 3,
+            "frags": 83
+          },
+          {
+            "level": 15,
+            "erda": 3,
+            "frags": 90
+          },
+          {
+            "level": 16,
+            "erda": 3,
+            "frags": 98
+          },
+          {
+            "level": 17,
+            "erda": 3,
+            "frags": 105
+          },
+          {
+            "level": 18,
+            "erda": 3,
+            "frags": 113
+          },
+          {
+            "level": 19,
+            "erda": 4,
+            "frags": 120
+          },
+          {
+            "level": 20,
+            "erda": 12,
+            "frags": 263
+          },
+          {
+            "level": 21,
+            "erda": 4,
+            "frags": 128
+          },
+          {
+            "level": 22,
+            "erda": 4,
+            "frags": 135
+          },
+          {
+            "level": 23,
+            "erda": 4,
+            "frags": 143
+          },
+          {
+            "level": 24,
+            "erda": 4,
+            "frags": 150
+          },
+          {
+            "level": 25,
+            "erda": 4,
+            "frags": 158
+          },
+          {
+            "level": 26,
+            "erda": 5,
+            "frags": 165
+          },
+          {
+            "level": 27,
+            "erda": 5,
+            "frags": 173
+          },
+          {
+            "level": 28,
+            "erda": 5,
+            "frags": 180
+          },
+          {
+            "level": 29,
+            "erda": 6,
+            "frags": 188
+          },
+          {
+            "level": 30,
+            "erda": 15,
+            "frags": 375
+          }
+        ],
+        "verification": "frontend-observed"
+      }
+    },
+    {
+      "coreId": "reinCore3",
+      "sourceName": "매화검 절기 : 섬무",
+      "icon": "https://maplescouter.com/hexaskill/Len_5.png",
+      "category": "Enhancement",
+      "coreNumber": 3,
+      "tag": null,
+      "shared": false,
+      "availability": "frontend-candidate",
+      "costs": {
+        "coreId": "reinCore3",
+        "freeBaseLevel": 0,
+        "affectsBossing": true,
+        "cumulative": {
+          "erda": [
+            0,
+            4,
+            5,
+            6,
+            7,
+            9,
+            11,
+            13,
+            16,
+            19,
+            27,
+            30,
+            33,
+            36,
+            39,
+            42,
+            45,
+            48,
+            51,
+            55,
+            67,
+            71,
+            75,
+            79,
+            83,
+            87,
+            92,
+            97,
+            102,
+            108,
+            123
+          ],
+          "frags": [
+            0,
+            75,
+            98,
+            125,
+            155,
+            189,
+            227,
+            269,
+            314,
+            363,
+            513,
+            573,
+            641,
+            716,
+            799,
+            889,
+            987,
+            1092,
+            1205,
+            1325,
+            1588,
+            1716,
+            1851,
+            1994,
+            2144,
+            2302,
+            2467,
+            2640,
+            2820,
+            3008,
+            3383
+          ]
+        },
+        "levels": [
+          {
+            "level": 1,
+            "erda": 4,
+            "frags": 75
+          },
+          {
+            "level": 2,
+            "erda": 1,
+            "frags": 23
+          },
+          {
+            "level": 3,
+            "erda": 1,
+            "frags": 27
+          },
+          {
+            "level": 4,
+            "erda": 1,
+            "frags": 30
+          },
+          {
+            "level": 5,
+            "erda": 2,
+            "frags": 34
+          },
+          {
+            "level": 6,
+            "erda": 2,
+            "frags": 38
+          },
+          {
+            "level": 7,
+            "erda": 2,
+            "frags": 42
+          },
+          {
+            "level": 8,
+            "erda": 3,
+            "frags": 45
+          },
+          {
+            "level": 9,
+            "erda": 3,
+            "frags": 49
+          },
+          {
+            "level": 10,
+            "erda": 8,
+            "frags": 150
+          },
+          {
+            "level": 11,
+            "erda": 3,
+            "frags": 60
+          },
+          {
+            "level": 12,
+            "erda": 3,
+            "frags": 68
+          },
+          {
+            "level": 13,
+            "erda": 3,
+            "frags": 75
+          },
+          {
+            "level": 14,
+            "erda": 3,
+            "frags": 83
+          },
+          {
+            "level": 15,
+            "erda": 3,
+            "frags": 90
+          },
+          {
+            "level": 16,
+            "erda": 3,
+            "frags": 98
+          },
+          {
+            "level": 17,
+            "erda": 3,
+            "frags": 105
+          },
+          {
+            "level": 18,
+            "erda": 3,
+            "frags": 113
+          },
+          {
+            "level": 19,
+            "erda": 4,
+            "frags": 120
+          },
+          {
+            "level": 20,
+            "erda": 12,
+            "frags": 263
+          },
+          {
+            "level": 21,
+            "erda": 4,
+            "frags": 128
+          },
+          {
+            "level": 22,
+            "erda": 4,
+            "frags": 135
+          },
+          {
+            "level": 23,
+            "erda": 4,
+            "frags": 143
+          },
+          {
+            "level": 24,
+            "erda": 4,
+            "frags": 150
+          },
+          {
+            "level": 25,
+            "erda": 4,
+            "frags": 158
+          },
+          {
+            "level": 26,
+            "erda": 5,
+            "frags": 165
+          },
+          {
+            "level": 27,
+            "erda": 5,
+            "frags": 173
+          },
+          {
+            "level": 28,
+            "erda": 5,
+            "frags": 180
+          },
+          {
+            "level": 29,
+            "erda": 6,
+            "frags": 188
+          },
+          {
+            "level": 30,
+            "erda": 15,
+            "frags": 375
+          }
+        ],
+        "verification": "frontend-observed"
+      }
+    },
+    {
+      "coreId": "reinCore4",
+      "sourceName": "망혼검 절기 : 심검",
+      "icon": "https://maplescouter.com/hexaskill/Len_6.png",
+      "category": "Enhancement",
+      "coreNumber": 4,
+      "tag": null,
+      "shared": false,
+      "availability": "frontend-candidate",
+      "costs": {
+        "coreId": "reinCore4",
+        "freeBaseLevel": 0,
+        "affectsBossing": true,
+        "cumulative": {
+          "erda": [
+            0,
+            4,
+            5,
+            6,
+            7,
+            9,
+            11,
+            13,
+            16,
+            19,
+            27,
+            30,
+            33,
+            36,
+            39,
+            42,
+            45,
+            48,
+            51,
+            55,
+            67,
+            71,
+            75,
+            79,
+            83,
+            87,
+            92,
+            97,
+            102,
+            108,
+            123
+          ],
+          "frags": [
+            0,
+            75,
+            98,
+            125,
+            155,
+            189,
+            227,
+            269,
+            314,
+            363,
+            513,
+            573,
+            641,
+            716,
+            799,
+            889,
+            987,
+            1092,
+            1205,
+            1325,
+            1588,
+            1716,
+            1851,
+            1994,
+            2144,
+            2302,
+            2467,
+            2640,
+            2820,
+            3008,
+            3383
+          ]
+        },
+        "levels": [
+          {
+            "level": 1,
+            "erda": 4,
+            "frags": 75
+          },
+          {
+            "level": 2,
+            "erda": 1,
+            "frags": 23
+          },
+          {
+            "level": 3,
+            "erda": 1,
+            "frags": 27
+          },
+          {
+            "level": 4,
+            "erda": 1,
+            "frags": 30
+          },
+          {
+            "level": 5,
+            "erda": 2,
+            "frags": 34
+          },
+          {
+            "level": 6,
+            "erda": 2,
+            "frags": 38
+          },
+          {
+            "level": 7,
+            "erda": 2,
+            "frags": 42
+          },
+          {
+            "level": 8,
+            "erda": 3,
+            "frags": 45
+          },
+          {
+            "level": 9,
+            "erda": 3,
+            "frags": 49
+          },
+          {
+            "level": 10,
+            "erda": 8,
+            "frags": 150
+          },
+          {
+            "level": 11,
+            "erda": 3,
+            "frags": 60
+          },
+          {
+            "level": 12,
+            "erda": 3,
+            "frags": 68
+          },
+          {
+            "level": 13,
+            "erda": 3,
+            "frags": 75
+          },
+          {
+            "level": 14,
+            "erda": 3,
+            "frags": 83
+          },
+          {
+            "level": 15,
+            "erda": 3,
+            "frags": 90
+          },
+          {
+            "level": 16,
+            "erda": 3,
+            "frags": 98
+          },
+          {
+            "level": 17,
+            "erda": 3,
+            "frags": 105
+          },
+          {
+            "level": 18,
+            "erda": 3,
+            "frags": 113
+          },
+          {
+            "level": 19,
+            "erda": 4,
+            "frags": 120
+          },
+          {
+            "level": 20,
+            "erda": 12,
+            "frags": 263
+          },
+          {
+            "level": 21,
+            "erda": 4,
+            "frags": 128
+          },
+          {
+            "level": 22,
+            "erda": 4,
+            "frags": 135
+          },
+          {
+            "level": 23,
+            "erda": 4,
+            "frags": 143
+          },
+          {
+            "level": 24,
+            "erda": 4,
+            "frags": 150
+          },
+          {
+            "level": 25,
+            "erda": 4,
+            "frags": 158
+          },
+          {
+            "level": 26,
+            "erda": 5,
+            "frags": 165
+          },
+          {
+            "level": 27,
+            "erda": 5,
+            "frags": 173
+          },
+          {
+            "level": 28,
+            "erda": 5,
+            "frags": 180
+          },
+          {
+            "level": 29,
+            "erda": 6,
+            "frags": 188
+          },
+          {
+            "level": 30,
+            "erda": 15,
+            "frags": 375
+          }
+        ],
+        "verification": "frontend-observed"
+      }
+    },
+    {
+      "coreId": "generalCore3",
+      "sourceName": "화중군자 VI",
+      "icon": "https://maplescouter.com/hexaskill/Len_11.png",
+      "category": "Common",
+      "coreNumber": 3,
+      "tag": null,
+      "shared": false,
+      "availability": "frontend-candidate",
+      "costs": {
+        "coreId": "generalCore3",
+        "freeBaseLevel": 0,
+        "affectsBossing": true,
+        "cumulative": {
+          "erda": [
+            0,
+            4,
+            5,
+            6,
+            7,
+            9,
+            11,
+            13,
+            16,
+            19,
+            28,
+            31,
+            34,
+            37,
+            40,
+            44,
+            48,
+            52,
+            56,
+            60,
+            74,
+            78,
+            83,
+            88,
+            93,
+            98,
+            103,
+            108,
+            113,
+            119,
+            137
+          ],
+          "frags": [
+            0,
+            90,
+            115,
+            145,
+            180,
+            220,
+            265,
+            315,
+            370,
+            430,
+            610,
+            683,
+            764,
+            854,
+            952,
+            1059,
+            1174,
+            1298,
+            1430,
+            1571,
+            1886,
+            2037,
+            2197,
+            2367,
+            2546,
+            2735,
+            2933,
+            3141,
+            3358,
+            3585,
+            4035
+          ]
+        },
+        "levels": [
+          {
+            "level": 1,
+            "erda": 4,
+            "frags": 90
+          },
+          {
+            "level": 2,
+            "erda": 1,
+            "frags": 25
+          },
+          {
+            "level": 3,
+            "erda": 1,
+            "frags": 30
+          },
+          {
+            "level": 4,
+            "erda": 1,
+            "frags": 35
+          },
+          {
+            "level": 5,
+            "erda": 2,
+            "frags": 40
+          },
+          {
+            "level": 6,
+            "erda": 2,
+            "frags": 45
+          },
+          {
+            "level": 7,
+            "erda": 2,
+            "frags": 50
+          },
+          {
+            "level": 8,
+            "erda": 3,
+            "frags": 55
+          },
+          {
+            "level": 9,
+            "erda": 3,
+            "frags": 60
+          },
+          {
+            "level": 10,
+            "erda": 9,
+            "frags": 180
+          },
+          {
+            "level": 11,
+            "erda": 3,
+            "frags": 73
+          },
+          {
+            "level": 12,
+            "erda": 3,
+            "frags": 81
+          },
+          {
+            "level": 13,
+            "erda": 3,
+            "frags": 90
+          },
+          {
+            "level": 14,
+            "erda": 3,
+            "frags": 98
+          },
+          {
+            "level": 15,
+            "erda": 4,
+            "frags": 107
+          },
+          {
+            "level": 16,
+            "erda": 4,
+            "frags": 115
+          },
+          {
+            "level": 17,
+            "erda": 4,
+            "frags": 124
+          },
+          {
+            "level": 18,
+            "erda": 4,
+            "frags": 132
+          },
+          {
+            "level": 19,
+            "erda": 4,
+            "frags": 141
+          },
+          {
+            "level": 20,
+            "erda": 14,
+            "frags": 315
+          },
+          {
+            "level": 21,
+            "erda": 4,
+            "frags": 151
+          },
+          {
+            "level": 22,
+            "erda": 5,
+            "frags": 160
+          },
+          {
+            "level": 23,
+            "erda": 5,
+            "frags": 170
+          },
+          {
+            "level": 24,
+            "erda": 5,
+            "frags": 179
+          },
+          {
+            "level": 25,
+            "erda": 5,
+            "frags": 189
+          },
+          {
+            "level": 26,
+            "erda": 5,
+            "frags": 198
+          },
+          {
+            "level": 27,
+            "erda": 5,
+            "frags": 208
+          },
+          {
+            "level": 28,
+            "erda": 5,
+            "frags": 217
+          },
+          {
+            "level": 29,
+            "erda": 6,
+            "frags": 227
+          },
+          {
+            "level": 30,
+            "erda": 18,
+            "frags": 450
+          }
+        ],
+        "verification": "frontend-observed"
+      }
+    }
+  ],
+  "placeholders": [
+    {
+      "coreId": "skillCore4",
+      "sourceName": "미출시"
+    },
+    {
+      "coreId": "skillCore5",
+      "sourceName": "미출시"
+    },
+    {
+      "coreId": "skillCore6",
+      "sourceName": "미출시"
+    },
+    {
+      "coreId": "generalCore4",
+      "sourceName": "미출시"
+    }
+  ],
+  "sourceIconOverrides": {
+    "generalCore2": "https://maplescouter.com/hexaskill/General/General_2.png"
+  },
+  "provenance": {
+    "capturedOn": "2026-10-01",
+    "status": "public-frontend-candidate-not-regional-support",
+    "metadata": {
+      "url": "https://maplescouter.com/_next/static/chunks/6352-0a4a27344bc2986a.js",
+      "sha256": "647e6e08d82609d739dee41a5e63bfae4863f1129c5296eb31318b7285f3efc1"
+    },
+    "costs": {
+      "url": "https://maplescouter.com/_next/static/chunks/7717-2a8c25f8bdabbd9d.js",
+      "sha256": "e69eb578dbc3c7baa0176e962bf6203bf4462019ea8b6f62cb4db9e7aa237ab2"
+    },
+    "iconOverrides": {
+      "url": "https://maplescouter.com/_next/static/chunks/app/%5Blocale%5D/(pages)/hexa/page-6208c755243e6ff9.js",
+      "sha256": "5f81a6e656c02b7ee7dcf9939fe5efae3ca741d551e6c5e403d7d35b81717dcb"
+    },
+    "method": "Literal parsing and adjacent cumulative differences; no aggregate-total allocation"
+  }
+}

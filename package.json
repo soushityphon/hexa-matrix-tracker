@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/data.test.mjs && node tests/capture-costs.test.mjs && node tests/worker.test.mjs && node tests/scouter-discovery.test.mjs && node tests/scouter-request-context.test.mjs && node tests/scouter-catalogue-acquisition.test.mjs && node tests/scouter-order-acquisition.test.mjs && node tests/scouter-request-policy.test.mjs && node tests/scouter-review-overlays.test.mjs && node tests/admin-panel.test.mjs"
+    "test": "node tests/data.test.mjs && node tests/capture-costs.test.mjs && node tests/worker.test.mjs && node tests/scouter-discovery.test.mjs && node tests/scouter-request-context.test.mjs && node tests/scouter-profile-request.test.mjs && node tests/scouter-catalogue-acquisition.test.mjs && node tests/scouter-order-acquisition.test.mjs && node tests/scouter-request-policy.test.mjs && node tests/scouter-review-overlays.test.mjs && node tests/admin-panel.test.mjs"
   }
 }
