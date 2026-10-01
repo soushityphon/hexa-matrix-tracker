@@ -6,6 +6,7 @@
   <title>HEXA Matrix Tracker</title>
   <link rel="stylesheet" href="styles.css?v=matrix-grid-2">
   <link rel="stylesheet" href="decorations.css">
+  <link rel="stylesheet" href="infographic.css">
 </head>
 <body>
   <main class="shell">
@@ -31,9 +32,10 @@
       <label>Update<select id="patch"></select></label>
       <fieldset class="world-picker"><legend>Priority (World)</legend><label><input type="radio" name="world" value="heroic" checked><span>Fragments (Heroic)</span></label><label><input type="radio" name="world" value="interactive"><span>Sol Erda (Interactive)</span></label></fieldset>
       <label id="version-picker" hidden>Priority version<select id="priority-version"></select></label>
+      <div class="view-picker" role="group" aria-label="View"><button id="view-tracker" type="button" aria-pressed="true">Tracker</button><button id="view-infographic" type="button" aria-pressed="false">Infographic</button></div>
     </div>
 
-    <div class="workspace">
+    <div class="workspace" data-view="tracker">
       <aside class="inputs">
         <section class="panel summary-panel">
           <h2>HEXA Matrix Summary</h2>
@@ -44,7 +46,7 @@
           <div class="include-option"><label class="toggle"><input id="includeJanus" type="checkbox"> Include Sol Janus in completion and spent totals</label></div>
         </section>
 
-        <section class="panel">
+        <section class="panel matrix-panel">
           <div class="panel-head"><h2>Current HEXA Matrix</h2><button id="reset" type="button">Reset</button></div>
           <div class="column-head"><span>node</span><span>level</span></div>
           <div id="nodes" class="node-list"></div>
@@ -81,6 +83,12 @@
           <div id="time-estimate" class="time-estimate" hidden></div>
         </section>
       </aside>
+      <section class="panel infographic-panel" hidden>
+        <div class="panel-head"><h2>HEXA Upgrade Priority</h2><label class="toggle"><input id="infographic-hide" type="checkbox"> Hide completed</label></div>
+        <p id="infographic-context" class="fine"></p>
+        <div id="infographic-grid" class="infographic-grid"></div>
+        <p id="infographic-message" class="fine" role="status"></p>
+      </section>
     </div>
   </main>
   <script type="module" src="matrix-app.js?v=matrix-grid-2"></script>

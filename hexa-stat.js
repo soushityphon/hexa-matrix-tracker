@@ -52,11 +52,11 @@ export function validateStatLines(lines) {
   return { valid: true, complete: entered.length === 3, total };
 }
 
-export function statProgress(lines, legacyTotal = 0) {
+export function statProgress(lines, legacyTotal = 0, markedComplete = false) {
   const checked = validateStatLines(lines);
-  const total = checked.valid && checked.complete ? checked.total : legacyTotal;
+  const total = markedComplete ? 20 : checked.valid && checked.complete ? checked.total : legacyTotal;
   let fd = null;
-  if (checked.valid && checked.complete && total === 20) {
+  if (checked.valid && checked.complete && checked.total === 20) {
     const [primary, second, third] = lines;
     fd = averages.get(`${primary}/${Math.max(second, third)}/${Math.min(second, third)}`) ?? null;
   }
@@ -68,4 +68,3 @@ export function restoreStatLines(lines, legacyTotal = 0) {
   if (validateStatLines(lines).valid) return [...lines];
   return legacyTotal > 0 ? [null, null, null] : [0, 0, 0];
 }
-

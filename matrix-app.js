@@ -9,6 +9,8 @@ import { fragmentDays, fragmentDuration, fragmentCompletionDate, fragmentShortfa
 import { restoreStatLines, statProgress, validateStatLines } from './hexa-stat.js';
 import { createDecorations } from './decorations.js';
 import { createMusic } from './music.js';
+import { createInfographic } from './infographic.js';
+import { infographicCheckpoints, infographicContext, clickInfographicCheckpoint, reconcileInfographicUndo, invalidateInfographicUndo, reconcileStatCompletion } from './infographic-progress.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -34,6 +36,44 @@ let catalog = previewCatalog(previewDrafts);
 const requestedMode = new URL(location.href).searchParams.get('mode');
 let initialSharedLoad = true;
 if (requestedMode && catalog.settings[requestedMode]?.enabled && catalog.priorities[requestedMode]?.length) saved.mode = requestedMode;
+
+let view='tracker';
+try { if(localStorage.getItem('hexa-tracker-view-v1')==='infographic')view='infographic';
+  $('#infographic-hide').checked=localStorage.getItem('hexa-tracker-infographic-hide-v1')==='true'; }catch{}
+let infographicEntries=[], infographicScope=null;
+const infographic=createInfographic({document,window,grid:$('#infographic-grid'),onClick:key=>{
+  if(classLoading || !infographicScope || !clickInfographicCheckpoint(saved,infographicScope,infographicEntries,key))return;
+  const entry=infographicEntries.find(entry=>entry.key===key);
+  if(entry.stat) {
+    const row=$$('[data-stat]').find(output=>output.dataset.stat===entry.skill)?.closest('.stat-row');
+    if(row) {
+      row.querySelector('[data-stat-unlocked]').checked=saved.statUnlocked[entry.skill];
+      row.querySelectorAll('[data-stat-line]').forEach((input,index)=>{
+        input.value=saved.statLines[entry.skill]?.[index] ?? '';
+        input.setCustomValidity('');input.setAttribute('aria-invalid','false');
+      });
+    }
+  }else {
+    const input=$$('[data-node]').find(input=>input.dataset.node===entry.skill);
+    if(input)input.value=saved.levels[entry.skill];
+  }
+  render();
+}});
+function syncView() {
+  $('.workspace').dataset.view=view;
+  $('.infographic-panel').hidden=view!=='infographic';
+  $('#view-tracker').setAttribute('aria-pressed',String(view==='tracker'));
+  $('#view-infographic').setAttribute('aria-pressed',String(view==='infographic'));
+}
+for(const name of ['tracker','infographic'])$('#view-'+name).addEventListener('click',()=>{
+  view=name;if(view==='infographic')selectedStats[activeClass]=null;
+  try{localStorage.setItem('hexa-tracker-view-v1',view);}catch{}
+  syncView();render();
+});
+$('#infographic-hide').addEventListener('change',()=>{
+  try{localStorage.setItem('hexa-tracker-infographic-hide-v1',String($('#infographic-hide').checked));}catch{}
+});
+syncView();
 
 const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 
@@ -126,7 +166,7 @@ function levels() {
   $$('[data-node]').forEach(input => { result[input.dataset.node] = validLevel(input); });
   $$('[data-stat]').forEach(output => {
     const skill=output.dataset.stat;
-    result[skill]=statProgress(saved.statLines?.[skill], clamp(saved.levels?.[skill],20)).total;
+    result[skill]=statProgress(saved.statLines?.[skill], clamp(saved.levels?.[skill],20), saved.statCompleted?.[skill] === true).total;
   });
   return result;
 }
@@ -179,7 +219,7 @@ $('.stat-list').addEventListener('click',event=>{
   if(event.target.closest('[data-stat-cancel]')){
     const unlocked=$$('[data-stat-unlocked]').find(field=>field.dataset.statUnlocked===skill);
     const lines=saved.statLines?.[skill];
-    if(!unlocked.disabled&&validateStatLines(lines).complete&&lines.every(level=>level===0))unlocked.checked=false;
+    if(!unlocked.disabled&&validateStatLines(lines).complete&&lines.every(level=>level===0)){invalidateInfographicUndo(saved,skill);unlocked.checked=false;}
   }else{
     selectedStats[activeClass]=selectedStats[activeClass]===skill ? null : skill;
   }
@@ -253,6 +293,7 @@ function upgradeCost(label, cost, time, action = '', owned = null) {
 }
 
 function render() {
+  syncView();
   const mode = syncPriorityOptions();
   const heroic = $('[name="world"]:checked').value === 'heroic';
   $('.calculator-panel').hidden = !heroic;
@@ -266,6 +307,8 @@ function render() {
   syncStatSelection(available);
   $('#stat-heading').hidden = !statNodes.some(node => available.has(node.short));
   $('#includeJanus').closest('.include-option').hidden = !available.has('Janus');
+  infographicEntries=infographicCheckpoints(order,[...NODES.map(node=>({...node,initialLevel:initialLevel(node)})),...statNodes.map(node=>({...node,isStat:true,maxLevel:node.maxLevel ?? 20}))]);
+  infographicScope=infographicContext(mode,infographicEntries);
   setTrackerCatalogue([]);
   if (!mode) {
     highlightCurrentSkill(null);
@@ -276,6 +319,9 @@ function render() {
     $('#totals').replaceChildren();
     $('#completion').replaceChildren();
     $('#time-estimate').hidden = true;
+    infographicEntries=[];infographicScope=null;infographic.clear();
+    $('#infographic-context').textContent='';
+    $('#infographic-message').textContent=classLoading?'Loading...':classLoadFailed?'Priorities could not be loaded.':'No saved priority is available for this selection.';
     checkMaterialIcons();
     return;
   }
@@ -288,7 +334,9 @@ function render() {
   if (!captured) {
     $('#next-upgrade').innerHTML = '<div class="metric"><strong>Captured level costs unavailable</strong><p>Grab Scouter info and save a new priority pair in the Admin Panel.</p></div>';
     $('#priority').replaceChildren(); $('#totals').replaceChildren(); $('#completion').replaceChildren();
-    $('#time-estimate').hidden = true; highlightCurrentSkill(null); return;
+    $('#time-estimate').hidden = true; highlightCurrentSkill(null);
+    infographic.clear();$('#infographic-message').textContent='Captured level costs unavailable. Grab Scouter info and save a new priority pair in the Admin Panel.';
+    return;
   }
   setTrackerCatalogue(NODES.filter(node=>available.has(node.short) && captured[node.short]).map(node => ({...node, costs:captured[node.short].levels, initialLevel:captured[node.short].freeBaseLevel})));
   const current = levels();
@@ -355,11 +403,11 @@ function render() {
     const row=input.closest('.stat-row');
     const name = row.querySelector('.stat-name');
     if (name) name.textContent = previewDrafts[mode]?.names[input.dataset.stat] || input.dataset.stat;
-    const progress=statProgress(saved.statLines?.[input.dataset.stat], current[input.dataset.stat]);
+    const progress=statProgress(saved.statLines?.[input.dataset.stat], current[input.dataset.stat], saved.statCompleted?.[input.dataset.stat] === true);
     input.textContent=progress.total < 20 ? `${progress.total} / 20` : '';
     input.setAttribute('aria-label', `${progress.total} of 20 levels`);
     row.querySelector('.stat-fd').textContent=progress.fd === null || row.querySelector('[aria-invalid="true"]') ? '' : `~${progress.fd.toFixed(3)}% FD`;
-    if (!row.querySelector('[aria-invalid="true"]')) row.querySelector('.stat-note').textContent=progress.hasLines ? '' : `Saved total ${progress.total} / 20. Enter all three line levels to update it.`;
+    if (!row.querySelector('[aria-invalid="true"]')) row.querySelector('.stat-note').textContent=progress.hasLines && (!saved.statCompleted?.[input.dataset.stat] || validateStatLines(saved.statLines?.[input.dataset.stat]).total === 20) ? '' : `Saved total ${progress.total} / 20. Enter all three line levels to update it.`;
     syncStatVisuals(input.dataset.stat, row);
   });
   $$('[data-node-row]').forEach(row => {
@@ -370,7 +418,11 @@ function render() {
     if (tagText && !tag) { tag = document.createElement('span'); tag.className = 'skill-tag'; label.prepend(tag); }
     if (tag) { tag.textContent = tagText; tag.hidden = !tagText; }
   });
-  saved = { mode, levels: current, statUnlocked: {...saved.statUnlocked,...statUnlocked}, statLines: saved.statLines || {}, owned, perday, erdaRequest, epicDungeon, hideDone: $('#hideDone').checked, includeJanus };
+  saved = { statCompleted:saved.statCompleted || {}, infographicUndo:saved.infographicUndo || {}, mode, levels: current, statUnlocked: {...saved.statUnlocked,...statUnlocked}, statLines: saved.statLines || {}, owned, perday, erdaRequest, epicDungeon, hideDone: $('#hideDone').checked, includeJanus };
+  reconcileInfographicUndo(saved,infographicScope,infographicEntries);
+  $('#infographic-context').textContent=`${$('#class').selectedOptions[0]?.textContent || activeClass} / ${$('#version-name').textContent}`;
+  $('#infographic-message').textContent=infographicEntries.length ? '' : 'No checkpoints are available for this priority.';
+  if(view==='infographic')infographic.render(infographicEntries,saved,infographicScope,$('#infographic-hide').checked);
   localStorage.setItem(storageKey, JSON.stringify(saved));
 }
 
@@ -389,16 +441,20 @@ function updateStatLine(input) {
     syncStatVisuals(skill,row);
     return;
   }
+  invalidateInfographicUndo(saved,skill);
+  reconcileStatCompletion(saved,skill,lines);
   saved.statLines={...saved.statLines,[skill]:lines};
   if(input.value!=='')row.querySelector('[data-stat-unlocked]').checked=true;
   render();
 }
 document.addEventListener('input', event=>{
+  if(event.target.matches('[data-node]'))invalidateInfographicUndo(saved,event.target.dataset.node);
   if(event.target.matches('[data-stat-line]'))updateStatLine(event.target);
   else if(!['class','music-volume'].includes(event.target.id))render();
 });
 document.addEventListener('change', event => {
   if(['class','music-volume'].includes(event.target.id))return;
+  if(event.target.matches('[data-node], [data-stat-unlocked]'))invalidateInfographicUndo(saved,event.target.dataset.node || event.target.dataset.statUnlocked);
   if(event.target.matches('[data-stat-line]')) { updateStatLine(event.target); return; }
   if (event.target.matches('[data-node]')) event.target.value = validLevel(event.target);
   render();
