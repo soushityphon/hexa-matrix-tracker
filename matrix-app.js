@@ -7,6 +7,7 @@ import { fetchSharedPreview, previewCatalog } from './preview-priorities.js';
 import { skillAccent } from './skill-colours.js';
 import { fragmentDays, fragmentDuration, fragmentCompletionDate, fragmentShortfall, effectiveDailyFragments, normaliseDungeon } from './fragment-calculator.js';
 import { restoreStatLines, statProgress, validateStatLines } from './hexa-stat.js';
+import { createDecorations } from './decorations.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -15,6 +16,7 @@ try {activeClass=new URL(location.href).searchParams.get('class') || localStorag
 if(!['hoyoung','ren'].includes(activeClass))activeClass='hoyoung';
 $('#class').value=activeClass;
 document.documentElement.dataset.class=activeClass;
+const decorations=createDecorations({document,window,control:$('#animations'),className:activeClass});
 let storageKey='hexa-tracker-'+activeClass+'-v1';
 let refreshSequence=0;
 let classLoading=true, classLoadFailed=false;
@@ -471,6 +473,7 @@ async function refreshSharedPriorities({force=false}={}) {
 }
 $('#class').addEventListener('change',()=>{
   activeClass=$('#class').value;selectedStats[activeClass]=null;document.documentElement.dataset.class=activeClass;storageKey='hexa-tracker-'+activeClass+'-v1';
+  decorations.setClass(activeClass);
   localStorage.setItem('hexa-tracker-class-v1',activeClass);
   try{saved=JSON.parse(localStorage.getItem(storageKey) || '{}') || {};}catch{saved={};}
   classLoading=true;classLoadFailed=false;$('#priority-sync').textContent='';

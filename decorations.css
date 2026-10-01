@@ -1,0 +1,45 @@
+/* Root stacking: page, decoration 0, panels 1, petals 2, toolbar 3.
+   Native select menus and modal dialogs use the browser top layer. */
+body { isolation: isolate; }
+.shell { position: relative; }
+.shell .panel, #priority-sync { position: relative; z-index: 1; }
+.shell .masthead, .shell .toolbar { position: relative; z-index: 3; }
+.decoration-layer { position: fixed; inset: 0; overflow: hidden; pointer-events: none; user-select: none; z-index: 0; contain: strict; }
+.decoration-foreground { z-index: 2; }
+.decoration-layer * { pointer-events: none; }
+.decoration-particle { position: absolute; display: block; width: var(--size); opacity: 0; animation-duration: var(--duration); animation-delay: var(--delay); animation-timing-function: linear; animation-iteration-count: infinite; }
+.decoration-particle img { display: block; width: 100%; height: auto; }
+.decoration-particle.is-loaded { opacity: var(--alpha); }
+.cloud { top: var(--top); left: 0; animation-name: cloud-drift; }
+.petal { top: 0; left: 0; animation-name: petal-drift; }
+.petal img { animation: petal-turn 9s ease-in-out infinite alternate; }
+.petal-front { animation-name: foreground-drift; }
+.decoration-layer.is-paused .decoration-particle, .decoration-layer.is-paused img { animation-play-state: paused; }
+@keyframes cloud-drift {
+  from { transform: translate3d(calc(-1 * var(--size)), 0, 0); }
+  to { transform: translate3d(100vw, 0, 0); }
+}
+@keyframes petal-drift {
+  from { transform: translate3d(var(--start-x), -15vh, 0); }
+  to { transform: translate3d(calc(var(--start-x) - 110vw), 115vh, 0); }
+}
+@keyframes petal-turn {
+  from { transform: translateX(-3px) rotate(calc(-1 * var(--turn))); }
+  to { transform: translateX(3px) rotate(var(--turn)); }
+}
+/* One front element, visible for part of its long cycle, then a quiet gap. */
+@keyframes foreground-drift {
+  0%, 10% { transform: translate3d(110vw, -15vh, 0); opacity: 0; }
+  15% { opacity: var(--alpha); }
+  55% { opacity: var(--alpha); }
+  65%, 100% { transform: translate3d(-20vw, 115vh, 0); opacity: 0; }
+}
+.petal-front:not(.is-loaded) { visibility: hidden; }
+@media (max-width: 640px) { .petal-front { --alpha: .22 !important; } }
+/* CSS backs up lifecycle handling, including before JavaScript starts. */
+@media (prefers-reduced-motion: reduce) {
+  .decoration-layer { display: none; }
+  .decoration-particle, .decoration-particle img { animation: none; }
+}
+#animations { min-height: 34px; white-space: nowrap; }
+@media (max-width: 640px) { #animations { min-height: 44px; } }

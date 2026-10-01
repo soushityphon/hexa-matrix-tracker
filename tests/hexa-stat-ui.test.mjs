@@ -53,11 +53,14 @@ function enter(skill,index,value){
 function split(skill,levels){levels.forEach((value,index)=>enter(skill,index,value));}
 function change(selector,value){const el=$(selector);el.value=value;el.dispatchEvent(new Event('change',{bubbles:true}));}
 const state=key=>JSON.parse(localStorage.getItem(key));
-const snapshot=()=>Object.fromEntries([hyKey,renKey,'hexa-tracker-class-v1'].map(key=>[key,localStorage.getItem(key)]).filter(([,value])=>value!==null));
+const snapshot=()=>Object.fromEntries([hyKey,renKey,'hexa-tracker-class-v1','hexa-tracker-animations-v1'].map(key=>[key,localStorage.getItem(key)]).filter(([,value])=>value!==null));
 
 await boot({[hyKey]:JSON.stringify({mode:'pair_lines_heroic',levels:{'HEXA Stat I':20,'HEXA Stat II':12,Harmony:1},statUnlocked:{'HEXA Stat III':true},owned:42})});
 assert.equal(document.querySelectorAll('[data-stat-line]').length,9);
 assert.equal(document.querySelectorAll('[data-stat-select]').length,3);
+const beforeAnimationToggle=structuredClone(state(hyKey));
+$('#animations').click();assert.equal(localStorage.getItem('hexa-tracker-animations-v1'),'off');
+assert.deepEqual(state(hyKey),beforeAnimationToggle);
 assert.equal(row(stats[0]).hidden,true);
 assert.equal(row(stats[1]).hidden,true);
 assert.equal(row(stats[0]).querySelector('[data-stat-unlocked]').hidden,true);
@@ -187,6 +190,8 @@ assert.deepEqual(fields(stats[0]).map(el=>el.value),['6','6','8']);
 change('#class','hoyoung');await tick();
 assert.deepEqual(fields(stats[0]).map(el=>el.value),['6','8','6']);
 change('#class','ren');await tick();$('#reset').click();
+assert.equal(localStorage.getItem('hexa-tracker-animations-v1'),'off');
+assert.ok([...document.querySelectorAll('.decoration-layer')].every(layer=>layer.hidden));
 assert.deepEqual(state(renKey).statLines[stats[0]],[0,0,0]);
 assert.deepEqual(state(hyKey),preservedHy);
 assert.equal($('#next-upgrade [data-stat-action="complete"]'),null);

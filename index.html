@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HEXA Matrix Tracker</title>
   <link rel="stylesheet" href="styles.css?v=matrix-grid-2">
+  <link rel="stylesheet" href="decorations.css">
 </head>
 <body>
   <main class="shell">
@@ -21,6 +22,7 @@
       <label>Update<select id="patch"></select></label>
       <fieldset class="world-picker"><legend>Priority (World)</legend><label><input type="radio" name="world" value="heroic" checked><span>Fragments (Heroic)</span></label><label><input type="radio" name="world" value="interactive"><span>Sol Erda (Interactive)</span></label></fieldset>
       <label id="version-picker" hidden>Priority version<select id="priority-version"></select></label>
+      <button id="animations" type="button" aria-pressed="false">Animations: Off</button>
     </div>
 
     <div class="workspace">

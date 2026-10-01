@@ -1,5 +1,15 @@
 # HEXA Matrix Tracker
 
+## Class animations, Issue #28
+
+The public tracker uses the owner's original transparent PNGs for slow Hoyoung clouds travelling left to right behind panels, and Ren petals travelling top right to bottom left. Ren has one foreground particle with a quiet gap in its cycle. Desktop uses five clouds or twelve background petals; screens up to 640px use three clouds or six background petals and smaller foreground artwork. These are initial visual tuning choices.
+
+`decorations.js` owns only the decorative layers and their lifecycle. It uses transform animations, with no frame loop, timers, server requests or animation dependency. Tiny petals stay near native size. Layers are viewport-clipped, hidden from assistive technology and ignore pointer events. Panels sit above the background; the toolbar sits above the foreground. Native menus and modal dialogs retain the browser top layer.
+
+The Animations button saves one browser-wide preference in `hexa-tracker-animations-v1`, separately from progress. It defaults on when reduced motion is absent. Reduced motion hides both layers and disables the control without overwriting the saved choice; session changes are honoured. Hidden tabs pause both travel and rotation. Off pauses and hides the layers, and an initially saved Off or reduced-motion state does not request artwork. Image/storage failures stay within decoration. Class switching replaces the scene immediately, independently of data loading; focus/world/update changes reuse it. Reset does not change the preference. Admin pages do not load this feature.
+
+`assets/backgrounds/manifest.json` records original filenames, retrieval IDs, dimensions, stable paths and SHA-256 hashes for all 23 unchanged PNGs. `decoration-assets.js` exposes only rendering metadata. The Worker build bundles the PNGs as base64 and serves decoded binary with `image/png`, plus the new scripts and stylesheet. The provenance manifest is not a public route. `tests/decorations.test.mjs` verifies preferences, media/visibility handling, bounded nodes, cleanup, broken images, original hashes and GET/HEAD delivery from the actual compiled Worker. Existing tracker DOM checks verify toggle and Reset independence. Live desktop/mobile motion, density and controls remain owner review when a rendered preview is unavailable.
+
 A browser-based MapleStory HEXA Matrix priority and material tracker. The first milestone replaces the Hoyoung spreadsheet workflow with a small calculation engine and Scouter checkpoint data.
 
 ## Current scope
