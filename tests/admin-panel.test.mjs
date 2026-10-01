@@ -86,3 +86,17 @@ assert.equal((await (await catalogueRequest()).json()).nodes[0].tag,'');
 const afterClearPublic=await (await worker.fetch(new Request('https://test.example/api/priority-preview'),env)).json();
 assert.equal(Object.values(afterClearPublic.drafts)[0].tags.Harmony,'');
 console.log('Default tags appear in admin fields; clearing survives refresh, save and public catalogue');
+
+const snapshotCosts={Harmony:{freeBaseLevel:0,levels:Array.from({length:30},(_,i)=>({erda:i+2,frags:(i+1)**2+10}))}};
+const costProvenance={capturedAt:'2026-10-01T00:00:00Z',resources:[{url:'https://maplescouter.com/test.js',sha256:'b'.repeat(64)}]};
+const capturedOrder={...currentDraft('lotus_heroic'),capturedCosts:snapshotCosts,costProvenance,steps:[{skill:'Harmony',level:2,sourceCost:{from:0,erda:5,frags:25},fdFrom:0,fdGain:1.25}]};
+const capturedPair={id:'pair_capture',name:'Captured',region:'GMS',enabled:false,orders:{heroic:capturedOrder,interactive:capturedOrder}};
+assert.equal((await call('POST',capturedPair)).status,200);
+assert.equal((await call('PATCH',{id:'pair_capture',name:'Renamed'})).status,200);
+const storedCapture=(await (await call('GET')).json()).drafts.pair_capture_heroic;
+assert.deepEqual(storedCapture.capturedCosts,snapshotCosts);
+assert.deepEqual(storedCapture.costProvenance,costProvenance);
+assert.deepEqual(storedCapture.steps,capturedOrder.steps);
+assert.equal((await call('POST',{...capturedPair,id:'pair_bad_capture',orders:{...capturedPair.orders,heroic:{...capturedOrder,steps:[{...capturedOrder.steps[0],sourceCost:{from:0,erda:5,frags:24}}]}}})).status,400);
+assert.equal(sqlite.prepare('SELECT count(*) AS n FROM priority_preview WHERE mode LIKE ?').get('pair_bad_capture%').n,0);
+console.log('D1 pair save and rename preserve exact captured schedules/FD; schedule mismatch rolls back');

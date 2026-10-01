@@ -1,5 +1,5 @@
 import {COSTS,NODES,PRIORITIES,PRIORITY_SETTINGS,STAT_ICONS} from '../data.js';
-import {activeNodes,combinedSourceGain,displayPriorityRows,matrixTotals,nextCheckpoint,priorityRows,rangeCost,statRemainingCost,taotieCatchUp} from '../planner.js';
+import {activeNodes,combinedSourceGain,displayPriorityRows,matrixTotals,nextCheckpoint,priorityRows,rangeCost,statRemainingCost} from '../planner.js';
 import {readFileSync} from 'node:fs';
 const assert=(x,m)=>{if(!x)throw new Error(m)};
 const assertEqual=(actual,expected,message)=>assert(JSON.stringify(actual)===JSON.stringify(expected),message);
@@ -43,8 +43,6 @@ assert(matrixTotals({Lotus:30},'hecate_heroic').spent.frags===0,'Lotus excluded 
 assert(PRIORITIES.taotie_heroic.some(step=>step.skill==='Lotus')&&PRIORITIES.taotie_heroic.some(step=>step.skill==='Hecate'),'Taotie order contains older skills');
 assert(matrixTotals({Taotie:1},'taotie_heroic').spent.frags===140,'future node included in preview totals');
 const caughtUp={Harmony:6,Talisman:2,Apparition:1,Hecate:1,Taotie:0};
-assert(taotieCatchUp(caughtUp,'taotie_heroic')?.target===1,'Taotie catch-up target follows completed existing checkpoints');
-assert(taotieCatchUp(caughtUp,'taotie_heroic')?.cost.frags===140,'Taotie catch-up includes unlock fragments');
 const rows=priorityRows({},'taotie_heroic');
 assert(rows.length===PRIORITIES.taotie_heroic.length,'priority table must show every checkpoint');
 assert(rows[0].skill==='Harmony'&&rows[0].cost.frags===50,'first priority row includes unlock cost');
@@ -109,7 +107,7 @@ assert(matrixTotals({Apotheosis:2},'lotus_heroic').spent.frags===30,'later Apoth
 import { compareDraft, currentDraft, parseSteps, validateDraft } from '../priority-draft.js';
 import { inspectScouterResponse, resolveScouterResponse } from '../scouter-import.js';
 import { extractScouterOrder } from '../scouter-extract.js';
-import { loadPreview, previewCatalog, matchingPriorityVersion, withCapturedGains } from '../preview-priorities.js';
+import { loadPreview, previewCatalog, matchingPriorityVersion } from '../preview-priorities.js';
 import { CAPTURED_GAINS } from '../source-gains.js';
 import { skillCostReview } from '../skill-cost-review.js';
 const draft=validateDraft(currentDraft('taotie_heroic'));
@@ -169,7 +167,9 @@ assert(originStep.fdFrom===1,'fresh Origin FD starts at its actual level-one bas
 assert(validateDraft({...currentDraft('lotus_heroic'),steps:[{skill:'Apotheosis',level:2,sourceCost:originCost}]}).steps[0].sourceCost.from===1,'origin source cost validates against levels after the free unlock');
 assert(validateDraft({...currentDraft('lotus_heroic'),steps:[originStep]}).steps[0].fdFrom===1,'fresh Origin FD transition can be saved');
 assert(validateDraft({...currentDraft('lotus_heroic'),steps:[{...originStep,fdFrom:0}]}).steps[0].fdFrom===0,'older Origin FD annotations remain valid');
-let mismatchBlocked=false;try{validateDraft({...currentDraft('taotie_heroic'),steps:[{skill:'Harmony',level:1,sourceCost:{from:0,erda:9,frags:50}}]})}catch{mismatchBlocked=true}
+const costProvenance={capturedAt:'2026-10-01T00:00:00Z',resources:[{url:'https://maplescouter.com/test.js',sha256:'a'.repeat(64)}]};
+const capturedCosts={Harmony:{freeBaseLevel:0,levels:COSTS.Mastery}};
+let mismatchBlocked=false;try{validateDraft({...currentDraft('taotie_heroic'),capturedCosts,costProvenance,steps:[{skill:'Harmony',level:1,sourceCost:{from:0,erda:9,frags:50}}]})}catch{mismatchBlocked=true}
 assert(mismatchBlocked,'a mismatched known skill cost cannot be saved through the Worker');
 assert(!savedSource.steps[1].sourceCost.perLevel,'aggregate cost does not invent per-level prices');
 for (const sourceCost of [{from:0,erda:5,frags:101},{from:1,erda:-1,frags:101},{from:1,erda:5,frags:101.5}]) {
@@ -206,15 +206,11 @@ assert(!previewCatalog({lotus_heroic:disabled}).settings.lotus_heroic.enabled,'d
 for (const mode of ['lotus_heroic','lotus_interactive','taotie_heroic','taotie_interactive']) {
   const steps=CAPTURED_GAINS[mode].map(([skill,level])=>({skill,level}));
   const source='Maple Scouter order, benchmark 허수아비';
-  const captured=withCapturedGains({sourceMode:mode,source,steps});
-  const expected=mode.startsWith('lotus_')?8.288333:9.155;
-  assert(Math.abs(captured.steps[0].fdGain-expected)<0.00001,`${mode} exact captured order gets its own source gain`);
-  assert(withCapturedGains({sourceMode:mode,source,steps:[...steps].reverse()}).steps[0].fdGain===undefined,`${mode} different order cannot inherit source gain`);
-  assert(withCapturedGains({sourceMode:mode,source:'different benchmark',steps}).steps[0].fdGain===undefined,`${mode} different benchmark cannot inherit source gain`);
-  assert(withCapturedGains({sourceMode:mode,source,steps:[{...steps[0],fdFrom:0,fdGain:0.123},...steps.slice(1)]}).steps[0].fdGain===0.123,`${mode} fresh import retains its own Scouter gain`);
-  const firstRow=displayPriorityRows({},mode,captured.steps)[0];
-  assert(Math.abs(combinedSourceGain(captured.steps,firstRow,0).gain-captured.steps[0].fdGain)<1e-8,'full source transition has FD');
-  assert(combinedSourceGain(captured.steps,firstRow,1)===null,'completed source transition has no remaining FD');
+  const captured={sourceMode:mode,source,steps};
+  const shown=previewCatalog({test:{...captured,mode:'test',name:'test',enabled:true}});
+  assert(shown.priorities.test.every(step=>step.fdGain===undefined),`${mode} missing FD stays missing even for identical orders and benchmarks`);
+  const fresh={...captured,mode:'test',steps:[{...steps[0],fdFrom:0,fdGain:0.123},...steps.slice(1)]};
+  assert(previewCatalog({test:fresh}).priorities.test[0].fdGain===0.123,`${mode} retains only its captured gain`);
 }
 const joined=[{skill:'Harmony',level:1,fdFrom:0,fdGain:8},{skill:'Talisman',level:1,fdFrom:0,fdGain:2},{skill:'Harmony',level:6,fdFrom:1,fdGain:3}];
 const joinedRow=displayPriorityRows({Talisman:1},'lotus_heroic',joined)[0];

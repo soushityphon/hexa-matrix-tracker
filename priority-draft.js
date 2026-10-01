@@ -1,4 +1,4 @@
-import { COSTS, NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SOURCES, PRIORITY_SETTINGS } from './data.js';
+import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SOURCES, PRIORITY_SETTINGS } from './data.js';
 
 const byShort = new Map(NODES.map(node => [node.short, node]));
 const statNames = new Set(['HEXA Stat I', 'HEXA Stat II', 'HEXA Stat III']);
@@ -47,6 +47,7 @@ export function validateDraft(draft) {
   }
   const shorts = newNodes.map(node => node.short);
   if (new Set(shorts).size !== shorts.length || new Set(newNodes.map(node => node.id)).size !== newNodes.length || shorts.some(short => byShort.has(short) || statNames.has(short)) || newNodes.some(node => NODES.some(existing => existing.id === node.id))) throw new Error('New skill short labels must be unique');
+  const capturedCosts = draft.capturedCosts === undefined ? undefined : validateCapturedCosts(draft.capturedCosts);
   const steps = parseSteps(draft.steps.map(step => `${step.skill}, ${step.level}`).join('\n'), shorts);
   for (let index = 0; index < steps.length; index++) {
     const { fdGain, fdFrom, sourceCost } = draft.steps[index];
@@ -57,11 +58,10 @@ export function validateDraft(draft) {
           !Number.isInteger(sourceCost.frags) || sourceCost.frags < 0) {
         throw new Error(`Invalid Scouter transition cost at step ${index + 1}`);
       }
-      const node = byShort.get(steps[index].skill);
-      if (node) {
-        const expected = COSTS[node.type]?.slice(previousLevel, steps[index].level).reduce((total, cost) => ({ erda: total.erda + cost.erda, frags: total.frags + cost.frags }), { erda: 0, frags: 0 });
+      if (capturedCosts) {
+        const expected = capturedCosts[steps[index].skill]?.levels.slice(previousLevel, steps[index].level).reduce((total, cost) => ({ erda: total.erda + cost.erda, frags: total.frags + cost.frags }), { erda: 0, frags: 0 });
         if (!expected || expected.erda !== sourceCost.erda || expected.frags !== sourceCost.frags) {
-          throw new Error(`Scouter cost differs from the tracker schedule at step ${index + 1}; review the schedule before saving`);
+          throw new Error(`Scouter cost differs from its captured level schedule at step ${index + 1}; review the schedule before saving`);
         }
       }
       steps[index] = { ...steps[index], sourceCost: { from: previousLevel, erda: sourceCost.erda, frags: sourceCost.frags } };
@@ -75,6 +75,7 @@ export function validateDraft(draft) {
     if (fdFrom !== previousFdLevel && !(firstOrigin && fdFrom === 1)) throw new Error(`Source FD transition does not match step ${index + 1}`);
     steps[index] = { ...steps[index], fdFrom, fdGain };
   }
+  if (capturedCosts && steps.some(step=>!statNames.has(step.skill) && !capturedCosts[step.skill])) throw new Error('Missing captured level schedule');
   const patch = PRIORITY_SETTINGS[draft.sourceMode || draft.mode].patch;
   if (steps.some(step => step.skill === 'Taotie') && patch !== 'taotie') throw new Error('Taotie steps need the Taotie patch');
   if (steps.some(step => step.skill === 'Lotus') && patch === 'hecate') throw new Error('Lotus steps are not in the Hecate patch');
@@ -111,7 +112,7 @@ export function validateDraft(draft) {
       skillCategories[node.short] = draft.skillCategories[node.short];
     }
   }
-  return { tags, skillCategories, ...metadata, schema: 4, mode: draft.mode, sourceMode: draft.sourceMode || draft.mode, isNew: draft.isNew === true, enabled: draft.enabled === true, name: draft.name.trim(), source: String(draft.source || '').trim(), names, shortNames, steps, newNodes, statIcons };
+  return { ...(capturedCosts ? {capturedCosts,costProvenance:validateCostProvenance(draft.costProvenance)} : {}), tags, skillCategories, ...metadata, schema: 4, mode: draft.mode, sourceMode: draft.sourceMode || draft.mode, isNew: draft.isNew === true, enabled: draft.enabled === true, name: draft.name.trim(), source: String(draft.source || '').trim(), names, shortNames, steps, newNodes, statIcons };
 }
 
 export function currentDraft(mode) {
@@ -122,4 +123,25 @@ export function compareDraft(draft, current = PRIORITIES[draft.sourceMode || dra
   const changedNames = NODES.filter(node => draft.names[node.short] !== node.name || (draft.shortNames?.[node.short] ?? node.short) !== node.short).length;
   const changedSteps = draft.steps.filter((step, index) => step.skill !== current[index]?.skill || step.level !== current[index]?.level).length;
   return { changedNames, changedSteps, lengthDifference: draft.steps.length - current.length };
+}
+
+// Exact source schedules are snapshots, never inferred from checkpoint totals.
+export function validateCapturedCosts(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || !Object.keys(value).length || Object.keys(value).length > 100) throw new Error('Invalid captured level schedules');
+  const result = {};
+  for (const [skill, schedule] of Object.entries(value)) {
+    if (!byShort.has(skill) || !schedule || schedule.freeBaseLevel !== (skill === 'Apotheosis' ? 1 : 0) || !Array.isArray(schedule.levels) || schedule.levels.length !== 30) throw new Error('Invalid captured skill schedule');
+    result[skill] = {freeBaseLevel:schedule.freeBaseLevel, levels:schedule.levels.map(cost=>{
+      if (!cost || !Number.isSafeInteger(cost.erda) || cost.erda < 0 || !Number.isSafeInteger(cost.frags) || cost.frags < 0) throw new Error('Invalid captured level cost');
+      return {erda:cost.erda,frags:cost.frags};
+    })};
+  }
+  return result;
+}
+function validateCostProvenance(value) {
+  if (!value || typeof value !== 'object' || !Number.isFinite(Date.parse(value.capturedAt)) || !Array.isArray(value.resources) || !value.resources.length) throw new Error('Captured cost provenance required');
+  return {capturedAt:value.capturedAt,resources:value.resources.map(row=>{
+    if (typeof row.url !== 'string' || !row.url.startsWith('https://maplescouter.com/') || !/^[a-f0-9]{64}$/.test(row.sha256)) throw new Error('Invalid captured cost provenance');
+    return {url:row.url,sha256:row.sha256};
+  })};
 }

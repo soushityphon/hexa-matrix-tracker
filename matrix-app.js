@@ -2,7 +2,7 @@ let NODES = [], statNodes = [];
 let nodeByShort = {};
 import { setTrackerCatalogue } from './planner.js';
 setTrackerCatalogue([]);
-import { activeNodes, combinedSourceGain, displayPriorityRows, matrixTotals, nextCheckpoint, rangeCost, taotieCatchUp } from './planner.js';
+import { activeNodes, combinedSourceGain, displayPriorityRows, matrixTotals, nextCheckpoint, rangeCost } from './planner.js';
 import { fetchSharedPreview, previewCatalog } from './preview-priorities.js';
 import { skillAccent } from './skill-colours.js';
 
@@ -190,6 +190,13 @@ function render() {
     return `${tag ? `<span class="skill-tag">${escapeHtml(tag)}</span> ` : ''}${escapeHtml(previewDrafts[mode]?.shortNames?.[skill] || skill)}`;
   };
   const order = catalog.priorities[mode];
+  const captured = previewDrafts[mode]?.capturedCosts;
+  if (!captured) {
+    $('#next-upgrade').innerHTML = '<div class="metric"><strong>Captured level costs unavailable</strong><p>Grab Scouter info and save a new priority pair in the Admin Panel.</p></div>';
+    $('#priority').replaceChildren(); $('#totals').replaceChildren(); $('#completion').replaceChildren();
+    $('#time-estimate').hidden = true; highlightCurrentSkill(null); return;
+  }
+  setTrackerCatalogue(NODES.filter(node=>captured[node.short]).map(node => ({...node, costs:captured[node.short].levels, initialLevel:captured[node.short].freeBaseLevel})));
   const current = levels();
   const statUnlocked = {};
   $$('[data-stat-unlocked]').forEach(input => {
@@ -204,7 +211,6 @@ function render() {
   const days = cost => perday ? Math.max(0, cost.frags - owned) / perday : null;
   const includeJanus = $('#includeJanus').checked;
   const matrix = matrixTotals(current, sourceMode, includeJanus, statUnlocked, order);
-  const catchUp = taotieCatchUp(current, sourceMode, order);
   const displayRows = displayPriorityRows(current, sourceMode, order, statUnlocked);
   const nextRow = displayRows.find(row => !row.done && row.index <= index + 1 && index + 1 <= row.endIndex);
   highlightCurrentSkill(nextRow?.skill);
@@ -224,7 +230,6 @@ function render() {
     img.addEventListener('error', () => { img.hidden = true; });
     if (img.complete && !img.naturalWidth) img.hidden = true;
   });
-  if (catchUp) $('#next-upgrade').insertAdjacentHTML('beforeend', `<div class="metric catch-up"><small>Taotie catch-up</small><strong>${priorityName('Taotie')} → ${catchUp.target}</strong>${materials(catchUp.cost, days(catchUp.cost))}</div>`);
   let remainingIndex = 0;
   $('#priority').innerHTML = displayRows.map((row, rowIndex) => {
     const cost = row.cost;

@@ -1,21 +1,7 @@
 import { PRIORITY_SETTINGS } from './data.js';
 import { validateDraft } from './priority-draft.js';
-import { CAPTURED_GAINS } from './source-gains.js';
 
 export const PREVIEW_KEY = 'hexa-priority-preview-v1';
-
-// Legacy saved imports predate source FD storage. Captured gains apply only
-// when the whole saved order and benchmark match the source capture.
-export function withCapturedGains(draft) {
-  const captured = CAPTURED_GAINS[draft.sourceMode];
-  if (!draft.source?.includes('benchmark 허수아비') || !captured || captured.length !== draft.steps.length || !captured.every(([skill, level], index) =>
-    draft.steps[index].skill === skill && draft.steps[index].level === level)) return draft;
-  return { ...draft, steps: draft.steps.map((step, index) => {
-    if (step.fdGain !== undefined) return step;
-    const [, , fdFrom, fdGain] = captured[index];
-    return fdGain === null ? step : { ...step, fdFrom, fdGain };
-  }) };
-}
 
 export function loadPreview(storage) {
   let raw;
@@ -39,7 +25,7 @@ export function previewCatalog(drafts) {
   const sources = {};
   for (const draft of Object.values(drafts)) {
     const base = PRIORITY_SETTINGS[draft.sourceMode];
-    priorities[draft.mode] = withCapturedGains(draft).steps;
+    priorities[draft.mode] = draft.steps;
     labels[draft.mode] = draft.name;
     settings[draft.mode] = { ...base, enabled: draft.enabled };
     sources[draft.mode] = draft.source;

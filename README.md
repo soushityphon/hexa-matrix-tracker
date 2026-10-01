@@ -6,7 +6,7 @@ A browser-based MapleStory HEXA Matrix priority and material tracker. The first 
 
 - Hoyoung
 - Hecate and Lotus patch selections, with the GMS Lotus Heroic order captured from Maple Scouter
-- Taotie future GMS planning view using KMS Maple Scouter priority snapshots, with Taotie catch-up materials
+- Normal KMS Taotie skills and captured priority steps
 - Current HEXA level inputs saved in the browser
 - Compact priority checkpoints
 - Live remaining upgrade order that skips completed checkpoints even when levels were raised out of order
@@ -20,7 +20,7 @@ The earlier captured Maple Scouter orders do not contain HEXA Stat checkpoints. 
 
 The reusable isolated Scouter acquisition and 30 September investigation are documented in [docs/scouter-discovery.md](docs/scouter-discovery.md). The new commands discover a candidate job catalogue from current public frontend files and reconstruct a validated response without importing the reviewed tracker catalogue or changing live data. Source identity, exact level schedules and display overrides remain separate; candidates are not publishable automatically. The independent review overlay helper stores job/core names and exact-candidate visibility choices without changing source checkpoints, costs or FD. It is offline groundwork, with no admin persistence, migration or promotion connected yet.
 
-`data.js` contains node metadata, level-by-level HEXA material costs, and directly captured Maple Scouter orders. `data/scouter-gms-2026-09-28.json` is the GMS Hoyoung Lotus Heroic order supplied from Maple Scouter's HEXA API. The source response includes 화중군자 VI (Lotus), Sol Hecate, and no Taotie. `data/scouter-kms-2026-09-28.json` contains Taotie Piece and Erda efficiency orders from a reset baseline on a public KMS profile. These are dated benchmarks, not personal optimisations. Hecate Heroic/Interactive and Lotus Interactive remain empty pending verified source data. Hecate omits Lotus and Taotie from completion; Lotus omits Taotie. Taotie is selectable to estimate its future GMS catch-up cost. If a checkpoint says Harmony 1 to 6, the calculator sums levels 2 through 6 itself.
+`data.js` contains node metadata, level-by-level HEXA material costs, and directly captured Maple Scouter orders. `data/scouter-gms-2026-09-28.json` is the GMS Hoyoung Lotus Heroic order supplied from Maple Scouter's HEXA API. The source response includes 화중군자 VI (Lotus), Sol Hecate, and no Taotie. `data/scouter-kms-2026-09-28.json` contains Taotie Piece and Erda efficiency orders from a reset baseline on a public KMS profile. These are dated benchmarks, not personal optimisations. Hecate Heroic/Interactive and Lotus Interactive remain empty pending verified source data. Hecate omits Lotus and Taotie from completion; Lotus omits Taotie. Taotie has no extra catch-up box or special calculation. If a checkpoint says Harmony 1 to 6, the calculator sums levels 2 through 6 itself.
 
 ## Hosting
 
@@ -42,9 +42,9 @@ The private Worker uses `MAPLE_SCOUTER_API_KEY` and two server secrets, `MAPLE_S
 
 For a repeatable source audit, run `node scripts/extract-scouter-order.mjs response.json taotie_heroic --out extracted.json`. It extracts ordered checkpoints, icons, source material columns and the first difference from the saved order without copying the character profile. It checks cumulative material arithmetic and each fixed-cost skill checkpoint against the app's level table; HEXA Stat material figures are identified as Scouter estimates because their upgrades are random. The attached 206-row Taotie Fragment response passes these checks. Ascent uses the Skill cost schedule (5 Sol Erda and 100 Fragments at unlock), while Taotie uses Skill II.
 
-Reviewed imports retain the exact Scouter `sourceCost` for each fixed-cost checkpoint as `{ from, erda, frags }` on that step. A multi-level checkpoint stores its total for that transition, not per-level values. Older saved orders without this field remain valid. These observations do not replace the verified level schedules used by the tracker; mismatches found during a fresh check block its save for review. HEXA Stat Scouter estimates are not stored as fixed transition costs.
+Reviewed imports retain the exact Scouter `sourceCost` for each fixed-cost checkpoint as `{ from, erda, frags }` on that step. A multi-level checkpoint stores its total for that transition, not per-level values. Older saved orders without this field remain valid. New grabs retain the exact per-level Scouter catalogue schedules and their public-source hashes with each priority. Transition checks and tracker calculations use that snapshot. Mismatches block the fresh import. HEXA Stat Scouter estimates are not stored as fixed transition costs.
 
-Priority Review now has a Hoyoung Skill & Costs section. It lists the current tracker schedule and any exact source transitions saved in the selected draft, marking one-level observations separately from aggregate ranges. A matching aggregate verifies only its total. Old versions show no source observations until reviewed against a new Scouter response. A matched response can be opened for review and saved to add its observations without creating another version. Known-skill cost mismatches are rejected on the server; new skills remain pending and cannot be published until their schedules are reviewed. Editing schedules and adding jobs are later work.
+The Admin Panel keeps cost schedules in source snapshots and omits diagnostic cost tables. A matched response may be saved as a new named pair. Unknown skills still require verified tracker support before promotion.
 
 The first Apotheosis transition starts at level 1, its free Origin baseline. Fresh Scouter FD annotations record that start as 1. Older saved/captured annotations with `fdFrom: 0` remain readable; partial FD estimates treat their effective start as 1 so the free unlock is not counted in the Fragment-cost share.
 
@@ -55,3 +55,15 @@ The tracker uses only the saved Admin Panel Skills catalogue. An empty catalogue
 The complete tracker backup can be uploaded through the Admin Panel backup control. Restoration refuses existing IDs and skill catalogues, and starts restored priorities as unavailable. The maintenance export/reset route requires the owner identity or a temporary ADMIN_MAINTENANCE_TOKEN; reset deletes only the exact backed-up priority rows. Remove the temporary token after maintenance.
 
 Tags are owned by Admin Panel Skills. Newly discovered Origin, Ascent and Mastery skills receive editable standard tags in their admin fields. Saving an empty tag removes it from the matrix, Next Upgrade and priority list. Source refresh preserves a saved empty tag; Add standard tags can refill it when requested. The tracker has no stylesheet tag fallback.
+
+## Capture-specific materials and FD, 1 October
+
+New Admin Panel grabs snapshot the Scouter catalogue’s exact per-level costs and source hashes alongside each world’s response. Cached responses retain their own catalogue snapshot, even if a newer catalogue is fetched. Save, rename, availability and backups preserve these fields. Independent skill reviews continue to control names, categories and editable tags, while later source refreshes cannot replace a saved priority’s cost or FD values.
+
+The tracker uses the selected priority’s schedules for next levels, jumps, totals and partial-transition FD cost shares. It does not attach historic FD to a matching order. Missing FD stays blank. `source-gains.js` remains dated regression evidence, but is neither loaded by the tracker nor included as a public Worker asset.
+
+Older priorities that lack captured per-level schedules remain stored, readable and downloadable. Their material calculations show an unavailable message until the owner makes a fresh grab and saves a new pair. No missing historical schedules are filled from today’s Skills record or fixed Hoyoung tables. Legacy fixed tables remain only for dated offline regression/extraction tools that have no supplied catalogue. HEXA Stat unlocks retain the existing separate unlock schedule and RNG treatment; Scouter’s aggregate Stat figures are not converted into exact level costs.
+
+Advanced response-file import requires an envelope containing `response` and its own `catalogue`; a bare response cannot establish capture-specific per-level costs. Normal owner workflow remains Grab Scouter info. No saved data migration, reset or player-progress change is required.
+
+Ren remains unsupported. The previous KMS experiment used substituted Hoyoung benchmark statistics, so it cannot verify a genuine Ren request. This continuation could not retrieve the ranking API, profile route or frontend chunks in the restricted workspace. No calculation request was made. Genuine highest-level Ren profile/request construction, GMS/KMS and both material modes still require source evidence before enabling Ren.

@@ -1,3 +1,11 @@
+## 1 October continuation, capture-owned cost and FD handling
+
+This section supersedes older runtime descriptions below. Normal Taotie skills and orders remain; the catch-up helper, extra box and style are removed. Fresh Admin Panel imports validate checkpoint materials against exact per-level costs from their own Scouter catalogue capture. Saved priorities retain `capturedCosts` and `costProvenance`; cached order responses retain their original catalogue snapshot. Tracker cost and partial FD formulas use the selected saved snapshot. Independent admin source refreshes do not replace it. Legacy matching-order FD attachment is removed, and the historical gain evidence is excluded from public Worker assets.
+
+Missing historical per-level schedules cannot be reconstructed from aggregate checkpoint costs. Old priorities remain unchanged in storage, but their material calculations show an unavailable notice until a new capture is saved. Missing FD remains absent. No D1 migration/write, secret operation, player-progress edit or live Scouter calculation occurred during this increment.
+
+Ren investigation is blocked by source access in this environment. Public ranking GET for `region=kms&job=렌&world=전체&page=1&pageSize=30` and frontend metadata chunk retrieval timed out with zero response bytes. Web retrieval could load the general HEXA page but could not retrieve the ranking API or chunk. This supplies no highest-level Ren identity, genuine profile, efficiencies or request evidence. Earlier substituted Ren evidence remains experimental. Do not seed a semantic review or enable Ren from it. The next step needs source access or a genuine Ren request/response with its profile provenance, then bounded verification of all four selections. No exhausted request budget was reset, and no API retry or calculation request was made.
+
 # Scouter-led reconstruction, 30 September 2026
 
 Issue #23 is the continuation authority. This investigation extends draft PR #22; test Site version 64 is unchanged. No D1 write, display-name edit, visibility change or browser-progress change was made.

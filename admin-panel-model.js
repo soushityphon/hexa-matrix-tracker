@@ -95,3 +95,13 @@ export function requireOrderSkills(drafts, review) {
   const model=trackerCatalogue(review), keys=new Set([...model.nodes,...model.stats].map(node=>node.short));
   if (drafts.some(draft=>draft.enabled && draft.steps.some(step=>!keys.has(step.skill)))) throw new Error('Save Skills with long/short names, categories and detected costs before making this priority available');
 }
+
+export function capturedCatalogueCosts(catalogue) {
+  const costs = {};
+  for (const source of catalogue.skills) {
+    const node = trackerSkill({...source,effectiveIcon:catalogue.sourceIconOverrides?.[source.coreId]});
+    if (!node || !source.costs) continue;
+    costs[node.short] = {freeBaseLevel:source.costs.freeBaseLevel,levels:source.costs.levels.map(({erda,frags})=>({erda,frags}))};
+  }
+  return {capturedCosts:costs,costProvenance:{capturedAt:catalogue.provenance.costs.capturedAt,resources:Object.values(catalogue.provenance)}};
+}

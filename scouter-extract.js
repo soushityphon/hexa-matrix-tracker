@@ -6,7 +6,7 @@ const integer = value => Number.isInteger(value) && value >= 0;
 const same = (a, b) => !!a && !!b && a.skill === b.skill && a.level === b.level;
 
 /** Extract only order data from a Scouter response. The player's profile is never copied. */
-export function extractScouterOrder(response, mode, mappings = {}) {
+export function extractScouterOrder(response, mode, mappings = {}, capturedCosts = null) {
   if (!Object.hasOwn(PRIORITIES, mode)) throw new Error(`Unknown priority mode: ${mode}`);
   const inspected = inspectScouterResponse(response);
   const unresolved = inspected.unknown.filter(item => !mappings[item.key]);
@@ -33,7 +33,9 @@ export function extractScouterOrder(response, mode, mappings = {}) {
     if (skill && !isStat) {
       if (level <= from) issues.push({ row: index + 1, kind: 'non-increasing-level', skill, from, level });
       else {
-        const expected = rangeCost(skill, from, level);
+        const schedule = capturedCosts?.[skill]?.levels;
+        const expected = capturedCosts ? schedule?.slice(from,level).reduce((sum,cost)=>({erda:sum.erda+cost.erda,frags:sum.frags+cost.frags}),{erda:0,frags:0}) : rangeCost(skill, from, level);
+        if (capturedCosts && !schedule) issues.push({row:index+1,kind:'missing-captured-schedule',skill});
         if (expected && (expected.erda !== erda || expected.frags !== frags)) {
           issues.push({ row: index + 1, kind: 'material-cost', skill, from, level, expected, actual: { erda, frags } });
         }

@@ -1,11 +1,12 @@
 import { NODES, STAT_ICONS } from './data.js';
 import { inspectScouterResponse } from './scouter-import.js';
 import { extractScouterOrder } from './scouter-extract.js';
-import { categories, defaultTags, trackerSkill, mergeSkills, validateSkills, validatePair, priorityGroups, orderMatches } from './admin-panel-model.js';
+import { capturedCatalogueCosts, categories, defaultTags, trackerSkill, mergeSkills, validateSkills, validatePair, priorityGroups, orderMatches } from './admin-panel-model.js';
 import { skillAccent } from './skill-colours.js';
 
 const $ = selector => document.querySelector(selector);
 const el = (tag, text, className) => { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; };
+let captureCatalogue = null;
 let drafts = {}, rows = [], orders = {}, captureRegion = null, skillDirty = false, loaded = false, busy = false;
 const cache = new Map();
 const pauseKey = 'hexa-scouter-pause-until';
@@ -65,12 +66,14 @@ function renderSkills() {
     $('#skills').append(card);
   }
 }
-function draftFromResponse(response, region, world) {
-  const mode=sourceMode(region,world), extracted=extractScouterOrder(response,mode);
+function draftFromResponse(response, region, world, catalogue) {
+  if (!catalogue || catalogue.selection.region !== region || catalogue.job !== $('#job').value) throw new Error('Import the response with its captured Scouter catalogue.');
+  const {capturedCosts,costProvenance} = capturedCatalogueCosts(catalogue);
+  const mode=sourceMode(region,world), extracted=extractScouterOrder(response,mode,{},capturedCosts);
   if (extracted.unknown.length) throw new Error(`${extracted.unknown.length} unfamiliar skills need tracker support. Their names can be reviewed in Skills.`);
   if (extracted.validation.issues.length) throw new Error('The response did not pass the existing order checks. No priorities were changed.');
   const inspected=inspectScouterResponse(response);
-  return {sourceMode:mode,steps:extracted.steps,statIcons:inspected.statIcons,newNodes:[],names:Object.fromEntries(NODES.map(node=>[node.short,node.name])),shortNames:Object.fromEntries(NODES.map(node=>[node.short,node.short])),source:`Maple Scouter ${region}, checked ${new Date().toISOString()}, benchmark ${String(response.standard || 'not recorded').slice(0,80)}`};
+  return {capturedCosts,costProvenance,sourceMode:mode,steps:extracted.steps,statIcons:inspected.statIcons,newNodes:[],names:Object.fromEntries(NODES.map(node=>[node.short,node.name])),shortNames:Object.fromEntries(NODES.map(node=>[node.short,node.short])),source:`Maple Scouter ${region}, checked ${new Date().toISOString()}, benchmark ${String(response.standard || 'not recorded').slice(0,80)}`};
 }
 function renderOrders() {
   $('#order-context').textContent = captureRegion ? `Hoyoung · ${captureRegion} source` : 'Grab Scouter info to review both orders.';
@@ -120,11 +123,19 @@ $('#grab').addEventListener('click',async()=>{
   try {
     message('Grabbing Scouter skills, icons and costs…');
     const catalogue=await cachedRequest(`catalogue:${region}`,`/api/scouter-catalogue?job=${encodeURIComponent($('#job').value)}&region=${region}&world=Heroic`);
+    captureCatalogue = structuredClone(catalogue);
     rows=mergeSkills(catalogue,rows,drafts);skillDirty=true;renderSkills();
     for(const world of ['heroic','interactive']) {
       message(`Grabbing ${world==='heroic'?'Heroic':'Interactive'} priority and FD…`);
-      const mode=sourceMode(region,world), response=await cachedRequest(mode,'/api/hexa-order','POST',{mode});
-      orders[world]=draftFromResponse(response,region,world);
+      const mode=sourceMode(region,world), old=cache.get(mode);
+      let capture;
+      if (old && Date.now()-old.at < 300000) capture=structuredClone(old.value);
+      else {
+        const response=await request('/api/hexa-order','POST',{mode});
+        capture={response,catalogue:structuredClone(captureCatalogue)};
+        cache.set(mode,{at:Date.now(),value:structuredClone(capture)});
+      }
+      orders[world]=draftFromResponse(capture.response,region,world,capture.catalogue);
       const stats=Object.entries(orders[world].statIcons).map(([short,icon],i)=>({coreId:'hexastat'+(['HEXA Stat I','HEXA Stat II','HEXA Stat III'].indexOf(short)+1),sourceName:short,icon}));
       rows=mergeSkills({skills:stats},rows,drafts);renderSkills();renderOrders();
     }
@@ -151,7 +162,7 @@ $('#save-pair').addEventListener('click',async()=>{
 });
 $('#response-file').addEventListener('change',async event=>{
   const file=event.target.files?.[0];if(!file)return;
-  try{if(file.size>250000)throw new Error('Response file is too large');const world=$('#import-world').value,region=$('#region').value;orders[world]=draftFromResponse(JSON.parse(await file.text()),region,world);captureRegion=region;renderOrders();message(`${world==='heroic'?'Heroic':'Interactive'} response loaded for review.`);}catch(error){message(error.message,true);}finally{event.target.value='';}
+  try{if(file.size>250000)throw new Error('Response file is too large');const world=$('#import-world').value,region=$('#region').value;const capture=JSON.parse(await file.text());orders[world]=draftFromResponse(capture.response,region,world,capture.catalogue);captureRegion=region;renderOrders();message(`${world==='heroic'?'Heroic':'Interactive'} response loaded for review.`);}catch(error){message(error.message,true);}finally{event.target.value='';}
 });
 $('.upload-button').addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();$('#backup').click();}});
 $('#backup').addEventListener('change',async event=>{
