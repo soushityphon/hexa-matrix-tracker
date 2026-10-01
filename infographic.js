@@ -19,30 +19,46 @@ export function createInfographic({document,window,grid,onClick}) {
   const svg=document.createElementNS(ns,'svg');
   svg.classList.add('infographic-connectors');svg.setAttribute('aria-hidden','true');
   svg.setAttribute('focusable','false');
-  const defs=document.createElementNS(ns,'defs'),marker=document.createElementNS(ns,'marker');
-  marker.id='infographic-arrow';marker.setAttribute('viewBox','0 0 6 6');
-  marker.setAttribute('refX','5');marker.setAttribute('refY','3');
-  marker.setAttribute('markerWidth','6');marker.setAttribute('markerHeight','6');
-  marker.setAttribute('orient','auto');
-  const head=document.createElementNS(ns,'path');head.setAttribute('d','M 0 0 L 5 3 L 0 6');
-  marker.append(head);defs.append(marker);svg.append(defs);grid.append(svg);
+  const defs=document.createElementNS(ns,'defs');
+  for(const suffix of ['', '-next']) {
+    const marker=document.createElementNS(ns,'marker');
+    marker.id='infographic-arrow'+suffix;marker.setAttribute('viewBox','0 0 6 6');
+    marker.setAttribute('refX','5');marker.setAttribute('refY','3');
+    marker.setAttribute('markerWidth','6');marker.setAttribute('markerHeight','6');
+    marker.setAttribute('orient','auto');
+    if(suffix)marker.classList.add('next');
+    const head=document.createElementNS(ns,'path');head.setAttribute('d','M 0 0 L 5 3 L 0 6');
+    marker.append(head);defs.append(marker);
+  }
+  const routes=document.createElementNS(ns,'g');
+  svg.append(defs,routes);grid.append(svg);
   const tiles=new Map();let frame=null;
   function draw() {
     frame=null;
-    svg.querySelectorAll(':scope > path').forEach(path=>path.remove());
+    routes.replaceChildren();
     if (grid.closest('[hidden]')) return;
     const bounds=grid.getBoundingClientRect();
     if (!bounds.width) return;
-    const visible=[...tiles.values()].filter(tile=>!tile.hidden);
+    // Retained buttons can move when the selected priority changes. Map insertion
+    // order is not display order, so measure and connect the current DOM sequence.
+    const visible=[...grid.querySelectorAll('[data-checkpoint]')].filter(tile=>!tile.hidden);
     const rects=visible.map(tile=>{
       const rect=tile.getBoundingClientRect();
       return {x:rect.left-bounds.left,y:rect.top-bounds.top,width:rect.width,height:rect.height};
     });
     svg.setAttribute('viewBox',`0 0 ${bounds.width} ${bounds.height}`);
-    for (const d of connectorPaths(rects,bounds.width)) {
+    function addRoute(d,next) {
       const path=document.createElementNS(ns,'path');path.setAttribute('d',d);
-      path.setAttribute('marker-end','url(#infographic-arrow)');svg.append(path);
+      if(next)path.classList.add('next');
+      path.setAttribute('marker-end',`url(#infographic-arrow${next?'-next':''})`);routes.append(path);
     }
+    if(visible[0]?.getAttribute('aria-current')==='step') {
+      const first=rects[0];
+      addRoute(`M 5 ${first.y+first.height/2} H ${first.x-4}`,true);
+    }
+    connectorPaths(rects,bounds.width).forEach((d,index)=>{
+      addRoute(d,visible[index+1].getAttribute('aria-current')==='step');
+    });
   }
   function schedule() {
     if (frame !== null) window.cancelAnimationFrame(frame);
@@ -58,6 +74,7 @@ export function createInfographic({document,window,grid,onClick}) {
     render(entries,saved,context,hideCompleted) {
       const active=document.activeElement?.dataset.checkpoint;
       const keys=new Set(entries.map(entry=>entry.key));
+      const next=entries.find(entry=>!infographicDone(saved,entry))?.key;
       for (const [key,tile] of tiles) if (!keys.has(key)) {tile.remove();tiles.delete(key);}
       for (const [position,entry] of entries.entries()) {
         let tile=tiles.get(entry.key);
@@ -84,6 +101,7 @@ export function createInfographic({document,window,grid,onClick}) {
         tile.style.setProperty('--skill-accent',skillAccent(entry.skill));
         tile.classList.toggle('completed',done);tile.hidden=hideCompleted && done;tile.disabled=done && !undo;
         tile.setAttribute('aria-pressed',String(done));
+        if(entry.key===next)tile.setAttribute('aria-current','step');else tile.removeAttribute('aria-current');
         const action=done ? undo ? 'Undo completion' : 'Complete. Edit progress in Tracker' : 'Mark complete';
         tile.setAttribute('aria-label',`${entry.name}, ${entry.label === 'MAX'?'maximum level '+entry.target:'level '+entry.target}. ${action}.`);
         tile.title=tile.getAttribute('aria-label');
@@ -92,7 +110,7 @@ export function createInfographic({document,window,grid,onClick}) {
         if(at!==tile)grid.insertBefore(tile,at || null);
       }
       if(active && hideCompleted && tiles.get(active)?.hidden) {
-        [...tiles.values()].find(tile=>!tile.hidden&&!tile.disabled)?.focus();
+        [...grid.querySelectorAll('[data-checkpoint]')].find(tile=>!tile.hidden&&!tile.disabled)?.focus();
       }
       schedule();
     },

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Window } from 'happy-dom';
 import { infographicCheckpoints, infographicContext, infographicDone, infographicCanUndo, clickInfographicCheckpoint, reconcileInfographicUndo, invalidateInfographicUndo } from '../infographic-progress.js';
-import { connectorPaths } from '../infographic.js';
+import { connectorPaths, createInfographic } from '../infographic.js';
 import { statProgress } from '../hexa-stat.js';
 import { NODES, STAT_ICONS } from '../data.js';
 import { currentDraft } from '../priority-draft.js';
@@ -68,6 +68,52 @@ const paths=connectorPaths([{x:24,y:14,width:64,height:88},{x:124,y:14,width:64,
 assert.equal(paths[0],'M 88 58 H 120');
 assert.equal(paths[1],'M 188 58 H 235 V 126 H 5 V 194 H 20');
 assert.equal(connectorPaths([],240).length,0);
+
+// Switching priorities retains buttons while changing their DOM order. Measured
+// geometry must follow that order, and repeated redraws must replace old routes.
+const layoutWindow=new Window(),layoutDocument=layoutWindow.document;
+const grid=layoutDocument.createElement('div');layoutDocument.body.append(grid);
+let redraw;
+layoutWindow.requestAnimationFrame=callback=>{redraw=callback;return 1;};
+layoutWindow.cancelAnimationFrame=()=>{};
+let layoutWidth=200;
+grid.getBoundingClientRect=()=>({left:0,top:0,width:layoutWidth,height:300});
+const view=createInfographic({document:layoutDocument,window:layoutWindow,grid,onClick:()=>{}});
+const layoutState={levels:{}};
+function checkLayout(sequence,hideCompleted=false) {
+  view.render(sequence,layoutState,infographicContext('layout',sequence),hideCompleted);
+  const visible=[...grid.querySelectorAll('[data-checkpoint]')].filter(tile=>!tile.hidden);
+  const columns=layoutWidth===200?2:3;
+  const rects=visible.map((tile,i)=>{
+    const rect={x:18+(i%columns)*74,y:10+Math.floor(i/columns)*84,width:56,height:64};
+    tile.getBoundingClientRect=()=>({left:rect.x,top:rect.y,width:rect.width,height:rect.height});
+    return rect;
+  });
+  redraw();
+  const routes=[...grid.querySelectorAll('svg path')].filter(path=>!path.closest('defs'));
+  const expected=connectorPaths(rects,layoutWidth);
+  const leading=visible[0]?.getAttribute('aria-current')==='step';
+  if(leading)expected.unshift(`M 5 ${rects[0].y+32} H ${rects[0].x-4}`);
+  assert.deepEqual(routes.map(path=>path.getAttribute('d')),expected);
+  assert.equal(routes.filter(path=>path.classList.contains('next')).length,visible.some(tile=>tile.hasAttribute('aria-current'))?1:0);
+  assert.ok(routes.every(path=>path.getAttribute('marker-end')===`url(#infographic-arrow${path.classList.contains('next')?'-next':''})`));
+  redraw();assert.equal([...grid.querySelectorAll('svg path')].filter(path=>!path.closest('defs')).length,expected.length);
+}
+const retainedSequence=[origin,ten,extra,stat];
+checkLayout(retainedSequence);
+const originalTen=grid.querySelector(`[data-checkpoint='${ten.key}']`);
+for(let i=0;i<6;i++) {
+  checkLayout([extra,stat,origin,ten]);
+  checkLayout(retainedSequence);
+}
+assert.equal(grid.querySelector(`[data-checkpoint='${ten.key}']`),originalTen);
+layoutState.levels['Future Skill']=10;
+checkLayout(retainedSequence);checkLayout(retainedSequence,true);checkLayout(retainedSequence,false);
+layoutWidth=280;layoutWindow.dispatchEvent(new layoutWindow.Event('resize'));checkLayout([stat,ten,origin,extra]);
+layoutState.levels.Extra=30;layoutState.levels['Future Stat']=20;
+checkLayout(retainedSequence);checkLayout(retainedSequence,true);
+view.clear();redraw();assert.equal(grid.querySelectorAll('svg > g > path').length,0);
+await layoutWindow.happyDOM.abort();
 
 const stats=Object.keys(STAT_ICONS);
 const skills=['Apotheosis','Harmony','Scroll'];
@@ -185,8 +231,8 @@ assert.deepEqual(savedState(renKey).levels,renProgress.levels);
 // Narrow-width geometry checks cover row return routes and reflow counts. Happy
 // DOM has no rendering engine, so phone touch/readability remains owner review.
 for(const width of [240,280,390,640,1000]){
-  const columns=Math.floor((width-48+22)/(64+22));assert.ok(columns>=2);
-  const rects=Array.from({length:9},(_,i)=>({x:24+(i%columns)*86,y:14+Math.floor(i/columns)*132,width:64,height:88}));
+  const columns=Math.floor((width-36+18)/(56+18));assert.ok(columns>=2);
+  const rects=Array.from({length:9},(_,i)=>({x:18+(i%columns)*74,y:10+Math.floor(i/columns)*84,width:56,height:64}));
   const routes=connectorPaths(rects,width);
   assert.equal(routes.length,8);
   assert.ok(routes.every(d=>!d.includes('NaN')));
@@ -202,6 +248,9 @@ assert.equal(window.getComputedStyle($('.results')).display,'none');
 assert.equal(window.getComputedStyle($('.quickstats')).display,'none');
 assert.equal(window.getComputedStyle($('.inputs')).display,'contents');
 assert.equal(window.getComputedStyle($('.workspace')).display,'block');
+assert.equal(window.getComputedStyle(buttons()[0]).borderTopWidth,'0px');
+assert.equal(window.getComputedStyle(buttons()[0]).backgroundColor,'transparent');
+assert.equal(window.getComputedStyle($('.infographic-grid')).rowGap,'20px');
 const broken=buttons().find(tile=>!tile.hidden).querySelector('img');broken.dispatchEvent(new Event('error'));
 assert.equal(broken.hidden,true);assert.equal(broken.previousElementSibling.hidden,false);
 
