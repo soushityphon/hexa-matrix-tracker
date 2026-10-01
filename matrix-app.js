@@ -111,7 +111,7 @@ function renderInputs() {
   syncPriorityOptions();
   $('#owned').value = saved.owned ?? 0;
   $('#perday').value = saved.perday ?? 0;
-  $('#erdaRequest').checked = saved.erdaRequest === true;
+  $('#erdaRequest').value = saved.erdaRequest === true ? 'yes' : 'none';
   $('#epicDungeon').value = normaliseDungeon(saved.epicDungeon);
   $('#hideDone').checked = saved.hideDone !== false;
   $('#includeJanus').checked = saved.includeJanus === true;
@@ -298,7 +298,7 @@ function render() {
   const { steps, index, completed, next } = nextCheckpoint(current, sourceMode, order);
   const owned = clamp($('#owned').value, 9999999);
   const perday = clamp($('#perday').value, 9999999);
-  const erdaRequest = $('#erdaRequest').checked;
+  const erdaRequest = $('#erdaRequest').value === 'yes';
   const epicDungeon = normaliseDungeon($('#epicDungeon').value);
   const rate = effectiveDailyFragments(perday, erdaRequest, epicDungeon);
   const days = cost => heroic && !cost.rng ? fragmentDays(cost.frags, owned, rate) : null;
@@ -339,7 +339,7 @@ function render() {
   $('#completion').innerHTML = `<div class="completion-label"><span>HEXA Matrix Completion</span><strong>${matrix.percent.toFixed(2)}%</strong></div><div class="completion-track" role="progressbar" aria-label="HEXA Matrix completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${matrix.percent.toFixed(2)}"><span style="width:${matrix.percent.toFixed(2)}%"></span></div>`;
   $$('.stat-icon').forEach(img => { img.addEventListener('error', () => { img.hidden = true; }); });
   $('.priority-table').classList.toggle('hide-done', $('#hideDone').checked);
-  $('#totals').innerHTML = `<div class="total"><small>Total Materials Spent</small><strong class="material-total">${materialAmount(matrix.spent.erda, 'erda')} ${materialAmount(matrix.spent.frags, 'frags')}</strong></div><div class="total"><small>Materials to Complete HEXA Matrix</small><strong class="material-total">${materialAmount(matrix.remaining.erda, 'erda')} ${materialAmount(matrix.remaining.frags, 'frags')}</strong></div>`;
+  $('#totals').innerHTML = `<div class="total"><small>Total Materials Spent</small><strong class="material-total">${materialAmount(matrix.spent.erda, 'erda')} ${materialAmount(matrix.spent.frags, 'frags')}</strong></div><div class="total" id="total-remaining" ${matrix.percent >= 100 ? 'hidden' : ''}><small>Materials to Complete HEXA Matrix</small><strong class="material-total">${materialAmount(matrix.remaining.erda, 'erda')} ${materialAmount(matrix.remaining.frags, 'frags')}</strong></div>`;
   checkMaterialIcons();
   $('#time-estimate').hidden = !heroic || !rate;
   if (heroic && rate) $('#time-estimate').innerHTML = `<small>Estimated time for remaining Fragments</small><strong>${days(matrix.remaining).toFixed(1)} days</strong>`;
