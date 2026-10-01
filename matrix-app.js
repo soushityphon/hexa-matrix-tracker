@@ -12,6 +12,7 @@ let activeClass='hoyoung';
 try {activeClass=new URL(location.href).searchParams.get('class') || localStorage.getItem('hexa-tracker-class-v1') || 'hoyoung';}catch{}
 if(!['hoyoung','ren'].includes(activeClass))activeClass='hoyoung';
 $('#class').value=activeClass;
+document.documentElement.dataset.class=activeClass;
 let storageKey='hexa-tracker-'+activeClass+'-v1';
 let refreshSequence=0;
 const initialLevel=node=>node.initialLevel ?? (node.short==='Apotheosis'?1:0);
@@ -342,7 +343,7 @@ async function refreshSharedPriorities() {
   }
 }
 $('#class').addEventListener('change',()=>{
-  activeClass=$('#class').value;storageKey='hexa-tracker-'+activeClass+'-v1';
+  activeClass=$('#class').value;document.documentElement.dataset.class=activeClass;storageKey='hexa-tracker-'+activeClass+'-v1';
   localStorage.setItem('hexa-tracker-class-v1',activeClass);
   try{saved=JSON.parse(localStorage.getItem(storageKey) || '{}') || {};}catch{saved={};}
   previewDrafts={};catalog=previewCatalog({});NODES=[];statNodes=[];nodeByShort={};
