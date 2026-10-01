@@ -5,7 +5,7 @@ setTrackerCatalogue([]);
 import { combinedSourceGain, displayPriorityRows, matrixTotals, nextCheckpoint, rangeCost } from './planner.js';
 import { fetchSharedPreview, previewCatalog } from './preview-priorities.js';
 import { skillAccent } from './skill-colours.js';
-import { fragmentDays, fragmentDuration, fragmentShortfall, effectiveDailyFragments, normaliseDungeon } from './fragment-calculator.js';
+import { fragmentDays, fragmentDuration, fragmentCompletionDate, fragmentShortfall, effectiveDailyFragments, normaliseDungeon } from './fragment-calculator.js';
 import { restoreStatLines, statProgress, validateStatLines } from './hexa-stat.js';
 
 const $ = selector => document.querySelector(selector);
@@ -343,7 +343,10 @@ function render() {
   $('#totals').innerHTML = `<div class="total"><small>Total Materials Spent</small><strong class="material-total">${materialAmount(matrix.spent.erda, 'erda')} ${materialAmount(matrix.spent.frags, 'frags')}</strong></div><div class="total" id="total-remaining" ${matrix.percent >= 100 ? 'hidden' : ''}><small>Materials to Complete HEXA Matrix</small><strong class="material-total">${materialAmount(matrix.remaining.erda, 'erda')} ${materialAmount(matrix.remaining.frags, 'frags')}</strong></div>`;
   checkMaterialIcons();
   $('#time-estimate').hidden = !heroic || !rate;
-  if (heroic && rate) $('#time-estimate').innerHTML = `<small>Estimated time for remaining Fragments</small><strong>${duration(matrix.remaining)}</strong>`;
+  if (heroic && rate) {
+    const finish = fragmentCompletionDate(days(matrix.remaining));
+    $('#time-estimate').innerHTML = `<small>Estimated time for remaining Fragments</small><strong>${finish ? `${finish} · ` : ''}${duration(matrix.remaining)}</strong>`;
+  }
   $$('[data-stat]').forEach(input => {
     const row=input.closest('.stat-row');
     const name = row.querySelector('.stat-name');

@@ -14,3 +14,11 @@ export function fragmentDuration(days, perday) {
   const weeks = Number((days / 7).toFixed(1));
   return `~${weeks} ${weeks === 1 ? 'week' : 'weeks'}`;
 }
+
+export function fragmentCompletionDate(days, today = new Date()) {
+  if (days === null || !Number.isFinite(days) || days < 0) return null;
+  const finish = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  // Add local calendar days, so daylight-saving changes cannot shift the date.
+  finish.setDate(finish.getDate() + Math.ceil(days));
+  return Number.isFinite(finish.getTime()) ? finish.toLocaleDateString(undefined, {dateStyle:'medium'}) : null;
+}
