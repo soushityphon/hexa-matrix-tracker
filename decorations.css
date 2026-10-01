@@ -5,11 +5,11 @@ body { isolation: isolate; }
 .shell .panel, #priority-sync { position: relative; z-index: 1; }
 .shell .masthead, .shell .toolbar { position: relative; z-index: 3; }
 .header-actions { display: grid; justify-items: end; gap: 8px; align-self: start; margin-left: auto; }
-/* Background fills are 60% opaque; text and controls keep their full opacity. */
+/* Background fills are 80% opaque; text and controls keep their full opacity. */
 .shell .panel, .shell .next-upgrade, .shell .stat-selector,
-.shell .priority-table tr:nth-child(even), .shell .priority-table th { background: color-mix(in srgb, var(--ui-panel) 60%, transparent); }
+.shell .priority-table tr:nth-child(even), .shell .priority-table th { background: color-mix(in srgb, var(--ui-panel) 80%, transparent); }
 .shell .node-row.next-skill, .shell .stat-list .stat-row.next-skill,
-.shell .priority-table tr.next, .shell .stat-selector.selected { background: color-mix(in srgb, color-mix(in srgb, var(--skill-accent, var(--ui-accent)) 17%, var(--ui-panel)) 60%, transparent); }
+.shell .priority-table tr.next, .shell .stat-selector.selected { background: color-mix(in srgb, color-mix(in srgb, var(--skill-accent, var(--ui-accent)) 17%, var(--ui-panel)) 80%, transparent); }
 .shell .node-row:hover, .shell .stat-list label:hover { background: rgb(255 255 255 / 4%); }
 @media (max-width: 450px) { .masthead { gap: 10px; } #animations { padding-inline: 6px; font-size: 11px; } }
 .decoration-layer { position: fixed; inset: 0; overflow: hidden; pointer-events: none; user-select: none; z-index: 0; contain: strict; }
