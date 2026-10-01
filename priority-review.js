@@ -1,3 +1,4 @@
+import {renDraftFromCapture,renSkillKey} from './ren-priority.js';
 import { NODES, STAT_ICONS } from './data.js';
 import { inspectScouterResponse } from './scouter-import.js';
 import { extractScouterOrder } from './scouter-extract.js';
@@ -32,10 +33,10 @@ function controls() {
   $('#grab').disabled = !loaded || busy;
   $('#save-skills').disabled = !loaded || busy || !rows.length;
   $('#add-tags').disabled = !loaded || busy || !rows.length;
-  $('#save-pair').disabled = isRen() || !loaded || busy || !orders.heroic || !orders.interactive || captureRegion !== $('#region').value;
+  $('#save-pair').disabled = !loaded || busy || !orders.heroic || !orders.interactive || captureRegion !== $('#region').value;
   $('#job').disabled = busy; $('#region').disabled = busy;
   $('#hoyoung-tab').disabled=busy;$('#ren-tab').disabled=busy;
-  $('#response-file').disabled=isRen()||busy;$('#backup').disabled=isRen()||busy;
+  $('#response-file').disabled=isRen()||busy;$('#backup').disabled=busy;
 }
 function tab(name) {
   currentView=name;
@@ -93,7 +94,7 @@ function renderOrders() {
       card.append(el('p',`${order.steps.length} ordered checkpoints`),el('p',matches.length?`Matches ${matches.map(draft=>draft.name).join(', ')}`:'Different from saved orders.'));
       const fd=order.steps.filter(step=>step.fdGain!==undefined).length;card.append(el('p',`${fd} checkpoints with source FD. HEXA Stats retain RNG treatment.`));
       const details=el('details'),list=el('ol');details.append(el('summary','Inspect order'));
-      for(const step of order.steps) list.append(el('li',`${step.skill} → ${step.level}${step.fdGain===undefined?'':` · FD ${step.fdGain.toFixed(3)}%`}`));details.append(list);card.append(details);
+      for(const step of order.steps) list.append(el('li',`${isRen()?(rows.find(row=>trackerSkill(row.source,'렌')?.short===step.skill)?.shortName || order.sourceSkills?.find(source=>renSkillKey(source.coreId)===step.skill)?.sourceName || step.skill):step.skill} → ${step.level}${step.fdGain===undefined?'':` · FD ${step.fdGain.toFixed(3)}%`}`));details.append(list);card.append(details);
     }
     $('#order-results').append(card);
   }
@@ -134,7 +135,7 @@ async function selectClass(job) {
   for(const [id,value] of [['hoyoung-tab','호영'],['ren-tab','렌']]) {const selected=job===value;$('#'+id).setAttribute('aria-selected',String(selected));$('#'+id).tabIndex=selected?0:-1;}
   $('#class-panel').setAttribute('aria-labelledby',isRen()?'ren-tab':'hoyoung-tab');
   $('#section-tabs').setAttribute('aria-label',jobLabel()+' sections');
-  $('#class-note').hidden=!isRen();$('#class-note').textContent='Ren capture review uses the rank 1 KMS benchmark. Skill names can be saved. Priority saving and tracker availability are not enabled yet.';
+  $('#class-note').hidden=!isRen();$('#class-note').textContent='Ren uses the rank 1 KMS benchmark. Save a named Heroic/Interactive pair, then manage availability under Saved priorities.';
   tab(saved?.view || 'skills');renderSkills();renderRegistered();renderOrders();
   busy=true;controls();try {await reload();message(`${jobLabel()} data is ready.`);}catch(error){message(error.message,true);}finally{busy=false;controls();}
 }
@@ -152,7 +153,7 @@ $('#grab').addEventListener('click',async()=>{
       const result=await cachedRequest('ren-preview:'+region,'/api/ren-capture','POST',{region});
       if(result.catalogue) {captureCatalogue=structuredClone(result.catalogue);rows=mergeSkills(result.catalogue,rows,{});skillDirty=true;}
       for(const [world,candidate] of Object.entries(result.captures || {})) {
-        orders[world]={preview:true,steps:candidate.steps.map(step=>({skill:step.sourceName,coreId:step.coreId,level:step.level,...(step.fd.checkpointGainPercent===undefined||step.fd.checkpointGainPercent===null?{}:{fdGain:step.fd.checkpointGainPercent})})),statIcons:Object.fromEntries(candidate.steps.filter(step=>/^hexaStat[123]$/i.test(step.coreId)).map(step=>[step.sourceName,step.icon])),capture:candidate};
+        orders[world]=renDraftFromCapture(candidate,result.catalogue);
         const stats=candidate.steps.filter(step=>/^hexaStat[123]$/i.test(step.coreId)).map(step=>({coreId:step.coreId.toLowerCase(),sourceName:step.sourceName,icon:step.icon,category:'HEXA Stat'}));
         rows=mergeSkills({job:'렌',skills:stats},rows,{});
       }
@@ -160,7 +161,7 @@ $('#grab').addEventListener('click',async()=>{
       $('#capture-note').textContent=b?`${b.name} · level ${b.characterLevel} · KMS rank 1 benchmark` : '';
       renderSkills();renderOrders();
       if(result.error)throw new Error(result.error);
-      message('Ren priorities captured for review. You can save skill names. Saving Ren priorities is not available yet.');
+      message('Ren priorities are ready. Save any skill-name edits, then name and save the priority pair.');
       return;
     }
     message('Grabbing Scouter skills, icons and costs…');
@@ -195,10 +196,9 @@ $('#save-skills').addEventListener('click',async()=>{
   catch(error){message(error.message,true);}finally{busy=false;controls();}
 });
 $('#save-pair').addEventListener('click',async()=>{
-  if(isRen()){message('Ren priority saving is not available yet.',true);return;}
   busy=true;controls();
   try {
-    const pair={id:'pair_'+crypto.randomUUID().replaceAll('-',''),name:$('#pair-name').value,enabled:false,region:captureRegion,orders};
+    const pair={job:currentJob,id:'pair_'+crypto.randomUUID().replaceAll('-',''),name:$('#pair-name').value,enabled:false,region:captureRegion,orders};
     validatePair(pair);await mutation('POST',pair);$('#pair-name').value='';message('Priority saved as unavailable. Use Make available under Saved priorities when ready.');
   }catch(error){message(error.message,true);}finally{busy=false;controls();}
 });
@@ -216,6 +216,7 @@ $('#backup').addEventListener('change',async event=>{
       if(!confirm('Restore this tracker backup? Restored priorities start unavailable. Existing records will not be overwritten.'))return;
       await mutation('POST',{restoreSnapshot:backup});message('Tracker backup restored. Review Skills before making priorities available.');return;
     }
+    if((backup.drafts?.[0]?.job || '호영')!==currentJob)throw new Error('Open the matching class tab before restoring this priority.');
     if(backup.type!=='hexa-priority-backup' || !Array.isArray(backup.drafts) || ![1,2].includes(backup.drafts.length))throw new Error('Upload a priority backup downloaded from this panel.');
     if(backup.drafts.length===1) {
       const name=prompt('Name for restored priority',backup.name);if(!name?.trim())return;
@@ -225,7 +226,7 @@ $('#backup').addEventListener('change',async event=>{
     const heroic=backup.drafts.find(draft=>draft.sourceMode.endsWith('_heroic')),interactive=backup.drafts.find(draft=>draft.sourceMode.endsWith('_interactive'));
     if(!heroic || !interactive || heroic.sourceMode.split('_')[0]!==interactive.sourceMode.split('_')[0])throw new Error('Backup orders must belong to the same captured update');
     const name=prompt('Name for restored priority pair',backup.name);if(!name?.trim())return;
-    const pair={id:'pair_'+crypto.randomUUID().replaceAll('-',''),name,enabled:false,region:heroic.sourceRegion || (heroic.sourceMode.startsWith('taotie_')?'KMS':'GMS'),orders:{heroic,interactive}};
+    const pair={job:heroic.job || '호영',id:'pair_'+crypto.randomUUID().replaceAll('-',''),name,enabled:false,region:heroic.sourceRegion || (heroic.sourceMode.startsWith('taotie_')?'KMS':'GMS'),orders:{heroic,interactive}};
     validatePair(pair);await mutation('POST',pair);message('Backup restored as unavailable. Existing priorities and skill names are unchanged.');
   }catch(error){message(error.message,true);}finally{event.target.value='';}
 });

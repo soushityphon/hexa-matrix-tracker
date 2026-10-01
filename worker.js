@@ -1,6 +1,7 @@
 // Bundled with the static files by scripts/build-worker.mjs.
 import { validateSkills, validatePair, applySkills, trackerCatalogue, requireOrderSkills } from './admin-panel-model.js';
 import { validateDraft } from './priority-draft.js';
+import {renCatalogueFromDrafts} from './ren-priority.js';
 import { cachedRenPreview } from './ren-preview.js';
 import { scouterRequestContext } from './scouter-request-context.js';
 import { acquireScouterCatalogue, catalogueSelection } from './scouter-catalogue-acquisition.js';
@@ -22,10 +23,17 @@ async function priorityPreview(request, env) {
           if (draft.mode === row.mode && !draft.newNodes.length) drafts[row.mode] = draft;
         } catch { /* An invalid saved version cannot be shown. */ }
       }
-      const review = await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind('호영').first();
-      const skills=review ? JSON.parse(review.review_json) : null;
-      const visible=applySkills(drafts,skills);
-      for (const draft of Object.values(visible)) {try {requireOrderSkills([draft],skills);} catch {draft.enabled=false;}}
+      const job=new URL(request.url).searchParams.get('job');
+      if(job&&!['호영','렌'].includes(job))return new Response('Choose Hoyoung or Ren',{status:400,headers:noStore});
+      let visible={};
+      for(const sourceJob of ['호영','렌']) {
+        if(job&&job!==sourceJob)continue;
+        const review=await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind(sourceJob).first();
+        const skills=review?JSON.parse(review.review_json):null;
+        const scoped=applySkills(Object.fromEntries(Object.entries(drafts).filter(([,draft])=>(draft.job || '호영')===sourceJob)),skills);
+        for(const draft of Object.values(scoped)){try{requireOrderSkills([draft],skills);}catch{draft.enabled=false;}}
+        Object.assign(visible,scoped);
+      }
       return Response.json({ drafts:visible }, { headers:noStore });
     }
     if (!['PUT', 'DELETE'].includes(request.method)) return new Response('Method not allowed', { status: 405 });
@@ -52,8 +60,16 @@ async function priorityPreview(request, env) {
 async function trackerSkills(request, env) {
   if (request.method !== 'GET') return new Response('Method not allowed', {status:405});
   try {
-    const row=await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind('호영').first();
-    return Response.json(trackerCatalogue(row ? JSON.parse(row.review_json) : null), {headers:noStore});
+    const job=new URL(request.url).searchParams.get('job') || '호영';
+    if(!['호영','렌'].includes(job))return new Response('Choose Hoyoung or Ren',{status:400,headers:noStore});
+    const row=await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind(job).first();
+    const review=row?JSON.parse(row.review_json):null;
+    if(job==='렌') {
+      const rows=await env.DB.prepare('SELECT mode, draft_json FROM priority_preview').all();
+      const drafts={};for(const source of rows.results || []){try{const draft=validateDraft(JSON.parse(source.draft_json));if(draft.job==='렌')drafts[draft.mode]=draft;}catch{}}
+      return Response.json(renCatalogueFromDrafts(drafts,review),{headers:noStore});
+    }
+    return Response.json(trackerCatalogue(review), {headers:noStore});
   } catch { return new Response('Skills storage unavailable', {status:503,headers:noStore}); }
 }
 // Temporary service authorisation is limited to backing up and removing exact
@@ -125,8 +141,11 @@ async function adminPanel(request, env) {
         if ((value.name !== undefined && (typeof value.name !== 'string' || !value.name.trim() || value.name.length > 120)) || (value.enabled !== undefined && typeof value.enabled !== 'boolean')) throw new Error('Invalid priority changes');
         changes = targets.map(draft => validateDraft({...draft, ...(value.enabled === undefined ? {} : {enabled:value.enabled}), ...(value.name === undefined ? {} : draft.pairId ? {pairName:value.name.trim(), name:value.name.trim() + ' | ' + (draft.sourceMode.endsWith('_heroic') ? 'Heroic' : 'Interactive')} : {name:value.name.trim()})}));
       }
-      const review=await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind('호영').first();
-      requireOrderSkills(changes,review ? JSON.parse(review.review_json) : null);
+      for(const job of ['호영','렌']) {
+        const scoped=changes.filter(draft=>(draft.job || '호영')===job);if(!scoped.length)continue;
+        const review=await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind(job).first();
+        requireOrderSkills(scoped,review ? JSON.parse(review.review_json) : null);
+      }
       if (changes.some(draft => draft.newNodes.length)) throw new Error('New skills still need tracker support before saving a priority');
     } catch (error) { return new Response(error.message, {status:400,headers:noStore}); }
     // Both variants commit together, or neither commits.

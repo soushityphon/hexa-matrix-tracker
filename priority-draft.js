@@ -1,3 +1,4 @@
+import {renSkillKey,renNode} from './ren-priority.js';
 import { NODES, PRIORITIES, PRIORITY_LABELS, PRIORITY_SOURCES, PRIORITY_SETTINGS } from './data.js';
 
 const byShort = new Map(NODES.map(node => [node.short, node]));
@@ -25,6 +26,7 @@ export function parseSteps(text, extraSkills = []) {
 }
 
 export function validateDraft(draft) {
+  if(draft?.job==='렌')return validateRenDraft(draft);
   if (!draft || !Object.hasOwn(PRIORITIES, draft.sourceMode || draft.mode)) throw new Error('Choose an existing source priority');
   if (draft.isNew && (Object.hasOwn(PRIORITIES, draft.mode) || !/^[a-z0-9_]+$/.test(draft.mode))) throw new Error('New priority ID is invalid or already exists');
   if (!draft.isNew && draft.mode !== (draft.sourceMode || draft.mode)) throw new Error('Existing priority ID does not match its source');
@@ -126,11 +128,11 @@ export function compareDraft(draft, current = PRIORITIES[draft.sourceMode || dra
 }
 
 // Exact source schedules are snapshots, never inferred from checkpoint totals.
-export function validateCapturedCosts(value) {
+export function validateCapturedCosts(value,extraNodes=[]) {
   if (!value || typeof value !== 'object' || Array.isArray(value) || !Object.keys(value).length || Object.keys(value).length > 100) throw new Error('Invalid captured level schedules');
   const result = {};
   for (const [skill, schedule] of Object.entries(value)) {
-    if (!byShort.has(skill) || !schedule || schedule.freeBaseLevel !== (skill === 'Apotheosis' ? 1 : 0) || !Array.isArray(schedule.levels) || schedule.levels.length !== 30) throw new Error('Invalid captured skill schedule');
+    if ((!byShort.has(skill) && !extraNodes.some(node=>node.short===skill)) || !schedule || schedule.freeBaseLevel !== (extraNodes.find(node=>node.short===skill)?.initialLevel ?? (skill === 'Apotheosis' ? 1 : 0)) || !Array.isArray(schedule.levels) || schedule.levels.length !== 30) throw new Error('Invalid captured skill schedule');
     result[skill] = {freeBaseLevel:schedule.freeBaseLevel, levels:schedule.levels.map(cost=>{
       if (!cost || !Number.isSafeInteger(cost.erda) || cost.erda < 0 || !Number.isSafeInteger(cost.frags) || cost.frags < 0) throw new Error('Invalid captured level cost');
       return {erda:cost.erda,frags:cost.frags};
@@ -144,4 +146,45 @@ function validateCostProvenance(value) {
     if (typeof row.url !== 'string' || !row.url.startsWith('https://maplescouter.com/') || !/^[a-f0-9]{64}$/.test(row.sha256)) throw new Error('Invalid captured cost provenance');
     return {url:row.url,sha256:row.sha256};
   })};
+}
+
+export function draftSettings(draft) {
+  if(draft.job==='렌')return {class:'ren',patch:draft.sourceRegion.toLowerCase(),world:draft.sourceMode.endsWith('_heroic')?'heroic':'interactive',enabled:draft.enabled};
+  return {...PRIORITY_SETTINGS[draft.sourceMode],class:'hoyoung'};
+}
+function validateRenDraft(draft) {
+  if(!/^ren_(?:gms|kms)_(?:heroic|interactive)$/.test(draft.sourceMode)||!['GMS','KMS'].includes(draft.sourceRegion)||!draft.sourceMode.startsWith('ren_'+draft.sourceRegion.toLowerCase()+'_')||!draft.isNew||typeof draft.mode!=='string'||!/^[a-z0-9_]+$/.test(draft.mode)||typeof draft.name!=='string'||!draft.name.trim())throw new Error('Invalid Ren priority identity');
+  if(!Array.isArray(draft.sourceSkills)||!draft.sourceSkills.length||draft.sourceSkills.length>100)throw new Error('Ren source skills required');
+  const sourceSkills=draft.sourceSkills.map(source=>{
+    const node=renNode(source);
+    if(!node?.group||typeof source.sourceName!=='string'||!source.sourceName||!/^https:\/\/maplescouter\.com\/hexaskill\/[\w/.-]+\.png$/.test(source.icon)||source.freeBaseLevel!==(source.coreId==='skillCore1'?1:0))throw new Error('Invalid Ren source skill');
+    return {coreId:source.coreId,sourceName:source.sourceName,icon:source.icon,category:source.category,freeBaseLevel:source.freeBaseLevel};
+  });
+  const nodes=sourceSkills.map(renNode),keys=new Set(nodes.map(node=>node.short));
+  if(keys.size!==nodes.length)throw new Error('Duplicate Ren source skill');
+  const capturedCosts=validateCapturedCosts(draft.capturedCosts,nodes);
+  if(Object.keys(capturedCosts).some(key=>!keys.has(key))||nodes.some(node=>!capturedCosts[node.short]))throw new Error('Ren captured schedule inventory differs');
+  if(!Array.isArray(draft.steps)||!draft.steps.length||draft.steps.length>1000)throw new Error('Ren order required');
+  const previous=new Map(nodes.map(node=>[node.short,node.initialLevel]));
+  const steps=draft.steps.map(step=>{
+    const stat=statNames.has(step.skill),from=previous.get(step.skill)||0;
+    if((!stat&&!keys.has(step.skill))||!Number.isInteger(step.level)||step.level<=from||step.level>(stat?20:30)||(stat&&step.level!==20))throw new Error('Invalid Ren checkpoint');
+    previous.set(step.skill,step.level);
+    if(stat)return {skill:step.skill,level:20};
+    const cost=capturedCosts[step.skill].levels.slice(from,step.level).reduce((sum,c)=>({erda:sum.erda+c.erda,frags:sum.frags+c.frags}),{erda:0,frags:0});
+    if(step.sourceCost?.from!==from||step.sourceCost.erda!==cost.erda||step.sourceCost.frags!==cost.frags)throw new Error('Ren checkpoint differs from its captured schedule');
+    const fd={};
+    if(step.fdGain!==undefined||step.fdFrom!==undefined){if(!Number.isFinite(step.fdGain)||step.fdGain<0||step.fdFrom!==from)throw new Error('Invalid Ren captured FD');Object.assign(fd,{fdGain:step.fdGain,fdFrom:step.fdFrom});}
+    return {skill:step.skill,level:step.level,sourceCost:{from,...cost},...fd};
+  });
+  const statIcons={};for(const [skill,icon] of Object.entries(draft.statIcons || {})){if(!statNames.has(skill)||!statIconPattern.test(icon))throw new Error('Invalid Ren Stat icon');statIcons[skill]=icon;}
+  if(steps.some(step=>statNames.has(step.skill)&&!statIcons[step.skill]))throw new Error('Missing Ren Stat icon');
+  const statObservations=(draft.statObservations || []).map(row=>{
+    if(!statNames.has(row.skill)||row.materialBasis!=='RNG estimate'||!['erda','frags'].every(key=>Number.isSafeInteger(row.sourceMaterials?.[key])&&row.sourceMaterials[key]>=0)||!((row.fd?.efficiencyPer30Fragments==null&&row.fd?.relativeFactor==null)||(Number.isFinite(row.fd?.efficiencyPer30Fragments)&&row.fd.efficiencyPer30Fragments>=0&&Number.isFinite(row.fd?.relativeFactor)&&row.fd.relativeFactor>0)))throw new Error('Invalid Ren Stat observation');
+    return {skill:row.skill,sourceMaterials:{erda:row.sourceMaterials.erda,frags:row.sourceMaterials.frags},fd:{efficiencyPer30Fragments:row.fd.efficiencyPer30Fragments,relativeFactor:row.fd.relativeFactor,interpretation:row.fd.interpretation},materialBasis:'RNG estimate'};
+  });
+  const names={},shortNames={},tags={},skillCategories={};
+  for(const key of [...keys,...statNames])for(const [field,target] of [['names',names],['shortNames',shortNames],['tags',tags],['skillCategories',skillCategories]])if(draft[field]?.[key]!==undefined){const value=draft[field][key];if(typeof value!=='string'||value.length>120||(field==='skillCategories'&&!['Skill','Mastery','Enhancement','Common','HEXA Stat'].includes(value)))throw new Error('Invalid Ren review field');target[key]=value;}
+  if(typeof draft.pairId!=='string'||!/^[a-z0-9_]+$/.test(draft.pairId)||typeof draft.pairName!=='string'||!draft.pairName.trim()||!Number.isFinite(Date.parse(draft.createdAt)))throw new Error('Invalid Ren pair metadata');
+  return {schema:5,job:'렌',sourceMode:draft.sourceMode,mode:draft.mode,isNew:true,name:draft.name.trim(),enabled:draft.enabled===true,pairId:draft.pairId,pairName:draft.pairName.trim(),sourceRegion:draft.sourceRegion,createdAt:draft.createdAt,source:String(draft.source || ''),sourceSkills,capturedCosts,costProvenance:validateCostProvenance(draft.costProvenance),steps,statIcons,statObservations,names,shortNames,tags,skillCategories,newNodes:[],captureProvenance:structuredClone(draft.captureProvenance || {}),requestContext:structuredClone(draft.requestContext || {})};
 }

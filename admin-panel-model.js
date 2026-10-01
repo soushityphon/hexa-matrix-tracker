@@ -1,12 +1,14 @@
 import { NODES, STAT_ICONS, PRIORITY_SETTINGS } from './data.js';
-import { validateDraft } from './priority-draft.js';
+import {renNode,renCatalogueFromDrafts} from './ren-priority.js';
+import { validateDraft, draftSettings } from './priority-draft.js';
 
 export const categories = ['Skill', 'Mastery', 'Enhancement', 'Common', 'HEXA Stat'];
 export const defaultTags = { Apotheosis:'Origin', Ascent:'Ascent', Harmony:'M1', Basics:'M2', Talisman:'M3', Scroll:'M4' };
 const categoryFor = node => ({'Skill Nodes':'Skill','Mastery Nodes':'Mastery','Enhancement Nodes':'Enhancement','Common Nodes':'Common','HEXA Stat':'HEXA Stat'})[node.group];
-export function trackerSkill(source) {
+export function trackerSkill(source,job='호영') {
   const number = /^hexastat([123])$/i.exec(source.coreId)?.[1];
   if (number) return {short:['HEXA Stat I','HEXA Stat II','HEXA Stat III'][Number(number)-1],group:'HEXA Stat'};
+  if(job==='렌')return renNode(source);
   return NODES.find(node => node.icon === (source.effectiveIcon || source.icon) || (node.short === 'Hecate' && source.coreId === 'generalCore2') || (node.short === 'Janus' && source.coreId === 'generalCore1'));
 }
 export function mergeSkills(catalogue, previous = [], drafts = {}) {
@@ -45,21 +47,25 @@ export function applySkills(drafts, review) {
   if (!review) return drafts;
   const rows = validateSkills(review).rows;
   return Object.fromEntries(Object.entries(drafts).map(([id,draft]) => {
+    if((draft.job || '호영')!==review.job)return [id,draft];
     const names = {...draft.names}, shortNames = {...draft.shortNames}, tags = {...draft.tags}, skillCategories = {...draft.skillCategories};
     for (const row of rows) {
-      const node = trackerSkill(row.source);
-      if (!node || !row.name || !row.shortName || !row.category) continue;
+      const node = trackerSkill(row.source,review.job);
+      if (!node || (review.job!=='렌'&&(!row.name || !row.shortName || !row.category))) continue;
       // Class identity is independent of region and priority version.
-      names[node.short] = row.name; shortNames[node.short] = row.shortName; tags[node.short] = row.tag; skillCategories[node.short] = row.category;
+      if(row.name)names[node.short] = row.name;else delete names[node.short]; if(row.shortName)shortNames[node.short] = row.shortName;else delete shortNames[node.short]; tags[node.short] = row.tag; if(row.category)skillCategories[node.short] = row.category;
     }
     return [id,{...draft,names,shortNames,tags,skillCategories}];
   }));
 }
 export function validatePair(value) {
   if (!value || !/^[a-z0-9_]+$/.test(value.id) || !value.name?.trim() || value.name.length > 120 || typeof value.enabled !== 'boolean' || !['GMS','KMS'].includes(value.region)) throw new Error('Enter a pair name and choose availability');
+  if(value.job!==undefined&&!['호영','렌'].includes(value.job))throw new Error('Choose Hoyoung or Ren');
+  if(['heroic','interactive'].some(world=>(value.orders?.[world]?.job || '호영')!==(value.job || '호영')))throw new Error('Both orders must belong to the selected class');
+  if(value.job==='렌'&&['heroic','interactive'].some(world=>value.orders?.[world]?.sourceMode!==`ren_${value.region.toLowerCase()}_${world}`))throw new Error('Ren orders must belong to the selected region and world');
   const patch = value.region === 'GMS' ? 'lotus' : 'taotie';
   const createdAt = value.createdAt || new Date().toISOString();
-  const drafts = ['heroic','interactive'].map(world => validateDraft({ ...value.orders?.[world], mode:`${value.id}_${world}`, sourceMode:`${patch}_${world}`, isNew:true, name:`${value.name.trim()} | ${world === 'heroic' ? 'Heroic' : 'Interactive'}`, enabled:value.enabled, pairId:value.id, pairName:value.name.trim(), sourceRegion:value.region, createdAt }));
+  const drafts = ['heroic','interactive'].map(world => validateDraft({ ...value.orders?.[world], mode:`${value.id}_${world}`, sourceMode:value.job==='렌'?`ren_${value.region.toLowerCase()}_${world}`:`${patch}_${world}`, ...(value.job==='렌'?{job:'렌'}:{}), isNew:true, name:`${value.name.trim()} | ${world === 'heroic' ? 'Heroic' : 'Interactive'}`, enabled:value.enabled, pairId:value.id, pairName:value.name.trim(), sourceRegion:value.region, createdAt }));
   return drafts;
 }
 export function priorityGroups(drafts) {
@@ -72,14 +78,14 @@ export function priorityGroups(drafts) {
   return [...groups.values()].sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
 }
 export function orderMatches(steps, world, drafts) {
-  return Object.values(drafts).filter(draft => PRIORITY_SETTINGS[draft.sourceMode]?.world === world && draft.steps.length === steps.length && draft.steps.every((step,i)=>step.skill === steps[i].skill && step.level === steps[i].level));
+  return Object.values(drafts).filter(draft => draftSettings(draft)?.world === world && draft.steps.length === steps.length && draft.steps.every((step,i)=>step.skill === steps[i].skill && step.level === steps[i].level));
 }
 
 export function trackerCatalogue(review) {
   const result = {nodes:[], stats:[], pending:0};
   if (!review) return result;
   for (const row of validateSkills(review).rows) {
-    const known = trackerSkill(row.source);
+    const known = trackerSkill(row.source,review.job);
     if (!known || !row.name || !row.shortName || !row.category) {result.pending++; continue;}
     if (row.category === 'HEXA Stat') {
       result.stats.push({short:known.short,name:row.name,shortName:row.shortName,icon:row.source.icon,tag:row.tag}); continue;
@@ -92,7 +98,8 @@ export function trackerCatalogue(review) {
   return result;
 }
 export function requireOrderSkills(drafts, review) {
-  const model=trackerCatalogue(review), keys=new Set([...model.nodes,...model.stats].map(node=>node.short));
+  const ren=drafts.every(draft=>draft.job==='렌');
+  const model=ren?renCatalogueFromDrafts(Object.fromEntries(drafts.map(draft=>[draft.mode,draft])),review):trackerCatalogue(review), keys=new Set([...model.nodes,...model.stats].map(node=>node.short));
   if (drafts.some(draft=>draft.enabled && draft.steps.some(step=>!keys.has(step.skill)))) throw new Error('Save Skills with long/short names, categories and detected costs before making this priority available');
 }
 

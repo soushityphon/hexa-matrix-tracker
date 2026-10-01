@@ -174,7 +174,7 @@ export function reconstructScouterOrder(response, catalogue, selection, iconOver
     const sourceRange = /(?:^|\s)(\d+)→(\d+)$/.exec(transition);
     if (!sourceRange || Number(sourceRange[1]) !== from || Number(sourceRange[2]) !== level) issues.push({position:index+1,kind:'transition-baseline'});
     const validFD = Number.isFinite(efficiency) && efficiency >= 0 && Number.isFinite(multiplier) && multiplier > 0;
-    if (!validFD) issues.push({position:index+1,kind:'invalid-fd-fields'});
+    if (!validFD && !(efficiency == null && multiplier == null)) issues.push({position:index+1,kind:'invalid-fd-fields'});
     const step = {position:index+1,coreId,sourceName,icon,from,level,rawLevel,transition,
       sourceMaterials:{erda,frags},cumulative:{erda:sumErda,frags:sumFrags},
       fd:{efficiencyPer30Fragments:validFD?efficiency:null,relativeFactor:validFD?multiplier:null,interpretation:'observed-field-7-and-8'}};

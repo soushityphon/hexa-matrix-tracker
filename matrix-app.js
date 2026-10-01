@@ -8,7 +8,13 @@ import { skillAccent } from './skill-colours.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
-const storageKey = 'hexa-tracker-hoyoung-v1';
+let activeClass='hoyoung';
+try {activeClass=new URL(location.href).searchParams.get('class') || localStorage.getItem('hexa-tracker-class-v1') || 'hoyoung';}catch{}
+if(!['hoyoung','ren'].includes(activeClass))activeClass='hoyoung';
+$('#class').value=activeClass;
+let storageKey='hexa-tracker-'+activeClass+'-v1';
+let refreshSequence=0;
+const initialLevel=node=>node.initialLevel ?? (node.short==='Apotheosis'?1:0);
 let saved;
 try { saved = JSON.parse(localStorage.getItem(storageKey) || '{}') || {}; }
 catch { saved = {}; }
@@ -62,7 +68,7 @@ function renderInputs() {
     row.innerHTML=`<img src="${escapeHtml(node.icon)}" alt=""><span class="stat-name">${escapeHtml(node.name)}</span><input data-stat="${escapeHtml(node.short)}" aria-label="${escapeHtml(node.name)} level" type="number" min="0" max="20" value="0"><label class="stat-unlocked"><input data-stat-unlocked="${escapeHtml(node.short)}" aria-label="${escapeHtml(node.name)} unlocked" type="checkbox"> Unlocked</label>`;
     $('.stat-list').append(row);
   }
-  const nodeRow = node => `<label class="node-row" style="--skill-accent:${skillAccent(node.short)}" data-node-row="${node.short}" data-node-id="${node.id}" title="${escapeHtml(node.name)}"><span class="node-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span class="node-label">${node.tag ? `<span class="skill-tag">${escapeHtml(node.tag)}</span>` : ''}<span class="node-name">${escapeHtml(node.name)}</span></span><input data-node="${node.short}" aria-label="${escapeHtml(node.name)} level" type="number" min="${node.short === 'Apotheosis' ? 1 : 0}" max="30" step="1" value="${clamp(saved.levels?.[node.short], 30, node.short === 'Apotheosis' ? 1 : 0)}"></label>`;
+  const nodeRow = node => `<label class="node-row" style="--skill-accent:${skillAccent(node.short)}" data-node-row="${node.short}" data-node-id="${node.id}" title="${escapeHtml(node.name)}"><span class="node-icon"><span aria-hidden="true">${node.short[0]}</span><img src="${node.icon}" alt=""></span><span class="node-label">${node.tag ? `<span class="skill-tag">${escapeHtml(node.tag)}</span>` : ''}<span class="node-name">${escapeHtml(node.name)}</span></span><input data-node="${node.short}" aria-label="${escapeHtml(node.name)} level" type="number" min="${initialLevel(node)}" max="30" step="1" value="${clamp(saved.levels?.[node.short], 30, initialLevel(node))}"></label>`;
   const renderGroup = (group, label, descending) => {
     const category = {'Skill Nodes':'Skill','Mastery Nodes':'Mastery','Enhancement Nodes':'Enhancement','Common Nodes':'Common'}[group];
     const nodes = NODES.filter(node => (previewDrafts[saved.mode]?.skillCategories?.[node.short] || {'Skill Nodes':'Skill','Mastery Nodes':'Mastery','Enhancement Nodes':'Enhancement','Common Nodes':'Common'}[node.group]) === category);
@@ -199,7 +205,7 @@ function render() {
   const sourceMode = previewDrafts[mode]?.sourceMode || mode;
   const priorityName = skill => {
     const tag=nodeByShort[skill]?.tag || statNodes.find(node=>node.short===skill)?.tag || '';
-    return `${tag ? `<span class="skill-tag">${escapeHtml(tag)}</span> ` : ''}${escapeHtml(previewDrafts[mode]?.shortNames?.[skill] || skill)}`;
+    return `${tag ? `<span class="skill-tag">${escapeHtml(tag)}</span> ` : ''}${escapeHtml(previewDrafts[mode]?.shortNames?.[skill] || nodeByShort[skill]?.shortName || statNodes.find(node=>node.short===skill)?.shortName || skill)}`;
   };
   const captured = previewDrafts[mode]?.capturedCosts;
   if (!captured) {
@@ -276,8 +282,9 @@ function render() {
   localStorage.setItem(storageKey, JSON.stringify(saved));
 }
 
-document.addEventListener('input', render);
+document.addEventListener('input', event=>{if(event.target.id!=='class')render();});
 document.addEventListener('change', event => {
+  if(event.target.id==='class')return;
   if (event.target.matches('[data-node], [data-stat]')) event.target.value = validLevel(event.target);
   render();
 });
@@ -306,11 +313,17 @@ $('#next-upgrade').addEventListener('click', event => {
   input.dispatchEvent(new Event('input', { bubbles: true }));
 });
 async function refreshSharedPriorities() {
+  const classAtStart=activeClass,sequence=++refreshSequence;
+  const job=classAtStart==='ren'?'렌':undefined;
   try {
-    const response=await fetch('/api/tracker-catalogue',{cache:'no-store'});
+    const response=await fetch('/api/tracker-catalogue'+(job?'?job='+encodeURIComponent(job):''),{cache:'no-store'});
     if(!response.ok) throw new Error('Saved skills are unavailable');
-    const model=await response.json();NODES=model.nodes;statNodes=model.stats;nodeByShort=Object.fromEntries(NODES.map(node=>[node.short,node]));setTrackerCatalogue(NODES);
-    const drafts = await fetchSharedPreview();
+    const model=await response.json();
+    if(classAtStart!==activeClass||sequence!==refreshSequence)return;
+    NODES=model.nodes;statNodes=model.stats;nodeByShort=Object.fromEntries(NODES.map(node=>[node.short,node]));setTrackerCatalogue(NODES);
+    const shared = await fetchSharedPreview(job);
+    if(classAtStart!==activeClass||sequence!==refreshSequence)return;
+    const drafts=Object.fromEntries(Object.entries(shared).filter(([,draft])=>(draft.job==='렌'?'ren':'hoyoung')===classAtStart));
     previewDrafts = drafts;
     catalog = previewCatalog(drafts);
     if (initialSharedLoad && requestedMode && catalog.settings[requestedMode]?.enabled && catalog.priorities[requestedMode]?.length) saved.mode = requestedMode;
@@ -320,6 +333,7 @@ async function refreshSharedPriorities() {
     render();
     $('#priority-sync').textContent = '';
   } catch (error) {
+    if(classAtStart!==activeClass||sequence!==refreshSequence)return;
     NODES=[];statNodes=[];nodeByShort={};setTrackerCatalogue([]);renderInputs();
     previewDrafts = {};
     catalog = previewCatalog({});
@@ -327,9 +341,16 @@ async function refreshSharedPriorities() {
     $('#priority-sync').textContent = `Shared priorities could not be loaded: ${error.message}. Priorities are unavailable until storage responds.`;
   }
 }
+$('#class').addEventListener('change',()=>{
+  activeClass=$('#class').value;storageKey='hexa-tracker-'+activeClass+'-v1';
+  localStorage.setItem('hexa-tracker-class-v1',activeClass);
+  try{saved=JSON.parse(localStorage.getItem(storageKey) || '{}') || {};}catch{saved={};}
+  previewDrafts={};catalog=previewCatalog({});NODES=[];statNodes=[];nodeByShort={};
+  setTrackerCatalogue([]);$('#patch').replaceChildren();renderInputs();render();refreshSharedPriorities();
+});
 window.addEventListener('focus', refreshSharedPriorities);
 $('#reset').onclick = () => {
-  if (confirm('Reset saved Hoyoung levels and resources?')) {
+  if (confirm(`Reset saved ${activeClass==='ren'?'Ren':'Hoyoung'} levels and resources?`)) {
     localStorage.removeItem(storageKey);
     saved = {};
     renderInputs();

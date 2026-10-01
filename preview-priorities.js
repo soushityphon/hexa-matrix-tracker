@@ -1,5 +1,5 @@
 import { PRIORITY_SETTINGS } from './data.js';
-import { validateDraft } from './priority-draft.js';
+import { validateDraft, draftSettings } from './priority-draft.js';
 
 export const PREVIEW_KEY = 'hexa-priority-preview-v1';
 
@@ -24,7 +24,7 @@ export function previewCatalog(drafts) {
   const settings = {};
   const sources = {};
   for (const draft of Object.values(drafts)) {
-    const base = PRIORITY_SETTINGS[draft.sourceMode];
+    const base = draftSettings(draft);
     priorities[draft.mode] = draft.steps;
     labels[draft.mode] = draft.name;
     settings[draft.mode] = { ...base, enabled: draft.enabled, selectionId:draft.pairId || draft.mode, selectionName:draft.pairName || draft.name };
@@ -45,8 +45,8 @@ export function matchingPriorityVersion(steps, sourceMode, drafts) {
   return null;
 }
 
-async function previewRequest(method, value) {
-  const response = await fetch('/api/priority-preview', {
+async function previewRequest(method, value, job) {
+  const response = await fetch('/api/priority-preview'+(job?'?job='+encodeURIComponent(job):''), {
     method, headers: method === 'GET' ? {} : { 'Content-Type': 'application/json' },
     ...(method === 'GET' ? {} : { body: JSON.stringify(value) }), cache: 'no-store'
   });
@@ -54,8 +54,8 @@ async function previewRequest(method, value) {
   return response.json();
 }
 
-export async function fetchSharedPreview() {
-  const { drafts } = await previewRequest('GET');
+export async function fetchSharedPreview(job) {
+  const { drafts } = await previewRequest('GET',undefined,job);
   const valid = {};
   for (const [mode, value] of Object.entries(drafts || {})) {
     try {
