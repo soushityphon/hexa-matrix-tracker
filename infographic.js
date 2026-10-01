@@ -73,6 +73,7 @@ export function createInfographic({document,window,grid,onClick}) {
   return {
     render(entries,saved,context,hideCompleted) {
       const active=document.activeElement?.dataset.checkpoint;
+      const activeSkill=tiles.get(active)?.dataset.skill;
       const keys=new Set(entries.map(entry=>entry.key));
       const next=entries.find(entry=>!infographicDone(saved,entry))?.key;
       for (const [key,tile] of tiles) if (!keys.has(key)) {tile.remove();tiles.delete(key);}
@@ -90,6 +91,7 @@ export function createInfographic({document,window,grid,onClick}) {
           const label=document.createElement('span');label.className='checkpoint-level';tile.append(icon,label);
           tiles.set(entry.key,tile);
         }
+        tile.dataset.skill=entry.skill;
         const done=infographicDone(saved,entry),undo=infographicCanUndo(saved,context,entry);
         const image=tile.querySelector('img');
         if(image.getAttribute('src')!==entry.icon) {
@@ -109,8 +111,9 @@ export function createInfographic({document,window,grid,onClick}) {
         const at=grid.children[position + 1];
         if(at!==tile)grid.insertBefore(tile,at || null);
       }
-      if(active && hideCompleted && tiles.get(active)?.hidden) {
-        [...grid.querySelectorAll('[data-checkpoint]')].find(tile=>!tile.hidden&&!tile.disabled)?.focus();
+      if(active && (!tiles.has(active) || tiles.get(active)?.hidden)) {
+        const available=[...grid.querySelectorAll('[data-checkpoint]')].filter(tile=>!tile.hidden&&!tile.disabled);
+        (available.find(tile=>tile.dataset.skill===activeSkill) || available[0])?.focus();
       }
       schedule();
     },

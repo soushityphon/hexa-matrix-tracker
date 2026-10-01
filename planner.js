@@ -90,28 +90,27 @@ export function priorityRows(levels, mode, order = PRIORITIES[mode], unlocked = 
   });
 }
 
-// Completed checkpoints do not interrupt a run of remaining upgrades. Keep
-// them as separate rows for the optional full view, and retain source indices.
+// Shared grouping for the list and infographic. Completed rows remain in the
+// full view, but do not interrupt a run of remaining upgrades for one skill.
+// Groups keep source rows intact so displays can use their stable endpoint IDs.
+export function priorityCheckpointGroups(rows) {
+  const groups=[];
+  let lastUnmet=null;
+  for(const row of rows) {
+    if(row.done) {groups.push([row]);continue;}
+    if(lastUnmet?.[0].skill===row.skill)lastUnmet.push(row);
+    else {lastUnmet=[row];groups.push(lastUnmet);}
+  }
+  return groups;
+}
+
 export function displayPriorityRows(levels, mode, order = PRIORITIES[mode], unlocked = {}) {
   const rows = priorityRows(levels, mode, order, unlocked);
-  const display = [];
-  let lastUnmet = null;
-  for (const row of rows) {
-    if (row.done) {
-      display.push({ ...row, endIndex: row.index });
-      continue;
-    }
-    if (lastUnmet?.skill === row.skill) {
-      lastUnmet.level = row.level;
-      lastUnmet.endIndex = row.index;
-      lastUnmet.cost = row.cost.rng ? lastUnmet.cost : rangeCost(row.skill, levels[row.skill] || 0, row.level);
-    } else {
-      lastUnmet = { ...row, endIndex: row.index,
-        cost: row.cost.rng ? row.cost : rangeCost(row.skill, levels[row.skill] || 0, row.level) };
-      display.push(lastUnmet);
-    }
-  }
-  return display;
+  return priorityCheckpointGroups(rows).map(group=>{
+    const first=group[0],last=group.at(-1);
+    return {...first,level:last.level,endIndex:last.index,
+      cost:first.done || first.cost.rng ? first.cost : rangeCost(first.skill,levels[first.skill] || 0,last.level)};
+  });
 }
 
 // Compound source transitions. Within a partially completed transition,

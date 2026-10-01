@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Window } from 'happy-dom';
-import { infographicCheckpoints, infographicContext, infographicDone, infographicCanUndo, clickInfographicCheckpoint, reconcileInfographicUndo, invalidateInfographicUndo } from '../infographic-progress.js';
+import { infographicCheckpoints, infographicDisplayCheckpoints, infographicContext, infographicDone, infographicCanUndo, clickInfographicCheckpoint, reconcileInfographicUndo, invalidateInfographicUndo } from '../infographic-progress.js';
 import { connectorPaths, createInfographic } from '../infographic.js';
+import { displayPriorityRows, setTrackerCatalogue } from '../planner.js';
 import { statProgress } from '../hexa-stat.js';
 import { NODES, STAT_ICONS } from '../data.js';
 import { currentDraft } from '../priority-draft.js';
@@ -64,6 +65,52 @@ clickInfographicCheckpoint(state,context,entries,max.key);
 const changed=infographicContext(context.mode,entries.slice(1));
 reconcileInfographicUndo(state,changed,entries.slice(1));
 assert.equal(state.infographicUndo[context.mode],undefined);
+// Dynamic run endpoints, including the adjacent levels in the owner's report.
+const guideNodes=[...future,{id:'lotus-l',short:'Future Lotus',name:'Lotus',maxLevel:30},
+  {id:'ascent-a',short:'Future Ascent',name:'Ascent',maxLevel:30}];
+const guideOrder=[{skill:'Future Lotus',level:14},{skill:'Future Lotus',level:15},
+  {skill:'Future Origin',level:20},{skill:'Future Origin',level:21},
+  {skill:'Future Ascent',level:26},{skill:'Future Ascent',level:27},{skill:'Future Ascent',level:29}];
+const guide=infographicCheckpoints(guideOrder,guideNodes),guideContext=infographicContext('guide',guide);
+const targets=(entries,state,scope)=>infographicDisplayCheckpoints(entries,state,scope).filter(entry=>!infographicDone(state,entry)).map(entry=>[entry.skill,entry.target]);
+assert.deepEqual(targets(guide,{levels:{}},guideContext),[['Future Lotus',15],['Future Origin',21],['Future Ascent',29]]);
+assert.deepEqual(targets(guide,{levels:{'Future Lotus':14,'Future Origin':20,'Future Ascent':28}},guideContext),[['Future Lotus',15],['Future Origin',21],['Future Ascent',29]]);
+const bridgeState={levels:{'Future Skill':7}},bridgeScope=infographicContext('bridge',entries);
+assert.deepEqual(targets(entries,bridgeState,bridgeScope),[['Future Skill',10],['Extra',1],['Future Skill',30],['Future Stat',20]]);
+bridgeState.levels.Extra=1;
+assert.deepEqual(targets(entries,bridgeState,bridgeScope),[['Future Skill',30],['Future Stat',20]]);
+// Clicking one checkpoint can join later remaining runs, without losing its
+// faded undo button or invalidating the stable source context.
+const joinOrder=[{skill:'Future Skill',level:10},{skill:'Extra',level:1},{skill:'Future Skill',level:15},
+  {skill:'Future Stat',level:20},{skill:'Future Skill',level:30}];
+const joinEntries=infographicCheckpoints(joinOrder,future),joinScope=infographicContext('join',joinEntries);
+const joined={levels:{'Future Skill':7},owned:60};
+const [joinTen,joinExtra,joinFifteen,joinStat,joinMax]=joinEntries;
+clickInfographicCheckpoint(joined,joinScope,joinEntries,joinTen.key);
+clickInfographicCheckpoint(joined,joinScope,joinEntries,joinExtra.key);
+clickInfographicCheckpoint(joined,joinScope,joinEntries,joinFifteen.key);
+clickInfographicCheckpoint(joined,joinScope,joinEntries,joinStat.key);
+clickInfographicCheckpoint(joined,joinScope,joinEntries,joinMax.key);
+let joinedReload=JSON.parse(JSON.stringify(joined));
+reconcileInfographicUndo(joinedReload,joinScope,joinEntries);
+assert.ok([joinTen,joinFifteen,joinMax].every(entry=>infographicDisplayCheckpoints(joinEntries,joinedReload,joinScope).some(shown=>shown.key===entry.key)));
+assert.equal(infographicCanUndo(joinedReload,joinScope,joinTen),false);
+for(const [checkpoint,level] of [[joinMax,15],[joinFifteen,10],[joinTen,7]]) {
+  assert.equal(clickInfographicCheckpoint(joinedReload,joinScope,joinEntries,checkpoint.key),true);
+  assert.equal(joinedReload.levels['Future Skill'],level);
+}
+assert.equal(joinedReload.owned,60);assert.equal(joinedReload.statLines?.['Future Stat']??null,null);
+// Histories from versions 90/91 keep their endpoint IDs, including individual
+// raw clicks which are no longer offered as new condensed actions.
+const legacy={levels:{'Future Skill':7}};
+clickInfographicCheckpoint(legacy,context,entries,ten.key);
+clickInfographicCheckpoint(legacy,context,entries,fifteen.key);
+reconcileInfographicUndo(legacy,context,entries);
+assert.ok(infographicDisplayCheckpoints(entries,legacy,context).some(entry=>entry.key===ten.key));
+assert.equal(clickInfographicCheckpoint(legacy,context,entries,fifteen.key),true);
+assert.equal(clickInfographicCheckpoint(legacy,context,entries,ten.key),true);
+assert.equal(legacy.levels['Future Skill'],7);
+
 const paths=connectorPaths([{x:24,y:14,width:64,height:88},{x:124,y:14,width:64,height:88},{x:24,y:150,width:64,height:88}],240);
 assert.equal(paths[0],'M 88 58 H 120');
 assert.equal(paths[1],'M 188 58 H 235 V 126 H 5 V 194 H 20');
@@ -138,6 +185,17 @@ for(const capture of [{region:'KMS',world:'Heroic',response:evidence.response},.
   assert.deepEqual(checkpoints.map(entry=>[entry.skill,entry.target]),draft.steps.map(step=>[step.skill,step.level]));
   assert.equal(checkpoints.filter(entry=>entry.stat).length,3);
   assert.equal(new Set(checkpoints.map(entry=>entry.key)).size,checkpoints.length);
+  // Compare the actual four verified Ren orders against the regular tracker,
+  // including non-checkpoint and out-of-order player levels.
+  setTrackerCatalogue(model.nodes);
+  const scope=infographicContext('verified',checkpoints);
+  for(let seed=0;seed<31;seed++) {
+    const levels=Object.fromEntries(checkpoints.map((entry,index)=>[entry.skill,entry.stat ? (seed+index)%21 : Math.max(entry.min,(seed*7+index*11)%31)]));
+    const visible=targets(checkpoints,{levels},scope);
+    const tracker=displayPriorityRows(levels,'verified',draft.steps).filter(row=>!row.done).map(row=>[row.skill,row.level]);
+    assert.deepEqual(visible,tracker,`${capture.region} ${capture.world}, level set ${seed}`);
+  }
+
 }
 const ren=pair('렌','ren_infographic',{heroic:renBase,interactive:{...renBase,sourceMode:'ren_gms_interactive'}});
 const models={hoyoung:{nodes:NODES.filter(n=>skills.includes(n.short)),stats:stats.map(short=>({short,name:short,icon:STAT_ICONS[short]}))},ren:renCatalogueFromDrafts(ren)};
@@ -220,7 +278,7 @@ change('#class','ren');await tick();assert.deepEqual(savedState(renKey).levels,r
 change('#class','hoyoung');await tick();
 button('Harmony',10).click();$('#view-tracker').click();change('[data-node="Harmony"]',12);$('#view-infographic').click();
 assert.equal(button('Harmony',10).disabled,true);
-button('Harmony',15).click();change('#patch','other_pair');assert.equal(button('Harmony',15),undefined);
+button('Harmony',15).click();change('#patch','other_pair');assert.equal(!!button('Harmony',15),false);
 change('#patch','infographic_pair');button('Harmony',15).click();assert.equal(savedState(hyKey).levels.Harmony,12);
 change('[name="world"][value="interactive"]','interactive');$('[name="world"][value="interactive"]').checked=true;$('[name="world"][value="interactive"]').dispatchEvent(new Event('change',{bubbles:true}));
 assert.match(savedState(hyKey).mode,/interactive$/);assert.equal(savedState(hyKey).levels.Harmony,12);
@@ -228,6 +286,30 @@ hide(true);await boot(snapshot());assert.equal($('#infographic-hide').checked,tr
 $('#reset').click();assert.equal(savedState(hyKey).levels.Apotheosis,1);assert.equal(savedState(hyKey).levels.Harmony,0);
 assert.equal($('.workspace').dataset.view,'infographic');assert.equal($('#infographic-hide').checked,true);
 assert.deepEqual(savedState(renKey).levels,renProgress.levels);
+// Actual app render/click/reload flow after non-checkpoint Tracker input.
+hide(false);$('#view-tracker').click();
+change('[data-node="Harmony"]',7);change('[data-node="Scroll"]',1);$('#view-infographic').click();
+assert.equal(!!button('Harmony',10),false);
+assert.equal(button('Harmony',15).getAttribute('aria-current'),'step');
+button('Harmony',15).focus();button('Harmony',15).click();
+assert.equal(savedState(hyKey).levels.Harmony,15);
+assert.equal(document.activeElement,button('Harmony',15));
+for(const skill of stats)button(skill,20).click();
+button('Harmony',30).click();assert.equal(button('Harmony',15).disabled,true);
+await boot(snapshot());
+assert.equal(savedState(hyKey).levels.Harmony,30);
+button('Harmony',30).click();assert.equal(savedState(hyKey).levels.Harmony,15);
+button('Harmony',15).focus();button('Harmony',15).click();assert.equal(savedState(hyKey).levels.Harmony,7);
+assert.equal(!!button('Harmony',15),false);assert.equal(!!button('Harmony',10),false);
+assert.equal(document.activeElement,button('Harmony',30));
+assert.equal(button('Harmony',30).getAttribute('aria-current'),'step');
+hide(true);assert.equal(button('Harmony',30).hidden,false);
+$('#view-tracker').click();change('[data-node="Harmony"]',28);$('#view-infographic').click();
+assert.equal(button('Harmony',30).hidden,false);assert.equal(button('Harmony',30).disabled,false);
+const weirdProgress=savedState(hyKey).levels.Harmony;
+change('#class','ren');await tick();change('#class','hoyoung');await tick();
+assert.equal(savedState(hyKey).levels.Harmony,weirdProgress);
+assert.equal(button('Harmony',30).getAttribute('aria-current'),'step');
 // Narrow-width geometry checks cover row return routes and reflow counts. Happy
 // DOM has no rendering engine, so phone touch/readability remains owner review.
 for(const width of [240,280,390,640,1000]){

@@ -1,6 +1,7 @@
 // Checkpoint preparation and reversible progress actions, independent of the DOM.
 // Stable catalogue IDs and exact priority sequences scope saved undo history.
 import { statProgress, validateStatLines } from './hexa-stat.js';
+import { priorityCheckpointGroups } from './planner.js';
 
 export function infographicCheckpoints(order, nodes) {
   const bySkill = new Map(nodes.map(node => [node.short, node]));
@@ -42,6 +43,26 @@ function nodeState(saved, entry) {
 }
 const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
 export const infographicDone = (saved, entry) => nodeState(saved,entry).level >= entry.target;
+
+// Display changes with progress, but actions/history always use the complete
+// source checkpoint catalogue and context. A clicked endpoint stays available
+// for reverse-order undo, even when the remaining run grows after a click.
+export function infographicDisplayCheckpoints(entries, saved, context) {
+  const history=saved.infographicUndo?.[context.mode];
+  const recorded=new Set(history?.sequence===context.sequence
+    ? Object.values(history.skills || {}).flatMap(stack=>Array.isArray(stack)?stack.map(record=>record.key):[]) : []);
+  const rows=entries.map(entry=>({...entry,done:infographicDone(saved,entry)}));
+  const display=[];
+  for(const group of priorityCheckpointGroups(rows)) {
+    const endpoint=group.at(-1),previous=display.at(-1);
+    // Pre-existing adjacent completed levels need only their last endpoint.
+    // Preserve every recorded click, including earlier locked undo steps.
+    if(endpoint.done && previous?.done && previous.skill===endpoint.skill &&
+      !recorded.has(previous.key) && !recorded.has(endpoint.key))display[display.length-1]=endpoint;
+    else display.push(endpoint);
+  }
+  return display;
+}
 
 export function invalidateInfographicUndo(saved, skill) {
   for (const history of Object.values(saved.infographicUndo || {})) {

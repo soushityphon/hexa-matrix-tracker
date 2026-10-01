@@ -10,7 +10,7 @@ import { restoreStatLines, statProgress, validateStatLines } from './hexa-stat.j
 import { createDecorations } from './decorations.js';
 import { createMusic } from './music.js';
 import { createInfographic } from './infographic.js';
-import { infographicCheckpoints, infographicContext, clickInfographicCheckpoint, reconcileInfographicUndo, invalidateInfographicUndo, reconcileStatCompletion } from './infographic-progress.js';
+import { infographicCheckpoints, infographicDisplayCheckpoints, infographicContext, clickInfographicCheckpoint, reconcileInfographicUndo, invalidateInfographicUndo, reconcileStatCompletion } from './infographic-progress.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -422,7 +422,7 @@ function render() {
   reconcileInfographicUndo(saved,infographicScope,infographicEntries);
   $('#infographic-context').textContent=`${$('#class').selectedOptions[0]?.textContent || activeClass} / ${$('#version-name').textContent}`;
   $('#infographic-message').textContent=infographicEntries.length ? '' : 'No checkpoints are available for this priority.';
-  if(view==='infographic')infographic.render(infographicEntries,saved,infographicScope,$('#infographic-hide').checked);
+  if(view==='infographic')infographic.render(infographicDisplayCheckpoints(infographicEntries,saved,infographicScope),saved,infographicScope,$('#infographic-hide').checked);
   localStorage.setItem(storageKey, JSON.stringify(saved));
 }
 
