@@ -8,6 +8,7 @@ import { skillAccent } from './skill-colours.js';
 import { fragmentDays, fragmentDuration, fragmentCompletionDate, fragmentShortfall, effectiveDailyFragments, normaliseDungeon } from './fragment-calculator.js';
 import { restoreStatLines, statProgress, validateStatLines } from './hexa-stat.js';
 import { createDecorations } from './decorations.js';
+import { createMusic } from './music.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -17,6 +18,7 @@ if(!['hoyoung','ren'].includes(activeClass))activeClass='hoyoung';
 $('#class').value=activeClass;
 document.documentElement.dataset.class=activeClass;
 const decorations=createDecorations({document,window,control:$('#animations'),className:activeClass});
+const music=createMusic({document,window,control:$('#music-control'),slider:$('#music-volume'),output:$('#music-level'),className:activeClass});
 let storageKey='hexa-tracker-'+activeClass+'-v1';
 let refreshSequence=0;
 let classLoading=true, classLoadFailed=false;
@@ -393,10 +395,10 @@ function updateStatLine(input) {
 }
 document.addEventListener('input', event=>{
   if(event.target.matches('[data-stat-line]'))updateStatLine(event.target);
-  else if(event.target.id!=='class')render();
+  else if(!['class','music-volume'].includes(event.target.id))render();
 });
 document.addEventListener('change', event => {
-  if(event.target.id==='class')return;
+  if(['class','music-volume'].includes(event.target.id))return;
   if(event.target.matches('[data-stat-line]')) { updateStatLine(event.target); return; }
   if (event.target.matches('[data-node]')) event.target.value = validLevel(event.target);
   render();
@@ -474,6 +476,7 @@ async function refreshSharedPriorities({force=false}={}) {
 $('#class').addEventListener('change',()=>{
   activeClass=$('#class').value;selectedStats[activeClass]=null;document.documentElement.dataset.class=activeClass;storageKey='hexa-tracker-'+activeClass+'-v1';
   decorations.setClass(activeClass);
+  music.setClass(activeClass);
   localStorage.setItem('hexa-tracker-class-v1',activeClass);
   try{saved=JSON.parse(localStorage.getItem(storageKey) || '{}') || {};}catch{saved={};}
   classLoading=true;classLoadFailed=false;$('#priority-sync').textContent='';

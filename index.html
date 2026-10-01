@@ -15,7 +15,13 @@
         <h1>HEXA Matrix Tracker</h1>
       </div>
       <div class="header-actions">
-        <button id="animations" type="button" aria-pressed="false">Animations: Off</button>
+        <div class="header-controls">
+          <label id="music-control" class="music-control" hidden>Music
+            <input id="music-volume" type="range" min="0" max="100" step="1" value="0" aria-label="Music volume" aria-valuetext="Muted">
+            <output id="music-level" for="music-volume" aria-live="polite">Muted</output>
+          </label>
+          <button id="animations" type="button" aria-pressed="false">Animations: Off</button>
+        </div>
         <div class="version"><span id="version-name">Select a saved priority</span></div>
       </div>
     </header><p id="priority-sync" role="status" class="fine"></p>

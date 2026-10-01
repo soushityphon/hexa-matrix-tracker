@@ -340,6 +340,27 @@ export default {
     const path = url.pathname === '/' ? '/index.html' : url.pathname;
     if (!Object.hasOwn(ASSETS, path)) return new Response('Not found', { status: 404 });
     const ext = path.slice(path.lastIndexOf('.'));
+    if (ext === '.mp3') {
+      const bytes = Uint8Array.from(atob(ASSETS[path]), char => char.charCodeAt(0));
+      const headers = { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'public, max-age=60', 'Accept-Ranges': 'bytes', 'Content-Length': String(bytes.length) };
+      if (request.method === 'HEAD') return new Response(null, { headers });
+      const range = request.headers.get('range');
+      if (range) {
+        const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+        let start, end;
+        if (match && (match[1] || match[2])) {
+          start = match[1] ? Number(match[1]) : Math.max(0, bytes.length - Number(match[2]));
+          end = match[1] && match[2] ? Math.min(Number(match[2]), bytes.length - 1) : bytes.length - 1;
+        }
+        if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start >= bytes.length || end < start || (!match[1] && Number(match[2]) === 0)) {
+          return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${bytes.length}`, 'Accept-Ranges': 'bytes' } });
+        }
+        headers['Content-Range'] = `bytes ${start}-${end}/${bytes.length}`;
+        headers['Content-Length'] = String(end - start + 1);
+        return new Response(bytes.slice(start, end + 1), { status: 206, headers });
+      }
+      return new Response(bytes, { headers });
+    }
     const body = ext === '.png' && request.method !== 'HEAD' ? Uint8Array.from(atob(ASSETS[path]), char => char.charCodeAt(0)) : ASSETS[path];
     return new Response(request.method === 'HEAD' ? null : body, { headers: { 'Content-Type': mimeTypes[ext] || 'application/octet-stream', 'Cache-Control': ['.html', '.js', '.css'].includes(ext) ? 'no-store' : 'public, max-age=60' } });
   }

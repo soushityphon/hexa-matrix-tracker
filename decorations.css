@@ -5,6 +5,17 @@ body { isolation: isolate; }
 .shell .panel, #priority-sync { position: relative; z-index: 1; }
 .shell .masthead, .shell .toolbar { position: relative; z-index: 3; }
 .header-actions { display: grid; justify-items: end; gap: 8px; align-self: start; margin-left: auto; }
+.header-controls { display: flex; align-items: center; gap: 12px; }
+.music-control { display: flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; }
+.music-control[hidden] { display: none; }
+.music-control input { width: 90px; min-height: 34px; margin: 0; padding: 0; accent-color: var(--ui-accent); }
+.music-control output { min-width: 36px; }
+@media (max-width: 640px) {
+  .masthead { flex-wrap: wrap; }
+  .header-actions { max-width: 100%; }
+  .header-controls { gap: 8px; }
+  .music-control input { min-height: 44px; width: 80px; }
+}
 /* Background fills are 80% opaque; text and controls keep their full opacity. */
 .shell .panel, .shell .next-upgrade, .shell .stat-selector,
 .shell .priority-table tr:nth-child(even), .shell .priority-table th { background: color-mix(in srgb, var(--ui-panel) 80%, transparent); }

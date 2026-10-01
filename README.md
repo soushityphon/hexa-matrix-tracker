@@ -1,3 +1,9 @@
+## Ren background music
+
+Ren has a Music volume slider immediately left of Animations. Every page load starts muted, with no audio element or audio request until a positive volume gesture. The supplied MP3 loops; zero pauses it, and switching class pauses, rewinds and resets to muted. Returning to Ren stays muted. Music is independent of Animations and reduced motion. Volume is not saved. Page navigation stops playback; errors reset the slider to zero with Retry shown. The slider uses Web Audio gain so mobile volume is controlled consistently. It does not trigger tracker renders or write progress.
+
+`assets/music/manifest.json` records the unchanged supplied MP3 filename, retrieval IDs, size, duration and SHA-256. The Worker bundles the original bytes with audio/mpeg, GET/HEAD and single byte-range responses for browser streaming and looping. The provenance manifest is not served. `tests/music.test.mjs` checks gesture-only playback, gain, muting, class changes, failures, cleanup, unchanged storage and compiled Worker byte delivery/ranges. Audible playback, loop transition and phone layout remain owner review on the test Site.
+
 # HEXA Matrix Tracker
 
 ## Class animations, Issue #28
