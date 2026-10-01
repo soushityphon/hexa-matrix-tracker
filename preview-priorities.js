@@ -27,7 +27,7 @@ export function previewCatalog(drafts) {
     const base = PRIORITY_SETTINGS[draft.sourceMode];
     priorities[draft.mode] = draft.steps;
     labels[draft.mode] = draft.name;
-    settings[draft.mode] = { ...base, enabled: draft.enabled };
+    settings[draft.mode] = { ...base, enabled: draft.enabled, selectionId:draft.pairId || draft.mode, selectionName:draft.pairName || draft.name };
     sources[draft.mode] = draft.source;
   }
   return { priorities, labels, settings, sources };

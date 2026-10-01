@@ -230,3 +230,7 @@ assert(Math.abs(combinedSourceGain([{...originLegacy[0],fdFrom:1}],originRow,2).
 assert(scrollEstimate.estimated&&Math.abs(scrollEstimate.gain-((1+2.147167/100)**(15/65)-1)*100)<1e-8,'Scroll 1→2 estimate uses remaining 15 of 65 Fragments');
 assert(combinedSourceGain([{skill:'Harmony',level:1,fdFrom:0,fdGain:8},{skill:'Harmony',level:6,fdFrom:1}],{...joinedRow,index:1,endIndex:2},0)===null,'missing source gain blocks a combined estimate');
 console.log('Data validation passed');
+const namedPair=previewCatalog({heroic:{...currentDraft('lotus_heroic'),mode:'pair_owner_heroic',pairId:'pair_owner',pairName:'Lotus',name:'Lotus | Heroic'},interactive:{...currentDraft('taotie_interactive'),mode:'pair_owner_interactive',pairId:'pair_owner',pairName:'Lotus',name:'Lotus | Interactive'}});
+assert(namedPair.settings.pair_owner_heroic.selectionName==='Lotus'&&namedPair.settings.pair_owner_interactive.selectionName==='Lotus','tracker selection displays the saved pair name regardless of region');
+assert(namedPair.settings.pair_owner_heroic.selectionId===namedPair.settings.pair_owner_interactive.selectionId,'world controls select within the named pair, not a source patch');
+assert(namedPair.settings.pair_owner_interactive.patch==='taotie','source patch stays internal for captured data');

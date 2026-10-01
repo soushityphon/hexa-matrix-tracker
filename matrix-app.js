@@ -37,16 +37,18 @@ function validLevel(input) {
 function syncPriorityOptions() {
   const select = $('#patch');
   const world = $('[name="world"]:checked').value;
-  const updates = [...new Set(Object.keys(catalog.priorities).filter(mode => catalog.priorities[mode].length && catalog.settings[mode]?.enabled).map(mode => catalog.settings[mode].patch))];
-  const labels = { lotus: 'GMS Lotus', taotie: 'KMS Taotie' };
-  const previousPatch = select.value;
-  if (updates.join('|') !== [...select.options].map(option => option.value).join('|')) select.replaceChildren(...updates.map(patch => new Option(labels[patch] || patch, patch)));
-  const patch = previousPatch || catalog.settings[saved.mode]?.patch || updates[0];
-  select.value = updates.includes(patch) ? patch : updates[0] || '';
-  const modes = Object.keys(catalog.priorities).filter(mode => catalog.priorities[mode].length && catalog.settings[mode]?.enabled && catalog.settings[mode].world === world && catalog.settings[mode].patch === select.value);
+  const available = Object.keys(catalog.priorities).filter(mode => catalog.priorities[mode].length && catalog.settings[mode]?.enabled);
+  const updates = new Map(available.map(mode => [catalog.settings[mode].selectionId, catalog.settings[mode].selectionName]));
+  const previousUpdate = select.value || catalog.settings[saved.mode]?.selectionId;
+  const options = [...updates];
+  if (options.length !== select.options.length || options.some(([id,name],index)=>select.options[index].value !== id || select.options[index].textContent !== name)) {
+    select.replaceChildren(...options.map(([id,name]) => new Option(name,id)));
+  }
+  select.value = updates.has(previousUpdate) ? previousUpdate : options[0]?.[0] || '';
+  const modes = available.filter(mode => catalog.settings[mode].world === world && catalog.settings[mode].selectionId === select.value);
   const versions = $('#priority-version');
   const previousVersion = saved.mode || versions.value;
-  versions.replaceChildren(...modes.map(mode => new Option(`${catalog.labels[mode]}${previewDrafts[mode] ? ' (test site)' : ''}`, mode)));
+  versions.replaceChildren(...modes.map(mode => new Option(catalog.labels[mode], mode)));
   $('#version-picker').hidden = modes.length < 2;
   if (modes.includes(previousVersion)) versions.value = previousVersion;
   return versions.value;
@@ -218,7 +220,7 @@ function render() {
   const nextLevel = next && !nextIsStat ? Math.min((current[next.skill] || 0) + 1, next.level) : null;
   const levelCost = next && !nextIsStat && rangeCost(next.skill, current[next.skill] || 0, nextLevel);
   const nextRowGain = nextRow && !nextIsStat ? combinedSourceGain(order, nextRow, current[nextRow.skill] || 0) : null;
-  $('#version-name').textContent = `${catalog.labels[mode]} / ${catalog.settings[mode].world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'}${previewDrafts[mode] ? ' / Test site preview' : ''}`;
+  $('#version-name').textContent = `${catalog.settings[mode].selectionName} / ${catalog.settings[mode].world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'}`;
   $('#progress').textContent = steps.length ? `${completed} / ${steps.length} complete` : 'Maple Scouter order pending';
   $('#next-upgrade').style.setProperty('--skill-accent', skillAccent(nextRow?.skill));
   const nextIcon = nextRow && (previewDrafts[mode]?.statIcons[nextRow.skill] || statNodes.find(node=>node.short===nextRow.skill)?.icon || nodeByShort[nextRow.skill]?.icon);
@@ -306,7 +308,7 @@ async function refreshSharedPriorities() {
     catalog = previewCatalog(drafts);
     if (initialSharedLoad && requestedMode && catalog.settings[requestedMode]?.enabled && catalog.priorities[requestedMode]?.length) saved.mode = requestedMode;
     initialSharedLoad = false;
-    if (catalog.settings[saved.mode]) $('#patch').value = catalog.settings[saved.mode].patch;
+    if (catalog.settings[saved.mode]) $('#patch').value = catalog.settings[saved.mode].selectionId;
     renderInputs();
     render();
     $('#priority-sync').textContent = '';
