@@ -18,8 +18,8 @@
 <section id="priorities-panel" role="tabpanel" aria-labelledby="priorities-tab" hidden>
 <div class="panel"><div class="panel-head"><h2>Scouter priorities</h2><span id="order-context" class="fine">Grab Scouter info to review both orders.</span></div>
 <div id="order-results" class="order-results"></div>
-<div class="pair-form"><label>Priority name<input id="pair-name" maxlength="120" placeholder="e.g. Ride or Die"></label><label>Availability<select id="pair-available"><option value="">Choose availability</option><option value="true">Available</option><option value="false">Unavailable</option></select></label><button id="save-pair" disabled>Save priority pair</button></div>
-<p class="fine">One name saves Heroic and Interactive together. Matches are for comparison. You choose which versions stay available.</p></div>
+<div class="pair-form"><label>Priority name<input id="pair-name" maxlength="120" placeholder="e.g. Ride or Die"></label><button id="save-pair" disabled>Save priority</button></div>
+<p class="fine">One name saves Heroic and Interactive together. New priorities start unavailable. Use Make available under Saved priorities when ready.</p></div>
 <div class="panel"><div class="panel-head"><h2>Saved priorities <span id="priority-count"></span></h2><label class="upload-button" role="button" tabindex="0">Upload backup<input id="backup" type="file" accept="application/json,.json" class="visually-hidden"></label></div><div id="registered"></div></div>
 <details class="panel advanced"><summary>Advanced, import a Scouter response</summary><label>Order<select id="import-world"><option value="heroic">Heroic</option><option value="interactive">Interactive</option></select></label><label>Response file<input id="response-file" type="file" accept=".json,.txt,application/json"></label><p class="fine">Use a response for the selected Scouter region. Import both orders before saving a pair.</p></details>
 </section>

@@ -155,9 +155,8 @@ $('#save-skills').addEventListener('click',async()=>{
 $('#save-pair').addEventListener('click',async()=>{
   busy=true;controls();
   try {
-    const choice=$('#pair-available').value;if(!choice)throw new Error('Choose availability');
-    const pair={id:'pair_'+crypto.randomUUID().replaceAll('-',''),name:$('#pair-name').value,enabled:choice==='true',region:captureRegion,orders};
-    validatePair(pair);await mutation('POST',pair);$('#pair-name').value='';$('#pair-available').value='';message('Heroic and Interactive saved together. Existing priorities kept their availability.');
+    const pair={id:'pair_'+crypto.randomUUID().replaceAll('-',''),name:$('#pair-name').value,enabled:false,region:captureRegion,orders};
+    validatePair(pair);await mutation('POST',pair);$('#pair-name').value='';message('Priority saved as unavailable. Use Make available under Saved priorities when ready.');
   }catch(error){message(error.message,true);}finally{busy=false;controls();}
 });
 $('#response-file').addEventListener('change',async event=>{
