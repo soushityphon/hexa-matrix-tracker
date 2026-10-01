@@ -5,7 +5,7 @@ setTrackerCatalogue([]);
 import { combinedSourceGain, displayPriorityRows, matrixTotals, nextCheckpoint, rangeCost } from './planner.js';
 import { fetchSharedPreview, previewCatalog } from './preview-priorities.js';
 import { skillAccent } from './skill-colours.js';
-import { fragmentDays, fragmentShortfall, effectiveDailyFragments, normaliseDungeon } from './fragment-calculator.js';
+import { fragmentDays, fragmentDuration, fragmentShortfall, effectiveDailyFragments, normaliseDungeon } from './fragment-calculator.js';
 import { restoreStatLines, statProgress, validateStatLines } from './hexa-stat.js';
 
 const $ = selector => document.querySelector(selector);
@@ -183,7 +183,7 @@ $('.stat-list').addEventListener('click',event=>{
 });
 
 function materials(cost, days, shortfall = false) {
-  return `<div class="materials">${materialAmount(cost.erda, 'erda')} ${materialAmount(cost.frags, 'frags', cost.rng, shortfall)}${days === null || cost.rng ? '' : ` <span class="material-days">/ ${days.toFixed(1)} days</span>`}</div>`;
+  return `<div class="materials">${materialAmount(cost.erda, 'erda')} ${materialAmount(cost.frags, 'frags', cost.rng, shortfall)}${days === null || cost.rng ? '' : ` <span class="material-days">/ ${days}</span>`}</div>`;
 }
 
 const materialIcons = {
@@ -302,6 +302,7 @@ function render() {
   const epicDungeon = normaliseDungeon($('#epicDungeon').value);
   const rate = effectiveDailyFragments(perday, erdaRequest, epicDungeon);
   const days = cost => heroic && !cost.rng ? fragmentDays(cost.frags, owned, rate) : null;
+  const duration = cost => fragmentDuration(days(cost), perday);
   const inventory = heroic ? owned : null;
   const includeJanus = $('#includeJanus').checked;
   const matrix = matrixTotals(current, sourceMode, includeJanus, statUnlocked, order);
@@ -318,8 +319,8 @@ function render() {
   const nextIcon = nextRow && (previewDrafts[mode]?.statIcons[nextRow.skill] || statNodes.find(node=>node.short===nextRow.skill)?.icon || nodeByShort[nextRow.skill]?.icon);
   const statStep = nextIsStat && (statUnlocked[next.skill]
     ? upgradeCost(`Completion · ${nextRow.level}`, nextRow.cost, null, statAction(next.skill, 'lines', 'Enter line levels'))
-    : upgradeCost('Unlock', { ...nextRow.cost, rng: false }, days({...nextRow.cost, rng:false}), statAction(next.skill, 'unlock', 'Mark unlocked'), inventory));
-  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><div class="upgrade-top"><small>Next Upgrade</small></div><div class="upgrade-heading"><div class="upgrade-label"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${priorityName(nextRow.skill)} → ${nextRow.level}</strong></div>${nextRowGain === null ? '' : fdText(nextRowGain)}</div>${nextIsStat ? statStep : `${upgradeCost(`Next level · ${nextLevel}`, levelCost, days(levelCost), upgradeAction(next.skill, nextLevel, `Mark level ${nextLevel}`, true), inventory)}${nextRow.level === nextLevel ? '' : upgradeCost(`Checkpoint · ${nextRow.level}`, nextRow.cost, days(nextRow.cost), upgradeAction(next.skill, nextRow.level, `Mark checkpoint ${nextRow.level}`), inventory)}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
+    : upgradeCost('Unlock', { ...nextRow.cost, rng: false }, duration({...nextRow.cost, rng:false}), statAction(next.skill, 'unlock', 'Mark unlocked'), inventory));
+  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><div class="upgrade-top"><small>Next Upgrade</small></div><div class="upgrade-heading"><div class="upgrade-label"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${priorityName(nextRow.skill)} → ${nextRow.level}</strong></div>${nextRowGain === null ? '' : fdText(nextRowGain)}</div>${nextIsStat ? statStep : `${upgradeCost(`Next level · ${nextLevel}`, levelCost, duration(levelCost), upgradeAction(next.skill, nextLevel, `Mark level ${nextLevel}`, true), inventory)}${nextRow.level === nextLevel ? '' : upgradeCost(`Checkpoint · ${nextRow.level}`, nextRow.cost, duration(nextRow.cost), upgradeAction(next.skill, nextRow.level, `Mark checkpoint ${nextRow.level}`), inventory)}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
   $$('#next-upgrade .upgrade-heading img').forEach(img => {
     img.addEventListener('error', () => { img.hidden = true; });
     if (img.complete && !img.naturalWidth) img.hidden = true;
@@ -342,7 +343,7 @@ function render() {
   $('#totals').innerHTML = `<div class="total"><small>Total Materials Spent</small><strong class="material-total">${materialAmount(matrix.spent.erda, 'erda')} ${materialAmount(matrix.spent.frags, 'frags')}</strong></div><div class="total" id="total-remaining" ${matrix.percent >= 100 ? 'hidden' : ''}><small>Materials to Complete HEXA Matrix</small><strong class="material-total">${materialAmount(matrix.remaining.erda, 'erda')} ${materialAmount(matrix.remaining.frags, 'frags')}</strong></div>`;
   checkMaterialIcons();
   $('#time-estimate').hidden = !heroic || !rate;
-  if (heroic && rate) $('#time-estimate').innerHTML = `<small>Estimated time for remaining Fragments</small><strong>${days(matrix.remaining).toFixed(1)} days</strong>`;
+  if (heroic && rate) $('#time-estimate').innerHTML = `<small>Estimated time for remaining Fragments</small><strong>${duration(matrix.remaining)}</strong>`;
   $$('[data-stat]').forEach(input => {
     const row=input.closest('.stat-row');
     const name = row.querySelector('.stat-name');

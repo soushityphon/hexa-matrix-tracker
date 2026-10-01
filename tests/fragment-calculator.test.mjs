@@ -6,7 +6,7 @@ import {renDraftFromCapture,renCatalogueFromDrafts} from '../ren-priority.js';
 import {reconstructScouterOrder,discoverySelection} from '../scouter-discovery.js';
 import {currentDraft} from '../priority-draft.js';
 import {validatePair} from '../admin-panel-model.js';
-import {fragmentDays,fragmentShortfall,effectiveDailyFragments,DUNGEON_WEEKLY_FRAGMENTS} from '../fragment-calculator.js';
+import {fragmentDays,fragmentDuration,fragmentShortfall,effectiveDailyFragments,DUNGEON_WEEKLY_FRAGMENTS} from '../fragment-calculator.js';
 assert.equal(fragmentShortfall(100,60),40);
 assert.equal(fragmentShortfall(290,60),230);
 assert.equal(fragmentShortfall(100,200),0);
@@ -20,6 +20,12 @@ for(const [dungeon,weekly] of Object.entries(DUNGEON_WEEKLY_FRAGMENTS)){
 assert.ok(Math.abs(fragmentDays(290,60,effectiveDailyFragments(10,true,'nightmareParadise'))-7)<1e-12);
 assert.equal(fragmentDays(100,200,10),0);
 assert.equal(fragmentDays(100,200,0),null);
+assert.equal(fragmentDuration(null,0),null);
+assert.equal(fragmentDuration(14,0),'~2 weeks');
+assert.equal(fragmentDuration(24.5,0),'~3.5 weeks');
+assert.equal(fragmentDuration(7,0),'~1 week');
+assert.equal(fragmentDuration(3.5,10),'3.5 days');
+assert.equal(fragmentDuration(0,0),'~0 weeks');
 const schedule={freeBaseLevel:0,levels:Array.from({length:30},(_,i)=>({erda:2,frags:i===9?100:i>9&&i<14?47.5:10}))};
 // Integer level costs, checkpoint 10..14 sums to 290.
 schedule.levels[10].frags=40;schedule.levels[11].frags=50;schedule.levels[12].frags=50;schedule.levels[13].frags=50;
@@ -67,13 +73,16 @@ const remaining=Number(remainingLabel.split(' ')[0].replaceAll(',',''));
 assert.match($('#time-estimate').textContent,new RegExp(fragmentDays(remaining,60,230/7).toFixed(1)+' days'));
 assert.equal($('#priority').textContent,fullTable);assert.equal($('#totals').textContent,totals);assert.equal($('#completion').textContent,completion);assert.equal($('#next-upgrade .fd-gain').textContent,fd);
 change('#perday',0);assert.equal($('#time-estimate').hidden,false);
+assert.match($('#next-upgrade').textContent,/~1.4 weeks/);
+assert.doesNotMatch($('#next-upgrade').textContent,/ days/);
+assert.match($('#time-estimate').textContent,new RegExp(fragmentDuration(fragmentDays(remaining,60,160/7),0)));
 for(const [d,w]of Object.entries(DUNGEON_WEEKLY_FRAGMENTS)){
   change('#erdaRequest',false);change('#epicDungeon',d);
   assert.equal($('#time-estimate').hidden,w===0);
-  if(w)assert.match($('#next-upgrade').textContent,new RegExp((230/(w/7)).toFixed(1)+' days'));
+  if(w)assert.match($('#next-upgrade').textContent,new RegExp(fragmentDuration(230/(w/7),0)));
 }
 change('#erdaRequest',true);change('#epicDungeon','nightmareParadise');
-change('#owned',10000);assert.deepEqual(amounts(),['0','0']);assert.match($('#next-upgrade').textContent,/0.0 days/);
+change('#owned',10000);assert.deepEqual(amounts(),['0','0']);assert.match($('#next-upgrade').textContent,/~0 weeks/);
 change('#owned',60);change('[name="world"][value="interactive"]',true);
 assert.equal($('.calculator-panel').hidden,true);assert.equal($('#time-estimate').hidden,true);assert.equal($('#next-upgrade .material-days'),null);assert.equal(amounts().length,0);
 assert.equal($('#includeJanus').closest('.include-option').hidden,false);

@@ -7,3 +7,10 @@ export function effectiveDailyFragments(perday, erdaRequest, dungeon) {
   return perday + ((erdaRequest ? ERDA_REQUEST_WEEKLY_FRAGMENTS : 0) + DUNGEON_WEEKLY_FRAGMENTS[normaliseDungeon(dungeon)]) / 7;
 }
 export const fragmentDays = (cost, owned, rate) => rate > 0 ? fragmentShortfall(cost, owned) / rate : null;
+
+export function fragmentDuration(days, perday) {
+  if (days === null) return null;
+  if (perday > 0) return `${days.toFixed(1)} days`;
+  const weeks = Number((days / 7).toFixed(1));
+  return `~${weeks} ${weeks === 1 ? 'week' : 'weeks'}`;
+}
