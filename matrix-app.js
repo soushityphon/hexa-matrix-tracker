@@ -16,6 +16,9 @@ $('#class').value=activeClass;
 document.documentElement.dataset.class=activeClass;
 let storageKey='hexa-tracker-'+activeClass+'-v1';
 let refreshSequence=0;
+let classLoading=true, classLoadFailed=false;
+const classDataCache=new Map(), classRequests=new Map();
+const CLASS_CACHE_MS=30000;
 const selectedStats={};
 const initialLevel=node=>node.initialLevel ?? (node.short==='Apotheosis'?1:0);
 let saved;
@@ -89,7 +92,7 @@ function renderInputs() {
     if (descending) nodes.reverse();
     return `<section class="node-group"><h3 class="group-label">${label}</h3>${nodes.map(nodeRow).join('')}</section>`;
   };
-  $('#nodes').innerHTML = NODES.length ? `<div class="node-column">${renderGroup('Skill Nodes', 'Skill', true)}${renderGroup('Enhancement Nodes', 'Enhancement', false)}</div><div class="node-column">${renderGroup('Mastery Nodes', 'Mastery', true)}${renderGroup('Common Nodes', 'Common', false)}</div>` : '<p class="fine">No skills saved. Populate and save Skills in the Admin Panel.</p>';
+  $('#nodes').innerHTML = NODES.length ? `<div class="node-column">${renderGroup('Skill Nodes', 'Skill', true)}${renderGroup('Enhancement Nodes', 'Enhancement', false)}</div><div class="node-column">${renderGroup('Mastery Nodes', 'Mastery', true)}${renderGroup('Common Nodes', 'Common', false)}</div>` : `<p class="fine">${classLoading?'Loading...':classLoadFailed?'Skills could not be loaded.':'No skills saved. Populate and save Skills in the Admin Panel.'}</p>`;
   $$('.node-icon img').forEach(img => {
     img.addEventListener('error', () => { img.hidden = true; });
     if (img.complete && !img.naturalWidth) img.hidden = true;
@@ -255,8 +258,8 @@ function render() {
   if (!mode) {
     highlightCurrentSkill(null);
     $('#version-name').textContent = `${$('#patch').selectedOptions[0]?.textContent || 'Update'} / ${$('[name="world"]:checked').value === 'heroic' ? 'Fragments' : 'Sol Erda'}`;
-    $('#progress').textContent = 'No saved priority is visible for this selection';
-    $('#next-upgrade').textContent = 'No saved priority is available for this update and world.';
+    $('#progress').textContent = classLoading ? 'Loading...' : 'No saved priority is visible for this selection';
+    $('#next-upgrade').textContent = classLoading ? 'Loading...' : 'No saved priority is available for this update and world.';
     $('#priority').replaceChildren();
     $('#totals').replaceChildren();
     $('#completion').replaceChildren();
@@ -407,32 +410,46 @@ $('#next-upgrade').addEventListener('click', event => {
   input.value = target;
   input.dispatchEvent(new Event('input', { bubbles: true }));
 });
-async function refreshSharedPriorities() {
+function requestClassData(className) {
+  if(classRequests.has(className))return classRequests.get(className);
+  const job=className==='ren'?'렌':undefined;
+  // These endpoints are independent. Avoid two sequential network round trips.
+  const request=Promise.all([
+    fetch('/api/tracker-catalogue'+(job?'?job='+encodeURIComponent(job):''),{cache:'no-store'}).then(async response=>{
+      if(!response.ok)throw new Error('Saved skills are unavailable');
+      return response.json();
+    }),
+    fetchSharedPreview(job)
+  ]).then(([model,shared])=>{
+    const drafts=Object.fromEntries(Object.entries(shared).filter(([,draft])=>(draft.job==='렌'?'ren':'hoyoung')===className));
+    const snapshot={model,drafts,loadedAt:Date.now()};
+    classDataCache.set(className,snapshot);
+    return snapshot;
+  }).finally(()=>{classRequests.delete(className);});
+  classRequests.set(className,request);
+  return request;
+}
+
+async function refreshSharedPriorities({force=false}={}) {
   const classAtStart=activeClass,sequence=++refreshSequence;
-  const job=classAtStart==='ren'?'렌':undefined;
   try {
-    const response=await fetch('/api/tracker-catalogue'+(job?'?job='+encodeURIComponent(job):''),{cache:'no-store'});
-    if(!response.ok) throw new Error('Saved skills are unavailable');
-    const model=await response.json();
+    const cached=classDataCache.get(classAtStart);
+    const snapshot=!force&&!classRequests.has(classAtStart)&&cached&&Date.now()-cached.loadedAt<CLASS_CACHE_MS ? cached : await requestClassData(classAtStart);
     if(classAtStart!==activeClass||sequence!==refreshSequence)return;
+    classLoading=false;classLoadFailed=false;
+    const {model,drafts}=snapshot;
     NODES=model.nodes;statNodes=model.stats;nodeByShort=Object.fromEntries(NODES.map(node=>[node.short,node]));setTrackerCatalogue(NODES);
-    const shared = await fetchSharedPreview(job);
-    if(classAtStart!==activeClass||sequence!==refreshSequence)return;
-    const drafts=Object.fromEntries(Object.entries(shared).filter(([,draft])=>(draft.job==='렌'?'ren':'hoyoung')===classAtStart));
-    previewDrafts = drafts;
-    catalog = previewCatalog(drafts);
+    previewDrafts=drafts;catalog=previewCatalog(drafts);
     if (initialSharedLoad && requestedMode && catalog.settings[requestedMode]?.enabled && catalog.priorities[requestedMode]?.length) saved.mode = requestedMode;
     initialSharedLoad = false;
     if (catalog.settings[saved.mode]) $('#patch').value = catalog.settings[saved.mode].selectionId;
-    renderInputs();
-    render();
-    $('#priority-sync').textContent = '';
+    renderInputs();render();$('#priority-sync').textContent = '';
   } catch (error) {
+    classDataCache.delete(classAtStart);
     if(classAtStart!==activeClass||sequence!==refreshSequence)return;
-    NODES=[];statNodes=[];nodeByShort={};setTrackerCatalogue([]);renderInputs();
-    previewDrafts = {};
-    catalog = previewCatalog({});
-    render();
+    classLoading=false;classLoadFailed=true;
+    NODES=[];statNodes=[];nodeByShort={};setTrackerCatalogue([]);
+    previewDrafts={};catalog=previewCatalog({});renderInputs();render();
     $('#priority-sync').textContent = `Shared priorities could not be loaded: ${error.message}. Priorities are unavailable until storage responds.`;
   }
 }
@@ -440,10 +457,11 @@ $('#class').addEventListener('change',()=>{
   activeClass=$('#class').value;document.documentElement.dataset.class=activeClass;storageKey='hexa-tracker-'+activeClass+'-v1';
   localStorage.setItem('hexa-tracker-class-v1',activeClass);
   try{saved=JSON.parse(localStorage.getItem(storageKey) || '{}') || {};}catch{saved={};}
+  classLoading=true;classLoadFailed=false;$('#priority-sync').textContent='';
   previewDrafts={};catalog=previewCatalog({});NODES=[];statNodes=[];nodeByShort={};
   setTrackerCatalogue([]);$('#patch').replaceChildren();renderInputs();render();refreshSharedPriorities();
 });
-window.addEventListener('focus', refreshSharedPriorities);
+window.addEventListener('focus',()=>refreshSharedPriorities({force:true}));
 $('#reset').onclick = () => {
   if (confirm(`Reset saved ${activeClass==='ren'?'Ren':'Hoyoung'} levels and resources?`)) {
     localStorage.removeItem(storageKey);

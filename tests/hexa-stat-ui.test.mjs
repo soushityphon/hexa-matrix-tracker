@@ -142,7 +142,24 @@ const world=$('[name="world"][value="interactive"]');world.checked=true;world.di
 assert.equal(state(hyKey).mode,'pair_lines_interactive');
 assert.deepEqual(state(hyKey).statLines[stats[0]],[6,8,6]);
 const preservedHy=structuredClone(state(hyKey));
-change('#class','ren');await tick();
+// Hold both first-load Ren requests and verify parallel fetch, truthful loading,
+// cached Hoyoung restoration and reuse of the pending Ren request on rapid switches.
+const realFetch=globalThis.fetch, pending=[];
+globalThis.fetch=url=>new Promise(resolve=>pending.push({url,resolve}));
+change('#class','ren');
+assert.equal(pending.length,2);
+assert.match($('#nodes').textContent,/Loading\.\.\./);
+assert.match($('#next-upgrade').textContent,/Loading\.\.\./);
+assert.doesNotMatch($('#nodes').textContent,/No skills saved/);
+change('#class','hoyoung');
+assert.equal(pending.length,2);
+assert.equal(document.querySelectorAll('[data-node]').length,1);
+assert.equal(state(hyKey).owned,42);
+change('#class','ren');
+assert.equal(pending.length,2);
+for(const request of pending)request.resolve(await realFetch(request.url));
+await tick();globalThis.fetch=realFetch;
+assert.doesNotMatch($('#nodes').textContent,/Loading/);
 assert.deepEqual(fields(stats[0]).map(el=>el.value),['0','0','0']);
 assert.equal(state(renKey).levels.ren_skillCore1,1);
 assert.equal(selector(stats[0]).querySelector('.stat-unlock-icon').classList.contains('is-unlocked'),false);
@@ -170,6 +187,28 @@ change('#class','ren');await tick();$('#reset').click();
 assert.deepEqual(state(renKey).statLines[stats[0]],[0,0,0]);
 assert.deepEqual(state(hyKey),preservedHy);
 assert.equal($('#next-upgrade [data-stat-action="complete"]'),null);
+// Switch cache expires after 30 seconds rather than keeping shared data forever.
+const realNow=Date.now;let expiredRequests=0;
+Date.now=()=>realNow()+30001;
+globalThis.fetch=async (...args)=>{expiredRequests++;return realFetch(...args);};
+change('#class','hoyoung');await tick();
+assert.equal(expiredRequests,2);
+assert.equal(state(hyKey).owned,42);
+Date.now=realNow;
+change('#class','ren');await tick();
+// A focus refresh bypasses the short switch cache. Failure clears unavailable data;
+// a later successful empty catalogue has the true empty-state message.
+let focusRequests=0;
+globalThis.fetch=async()=>{focusRequests++;return new Response('Unavailable',{status:503});};
+win.dispatchEvent(new Event('focus'));await tick();
+assert.equal(focusRequests,2);
+assert.match($('#nodes').textContent,/Skills could not be loaded/);
+assert.match($('#priority-sync').textContent,/could not be loaded/);
+assert.equal(document.querySelectorAll('[data-node]').length,0);
+globalThis.fetch=async url=>Response.json(url.startsWith('/api/tracker-catalogue')?{nodes:[],stats:[]}:{drafts:{}});
+win.dispatchEvent(new Event('focus'));await tick();
+assert.match($('#nodes').textContent,/No skills saved/);
+assert.equal($('#priority-sync').textContent,'');
 const css=readFileSync(new URL('../styles.css',import.meta.url),'utf8');
 assert.match(css,/\.fd-gain\{color:var\(--ui-accent\)/);
 await win.happyDOM.abort();
