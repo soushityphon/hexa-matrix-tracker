@@ -84,13 +84,13 @@ function renderInputs() {
     const icon = statNodes.find(node=>node.short===input.dataset.stat)?.icon;
     if (!icon) return;
     const row = input.closest('.stat-row');
+    row.style.setProperty('--skill-accent', skillAccent(input.dataset.stat));
     if (row.querySelector('img')) return;
     const image = document.createElement('img');
     image.src = icon;
     image.alt = '';
     image.addEventListener('error', () => { image.hidden = true; });
     row.prepend(image);
-    row.style.setProperty('--skill-accent', skillAccent(input.dataset.stat));
   });
   $$('[data-stat]').forEach(input => { input.value = clamp(saved.levels?.[input.dataset.stat], 20); });
   $$('[data-stat-unlocked]').forEach(input => {
@@ -242,7 +242,7 @@ function render() {
   const statStep = nextIsStat && (statUnlocked[next.skill]
     ? upgradeCost(`Completion · ${nextRow.level}`, nextRow.cost, null, statAction(next.skill, 'complete', 'Mark complete'))
     : upgradeCost('Unlock', { ...nextRow.cost, rng: false }, null, statAction(next.skill, 'unlock', 'Mark unlocked')));
-  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><div class="upgrade-top"><small>Next Upgrade</small>${nextRowGain === null ? '' : fdText(nextRowGain)}</div><div class="upgrade-heading"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${priorityName(nextRow.skill)} → ${nextRow.level}</strong></div>${nextIsStat ? statStep : `${upgradeCost(`Next level · ${nextLevel}`, levelCost, days(levelCost), upgradeAction(next.skill, nextLevel, `Mark level ${nextLevel}`, true))}${nextRow.level === nextLevel ? '' : upgradeCost(`Checkpoint · ${nextRow.level}`, nextRow.cost, days(nextRow.cost), upgradeAction(next.skill, nextRow.level, `Mark checkpoint ${nextRow.level}`))}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
+  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><div class="upgrade-top"><small>Next Upgrade</small></div><div class="upgrade-heading"><div class="upgrade-label"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${priorityName(nextRow.skill)} → ${nextRow.level}</strong></div>${nextRowGain === null ? '' : fdText(nextRowGain)}</div>${nextIsStat ? statStep : `${upgradeCost(`Next level · ${nextLevel}`, levelCost, days(levelCost), upgradeAction(next.skill, nextLevel, `Mark level ${nextLevel}`, true))}${nextRow.level === nextLevel ? '' : upgradeCost(`Checkpoint · ${nextRow.level}`, nextRow.cost, days(nextRow.cost), upgradeAction(next.skill, nextRow.level, `Mark checkpoint ${nextRow.level}`))}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
   $$('#next-upgrade .upgrade-heading img').forEach(img => {
     img.addEventListener('error', () => { img.hidden = true; });
     if (img.complete && !img.naturalWidth) img.hidden = true;
