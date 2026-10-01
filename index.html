@@ -25,6 +25,15 @@
 
     <div class="workspace">
       <aside class="inputs">
+        <section class="panel summary-panel">
+          <h2>HEXA Matrix Summary</h2>
+          <div class="summary-metrics">
+            <div id="completion" class="completion"></div>
+            <div class="totals" id="totals"></div>
+          </div>
+          <div class="include-option"><label class="toggle"><input id="includeJanus" type="checkbox"> Include Sol Janus in completion and spent totals</label></div>
+        </section>
+
         <section class="panel">
           <div class="panel-head"><h2>Current HEXA Matrix</h2><button id="reset" type="button">Reset</button></div>
           <div class="column-head"><span>node</span><span>level</span></div>
@@ -49,18 +58,17 @@
       </div>
 
       <aside class="quickstats">
-        <section class="panel">
-          <h2>HEXA Matrix Summary</h2>
-          <div id="completion" class="completion"></div>
-          <div class="totals" id="totals"></div>
-        </section>
         <section class="panel calculator-panel">
-          <h2>Calculator</h2>
+          <h2 class="calculator-title"><img src="assets/sol-erda-fragment.png" alt="">Fragment Calculator</h2>
           <div class="resources">
             <label>Fragments owned <input id="owned" type="number" min="0" value="0"></label>
             <label>Fragments per day <input id="perday" type="number" min="0" value="0"></label>
           </div>
-          <div class="include-option"><label class="toggle"><input id="includeJanus" type="checkbox"> Include Sol Janus in completion and spent totals</label></div>
+          <div class="weekly-income">
+            <label class="toggle"><input id="erdaRequest" type="checkbox"> Erda's Request, 90 Fragments per week</label>
+            <label>Epic Dungeon<select id="epicDungeon"><option value="none">None</option><option value="highMountain">High Mountain, 40 per week</option><option value="anglerCompany">Angler Company, 55 per week</option><option value="nightmareParadise">Nightmare Paradise, 70 per week</option></select></label>
+          </div>
+          <p class="fine">Estimates average weekly rewards across seven days.</p>
           <div id="time-estimate" class="time-estimate" hidden></div>
         </section>
       </aside>

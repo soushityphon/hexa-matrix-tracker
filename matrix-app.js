@@ -5,6 +5,7 @@ setTrackerCatalogue([]);
 import { combinedSourceGain, displayPriorityRows, matrixTotals, nextCheckpoint, rangeCost } from './planner.js';
 import { fetchSharedPreview, previewCatalog } from './preview-priorities.js';
 import { skillAccent } from './skill-colours.js';
+import { fragmentDays, fragmentShortfall, effectiveDailyFragments, normaliseDungeon } from './fragment-calculator.js';
 import { restoreStatLines, statProgress, validateStatLines } from './hexa-stat.js';
 
 const $ = selector => document.querySelector(selector);
@@ -110,6 +111,8 @@ function renderInputs() {
   syncPriorityOptions();
   $('#owned').value = saved.owned ?? 0;
   $('#perday').value = saved.perday ?? 0;
+  $('#erdaRequest').checked = saved.erdaRequest === true;
+  $('#epicDungeon').value = normaliseDungeon(saved.epicDungeon);
   $('#hideDone').checked = saved.hideDone !== false;
   $('#includeJanus').checked = saved.includeJanus === true;
 }
@@ -179,18 +182,18 @@ $('.stat-list').addEventListener('click',event=>{
   render();
 });
 
-function materials(cost, days) {
-  return `<div class="materials">${materialAmount(cost.erda, 'erda')} ${materialAmount(cost.frags, 'frags', cost.rng)}${days === null || cost.rng ? '' : ` <span class="material-days">/ ${days.toFixed(1)} days</span>`}</div>`;
+function materials(cost, days, shortfall = false) {
+  return `<div class="materials">${materialAmount(cost.erda, 'erda')} ${materialAmount(cost.frags, 'frags', cost.rng, shortfall)}${days === null || cost.rng ? '' : ` <span class="material-days">/ ${days.toFixed(1)} days</span>`}</div>`;
 }
 
 const materialIcons = {
   erda: { path: 'assets/sol-erda.png', name: 'Sol Erda' },
   frags: { path: 'assets/sol-erda-fragment.png', name: 'Fragments' }
 };
-function materialAmount(value, type, rng = false) {
+function materialAmount(value, type, rng = false, shortfall = false) {
   const { path, name } = materialIcons[type];
   const amount = rng ? (value ? `${value.toLocaleString()}+` : 'RNG') : value.toLocaleString();
-  return `<span class="material-amount" aria-label="${rng ? (value ? `at least ${value.toLocaleString()}` : 'variable') : value.toLocaleString()} ${name}"><img src="${path}" alt=""><span aria-hidden="true">${amount}</span><span class="material-fallback" aria-hidden="true">${name}</span></span>`;
+  return `<span class="material-amount" aria-label="${rng ? (value ? `at least ${value.toLocaleString()}` : 'variable') : value.toLocaleString()} ${name}${shortfall ? ' still needed' : ''}"><img src="${path}" alt=""><span aria-hidden="true">${amount}</span><span class="material-fallback" aria-hidden="true">${name}</span></span>`;
 }
 function checkMaterialIcons() {
   $$('.material-amount img, .material-heading img').forEach(img => {
@@ -239,12 +242,17 @@ function fdText(result) {
   return `<span class="fd-gain" title="${note}" aria-label="${result.estimated ? 'Estimated ' : ''}plus ${result.gain.toFixed(3)} percent final damage. ${note}">${result.estimated ? '≈' : ''}+${result.gain.toFixed(3)}% FD</span>`;
 }
 
-function upgradeCost(label, cost, time, action = '') {
-  return `<div class="upgrade-cost"><div class="upgrade-cost-details"><span>${label}</span>${materials(cost, time)}</div>${action}</div>`;
+function upgradeCost(label, cost, time, action = '', owned = null) {
+  const shortfall = owned !== null && !cost.rng;
+  const displayCost = shortfall ? {...cost, frags:fragmentShortfall(cost.frags, owned)} : cost;
+  return `<div class="upgrade-cost"><div class="upgrade-cost-details"><span>${label}</span>${materials(displayCost, time, shortfall)}${shortfall ? '<small class="fragment-needed">Fragments still needed</small>' : ''}</div>${action}</div>`;
 }
 
 function render() {
   const mode = syncPriorityOptions();
+  const heroic = $('[name="world"]:checked').value === 'heroic';
+  $('.calculator-panel').hidden = !heroic;
+  $('.quickstats').hidden = !heroic;
   const order = catalog.priorities[mode] || [];
   // A capture's catalogue can contain skills that its priority never uses.
   // Keep their inputs and progress, but scope the matrix to this exact order.
@@ -290,7 +298,11 @@ function render() {
   const { steps, index, completed, next } = nextCheckpoint(current, sourceMode, order);
   const owned = clamp($('#owned').value, 9999999);
   const perday = clamp($('#perday').value, 9999999);
-  const days = cost => perday ? Math.max(0, cost.frags - owned) / perday : null;
+  const erdaRequest = $('#erdaRequest').checked;
+  const epicDungeon = normaliseDungeon($('#epicDungeon').value);
+  const rate = effectiveDailyFragments(perday, erdaRequest, epicDungeon);
+  const days = cost => heroic && !cost.rng ? fragmentDays(cost.frags, owned, rate) : null;
+  const inventory = heroic ? owned : null;
   const includeJanus = $('#includeJanus').checked;
   const matrix = matrixTotals(current, sourceMode, includeJanus, statUnlocked, order);
   const displayRows = displayPriorityRows(current, sourceMode, order, statUnlocked);
@@ -306,8 +318,8 @@ function render() {
   const nextIcon = nextRow && (previewDrafts[mode]?.statIcons[nextRow.skill] || statNodes.find(node=>node.short===nextRow.skill)?.icon || nodeByShort[nextRow.skill]?.icon);
   const statStep = nextIsStat && (statUnlocked[next.skill]
     ? upgradeCost(`Completion · ${nextRow.level}`, nextRow.cost, null, statAction(next.skill, 'lines', 'Enter line levels'))
-    : upgradeCost('Unlock', { ...nextRow.cost, rng: false }, null, statAction(next.skill, 'unlock', 'Mark unlocked')));
-  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><div class="upgrade-top"><small>Next Upgrade</small></div><div class="upgrade-heading"><div class="upgrade-label"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${priorityName(nextRow.skill)} → ${nextRow.level}</strong></div>${nextRowGain === null ? '' : fdText(nextRowGain)}</div>${nextIsStat ? statStep : `${upgradeCost(`Next level · ${nextLevel}`, levelCost, days(levelCost), upgradeAction(next.skill, nextLevel, `Mark level ${nextLevel}`, true))}${nextRow.level === nextLevel ? '' : upgradeCost(`Checkpoint · ${nextRow.level}`, nextRow.cost, days(nextRow.cost), upgradeAction(next.skill, nextRow.level, `Mark checkpoint ${nextRow.level}`))}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
+    : upgradeCost('Unlock', { ...nextRow.cost, rng: false }, days({...nextRow.cost, rng:false}), statAction(next.skill, 'unlock', 'Mark unlocked'), inventory));
+  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><div class="upgrade-top"><small>Next Upgrade</small></div><div class="upgrade-heading"><div class="upgrade-label"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${priorityName(nextRow.skill)} → ${nextRow.level}</strong></div>${nextRowGain === null ? '' : fdText(nextRowGain)}</div>${nextIsStat ? statStep : `${upgradeCost(`Next level · ${nextLevel}`, levelCost, days(levelCost), upgradeAction(next.skill, nextLevel, `Mark level ${nextLevel}`, true), inventory)}${nextRow.level === nextLevel ? '' : upgradeCost(`Checkpoint · ${nextRow.level}`, nextRow.cost, days(nextRow.cost), upgradeAction(next.skill, nextRow.level, `Mark checkpoint ${nextRow.level}`), inventory)}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
   $$('#next-upgrade .upgrade-heading img').forEach(img => {
     img.addEventListener('error', () => { img.hidden = true; });
     if (img.complete && !img.naturalWidth) img.hidden = true;
@@ -329,8 +341,8 @@ function render() {
   $('.priority-table').classList.toggle('hide-done', $('#hideDone').checked);
   $('#totals').innerHTML = `<div class="total"><small>Total Materials Spent</small><strong class="material-total">${materialAmount(matrix.spent.erda, 'erda')} ${materialAmount(matrix.spent.frags, 'frags')}</strong></div><div class="total"><small>Materials to Complete HEXA Matrix</small><strong class="material-total">${materialAmount(matrix.remaining.erda, 'erda')} ${materialAmount(matrix.remaining.frags, 'frags')}</strong></div>`;
   checkMaterialIcons();
-  $('#time-estimate').hidden = !perday;
-  if (perday) $('#time-estimate').innerHTML = `<small>Estimated time for remaining Fragments</small><strong>${days(matrix.remaining).toFixed(1)} days</strong>`;
+  $('#time-estimate').hidden = !heroic || !rate;
+  if (heroic && rate) $('#time-estimate').innerHTML = `<small>Estimated time for remaining Fragments</small><strong>${days(matrix.remaining).toFixed(1)} days</strong>`;
   $$('[data-stat]').forEach(input => {
     const row=input.closest('.stat-row');
     const name = row.querySelector('.stat-name');
@@ -350,7 +362,7 @@ function render() {
     if (tagText && !tag) { tag = document.createElement('span'); tag.className = 'skill-tag'; label.prepend(tag); }
     if (tag) { tag.textContent = tagText; tag.hidden = !tagText; }
   });
-  saved = { mode, levels: current, statUnlocked: {...saved.statUnlocked,...statUnlocked}, statLines: saved.statLines || {}, owned, perday, hideDone: $('#hideDone').checked, includeJanus };
+  saved = { mode, levels: current, statUnlocked: {...saved.statUnlocked,...statUnlocked}, statLines: saved.statLines || {}, owned, perday, erdaRequest, epicDungeon, hideDone: $('#hideDone').checked, includeJanus };
   localStorage.setItem(storageKey, JSON.stringify(saved));
 }
 

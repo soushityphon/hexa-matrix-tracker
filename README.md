@@ -88,3 +88,11 @@ Tracker Update choices use saved priority pair IDs and the owner’s pair names.
 
 
 Class loading shows Loading... while data is pending, rather than the empty-catalogue message. Catalogue and saved-priority reads run in parallel. Successful class data is cached in memory for 30 seconds, so a return switch can render at once; concurrent requests for the same class are coalesced. Focus refreshes bypass the cache, and failures clear the failed class cache and unavailable view. Only source/catalogue data is cached, with player progress still read from the existing class-specific storage. No permanent browser or server cache is added.
+
+## Fragment Calculator
+
+Summary sits above the left-column matrix and retains the Fragment-spending completion formula and full material totals. Include Sol Janus remains available in either world when Janus belongs to the selected order. The Fragment Calculator is Heroic-only; its per-class inventory, daily farming and weekly selections stay saved while hidden.
+
+Next Upgrade shows Fragments still needed after inventory, clamped to zero, for each alternative target. Upgrade actions never change inventory. Captured costs, priority-table amounts, Sol Erda and Summary totals remain full costs. Stat levelling stays RNG, with no inventory deduction or duration for unknown amounts; fixed unlocks can use the known cost.
+
+`fragment-calculator.js` keeps owner-supplied weekly rewards separate from Scouter: Erda's Request 90, and one Epic Dungeon, None 0, High Mountain 40, Angler Company 55 or Nightmare Paradise 70. Estimates use daily farming plus weekly rewards divided by seven, without rounding the rate, and show the existing decimal days. Weekly-only income works; zero income hides estimates. These are average pace estimates, not claim/reset schedules. New weekly settings default to unchecked/None.

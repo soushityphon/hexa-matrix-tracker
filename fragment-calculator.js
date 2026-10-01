@@ -1,0 +1,9 @@
+// Owner-supplied weekly rewards, independent of captured upgrade data.
+export const DUNGEON_WEEKLY_FRAGMENTS = Object.freeze({none:0, highMountain:40, anglerCompany:55, nightmareParadise:70});
+export const ERDA_REQUEST_WEEKLY_FRAGMENTS = 90;
+export const normaliseDungeon = choice => Object.hasOwn(DUNGEON_WEEKLY_FRAGMENTS, choice) ? choice : 'none';
+export const fragmentShortfall = (cost, owned) => Math.max(0, cost - owned);
+export function effectiveDailyFragments(perday, erdaRequest, dungeon) {
+  return perday + ((erdaRequest ? ERDA_REQUEST_WEEKLY_FRAGMENTS : 0) + DUNGEON_WEEKLY_FRAGMENTS[normaliseDungeon(dungeon)]) / 7;
+}
+export const fragmentDays = (cost, owned, rate) => rate > 0 ? fragmentShortfall(cost, owned) / rate : null;
