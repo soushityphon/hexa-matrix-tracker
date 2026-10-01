@@ -142,7 +142,7 @@ await boot(snapshot());
 assert.equal(row(stats[2]).hidden,true);
 change('#patch','pair_lines');
 assert.deepEqual(fields(stats[2]).map(el=>el.value),['10','10','0']);
-const world=$('[name="world"][value="interactive"]');world.checked=true;world.dispatchEvent(new Event('change',{bubbles:true}));
+const world=$('[name="world"][value="interactive"]');$('[name="world"][value="heroic"]').checked=false;world.checked=true;world.dispatchEvent(new Event('change',{bubbles:true}));
 assert.equal(state(hyKey).mode,'pair_lines_interactive');
 assert.deepEqual(state(hyKey).statLines[stats[0]],[6,8,6]);
 const preservedHy=structuredClone(state(hyKey));

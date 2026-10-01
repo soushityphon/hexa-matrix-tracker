@@ -26,3 +26,6 @@
 @media(max-width:1000px){.toolbar .view-picker{width:auto}.toolbar>.view-picker{margin-left:auto}}
 @media(max-width:780px){.workspace[data-view="infographic"] .summary-metrics{grid-template-columns:minmax(0,1fr);gap:8px}.workspace[data-view="infographic"] .totals{grid-template-columns:minmax(0,1fr);gap:0}.view-picker{margin-left:auto}.view-picker button{min-height:40px}.toolbar{gap:12px}.infographic-grid{column-gap:18px;row-gap:20px}}
 @media(prefers-reduced-motion:reduce){.checkpoint{transition:none}}
+
+.priority-context{margin-left:auto;min-width:0;text-align:right;font-size:11px;line-height:1.4;color:var(--ui-soft)}
+#infographic-context{color:var(--ui-accent)}

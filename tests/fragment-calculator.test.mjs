@@ -60,7 +60,7 @@ async function boot(storage={}){
   await import('../matrix-app.js?calc='+Math.random());await new Promise(r=>setTimeout(r,20));
 }
 const $=s=>document.querySelector(s);
-const change=(s,value)=>{const el=$(s);if(el.type==='checkbox'||el.type==='radio')el.checked=value;else el.value=s==='#erdaRequest'?(value?'yes':'none'):value;el.dispatchEvent(new Event('change',{bubbles:true}));};
+const change=(s,value)=>{const el=$(s);if(el.type==='radio'&&value)document.querySelectorAll('input[type=radio]').forEach(other=>{if(other!==el&&other.name===el.name)other.checked=false;});if(el.type==='checkbox'||el.type==='radio')el.checked=value;else el.value=s==='#erdaRequest'?(value?'yes':'none'):value;el.dispatchEvent(new Event('change',{bubbles:true}));};
 const state=()=>JSON.parse(localStorage.getItem(key));
 const amounts=()=>[...document.querySelectorAll('#next-upgrade .material-amount[aria-label$="Fragments still needed"]')].map(el=>el.querySelector('span').textContent);
 const snapshot=()=>Object.fromEntries([key,renKey,'hexa-tracker-class-v1'].map(k=>[k,localStorage.getItem(k)]).filter(([,v])=>v));

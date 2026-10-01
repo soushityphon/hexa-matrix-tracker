@@ -280,7 +280,7 @@ button('Harmony',10).click();$('#view-tracker').click();change('[data-node="Harm
 assert.equal(button('Harmony',10).disabled,true);
 button('Harmony',15).click();change('#patch','other_pair');assert.equal(!!button('Harmony',15),false);
 change('#patch','infographic_pair');button('Harmony',15).click();assert.equal(savedState(hyKey).levels.Harmony,12);
-change('[name="world"][value="interactive"]','interactive');$('[name="world"][value="interactive"]').checked=true;$('[name="world"][value="interactive"]').dispatchEvent(new Event('change',{bubbles:true}));
+$('[name="world"][value="heroic"]').checked=false;change('[name="world"][value="interactive"]','interactive');$('[name="world"][value="interactive"]').checked=true;$('[name="world"][value="interactive"]').dispatchEvent(new Event('change',{bubbles:true}));
 assert.match(savedState(hyKey).mode,/interactive$/);assert.equal(savedState(hyKey).levels.Harmony,12);
 hide(true);await boot(snapshot());assert.equal($('#infographic-hide').checked,true);
 $('#reset').click();assert.equal(savedState(hyKey).levels.Apotheosis,1);assert.equal(savedState(hyKey).levels.Harmony,0);
