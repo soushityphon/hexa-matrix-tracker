@@ -76,7 +76,7 @@ function renderInputs() {
     saved.statLines={...saved.statLines,[node.short]:lines};
     const index=statNodes.indexOf(node);
     const selector=document.createElement('div');selector.className='stat-selector';selector.dataset.statSelector=node.short;
-    selector.innerHTML=`<button type="button" class="stat-unlock-icon" data-stat-toggle="${skill}" aria-label="Unlock ${escapeHtml(node.name)}" aria-pressed="false"><span aria-hidden="true">${index+1}</span><img src="${escapeHtml(node.icon)}" alt=""></button><button type="button" class="stat-select" data-stat-select="${skill}" aria-controls="stat-panel-${index}" aria-pressed="false"><span class="stat-selector-name">${escapeHtml(node.name)}</span><span class="stat-selector-summary"></span></button>`;
+    selector.innerHTML=`<button type="button" class="stat-select" data-stat-select="${skill}" aria-controls="stat-panel-${index}" aria-expanded="false" aria-pressed="false"><span class="stat-unlock-icon"><span aria-hidden="true">${index+1}</span><img src="${escapeHtml(node.icon)}" alt=""></span><span class="stat-selector-name">${escapeHtml(node.name)}</span><span class="stat-mini-preview" aria-label="Saved line levels">${[0,1,2].map(line=>`<span class="stat-mini-line ${line===0?'stat-main':'stat-additional'}"><span class="stat-bar" aria-hidden="true">${Array.from({length:10},()=>'<i></i>').join('')}</span><span class="stat-mini-value"></span></span>`).join('')}</span><span class="stat-selector-summary"></span></button><button type="button" class="stat-cancel" data-stat-cancel="${skill}" aria-label="Cancel unlock for ${escapeHtml(node.name)}" title="Cancel unlock" hidden>×</button>`;
     selectors.append(selector);
     row.id=`stat-panel-${index}`;
     row.innerHTML=`<span class="stat-name visually-hidden">${escapeHtml(node.name)}</span><input data-stat-unlocked="${skill}" type="checkbox" hidden tabindex="-1" aria-hidden="true"><h3 class="stat-line-heading">Main Stat</h3><div class="stat-lines">${['Main Stat','2nd additional stat','3rd additional stat'].map((label,index)=>`${index===1?'<h3 class="stat-line-heading">Additional Stats</h3>':''}<label class="stat-line ${index===0?'stat-main':'stat-additional'}"><span class="visually-hidden">${label}</span><span class="stat-bar" aria-hidden="true">${Array.from({length:10},()=>'<i></i>').join('')}</span><input data-stat-line="${skill}" data-line-index="${index}" aria-label="${escapeHtml(node.name)} ${label} level" aria-describedby="stat-note-${statNodes.indexOf(node)}" type="number" min="0" max="10" step="1" value="${lines[index] ?? ''}"></label>`).join('')}</div><div class="stat-summary" hidden><span data-stat="${skill}"></span><span class="stat-fd"></span></div><p class="stat-note" id="stat-note-${statNodes.indexOf(node)}" aria-live="polite"></p>`;
@@ -123,12 +123,13 @@ function levels() {
 
 function syncStatSelection(available) {
   const choices=statNodes.filter(node=>available.has(node.short));
-  if(!choices.some(node=>node.short===selectedStats[activeClass]))selectedStats[activeClass]=choices[0]?.short;
+  if(selectedStats[activeClass]!==null&&!choices.some(node=>node.short===selectedStats[activeClass]))selectedStats[activeClass]=choices[0]?.short;
   $$('.stat-selector').forEach(selector=>{
     const skill=selector.dataset.statSelector,selected=skill===selectedStats[activeClass];
     selector.hidden=!available.has(skill);
     selector.classList.toggle('selected',selected);
     selector.querySelector('[data-stat-select]').setAttribute('aria-pressed',String(selected));
+    selector.querySelector('[data-stat-select]').setAttribute('aria-expanded',String(selected));
   });
   $$('[data-stat]').forEach(output=>{output.closest('.stat-row').hidden=!available.has(output.dataset.stat)||output.dataset.stat!==selectedStats[activeClass];});
 }
@@ -136,13 +137,21 @@ function syncStatSelection(available) {
 function syncStatVisuals(skill,row) {
   const selector=$$('.stat-selector').find(item=>item.dataset.statSelector===skill);
   const unlocked=row.querySelector('[data-stat-unlocked]');
-  const toggle=selector.querySelector('[data-stat-toggle]');
+  const icon=selector.querySelector('.stat-unlock-icon');
   selector.querySelector('.stat-selector-name').textContent=row.querySelector('.stat-name').textContent;
-  toggle.classList.toggle('is-unlocked',unlocked.checked);
-  toggle.setAttribute('aria-pressed',String(unlocked.checked));
-  toggle.setAttribute('aria-disabled',String(unlocked.disabled));
-  toggle.setAttribute('aria-label',`${unlocked.checked?'Lock':'Unlock'} ${skill}`);
-  toggle.title=unlocked.disabled ? 'Unlocked. Clear all line levels before locking.' : unlocked.checked ? 'Unlocked. Click to lock.' : 'Locked. Click to unlock.';
+  icon.classList.toggle('is-unlocked',unlocked.checked);
+  icon.title=unlocked.checked ? 'Unlocked' : 'Locked';
+  selector.querySelector('[data-stat-select]').setAttribute('aria-label',`${row.querySelector('.stat-name').textContent}, ${unlocked.checked?'unlocked':'locked'}. ${selectedStats[activeClass]===skill?'Close':'Edit'} line levels.`);
+  const savedLines=saved.statLines?.[skill];
+  selector.querySelector('[data-stat-cancel]').hidden=!(unlocked.checked && !unlocked.disabled && validateStatLines(savedLines).complete && savedLines.every(level=>level===0));
+  selector.querySelectorAll('.stat-mini-line').forEach((line,index)=>{
+    const level=savedLines?.[index];
+    const known=Number.isInteger(level)&&level>=0&&level<=10;
+    line.querySelector('.stat-mini-value').textContent=known ? String(level) : '';
+    line.querySelector('.stat-mini-value').setAttribute('aria-label',`${['Main Stat','2nd additional stat','3rd additional stat'][index]} ${known?level:'not entered'}`);
+    line.querySelectorAll('.stat-bar i').forEach((segment,i)=>segment.classList.toggle('filled',known&&i<level));
+  });
+  selector.querySelector('.stat-selector-summary').classList.toggle('fd-gain',!!row.querySelector('.stat-fd').textContent);
   selector.querySelector('.stat-selector-summary').textContent=[row.querySelector('[data-stat]').textContent,row.querySelector('.stat-fd').textContent].filter(Boolean).join(' ');
   selector.querySelector('.stat-selector-summary').setAttribute('aria-label',`${row.querySelector('[data-stat]').getAttribute('aria-label')}. ${row.querySelector('.stat-fd').textContent}`);
   selector.querySelector('.stat-selector-summary').title='General average from the owner-supplied HEXA Stat table, not personalised FD.';
@@ -154,13 +163,15 @@ function syncStatVisuals(skill,row) {
 }
 
 $('.stat-list').addEventListener('click',event=>{
-  const button=event.target.closest('button[data-stat-select],button[data-stat-toggle]');
-  if(!button)return;
-  const skill=button.dataset.statSelect || button.dataset.statToggle;
-  selectedStats[activeClass]=skill;
-  if(button.dataset.statToggle){
+  const selector=event.target.closest('[data-stat-selector]');
+  if(!selector)return;
+  const skill=selector.dataset.statSelector;
+  if(event.target.closest('[data-stat-cancel]')){
     const unlocked=$$('[data-stat-unlocked]').find(field=>field.dataset.statUnlocked===skill);
-    if(!unlocked.disabled)unlocked.checked=!unlocked.checked;
+    const lines=saved.statLines?.[skill];
+    if(!unlocked.disabled&&validateStatLines(lines).complete&&lines.every(level=>level===0))unlocked.checked=false;
+  }else{
+    selectedStats[activeClass]=selectedStats[activeClass]===skill ? null : skill;
   }
   render();
 });
@@ -322,7 +333,7 @@ function render() {
     const name = row.querySelector('.stat-name');
     if (name) name.textContent = previewDrafts[mode]?.names[input.dataset.stat] || input.dataset.stat;
     const progress=statProgress(saved.statLines?.[input.dataset.stat], current[input.dataset.stat]);
-    input.textContent=progress.total < 20 ? `${progress.total} / 20` : '✓';
+    input.textContent=progress.total < 20 ? `${progress.total} / 20` : '';
     input.setAttribute('aria-label', `${progress.total} of 20 levels`);
     row.querySelector('.stat-fd').textContent=progress.fd === null || row.querySelector('[aria-invalid="true"]') ? '' : `~${progress.fd.toFixed(3)}% FD`;
     if (!row.querySelector('[aria-invalid="true"]')) row.querySelector('.stat-note').textContent=progress.hasLines ? '' : `Saved total ${progress.total} / 20. Enter all three line levels to update it.`;
@@ -356,6 +367,7 @@ function updateStatLine(input) {
     return;
   }
   saved.statLines={...saved.statLines,[skill]:lines};
+  if(input.value!=='')row.querySelector('[data-stat-unlocked]').checked=true;
   render();
 }
 document.addEventListener('input', event=>{
