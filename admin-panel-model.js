@@ -17,15 +17,15 @@ export function mergeSkills(catalogue, previous = [], drafts = {}) {
     const existing = byCore.get(source.coreId);
     // Refresh source data without changing owner fields, including inactive rows.
     if (existing) { Object.assign(existing, { source }); continue; }
-    const node = trackerSkill(source);
+    const node = catalogue.job === '렌' ? null : trackerSkill(source);
     const values = node ? Object.values(drafts).map(draft => ({name:draft.names?.[node.short] || '', shortName:draft.shortNames?.[node.short] || node.short})) : [];
     const unique = [...new Set(values.map(value => JSON.stringify(value)))].map(value => JSON.parse(value));
-    rows.push({ coreId:source.coreId, source, name:unique.length === 1 ? unique[0].name : '', shortName:unique.length === 1 ? unique[0].shortName : '', category:values.length && node ? categoryFor(node) : (node?.group === 'HEXA Stat' ? 'HEXA Stat' : ''), tag:node ? defaultTags[node.short] || '' : '', conflicts:unique.length > 1 ? unique : [] });
+    rows.push({ coreId:source.coreId, source, name:unique.length === 1 ? unique[0].name : '', shortName:unique.length === 1 ? unique[0].shortName : '', category:values.length && node ? categoryFor(node) : (node?.group === 'HEXA Stat' ? 'HEXA Stat' : catalogue.job==='렌' ? source.category || '' : ''), tag:node ? defaultTags[node.short] || '' : (catalogue.job==='렌' ? source.tag || '' : ''), conflicts:unique.length > 1 ? unique : [] });
   }
   return rows;
 }
 export function validateSkills(value) {
-  if (value?.job !== '호영' || !Array.isArray(value.rows) || !value.rows.length || value.rows.length > 100) throw new Error('Hoyoung skill review required');
+  if (!['호영','렌'].includes(value?.job) || !Array.isArray(value.rows) || !value.rows.length || value.rows.length > 100) throw new Error('Hoyoung or Ren skill review required');
   const seen = new Set();
   const rows = value.rows.map(row => {
     if (!/^(?:(skillCore|masteryCore|reinCore|generalCore)\d+|hexastat[123])$/.test(row.coreId) || seen.has(row.coreId)) throw new Error('Invalid or duplicate skill identity');
@@ -39,7 +39,7 @@ export function validateSkills(value) {
     if (source.costs && (source.costs.levels?.length !== 30 || source.costs.levels.some((cost,i) => cost.level !== i+1 || !Number.isSafeInteger(cost.erda) || cost.erda < 0 || !Number.isSafeInteger(cost.frags) || cost.frags < 0))) throw new Error('Invalid source level costs');
     return {coreId:row.coreId, source, name:row.name.trim(), shortName:row.shortName.trim(), tag:row.tag.trim(), category:row.category};
   });
-  return {schema:1, job:'호영', rows};
+  return {schema:1, job:value.job, rows};
 }
 export function applySkills(drafts, review) {
   if (!review) return drafts;

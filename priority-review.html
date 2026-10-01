@@ -3,13 +3,17 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Admin Panel | HEXA Matrix Tracker</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="priority-review.css"></head>
 <body><main class="shell admin-shell">
 <header class="masthead"><div><p class="kicker">HEXA Matrix Tracker</p><h1>Admin Panel</h1></div><a href="index.html">Tracker</a></header>
+<nav class="admin-tabs class-tabs" role="tablist" aria-label="Class"><button id="hoyoung-tab" role="tab" aria-selected="true" aria-controls="class-panel">Hoyoung</button><button id="ren-tab" role="tab" aria-selected="false" aria-controls="class-panel" tabindex="-1">Ren</button></nav>
+<select id="job" hidden aria-label="Class"><option value="호영">Hoyoung</option><option value="렌">Ren</option></select>
+<section id="class-panel" role="tabpanel" aria-labelledby="hoyoung-tab">
 <section class="admin-toolbar" aria-label="Scouter selection">
-<label>Class<select id="job"><option value="호영">Hoyoung</option disabled>Ren, awaiting verified support</option></select></label>
-<label>Scouter<select id="region"><option>GMS</option><option>KMS</option></select></label>
+
+<label>Scouter<select id="region"><option value="GMS">GMS</option><option value="KMS">KMS</option></select></label>
 <button id="grab" disabled>Grab Scouter info</button><span id="capture-note"></span>
 </section>
+<p id="class-note" class="fine" hidden></p>
 <p id="status" role="status" aria-live="polite">Loading saved data…</p>
-<nav class="admin-tabs" role="tablist" aria-label="Admin sections"><button id="skills-tab" role="tab" aria-selected="true" aria-controls="skills-panel" tabindex="0">Skills</button><button id="priorities-tab" role="tab" aria-selected="false" aria-controls="priorities-panel" tabindex="-1">Priorities</button></nav>
+<nav id="section-tabs" class="admin-tabs" role="tablist" aria-label="Hoyoung sections"><button id="skills-tab" role="tab" aria-selected="true" aria-controls="skills-panel" tabindex="0">Skills</button><button id="priorities-tab" role="tab" aria-selected="false" aria-controls="priorities-panel" tabindex="-1">Priorities</button></nav>
 <section id="skills-panel" role="tabpanel" aria-labelledby="skills-tab">
 <div class="panel"><div class="panel-head"><h2>Skills <span id="skill-count"></span></h2><div class="actions"><button id="add-tags" disabled>Add standard tags</button><button id="save-skills" disabled>Save skills</button></div></div>
 <p class="fine">Long names appear in Current HEXA Matrix. Short names appear in Upgrade Priority.</p>
@@ -23,4 +27,4 @@
 <div class="panel"><div class="panel-head"><h2>Saved priorities <span id="priority-count"></span></h2><label class="upload-button" role="button" tabindex="0">Upload backup<input id="backup" type="file" accept="application/json,.json" class="visually-hidden"></label></div><div id="registered"></div></div>
 <details class="panel advanced"><summary>Advanced, import a Scouter response</summary><label>Order<select id="import-world"><option value="heroic">Heroic</option><option value="interactive">Interactive</option></select></label><label>Response file<input id="response-file" type="file" accept=".json,.txt,application/json"></label><p class="fine">Use a response for the selected Scouter region. Import both orders before saving a pair.</p></details>
 </section>
-</main><script type="module" src="priority-review.js"></script></body></html>
+</section></main><script type="module" src="priority-review.js"></script></body></html>

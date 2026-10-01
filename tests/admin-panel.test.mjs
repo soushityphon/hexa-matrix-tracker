@@ -100,3 +100,14 @@ assert.deepEqual(storedCapture.steps,capturedOrder.steps);
 assert.equal((await call('POST',{...capturedPair,id:'pair_bad_capture',orders:{...capturedPair.orders,heroic:{...capturedOrder,steps:[{...capturedOrder.steps[0],sourceCost:{from:0,erda:5,frags:24}}]}}})).status,400);
 assert.equal(sqlite.prepare('SELECT count(*) AS n FROM priority_preview WHERE mode LIKE ?').get('pair_bad_capture%').n,0);
 console.log('D1 pair save and rename preserve exact captured schedules/FD; schedule mismatch rolls back');
+
+const hoyoungBefore=sqlite.prepare('SELECT review_json FROM admin_skills WHERE job = ?').get('호영').review_json;
+const prioritiesBefore=sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all();
+const renReview={job:'렌',rows:[{coreId:'skillCore1',source:{coreId:'skillCore1',sourceName:'Synthetic Ren source',icon:'https://maplescouter.com/hexaskill/Len_1.png'},name:'Reviewed Ren',shortName:'Ren Origin',category:'Skill',tag:'Origin'}]};
+assert.equal((await call('PUT',renReview)).status,200);
+const renState=await (await worker.fetch(new Request('https://test.example/api/admin-panel?job='+encodeURIComponent('렌'),{headers}),env)).json();
+assert.equal(renState.skills.job,'렌');assert.deepEqual(renState.drafts,{});
+assert.equal(sqlite.prepare('SELECT review_json FROM admin_skills WHERE job = ?').get('호영').review_json,hoyoungBefore);
+assert.deepEqual(sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all(),prioritiesBefore);
+assert.equal((await (await call('GET')).json()).skills.job,'호영');
+console.log('Ren skill reviews and class tabs retain separate D1 records without changing Hoyoung priorities');

@@ -9,6 +9,10 @@ const el = (tag, text, className) => { const node = document.createElement(tag);
 let captureCatalogue = null;
 let drafts = {}, rows = [], orders = {}, captureRegion = null, skillDirty = false, loaded = false, busy = false;
 const cache = new Map();
+const classStates=new Map();
+let currentJob='호영', currentView='skills';
+const isRen=()=>currentJob==='렌';
+const jobLabel=()=>isRen()?'Ren':'Hoyoung';
 const pauseKey = 'hexa-scouter-pause-until';
 let pauseUntil = 0;
 try { pauseUntil = Number(sessionStorage.getItem(pauseKey)) || 0; } catch { /* In-page fallback. */ }
@@ -28,10 +32,13 @@ function controls() {
   $('#grab').disabled = !loaded || busy;
   $('#save-skills').disabled = !loaded || busy || !rows.length;
   $('#add-tags').disabled = !loaded || busy || !rows.length;
-  $('#save-pair').disabled = !loaded || busy || !orders.heroic || !orders.interactive || captureRegion !== $('#region').value;
+  $('#save-pair').disabled = isRen() || !loaded || busy || !orders.heroic || !orders.interactive || captureRegion !== $('#region').value;
   $('#job').disabled = busy; $('#region').disabled = busy;
+  $('#hoyoung-tab').disabled=busy;$('#ren-tab').disabled=busy;
+  $('#response-file').disabled=isRen()||busy;$('#backup').disabled=isRen()||busy;
 }
 function tab(name) {
+  currentView=name;
   for (const key of ['skills','priorities']) { const selected = key === name; $(`#${key}-tab`).setAttribute('aria-selected', String(selected)); $(`#${key}-tab`).tabIndex = selected ? 0 : -1; $(`#${key}-panel`).hidden = !selected; }
 }
 for (const name of ['skills','priorities']) {
@@ -76,7 +83,7 @@ function draftFromResponse(response, region, world, catalogue) {
   return {capturedCosts,costProvenance,sourceMode:mode,steps:extracted.steps,statIcons:inspected.statIcons,newNodes:[],names:Object.fromEntries(NODES.map(node=>[node.short,node.name])),shortNames:Object.fromEntries(NODES.map(node=>[node.short,node.short])),source:`Maple Scouter ${region}, checked ${new Date().toISOString()}, benchmark ${String(response.standard || 'not recorded').slice(0,80)}`};
 }
 function renderOrders() {
-  $('#order-context').textContent = captureRegion ? `Hoyoung · ${captureRegion} source` : 'Grab Scouter info to review both orders.';
+  $('#order-context').textContent = captureRegion ? `${jobLabel()} · ${captureRegion} source` : 'Grab Scouter info to review both orders.';
   $('#order-results').replaceChildren();
   for(const world of ['heroic','interactive']) {
     const order=orders[world],card=el('article',undefined,'order-card');card.append(el('h3',world==='heroic'?'Heroic':'Interactive'));
@@ -106,23 +113,58 @@ function renderRegistered() {
     const enabled=group.drafts.every(draft=>draft.enabled);
     button(enabled?'Make unavailable':'Make available',()=>mutation('PATCH',{id:group.id,enabled:!enabled}));
     button('Rename',async()=>{const name=prompt('Priority name',group.name);if(name?.trim())await mutation('PATCH',{id:group.id,name});});
-    button('Download',()=>download({schema:1,type:'hexa-priority-backup',name:group.name,drafts:group.drafts,skills:rows.length?{job:'호영',rows}:null},`hexa-${group.id}.json`));
+    button('Download',()=>download({schema:1,type:'hexa-priority-backup',name:group.name,drafts:group.drafts,skills:rows.length?{job:currentJob,rows}:null},`hexa-${group.id}.json`));
     button('Delete',async()=>{if(confirm(`Delete ${group.name} and its ${group.drafts.length} saved order(s)?`))await mutation('DELETE',{id:group.id});});
     card.append(details,actions);$('#registered').append(card);
   }
 }
 async function reload() {
-  const result=await request('/api/admin-panel');drafts=result.drafts;
+  const result=await request('/api/admin-panel?job='+encodeURIComponent(currentJob));drafts=result.drafts;
   if(!skillDirty) rows=result.skills?.rows || rows;
   renderSkills();renderRegistered();renderOrders();
+}
+async function selectClass(job) {
+  if(busy||job===currentJob)return;
+  classStates.set(currentJob,{drafts,rows,orders,captureRegion,captureCatalogue,skillDirty,region:$('#region').value,view:currentView,note:$('#capture-note').textContent,pairName:$('#pair-name').value});
+  currentJob=job;$('#job').value=job;
+  const saved=classStates.get(job);
+  ({drafts,rows,orders,captureRegion,captureCatalogue,skillDirty}=saved || {drafts:{},rows:[],orders:{},captureRegion:null,captureCatalogue:null,skillDirty:false});
+  $('#pair-name').value=saved?.pairName || '';
+  $('#region').value=saved?.region || (isRen()?'KMS':'GMS');$('#capture-note').textContent=saved?.note || '';
+  for(const [id,value] of [['hoyoung-tab','호영'],['ren-tab','렌']]) {const selected=job===value;$('#'+id).setAttribute('aria-selected',String(selected));$('#'+id).tabIndex=selected?0:-1;}
+  $('#class-panel').setAttribute('aria-labelledby',isRen()?'ren-tab':'hoyoung-tab');
+  $('#section-tabs').setAttribute('aria-label',jobLabel()+' sections');
+  $('#class-note').hidden=!isRen();$('#class-note').textContent='Ren capture review uses the rank 1 KMS benchmark. Skill names can be saved. Priority saving and tracker availability are not enabled yet.';
+  tab(saved?.view || 'skills');renderSkills();renderRegistered();renderOrders();
+  busy=true;controls();try {await reload();message(`${jobLabel()} data is ready.`);}catch(error){message(error.message,true);}finally{busy=false;controls();}
+}
+for(const [id,job] of [['hoyoung-tab','호영'],['ren-tab','렌']]) {
+  $('#'+id).addEventListener('click',()=>selectClass(job));
+  $('#'+id).addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const next=event.key==='Home'?'호영':event.key==='End'?'렌':job==='렌'?'호영':'렌';selectClass(next).then(()=>$(next==='렌'?'#ren-tab':'#hoyoung-tab').focus());}});
 }
 $('#region').addEventListener('change',()=>{orders={};captureRegion=null;$('#capture-note').textContent='';renderOrders();});
 $('#grab').addEventListener('click',async()=>{
   if(Date.now()<pauseUntil){message('Scouter refused a recent request. Wait five minutes before trying again.',true);return;}
   busy=true;controls();const region=$('#region').value;orders={};captureRegion=region;renderOrders();
   try {
+    if(isRen()) {
+      message('Grabbing the rank 1 Ren profile and Scouter priorities…');
+      const result=await cachedRequest('ren-preview:'+region,'/api/ren-capture','POST',{region});
+      if(result.catalogue) {captureCatalogue=structuredClone(result.catalogue);rows=mergeSkills(result.catalogue,rows,{});skillDirty=true;}
+      for(const [world,candidate] of Object.entries(result.captures || {})) {
+        orders[world]={preview:true,steps:candidate.steps.map(step=>({skill:step.sourceName,coreId:step.coreId,level:step.level,...(step.fd.checkpointGainPercent===undefined||step.fd.checkpointGainPercent===null?{}:{fdGain:step.fd.checkpointGainPercent})})),statIcons:Object.fromEntries(candidate.steps.filter(step=>/^hexaStat[123]$/i.test(step.coreId)).map(step=>[step.sourceName,step.icon])),capture:candidate};
+        const stats=candidate.steps.filter(step=>/^hexaStat[123]$/i.test(step.coreId)).map(step=>({coreId:step.coreId.toLowerCase(),sourceName:step.sourceName,icon:step.icon,category:'HEXA Stat'}));
+        rows=mergeSkills({job:'렌',skills:stats},rows,{});
+      }
+      const b=result.benchmark;
+      $('#capture-note').textContent=b?`${b.name} · level ${b.characterLevel} · KMS rank 1 benchmark` : '';
+      renderSkills();renderOrders();
+      if(result.error)throw new Error(result.error);
+      message('Ren priorities captured for review. You can save skill names. Saving Ren priorities is not available yet.');
+      return;
+    }
     message('Grabbing Scouter skills, icons and costs…');
-    const catalogue=await cachedRequest(`catalogue:${region}`,`/api/scouter-catalogue?job=${encodeURIComponent($('#job').value)}&region=${region}&world=Heroic`);
+    const catalogue=await cachedRequest(`catalogue:${currentJob}:${region}`,`/api/scouter-catalogue?job=${encodeURIComponent($('#job').value)}&region=${region}&world=Heroic`);
     captureCatalogue = structuredClone(catalogue);
     rows=mergeSkills(catalogue,rows,drafts);skillDirty=true;renderSkills();
     for(const world of ['heroic','interactive']) {
@@ -146,13 +188,14 @@ $('#grab').addEventListener('click',async()=>{
     message(`${error.message} The remaining requests were stopped. Saved data is unchanged.`,true);
   } finally {busy=false;controls();renderOrders();}
 });
-$('#add-tags').addEventListener('click',()=>{for(const row of rows){const tag=defaultTags[trackerSkill(row.source)?.short];if(tag && !row.tag) row.tag=tag;}skillDirty=true;renderSkills();message('Standard tags added to empty fields. Save skills to keep them.');});
+$('#add-tags').addEventListener('click',()=>{for(const row of rows){const tag=isRen()?row.source.tag:defaultTags[trackerSkill(row.source)?.short];if(tag && !row.tag) row.tag=tag;}skillDirty=true;renderSkills();message('Standard tags added to empty fields. Save skills to keep them.');});
 $('#save-skills').addEventListener('click',async()=>{
   busy=true;controls();
-  try {const review=validateSkills({job:'호영',rows});await request('/api/admin-panel','PUT',review);skillDirty=false;await reload();message('Skills saved for Hoyoung. Saved priority orders are unchanged.');}
+  try {const review=validateSkills({job:currentJob,rows});await request('/api/admin-panel','PUT',review);skillDirty=false;await reload();message(`Skills saved for ${jobLabel()}. Saved priority orders are unchanged.`);}
   catch(error){message(error.message,true);}finally{busy=false;controls();}
 });
 $('#save-pair').addEventListener('click',async()=>{
+  if(isRen()){message('Ren priority saving is not available yet.',true);return;}
   busy=true;controls();
   try {
     const pair={id:'pair_'+crypto.randomUUID().replaceAll('-',''),name:$('#pair-name').value,enabled:false,region:captureRegion,orders};

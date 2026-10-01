@@ -1,6 +1,7 @@
 // Bundled with the static files by scripts/build-worker.mjs.
 import { validateSkills, validatePair, applySkills, trackerCatalogue, requireOrderSkills } from './admin-panel-model.js';
 import { validateDraft } from './priority-draft.js';
+import { cachedRenPreview } from './ren-preview.js';
 import { scouterRequestContext } from './scouter-request-context.js';
 import { acquireScouterCatalogue, catalogueSelection } from './scouter-catalogue-acquisition.js';
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png' };
@@ -83,8 +84,10 @@ async function adminPanel(request, env) {
     const rows = await env.DB.prepare('SELECT mode, draft_json FROM priority_preview').all();
     const drafts = Object.fromEntries((rows.results || []).map(row => [row.mode, validateDraft(JSON.parse(row.draft_json))]));
     if (request.method === 'GET') {
-      const review = await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind('호영').first();
-      return Response.json({drafts, skills:review ? validateSkills(JSON.parse(review.review_json)) : null}, {headers:noStore});
+      const job=new URL(request.url).searchParams.get('job') || '호영';
+      if(!['호영','렌'].includes(job))return new Response('Choose Hoyoung or Ren',{status:400,headers:noStore});
+      const review = await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind(job).first();
+      return Response.json({drafts:Object.fromEntries(Object.entries(drafts).filter(([,draft])=>(draft.job || '호영')===job)), skills:review ? validateSkills(JSON.parse(review.review_json)) : null}, {headers:noStore});
     }
     if (!['PUT','POST','PATCH','DELETE'].includes(request.method)) return new Response('Method not allowed', {status:405});
     if (Number(request.headers.get('content-length')) > 250000) return new Response('Payload too large', {status:413});
@@ -249,6 +252,17 @@ async function requestDiagnostic(request, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === '/api/ren-capture') {
+      if(!isAdmin(request,env))return new Response('Admin access required',{status:403,headers:noStore});
+      if(request.method!=='POST')return new Response('Method not allowed',{status:405,headers:noStore});
+      const body=await request.text();
+      if(body.length>1000)return new Response('Payload too large',{status:413});
+      let selection;try{selection=JSON.parse(body);}catch{return new Response('Invalid JSON',{status:400});}
+      if(!['GMS','KMS'].includes(selection?.region)||Object.keys(selection).length!==1)return new Response('Choose GMS or KMS for Ren capture review',{status:400,headers:noStore});
+      if(!env.MAPLE_SCOUTER_API_KEY)return new Response('Ren request is not configured',{status:503,headers:noStore});
+      try{return Response.json(await cachedRenPreview(env.MAPLE_SCOUTER_API_KEY,selection.region),{headers:noStore});}
+      catch{return new Response('Ren capture failed. Saved data is unchanged.',{status:502,headers:noStore});}
+    }
     if (url.pathname === '/api/tracker-catalogue') return trackerSkills(request, env);
     if (url.pathname === '/api/admin-maintenance') return adminMaintenance(request, env);
     if (url.pathname === '/api/admin-panel') return adminPanel(request, env);
