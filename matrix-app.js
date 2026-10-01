@@ -2,7 +2,7 @@ let NODES = [], statNodes = [];
 let nodeByShort = {};
 import { setTrackerCatalogue } from './planner.js';
 setTrackerCatalogue([]);
-import { activeNodes, combinedSourceGain, displayPriorityRows, matrixTotals, nextCheckpoint, rangeCost } from './planner.js';
+import { combinedSourceGain, displayPriorityRows, matrixTotals, nextCheckpoint, rangeCost } from './planner.js';
 import { fetchSharedPreview, previewCatalog } from './preview-priorities.js';
 import { skillAccent } from './skill-colours.js';
 
@@ -174,6 +174,16 @@ function upgradeCost(label, cost, time, action = '') {
 
 function render() {
   const mode = syncPriorityOptions();
+  const order = catalog.priorities[mode] || [];
+  // A capture's catalogue can contain skills that its priority never uses.
+  // Keep their inputs and progress, but scope the matrix to this exact order.
+  const available = new Set(order.map(step => step.skill));
+  $$('[data-node-row]').forEach(row => { row.hidden = !available.has(row.dataset.nodeRow); });
+  $$('.node-group').forEach(group => { group.hidden = !group.querySelector('[data-node-row]:not([hidden])'); });
+  $$('[data-stat]').forEach(input => { input.closest('.stat-row').hidden = !available.has(input.dataset.stat); });
+  $('#stat-heading').hidden = !statNodes.some(node => available.has(node.short));
+  $('#includeJanus').closest('.include-option').hidden = !available.has('Janus');
+  setTrackerCatalogue([]);
   if (!mode) {
     highlightCurrentSkill(null);
     $('#version-name').textContent = `${$('#patch').selectedOptions[0]?.textContent || 'Update'} / ${$('[name="world"]:checked').value === 'heroic' ? 'Fragments' : 'Sol Erda'}`;
@@ -191,14 +201,13 @@ function render() {
     const tag=nodeByShort[skill]?.tag || statNodes.find(node=>node.short===skill)?.tag || '';
     return `${tag ? `<span class="skill-tag">${escapeHtml(tag)}</span> ` : ''}${escapeHtml(previewDrafts[mode]?.shortNames?.[skill] || skill)}`;
   };
-  const order = catalog.priorities[mode];
   const captured = previewDrafts[mode]?.capturedCosts;
   if (!captured) {
     $('#next-upgrade').innerHTML = '<div class="metric"><strong>Captured level costs unavailable</strong><p>Grab Scouter info and save a new priority pair in the Admin Panel.</p></div>';
     $('#priority').replaceChildren(); $('#totals').replaceChildren(); $('#completion').replaceChildren();
     $('#time-estimate').hidden = true; highlightCurrentSkill(null); return;
   }
-  setTrackerCatalogue(NODES.filter(node=>captured[node.short]).map(node => ({...node, costs:captured[node.short].levels, initialLevel:captured[node.short].freeBaseLevel})));
+  setTrackerCatalogue(NODES.filter(node=>available.has(node.short) && captured[node.short]).map(node => ({...node, costs:captured[node.short].levels, initialLevel:captured[node.short].freeBaseLevel})));
   const current = levels();
   const statUnlocked = {};
   $$('[data-stat-unlocked]').forEach(input => {
@@ -255,9 +264,7 @@ function render() {
     const name = input.closest('.stat-row').querySelector('.stat-name');
     if (name) name.textContent = previewDrafts[mode]?.names[input.dataset.stat] || input.dataset.stat;
   });
-  const available = new Set(activeNodes(sourceMode).map(node => node.short));
   $$('[data-node-row]').forEach(row => {
-    row.hidden = !available.has(row.dataset.nodeRow);
     row.querySelector('.node-name').textContent = previewDrafts[mode]?.names[row.dataset.nodeRow] || nodeByShort[row.dataset.nodeRow].name;
     const label = row.querySelector('.node-label');
     let tag = label.querySelector('.skill-tag');
