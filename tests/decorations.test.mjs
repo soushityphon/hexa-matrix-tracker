@@ -41,22 +41,71 @@ assert.equal(control.getAttribute('aria-pressed'), 'true');
 const original = doc.querySelector('.cloud');
 renderer.setClass('hoyoung'); assert.equal(doc.querySelector('.cloud'), original);
 renderer.setClass('ren');
-assert.equal(count('.cloud'), 0); assert.equal(count('.decoration-background .petal'), 18);
-assert.equal(count('.petal-front'), 3);
+assert.equal(count('.cloud'), 0); assert.equal(count('.decoration-background .petal'), 36);
+assert.equal(count('.petal-front'), 6);
 assert.equal(parseFloat(doc.querySelector('.petal').style.getPropertyValue('--size')), Math.round(doc.querySelector('.petal img').width * .85));
 assert.equal(parseFloat(doc.querySelector('.petal-front').style.getPropertyValue('--size')), Math.round(doc.querySelector('.petal-front img').width * .6));
+const petals = [...doc.querySelectorAll('.petal')];
+const value = (node, name) => parseFloat(node.style.getPropertyValue(name));
+assert.ok(new Set(petals.map(node => node.style.getPropertyValue('--start-x'))).size > 30);
+assert.ok(new Set(petals.map(node => node.style.getPropertyValue('--alpha'))).size > 12);
+assert.ok(petals.some(node => value(node, '--blur') > 0));
+assert.ok(petals.some(node => value(node, '--blur') === 0));
+for (const node of petals) {
+  const front = node.classList.contains('petal-front');
+  assert.ok(value(node, '--start-x') > value(node, '--x1'));
+  assert.ok(value(node, '--x1') > value(node, '--x2'));
+  assert.ok(value(node, '--x2') > value(node, '--end-x'));
+  assert.ok(value(node, '--y1') < value(node, '--y2'));
+  assert.ok(value(node, '--alpha') >= (front ? .18 : .22));
+  assert.ok(value(node, '--alpha') <= (front ? .34 : .48));
+  assert.ok(value(node, '--blur') <= (front ? .8 : .35));
+  assert.ok(value(node, '--duration') >= (front ? 70 : 32));
+  assert.ok(value(node, '--duration') <= (front ? 90 : 50));
+}
+const iteration = (node, name) => {
+  const event = new win.Event('animationiteration', { bubbles: true });
+  Object.defineProperty(event, 'animationName', { value: name });
+  node.dispatchEvent(event);
+};
+const tracked = doc.querySelector('.petal');
+const timeline = ['--duration', '--delay', '--size', '--sway-duration', '--sway-delay'].map(name => tracked.style.getPropertyValue(name));
+let previousPath = tracked.style.cssText;
+iteration(tracked.querySelector('img'), 'petal-turn');
+assert.equal(tracked.style.cssText, previousPath);
+for (let i = 0; i < 10; i++) {
+  iteration(tracked, 'petal-drift');
+  assert.notEqual(tracked.style.cssText, previousPath);
+  previousPath = tracked.style.cssText;
+  assert.deepEqual(['--duration', '--delay', '--size', '--sway-duration', '--sway-delay'].map(name => tracked.style.getPropertyValue(name)), timeline);
+  assert.equal(count('.petal'), 42);
+}
+Object.defineProperty(doc, 'hidden', { configurable: true, value: true });
+iteration(tracked, 'petal-drift'); assert.equal(tracked.style.cssText, previousPath);
+Object.defineProperty(doc, 'hidden', { configurable: true, value: false });
+const front = doc.querySelector('.petal-front'), oldFront = front.style.cssText;
+iteration(front, 'foreground-drift'); assert.notEqual(front.style.cssText, oldFront);
 for (let i = 0; i < 50; i++) renderer.setClass(i % 2 ? 'ren' : 'hoyoung');
-assert.equal(layers().length, 2); assert.equal(count('.petal'), 21);
-mobile.set(true); assert.equal(count('.decoration-background .petal'), 9);
-assert.equal(count('.petal-front'), 3);
+assert.equal(layers().length, 2); assert.equal(count('.petal'), 42);
+iteration(tracked, 'petal-drift'); assert.equal(tracked.style.cssText, previousPath); // Detached particles stay inert.
+mobile.set(true); assert.equal(count('.decoration-background .petal'), 18);
+assert.equal(count('.petal-front'), 6);
+for (const node of doc.querySelectorAll('.petal')) {
+  const front = node.classList.contains('petal-front');
+  assert.ok(value(node, '--alpha') >= (front ? .12 : .18));
+  assert.ok(value(node, '--alpha') <= (front ? .24 : .40));
+}
 const broken = doc.querySelector('.petal');
 broken.querySelector('img').dispatchEvent(new win.Event('error')); assert.equal(broken.hidden, true);
 const loaded = doc.querySelector('.petal-front');
 loaded.querySelector('img').dispatchEvent(new win.Event('load')); assert.ok(loaded.classList.contains('is-loaded'));
 control.click(); assert.equal(win.localStorage.getItem(key), 'off');
 assert.ok(layers().every(layer => layer.hidden));
+const pausedPath = loaded.style.cssText;
+iteration(loaded, 'foreground-drift'); assert.equal(loaded.style.cssText, pausedPath);
 assert.equal(win.localStorage.getItem('hexa-tracker-hoyoung-v1'), storageBefore);
 renderer.destroy(); assert.equal(layers().length, 0);
+iteration(loaded, 'foreground-drift'); assert.equal(loaded.style.cssText, pausedPath);
 renderer = boot('ren'); assert.ok(layers().every(layer => layer.hidden));
 assert.equal(count('.petal'), 0); // Saved Off does not request decoration images.
 renderer.setClass('hoyoung'); control.click(); assert.equal(count('.cloud'), 5);

@@ -3,7 +3,7 @@ import { decorationAssets } from './decoration-assets.js';
 const preferenceKey = 'hexa-tracker-animations-v1';
 const settings = {
   hoyoung: { desktop: 8, mobile: 5, duration: 120, variation: 35 },
-  ren: { desktop: 18, mobile: 9, duration: 32, variation: 18 }
+  ren: { desktop: 36, mobile: 18, foreground: 6, duration: 32, variation: 18 }
 };
 
 // Decoration owns no tracker state, data requests, timers or frame loop.
@@ -21,15 +21,15 @@ export function createDecorations({ document, window, control, className }) {
     return layer;
   });
 
-  function particle(asset, index, count, foreground = false, cloudSpeed = 'normal') {
+  function particle(asset, foreground = false, cloudSpeed = 'normal') {
     const config = settings[className];
     const wrapper = document.createElement('span');
     wrapper.className = `decoration-particle ${className === 'hoyoung' ? 'cloud' : 'petal'}${foreground ? ' petal-front' : ''}`;
     const duration = foreground ? 70 + Math.random() * 20 : className === 'hoyoung' && cloudSpeed === 'fast' ? 90 + Math.random() * 20 : className === 'hoyoung' && cloudSpeed === 'slow' ? 170 + Math.random() * 25 : config.duration + Math.random() * config.variation;
     wrapper.style.setProperty('--duration', `${duration.toFixed(2)}s`);
     // Cloud height and phase are independent, so they never form an ordered diagonal.
-    // Front petals use staggered phases to avoid moving as one group.
-    const phase = className === 'hoyoung' ? Math.random() : (index + Math.random() * .8) / count;
+    // Independent phases and speeds keep both scenes from forming ordered lines.
+    const phase = Math.random();
     wrapper.style.setProperty('--delay', `${(-duration * phase).toFixed(2)}s`);
     const scale = className === 'hoyoung' ? (narrowScreen?.matches ? .4 : .65) : (foreground ? .6 : .85);
     wrapper.style.setProperty('--size', `${Math.round(asset.width * scale)}px`);
@@ -37,6 +37,37 @@ export function createDecorations({ document, window, control, className }) {
     wrapper.style.setProperty('--top', `${6 + Math.random() * 84}%`);
     wrapper.style.setProperty('--start-x', `${25 + Math.random() * 100}vw`);
     wrapper.style.setProperty('--turn', `${20 + Math.random() * 65}deg`);
+    if (className === 'ren') {
+      const mobile = !!narrowScreen?.matches;
+      const randomisePass = () => {
+        const start = 35 + Math.random() * 105;
+        const travel = 95 + Math.random() * 65;
+        const set = (name, value, unit = '') => wrapper.style.setProperty(name, `${value.toFixed(2)}${unit}`);
+        set('--start-x', start, 'vw');
+        set('--x1', start - travel * (foreground ? .30 : .28) + (Math.random() - .5) * 10, 'vw');
+        set('--x2', start - travel * (foreground ? .75 : .62) + (Math.random() - .5) * 14, 'vw');
+        set('--end-x', start - travel, 'vw');
+        set('--y1', 20 + Math.random() * 10, 'vh');
+        set('--y2', (foreground ? 76 : 58) + Math.random() * 14, 'vh');
+        const alpha = foreground ? (mobile ? .12 : .18) + Math.random() * (mobile ? .12 : .16) : (mobile ? .18 : .22) + Math.random() * (mobile ? .22 : .26);
+        set('--alpha', alpha);
+        set('--alpha-low', alpha * (.65 + Math.random() * .20));
+        // Blur is fixed for a pass, sparse and slight, never animated.
+        set('--blur', Math.random() < .25 ? (foreground ? .3 : .15) + Math.random() * (foreground ? .5 : .2) : 0, 'px');
+        set('--sway', 2 + Math.random() * (foreground ? 10 : 5), 'px');
+        set('--base-turn', Math.random() * 360, 'deg');
+        set('--turn', 15 + Math.random() * 55, 'deg');
+      };
+      wrapper.style.setProperty('--sway-duration', `${(6 + Math.random() * 9).toFixed(2)}s`);
+      wrapper.style.setProperty('--sway-delay', `${(-Math.random() * 15).toFixed(2)}s`);
+      randomisePass();
+      // Re-roll only at the clipped travel boundary. Keep duration/delay intact
+      // so the running CSS timeline never jumps. No timer or frame loop.
+      wrapper.addEventListener('animationiteration', event => {
+        if (event.target === wrapper && ['petal-drift', 'foreground-drift'].includes(event.animationName)
+          && !disposed && enabled && !document.hidden && !reducedMotion?.matches && wrapper.isConnected) randomisePass();
+      });
+    }
     const image = document.createElement('img');
     image.alt = '';
     image.draggable = false;
@@ -74,13 +105,12 @@ export function createDecorations({ document, window, control, className }) {
     }
     const offset = Math.floor(Math.random() * background.length);
     for (let index = 0; index < count; index++) {
-      layers[0].append(particle(background[(index + offset) % background.length], index, count, false, speeds[index]));
+      layers[0].append(particle(background[(index + offset) % background.length], false, speeds[index]));
     }
     if (className === 'ren') {
       const large = all.filter(asset => asset.width > 28);
-      for (let index = 0; index < 3; index++) {
-        const front = particle(large[Math.floor(Math.random() * large.length)], index, 3, true);
-        front.style.setProperty('--start-x', `${85 + Math.random() * 35}vw`);
+      for (let index = 0; index < config.foreground; index++) {
+        const front = particle(large[Math.floor(Math.random() * large.length)], true);
         if (mobile) front.style.setProperty('--size', `${Math.round(parseFloat(front.style.getPropertyValue('--size')) * .7)}px`);
         layers[1].append(front);
       }

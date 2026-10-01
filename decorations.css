@@ -31,7 +31,7 @@ body { isolation: isolate; }
 .decoration-particle.is-loaded { opacity: var(--alpha); }
 .cloud { top: var(--top); left: 0; animation-name: cloud-drift; }
 .petal { top: 0; left: 0; animation-name: petal-drift; }
-.petal img { animation: petal-turn 9s ease-in-out infinite alternate; }
+.petal img { filter: blur(var(--blur, 0px)); animation: petal-turn var(--sway-duration) var(--sway-delay) ease-in-out infinite alternate; }
 .petal-front { animation-name: foreground-drift; }
 .decoration-layer.is-paused .decoration-particle, .decoration-layer.is-paused img { animation-play-state: paused; }
 @keyframes cloud-drift {
@@ -39,22 +39,26 @@ body { isolation: isolate; }
   to { transform: translate3d(100vw, 0, 0); }
 }
 @keyframes petal-drift {
-  from { transform: translate3d(var(--start-x), -15vh, 0); }
-  to { transform: translate3d(calc(var(--start-x) - 110vw), 115vh, 0); }
+  0% { transform: translate3d(var(--start-x), -15vh, 0); opacity: 0; }
+  10% { opacity: var(--alpha); }
+  30% { transform: translate3d(var(--x1), var(--y1), 0); opacity: var(--alpha); }
+  60% { transform: translate3d(var(--x2), var(--y2), 0); opacity: var(--alpha-low); }
+  90% { opacity: var(--alpha); }
+  100% { transform: translate3d(var(--end-x), 115vh, 0); opacity: 0; }
 }
 @keyframes petal-turn {
-  from { transform: translateX(-3px) rotate(calc(-1 * var(--turn))); }
-  to { transform: translateX(3px) rotate(var(--turn)); }
+  from { transform: translateX(calc(-1 * var(--sway))) rotate(calc(var(--base-turn) - var(--turn))); }
+  to { transform: translateX(var(--sway)) rotate(calc(var(--base-turn) + var(--turn))); }
 }
 /* Each front petal is visible for part of its long cycle, then has a quiet gap. */
 @keyframes foreground-drift {
   0%, 10% { transform: translate3d(var(--start-x), -15vh, 0); opacity: 0; }
   15% { opacity: var(--alpha); }
-  55% { opacity: var(--alpha); }
-  65%, 100% { transform: translate3d(calc(var(--start-x) - 130vw), 115vh, 0); opacity: 0; }
+  35% { transform: translate3d(var(--x1), var(--y1), 0); opacity: var(--alpha-low); }
+  55% { transform: translate3d(var(--x2), var(--y2), 0); opacity: var(--alpha); }
+  65%, 100% { transform: translate3d(var(--end-x), 115vh, 0); opacity: 0; }
 }
-.petal-front:not(.is-loaded) { visibility: hidden; }
-@media (max-width: 640px) { .petal-front { --alpha: .22 !important; } }
+.petal:not(.is-loaded) { visibility: hidden; }
 /* CSS backs up lifecycle handling, including before JavaScript starts. */
 @media (prefers-reduced-motion: reduce) {
   .decoration-layer { display: none; }
