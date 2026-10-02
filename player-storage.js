@@ -94,6 +94,7 @@ export function createPlayerStorage(getStorage, onStatus = () => {}) {
     return true;
   }
   return {read,write,remove,replaceMany,
+    canBackup:key=>{if(!sessions.has(key))read(key);return !sessions.get(key).protected;},
     readPreference:key=>access(storage=>storage.getItem(key)).value ?? null,
     writePreference:(key,value)=>access(storage=>storage.setItem(key,value)).ok};
 }

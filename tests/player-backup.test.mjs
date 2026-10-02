@@ -23,4 +23,12 @@ const wrong=structuredClone(backup);wrong.classes.Other=wrong.classes.Len;assert
 const malformed=structuredClone(backup);malformed.classes.Len.progress.levels.skillCore1=31;assert.throws(()=>parsePlayerBackup(malformed,models));
 const stale=structuredClone(backup);stale.classes.Len.progress.infographicUndo={};assert.throws(()=>parsePlayerBackup(stale,models));
 assert.throws(()=>createPlayerBackup({hoyoung:{levels:{Unknown:1}}},models));
+for(const change of [progress=>progress.levels=null,progress=>progress.levels.hexaStat1=21,progress=>progress.statUnlocked={skillCore1:true},progress=>progress.statLines={skillCore1:[0,0,0]},progress=>progress.extra=true]) {
+  const invalid=structuredClone(backup);change(invalid.classes.Hoyeong.progress);
+  assert.throws(()=>parsePlayerBackup(invalid,models));
+}
+const renamed=structuredClone(models);renamed.hoyoung.nodes[0].name='Owner renamed display';
+assert.deepEqual(parsePlayerBackup(backup,renamed),restored);
+const single=structuredClone(backup);delete single.classes.Len;
+assert.deepEqual(Object.keys(parsePlayerBackup(single,models)),['hoyoung']);
 console.log('Player backup source IDs, round trip, stale history removal and validation pass');

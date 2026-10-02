@@ -527,7 +527,11 @@ async function backupModels() {
 }
 async function currentBackup(models) {
   const classes={};
-  for(const className of Object.keys(PLAYER_CLASSES))classes[className]=playerStorage.read('hexa-tracker-'+className+'-v1');
+  for(const className of Object.keys(PLAYER_CLASSES)) {
+    const key='hexa-tracker-'+className+'-v1';
+    if(!playerStorage.canBackup(key))throw new Error('Saved progress for '+PLAYER_CLASSES[className]+' needs recovery before export');
+    classes[className]=playerStorage.read(key);
+  }
   return createPlayerBackup(classes,models);
 }
 function backupStatus(message,error=false) {
@@ -555,7 +559,7 @@ $('#import-progress-file').addEventListener('change',async event=>{
     const safety=await currentBackup(models);
     downloadJSON(safety,'hexa-matrix-before-import-'+new Date().toISOString().slice(0,10)+'.json');
     const replacements=Object.fromEntries(Object.entries(classes).map(([className,progress])=>['hexa-tracker-'+className+'-v1',progress]));
-    if(!playerStorage.replaceMany(replacements))throw new Error('Existing progress could not be safely replaced. No import was applied');
+    if(!playerStorage.replaceMany(replacements))throw new Error('Storage failed during import. Keep this tab open and retain the safety backup');
     saved=playerStorage.read(storageKey);
     selectedStats[activeClass]=null;renderInputs();render();
     backupStatus(`Imported ${names}. Infographic undo history was cleared as agreed.`);

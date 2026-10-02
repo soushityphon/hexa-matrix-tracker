@@ -4,6 +4,7 @@ export const PLAYER_BACKUP_FORMAT='hexa-player-backup';
 export const PLAYER_BACKUP_VERSION=1;
 export const PLAYER_CLASSES={hoyoung:'Hoyeong',ren:'Len'};
 const keyedFields=['levels','statUnlocked','statCompleted','statLines'];
+const supportedFields=new Set([...keyedFields,'mode','owned','perday','erdaRequest','epicDungeon','hideDone','includeJanus']);
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 
 function maps(model) {
@@ -18,6 +19,7 @@ function maps(model) {
 }
 function translateMap(value,map,direction) {
   if(value===undefined)return undefined;
+  if(!object(value))throw new Error('Backup skill state is not valid');
   const result={};
   for(const [key,item] of Object.entries(value)) {
     const translated=map.get(key);
@@ -36,6 +38,11 @@ export function encodePlayerClass(save,model) {
 export function decodePlayerClass(progress,model) {
   if(!object(progress))throw new Error('Backup progress is not valid');
   if(Object.hasOwn(progress,'infographicUndo'))throw new Error('Backup contains unsupported undo history');
+  if(Object.keys(progress).some(key=>!supportedFields.has(key)))throw new Error('Backup contains unsupported settings');
+  const statIds=new Set((model?.stats||[]).map(node=>node.sourceKey));
+  for(const field of ['statUnlocked','statCompleted','statLines']) {
+    if(progress[field]!==undefined&&(!object(progress[field])||Object.keys(progress[field]).some(key=>!statIds.has(key))))throw new Error('Backup Stat identity is not valid');
+  }
   const {bySource}=maps(model),save=structuredClone(progress);
   for(const field of keyedFields)if(save[field]!==undefined)save[field]=translateMap(save[field],bySource,'backup');
   if(!validatePlayerSave(save))throw new Error('Backup progress is not valid');

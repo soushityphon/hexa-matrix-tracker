@@ -6,6 +6,7 @@ import { currentDraft } from '../priority-draft.js';
 import { validatePair } from '../admin-panel-model.js';
 import { reconstructScouterOrder, discoverySelection } from '../scouter-discovery.js';
 import { renDraftFromCapture, renCatalogueFromDrafts } from '../ren-priority.js';
+import {createPlayerBackup} from '../player-backup.js';
 
 const stats=Object.keys(STAT_ICONS);
 const statSteps=stats.map(skill=>({skill,level:20}));
@@ -27,6 +28,8 @@ renBase.steps=[...statSteps,{skill:'ren_skillCore1',level:2,sourceCost:{from:1,.
 const ren=pair('렌','pair_ren_lines',{heroic:renBase,interactive:{...renBase,sourceMode:'ren_gms_interactive'}});
 const models={hoyoung:{nodes:[{...harmony,costs:costs.levels}],stats:stats.map(short=>({short,name:short,icon:STAT_ICONS[short]}))},ren:renCatalogueFromDrafts(ren)};
 const drafts={hoyoung:hy,ren};
+models.hoyoung.nodes[0].sourceKey='masteryCore1';
+models.hoyoung.stats.forEach((node,index)=>node.sourceKey='hexaStat'+(index+1));
 const hyKey='hexa-tracker-hoyoung-v1',renKey='hexa-tracker-ren-v1';
 let win;
 const tick=()=>new Promise(resolve=>setTimeout(resolve,20));
@@ -80,5 +83,27 @@ for(const raw of ['42','null','[]','{bad',JSON.stringify({statLines:{x:42}}),JSO
 }
 await boot({},'read');assert.equal(document.querySelectorAll('[data-node]').length,1);assert.equal($('#priority-sync').textContent,'');assert.match($('#save-status').textContent,/could not be read/);
 change('#class','ren');await tick();assert.ok(document.querySelectorAll('[data-node]').length);
+await win.happyDOM.abort();
+await boot({[hyKey]:JSON.stringify({levels:{Harmony:1},owned:42}),[renKey]:JSON.stringify({owned:7})});
+const downloads=[];
+const oldCreate=URL.createObjectURL,oldRevoke=URL.revokeObjectURL;
+URL.createObjectURL=blob=>{downloads.push(blob);return 'blob:test';};URL.revokeObjectURL=()=>{};
+win.HTMLAnchorElement.prototype.click=function(){};
+$('#export-progress').click();await tick();
+const exported=JSON.parse(await downloads[0].text());assert.equal(exported.classes.Hoyeong.progress.levels.masteryCore1,1);
+const incoming=createPlayerBackup({hoyoung:{levels:{Harmony:2},owned:99,perday:8}},models);
+async function importFile(value){
+  Object.defineProperty($('#import-progress-file'),'files',{configurable:true,value:[{size:100,text:async()=>JSON.stringify(value)}]});
+  $('#import-progress-file').dispatchEvent(new Event('change'));await tick();
+}
+await importFile(incoming);
+assert.match($('#backup-status').textContent,/Imported/);assert.equal($('#owned').value,'99');assert.equal($('[data-node]').value,'2');
+assert.equal(state(renKey).owned,7);assert.equal(JSON.parse(await downloads[1].text()).classes.Hoyeong.progress.owned,42);
+assert.deepEqual(state(hyKey).infographicUndo,{});
+const prior=localStorage.getItem(hyKey);globalThis.confirm=()=>false;
+await importFile(incoming);assert.equal(localStorage.getItem(hyKey),prior);assert.equal(downloads.length,2);
+globalThis.confirm=()=>true;incoming.classes.Hoyeong.progress.levels.masteryCore1=31;
+await importFile(incoming);assert.match($('#backup-status').textContent,/failed/);assert.equal(localStorage.getItem(hyKey),prior);assert.equal(downloads.length,2);
+URL.createObjectURL=oldCreate;URL.revokeObjectURL=oldRevoke;
 await win.happyDOM.abort();
 console.log('Player storage app: blocked reads/writes, damaged records, reset and class switching pass');
