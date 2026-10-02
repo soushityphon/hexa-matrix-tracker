@@ -145,12 +145,28 @@ export function createPlayerStorage(getStorage, onStatus = () => {}, withLock = 
       entry.raw=latest.value;entry.value=value;entry.reason='';entry.protected=false;report(entry);return true;
     });
   }
-  return {read,write,remove,replaceMany,check,adopt,
+  function continueSave(key,value,confirmReplacement=()=>true) {
+    if(!sessions.has(key))read(key);
+    const progress=structuredClone(value);
+    if(!validatePlayerSave(progress))return false;
+    return run([key],()=>{
+      const entry=sessions.get(key),latest=access(storage=>storage.getItem(key));
+      // This is an explicit conflict choice, never a bypass of damaged-record
+      // protection or a silent overwrite during an ordinary write/import.
+      if(entry.protected || entry.reason!=='conflict' || !latest.ok)return false;
+      try{if(latest.value!==null && !validatePlayerSave(JSON.parse(latest.value)))return false;}
+      catch{return false;}
+      if(!confirmReplacement())return false;
+      const raw=JSON.stringify(progress),result=access(storage=>storage.setItem(key,raw));
+      if(!result.ok){report(entry);return false;}
+      entry.raw=raw;entry.value=progress;entry.reason='';report(entry);return true;
+    });
+  }
+  return {read,write,remove,replaceMany,check,adopt,continueSave,
     flush:()=>pending,
     conflict:key=>sessions.get(key)?.reason==='conflict',
     session:key=>structuredClone(sessions.get(key)?.value ?? read(key)),
     canBackup:key=>{if(!sessions.has(key))read(key);return check(key)&&!sessions.get(key).protected;},
-    canRecover:key=>{if(!sessions.has(key))read(key);return !sessions.get(key).protected;},
     readPreference:key=>access(storage=>storage.getItem(key)).value ?? null,
     writePreference:(key,value)=>access(storage=>storage.setItem(key,value)).ok};
 }

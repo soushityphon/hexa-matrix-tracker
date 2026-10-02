@@ -53,6 +53,7 @@ function syncConflict() {
   $('#save-conflict').hidden=!conflict;
   $('#conflict-message').textContent=conflict ? `Saved ${PLAYER_CLASS_NAMES[activeClass]} progress changed in another tab. Editing is paused.` : '';
   $('#load-latest-save').disabled=sourcePaused() || saveActionPending;
+  $('#continue-tab-save').disabled=sourcePaused() || saveActionPending;
   syncPausedControls();
 }
 function checkActive() {return playerStorage.check(storageKey);}
@@ -736,16 +737,20 @@ $('#import-progress-file').addEventListener('change',async event=>{
     backupStatus(`Imported ${names}. Infographic undo history was cleared as agreed.`);
   } catch(error) {saveActionPending=false;syncConflict();backupStatus('Progress import failed: '+error.message,true);}
 });
-$('#export-tab-progress').addEventListener('click',async()=>{
-  const className=activeClass,key=storageKey,progress=structuredClone(saved);
-  const button=$('#export-tab-progress');button.disabled=true;
-  try {
-    if(!playerStorage.canRecover(key))throw new Error('The original save needs recovery before export');
-    const models=await backupModels();
-    downloadJSON(createPlayerBackup({[className]:progress},models),'hexa-matrix-'+className+'-tab-recovery-'+new Date().toISOString().slice(0,10)+'.json');
-    backupStatus(`Exported this tab's ${PLAYER_CLASS_NAMES[className]} progress. The newer saved progress was kept.`);
-  }catch(error){backupStatus('This tab could not be exported: '+error.message,true);}
-  finally{button.disabled=false;}
+$('#continue-tab-save').addEventListener('click',async()=>{
+  if(sourcePaused() || saveActionPending || !playerStorage.conflict(storageKey))return;
+  const key=storageKey,className=activeClass,progress=structuredClone(saved);
+  saveActionPending=true;syncConflict();
+  const continued=await playerStorage.continueSave(key,progress,()=>{
+    if(key!==storageKey || sourcePaused())return false;
+    return confirm(`Continue this ${PLAYER_CLASS_NAMES[className]} save? This replaces the newer saved progress for this class with the progress in this tab.`);
+  });
+  saveActionPending=false;syncConflict();
+  if(key!==storageKey)return;
+  if(!continued){backupStatus('This save was not continued. Replacement was cancelled, or the newer save could not be read or written. Both copies were kept.',true);return;}
+  // Keep this tab's fields, including invalid drafts, and its matching Undo.
+  // Only valid saved progress is written. The other tab will detect this write.
+  render();backupStatus(`Continuing this tab's ${PLAYER_CLASS_NAMES[className]} save.`);
 });
 $('#load-latest-save').addEventListener('click',async()=>{
   if(sourcePaused() || saveActionPending)return;
@@ -756,7 +761,7 @@ $('#load-latest-save').addEventListener('click',async()=>{
     const drafts=$$('[data-node], [data-stat-line]').some(input=>input.validity.badInput || !input.validity.valid ||
       (input.dataset.statLine && String(input.value)!==String(saved.statLines?.[input.dataset.statLine]?.[Number(input.dataset.lineIndex)] ?? '')));
     return (JSON.stringify(latest)===JSON.stringify(saved) && !drafts) ||
-      confirm(`Load the latest saved ${PLAYER_CLASS_NAMES[className]} progress? This replaces this tab's progress and unfinished inputs. Export this tab first if you want to keep a copy.`);
+      confirm(`Load the latest saved ${PLAYER_CLASS_NAMES[className]} progress? This replaces this tab's progress and unfinished inputs.`);
   });
   saveActionPending=false;syncConflict();
   if(key!==storageKey)return;

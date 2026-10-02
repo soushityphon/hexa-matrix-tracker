@@ -113,7 +113,7 @@ assert.match($('#backup-status').textContent,/Tracker data changed during import
 assert.equal(state(hyKey).levels.Harmony,2);assert.equal(state(hyKey).owned,99);
 assert.equal(downloads.length,2);
 // External writes pause the affected class, preserve the current view and offer
-// a session-only recovery download without replacing the newer save.
+// explicit choices between the newer save and this retained tab progress.
 let lockQueue=Promise.resolve();
 const locks={request:(_name,run)=>{const result=lockQueue.then(run);lockQueue=result.catch(()=>{});return result;}};
 await boot({[hyKey]:JSON.stringify({levels:{Harmony:1},owned:42}),[renKey]:JSON.stringify({owned:7})},null,locks);
@@ -129,10 +129,17 @@ $('#view-infographic').click();$('#view-tracker').click();await tick();
 assert.equal(localStorage.getItem(hyKey),JSON.stringify(newer));
 change('#class','ren');await tick();assert.equal($('#save-conflict').hidden,true);
 change('#class','hoyoung');await tick();assert.equal($('#save-conflict').hidden,false);assert.equal($('[data-node]').value,'1');assert.equal($('#owned').value,'42');assert.equal($('[data-node]').disabled,true);
-const count=downloads.length;$('#export-tab-progress').click();await tick();
-assert.equal(downloads.length,count+1);const recovery=JSON.parse(await downloads.at(-1).text());
-assert.deepEqual(Object.keys(recovery.classes),['Hoyeong']);assert.equal(recovery.classes.Hoyeong.progress.levels.masteryCore1,1);
-assert.equal(recovery.classes.Hoyeong.progress.owned,42);assert.equal(localStorage.getItem(hyKey),JSON.stringify(newer));
+const count=downloads.length,otherClassRaw=localStorage.getItem(renKey);
+assert.equal($('#export-tab-progress'),null);assert.equal($('#continue-tab-save').textContent,'Continue this save');
+globalThis.confirm=()=>false;$('#continue-tab-save').click();await tick();
+assert.equal($('#save-conflict').hidden,false);assert.equal(localStorage.getItem(hyKey),JSON.stringify(newer));
+let continuePrompt='';globalThis.confirm=message=>{continuePrompt=message;return true;};
+$('#continue-tab-save').click();await tick();
+assert.match(continuePrompt,/replaces the newer saved progress/);assert.equal($('#save-conflict').hidden,true);
+assert.equal($('[data-node]').value,'1');assert.equal($('#owned').value,'42');assert.equal(JSON.parse(localStorage.getItem(hyKey)).owned,42);
+assert.equal(localStorage.getItem(renKey),otherClassRaw);assert.equal(downloads.length,count);
+// Create a further change to verify Load latest save still works.
+localStorage.setItem(hyKey,JSON.stringify(newer));win.dispatchEvent(new win.StorageEvent('storage',{key:hyKey}));
 globalThis.confirm=()=>false;$('#load-latest-save').click();await tick();assert.equal($('#save-conflict').hidden,false);assert.equal($('[data-node]').value,'1');
 globalThis.confirm=()=>true;$('#load-latest-save').click();await tick();assert.equal($('#save-conflict').hidden,true);
 assert.equal($('[data-node]').value,'2');assert.equal($('#owned').value,'88');assert.equal($('#undo-progress').disabled,true);assert.equal($('#reset').disabled,false);
@@ -151,13 +158,28 @@ localStorage.setItem(hyKey,JSON.stringify({...JSON.parse(localStorage.getItem(hy
 win.dispatchEvent(new win.StorageEvent('storage',{key:hyKey}));win.dispatchEvent(new Event('focus'));await tick();
 assert.equal(fields(stats[0])[0].value,'11');
 let prompted=0;globalThis.confirm=()=>{prompted++;return false;};$('#load-latest-save').click();await tick();assert.equal(prompted,1);assert.equal(fields(stats[0])[0].value,'11');
+// Continuing keeps this tab's invalid draft visible, but persists only valid progress.
+globalThis.confirm=()=>true;const draftDownloads=downloads.length;
+$('#continue-tab-save').click();await tick();assert.equal(fields(stats[0])[0].value,'11');
+assert.equal($('#save-conflict').hidden,true);assert.equal(JSON.parse(localStorage.getItem(hyKey)).owned,99);
+assert.deepEqual(JSON.parse(localStorage.getItem(hyKey)).statLines[stats[0]],[0,0,0]);assert.equal(downloads.length,draftDownloads);
+localStorage.setItem(hyKey,JSON.stringify({...JSON.parse(localStorage.getItem(hyKey)),owned:100}));
+win.dispatchEvent(new win.StorageEvent('storage',{key:hyKey}));
 globalThis.confirm=()=>true;$('#load-latest-save').click();await tick();assert.equal(fields(stats[0])[0].value,'0');assert.equal($('#owned').value,'100');
 // Malformed external saves never replace the retained view or raw record.
 localStorage.setItem(hyKey,'42');win.dispatchEvent(new win.StorageEvent('storage',{key:hyKey}));
+$('#continue-tab-save').click();await tick();assert.equal(localStorage.getItem(hyKey),'42');assert.equal($('#save-conflict').hidden,false);
 $('#load-latest-save').click();await tick();assert.equal(localStorage.getItem(hyKey),'42');assert.equal($('#owned').value,'100');assert.equal($('#save-conflict').hidden,false);
 // External clear/Reset can be explicitly adopted as the existing baseline.
 localStorage.removeItem(hyKey);win.dispatchEvent(new win.StorageEvent('storage',{key:null}));
 $('#load-latest-save').click();await tick();assert.equal($('#save-conflict').hidden,true);assert.equal($('[data-node]').value,'0');
+await boot({[hyKey]:JSON.stringify({levels:{Harmony:1},owned:42}),[renKey]:JSON.stringify({owned:7})},null,locks);
+change('[data-node]',2);await tick();assert.equal($('#undo-progress').disabled,false);
+localStorage.setItem(hyKey,JSON.stringify({...JSON.parse(localStorage.getItem(hyKey)),owned:99}));
+win.dispatchEvent(new win.StorageEvent('storage',{key:hyKey}));
+$('#continue-tab-save').click();await tick();assert.equal($('#undo-progress').disabled,false);assert.equal($('#owned').value,'42');
+$('#undo-progress').click();await tick();assert.equal($('[data-node]').value,'1');
+assert.equal(JSON.parse(localStorage.getItem(hyKey)).levels.Harmony,1);
 // Import rechecks the other class inside its lock, even after confirmation
 // and safety preparation. No stale backup download or replacement is allowed.
 await boot({[hyKey]:JSON.stringify({levels:{Harmony:1},owned:42}),[renKey]:JSON.stringify({owned:7})},null,locks);
