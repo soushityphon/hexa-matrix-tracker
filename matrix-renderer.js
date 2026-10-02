@@ -8,6 +8,14 @@ import { escapeHtml, fdExplanation, materialAmount, STAT_FD_NOTE } from './prior
 export function createMatrixRenderer({document, checkMaterialIcons}) {
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
+  const rendered=new WeakMap();
+  const setText=(element,value)=>{if(element.textContent!==value)element.textContent=value;};
+  function replaceMarkup(element,markup) {
+    const prior=rendered.get(element);
+    if(prior?.markup===markup && prior.children.length===element.childNodes.length && prior.children.every((child,index)=>element.childNodes[index]===child))return;
+    element.innerHTML=markup;
+    rendered.set(element,{markup,children:[...element.childNodes]});
+  }
   function renderInputs({nodes:matrixNodes, statNodes, saved, draft, catalog,
       classLoading, classLoadFailed, initialLevel, clamp, restoreLines, syncPriorityOptions}) {
     $('.stat-list').replaceChildren();
@@ -76,10 +84,11 @@ export function createMatrixRenderer({document, checkMaterialIcons}) {
     const selector=$$('.stat-selector').find(item=>item.dataset.statSelector===skill);
     const unlocked=row.querySelector('[data-stat-unlocked]');
     const icon=selector.querySelector('.stat-unlock-icon');
-    selector.querySelector('.stat-selector-name').textContent=row.querySelector('.stat-name').textContent;
+    setText(selector.querySelector('.stat-selector-name'),row.querySelector('.stat-name').textContent);
     icon.classList.toggle('is-unlocked',unlocked.checked);
     const node=statNodes.find(node=>node.short===skill);
-    icon.querySelector('img').src=unlocked.checked ? node.icon : node.icon.replace('-unlocked.png','-locked.png');
+    const iconPath=unlocked.checked ? node.icon : node.icon.replace('-unlocked.png','-locked.png');
+    if(icon.querySelector('img').getAttribute('src')!==iconPath)icon.querySelector('img').src=iconPath;
     icon.title=unlocked.checked ? 'Unlocked' : 'Locked';
     selector.querySelector('[data-stat-select]').setAttribute('aria-label',`${row.querySelector('.stat-name').textContent}, ${unlocked.checked?'unlocked':'locked'}. ${selected===skill?'Close':'Edit'} line levels.`);
     const savedLines=saved.statLines?.[skill];
@@ -87,14 +96,14 @@ export function createMatrixRenderer({document, checkMaterialIcons}) {
     selector.querySelectorAll('.stat-mini-line').forEach((line,index)=>{
       const level=savedLines?.[index];
       const known=Number.isInteger(level)&&level>=0&&level<=10;
-      line.querySelector('.stat-mini-value').textContent=known ? String(level) : '';
+      setText(line.querySelector('.stat-mini-value'),known ? String(level) : '');
       line.querySelector('.stat-mini-value').setAttribute('aria-label',`${['Main Stat','2nd additional stat','3rd additional stat'][index]} ${known?level:'not entered'}`);
       line.querySelectorAll('.stat-bar i').forEach((segment,i)=>segment.classList.toggle('filled',known&&i<level));
     });
     selector.querySelector('.stat-selector-summary').classList.toggle('fd-gain',!!row.querySelector('.stat-fd').textContent);
     const summary=selector.querySelector('.stat-selector-summary');
     const fd=row.querySelector('.stat-fd').textContent;
-    summary.innerHTML=fd ? fdExplanation(fd, STAT_FD_NOTE, `${row.querySelector('.stat-name').textContent} average final damage. ${STAT_FD_NOTE}`) : escapeHtml(row.querySelector('[data-stat]').textContent);
+    replaceMarkup(summary,fd ? fdExplanation(fd, STAT_FD_NOTE, `${row.querySelector('.stat-name').textContent} average final damage. ${STAT_FD_NOTE}`,`stat:${skill}`) : escapeHtml(row.querySelector('[data-stat]').textContent));
     summary.setAttribute('aria-label',`${row.querySelector('[data-stat]').getAttribute('aria-label')}. ${fd}`);
     summary.title=fd ? STAT_FD_NOTE : '';
     row.querySelectorAll('[data-stat-line]').forEach(field=>{
@@ -123,32 +132,32 @@ export function createMatrixRenderer({document, checkMaterialIcons}) {
     $$('[data-stat]').forEach(input => {
       const row=input.closest('.stat-row');
       const name = row.querySelector('.stat-name');
-      if (name) name.textContent = draft?.names[input.dataset.stat] || input.dataset.stat;
+      if (name) setText(name,draft?.names[input.dataset.stat] || input.dataset.stat);
       const progress=statProgress(saved.statLines?.[input.dataset.stat], current[input.dataset.stat], saved.statCompleted?.[input.dataset.stat] === true);
-      input.textContent=progress.total < 20 ? `${progress.total} / 20` : '';
+      setText(input,progress.total < 20 ? `${progress.total} / 20` : '');
       input.setAttribute('aria-label', `${progress.total} of 20 levels`);
-      row.querySelector('.stat-fd').textContent=progress.fd === null || row.querySelector('[aria-invalid="true"]') ? '' : `~${progress.fd.toFixed(3)}% FD`;
-      if (!row.querySelector('[aria-invalid="true"]')) row.querySelector('.stat-note').textContent=progress.hasLines && (!saved.statCompleted?.[input.dataset.stat] || validateStatLines(saved.statLines?.[input.dataset.stat]).total === 20) ? '' : `Saved total ${progress.total} / 20. Enter all three line levels to update it.`;
+      setText(row.querySelector('.stat-fd'),progress.fd === null || row.querySelector('[aria-invalid="true"]') ? '' : `~${progress.fd.toFixed(3)}% FD`);
+      if (!row.querySelector('[aria-invalid="true"]')) setText(row.querySelector('.stat-note'),progress.hasLines && (!saved.statCompleted?.[input.dataset.stat] || validateStatLines(saved.statLines?.[input.dataset.stat]).total === 20) ? '' : `Saved total ${progress.total} / 20. Enter all three line levels to update it.`);
       syncStatVisuals({skill:input.dataset.stat, row, statNodes, saved, selected});
     });
     $$('[data-node-row]').forEach(row => {
-      row.querySelector('.node-name').textContent = draft?.names[row.dataset.nodeRow] || nodeByShort[row.dataset.nodeRow].name;
+      setText(row.querySelector('.node-name'),draft?.names[row.dataset.nodeRow] || nodeByShort[row.dataset.nodeRow].name);
       const label = row.querySelector('.node-label');
       let tag = label.querySelector('.skill-tag');
       const tagText = nodeByShort[row.dataset.nodeRow]?.tag || '';
       if (tagText && !tag) { tag = document.createElement('span'); tag.className = 'skill-tag'; label.prepend(tag); }
-      if (tag) { tag.textContent = tagText; tag.hidden = !tagText; }
+      if (tag) { setText(tag,tagText); tag.hidden = !tagText; }
     });
   }
 
   function renderSummary({matrix, heroic, rate, days, duration}) {
-    $('#completion').innerHTML = `<div class="completion-label"><span>HEXA Matrix Completion</span><strong>${matrix.percent.toFixed(2)}%</strong></div><div class="completion-track" role="progressbar" aria-label="HEXA Matrix completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${matrix.percent.toFixed(2)}"><span style="width:${matrix.percent.toFixed(2)}%"></span></div>`;
-    $('#totals').innerHTML = `<div class="total"><small>Total Materials Spent</small><strong class="material-total">${materialAmount(matrix.spent.erda, 'erda')} ${materialAmount(matrix.spent.frags, 'frags')}</strong></div><div class="total" id="total-remaining" ${matrix.percent >= 100 ? 'hidden' : ''}><small>Materials to Complete HEXA Matrix</small><strong class="material-total">${materialAmount(matrix.remaining.erda, 'erda')} ${materialAmount(matrix.remaining.frags, 'frags')}</strong></div>`;
+    replaceMarkup($('#completion'), `<div class="completion-label"><span>HEXA Matrix Completion</span><strong>${matrix.percent.toFixed(2)}%</strong></div><div class="completion-track" role="progressbar" aria-label="HEXA Matrix completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${matrix.percent.toFixed(2)}"><span style="width:${matrix.percent.toFixed(2)}%"></span></div>`);
+    replaceMarkup($('#totals'), `<div class="total"><small>Total Materials Spent</small><strong class="material-total">${materialAmount(matrix.spent.erda, 'erda')} ${materialAmount(matrix.spent.frags, 'frags')}</strong></div><div class="total" id="total-remaining" ${matrix.percent >= 100 ? 'hidden' : ''}><small>Materials to Complete HEXA Matrix</small><strong class="material-total">${materialAmount(matrix.remaining.erda, 'erda')} ${materialAmount(matrix.remaining.frags, 'frags')}</strong></div>`);
     checkMaterialIcons();
     $('#time-estimate').hidden = !heroic || !rate;
     if (heroic && rate) {
       const finish = fragmentCompletionDate(days(matrix.remaining));
-      $('#time-estimate').innerHTML = `<small>Estimated time for remaining Fragments</small><strong>${finish ? `${finish} · ` : ''}${duration(matrix.remaining)}</strong>`;
+      replaceMarkup($('#time-estimate'), `<small>Estimated time for remaining Fragments</small><strong>${finish ? `${finish} · ` : ''}${duration(matrix.remaining)}</strong>`);
     }
   }
   return {renderInputs, syncStatSelection, syncStatVisuals, highlightCurrentSkill, renderProgress, renderSummary};

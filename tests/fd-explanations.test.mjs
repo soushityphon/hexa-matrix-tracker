@@ -104,12 +104,12 @@ localStorage.setItem=originalWrite;
 // A tracker-cleared region must be repopulated even when its markup is unchanged.
 const expectedPriority=$('#priority').innerHTML;
 $('#priority').replaceChildren();
-$('#fd-explanation-close').dispatchEvent(new Event('input',{bubbles:true}));
+$('#owned').dispatchEvent(new Event('input',{bubbles:true}));
 assert.equal($('#priority').innerHTML,expectedPriority);
 // Image fallback changes survive an unrelated render of the same markup.
 const nextImage=$('#next-upgrade .upgrade-heading img');
 nextImage.dispatchEvent(new Event('error'));
-$('#fd-explanation-close').dispatchEvent(new Event('input',{bubbles:true}));
+$('#owned').dispatchEvent(new Event('input',{bubbles:true}));
 assert.equal($('#next-upgrade .upgrade-heading img'),nextImage);
 assert.equal(nextImage.hidden,true);
 
@@ -146,5 +146,54 @@ await explain($('#next-upgrade [data-fd-note]'),/rounded Maple Scouter/);
 for(const input of document.querySelectorAll('[name="world"]'))input.checked=input.value==='interactive';
 $('[name="world"][value="interactive"]').dispatchEvent(new Event('change',{bubbles:true}));
 await explain($('#priority [data-fd-note]'),/rounded Maple Scouter/);
+// An unchanged refresh must retain invalid drafts, their validation and focus.
+for(const job of ['hoyoung','ren']) {
+  const key=job==='ren'?renKey:hyKey;
+  const mode=job==='ren'?'pair_ren_lines_heroic':'pair_lines_heroic';
+  await boot({[key]:JSON.stringify({mode,statUnlocked:allStats,statLines:{[stats[0]]:[6,8,6],[stats[1]]:[2,null,4]},owned:42,perday:20})});
+  if(job==='ren'){change('#class','ren');await tick();}
+  const fd=document.querySelector('[data-fd-key="stat:'+stats[0]+'"]');
+  const completion=$('#completion').firstChild,totals=$('#totals').firstChild,time=$('#time-estimate').firstChild;
+  let measured=0;const write=localStorage.setItem;
+  localStorage.setItem=(key,value)=>{measured++;write(key,value);};
+  for(let index=0;index<100;index++)$('#owned').dispatchEvent(new Event('input',{bubbles:true}));
+  console.log(JSON.stringify({job,relatedNoops:100,playerWrites:measured,summaryRetained:$('#completion').firstChild===completion&&$('#totals').firstChild===totals&&$('#time-estimate').firstChild===time,statFdRetained:document.querySelector('[data-fd-key="stat:'+stats[0]+'"]')===fd}));
+  assert.equal(measured,0);localStorage.setItem=write;
+  assert.ok($('#completion').firstChild===completion&&$('#totals').firstChild===totals&&$('#time-estimate').firstChild===time);
+  assert.ok(document.querySelector('[data-fd-key="stat:'+stats[0]+'"]')===fd);
+  $('[data-stat-select="'+stats[1]+'"]').click();
+  const invalid=document.querySelector('[data-stat-line="'+stats[1]+'"][data-line-index="1"]');
+  invalid.value='15';invalid.dispatchEvent(new Event('input',{bubbles:true}));invalid.focus();
+  assert.equal(invalid.getAttribute('aria-invalid'),'true');
+  const before=localStorage.getItem(key),note=invalid.closest('.stat-row').querySelector('.stat-note').textContent;
+  focusRefresh();await tick();await tick();
+  assert.ok(invalid.isConnected);assert.equal(invalid.value,'15');assert.equal(invalid.getAttribute('aria-invalid'),'true');
+  assert.equal(invalid.validationMessage,note);assert.equal(document.activeElement,invalid);
+  assert.equal(localStorage.getItem(key),before);
+  // Rebuilt FD buttons return focus by logical key when source names change.
+  const original=document.querySelector('#priority [data-fd-key]');original.focus();original.click();
+  const keyFD=original.dataset.fdKey;
+  const prior=drafts[job][mode];
+  drafts[job][mode]={...prior,shortNames:{...prior.shortNames,[job==='ren'?'ren_skillCore1':'Harmony']:'Changed reviewed name'}};
+  focusRefresh();await tick();await tick();
+  assert.equal(original.isConnected,false);$('#fd-explanation-close').click();await tick();
+  assert.equal(document.activeElement.dataset.fdKey,keyFD);
+  const replaced=document.activeElement;replaced.click();
+  drafts[job][mode]={...prior,steps:prior.steps.map(step=>({...step,fdGain:undefined,fdFrom:undefined}))};
+  focusRefresh();await tick();await tick();$('#fd-explanation-close').click();await tick();
+  assert.equal(document.activeElement,$('#view-tracker'),'removed FD opener uses the current view button');
+  assert.ok($('#priority').children.length>0,'valid source without FD still has priority rows');
+  drafts[job][mode]=prior;
+}
+// An intentional focus move while waiting for source data must win.
+let release;const wait=new Promise(resolve=>release=resolve);
+let delayed=false;
+await boot({[hyKey]:JSON.stringify({mode:'pair_lines_heroic',statCompleted:allStats})},async url=>{
+  if(delayed)await wait;
+  return Response.json(url.startsWith('/api/tracker-catalogue')?models.hoyoung:{drafts:hy});
+});
+const editor=$('[data-node="Harmony"]');editor.focus();delayed=true;focusRefresh();
+$('#view-infographic').focus();release();await tick();await tick();
+assert.equal(document.activeElement,$('#view-infographic'));
 await win.happyDOM.abort();
 console.log('FD explanations: source/partial/Stat, modal/focus, paused views, blank values and class/world isolation pass');

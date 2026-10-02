@@ -38,14 +38,14 @@ function statAction(skill, action, label) {
 }
 
 export const STAT_FD_NOTE='General average from the Inven-supplied HEXA Stat table, not personalised FD. Shown only with valid line levels totalling 20.';
-export function fdExplanation(text,note,label) {
-  return `<button type="button" class="fd-gain fd-info" data-fd-note="${escapeHtml(note)}" title="${escapeHtml(note)}" aria-label="${escapeHtml(label)} Open FD explanation." aria-haspopup="dialog" aria-controls="fd-explanation">${escapeHtml(text)}</button>`;
+export function fdExplanation(text,note,label,key) {
+  return `<button type="button" class="fd-gain fd-info" ${key ? `data-fd-key="${escapeHtml(key)}"` : ''} data-fd-note="${escapeHtml(note)}" title="${escapeHtml(note)}" aria-label="${escapeHtml(label)} Open FD explanation." aria-haspopup="dialog" aria-controls="fd-explanation">${escapeHtml(text)}</button>`;
 }
-function fdText(result) {
+function fdText(result,key) {
   const note = result.estimated
     ? 'Approximate FD gain. The remaining gain within a partly completed Scouter step is estimated from its share of Fragment cost. Actual gain may differ.'
     : 'Approximate FD gain based on rounded Maple Scouter step values. Combined gains are compounded.';
-  return fdExplanation(`${result.estimated ? '≈' : ''}+${result.gain.toFixed(3)}% FD`,note,`${result.estimated ? 'Estimated ' : ''}plus ${result.gain.toFixed(3)} percent final damage. ${note}`);
+  return fdExplanation(`${result.estimated ? '≈' : ''}+${result.gain.toFixed(3)}% FD`,note,`${result.estimated ? 'Estimated ' : ''}plus ${result.gain.toFixed(3)} percent final damage. ${note}`,key);
 }
 function upgradeCost(label, cost, time, action = '', owned = null) {
   const shortfall = owned !== null && !cost.rng;
@@ -89,7 +89,7 @@ export function createPriorityRenderer({document}) {
     const statStep = nextIsStat && (statUnlocked[next.skill]
       ? upgradeCost(`Completion · ${nextRow.level}`, nextRow.cost, null, statAction(next.skill, 'lines', 'Enter line levels'))
       : upgradeCost('Unlock', { ...nextRow.cost, rng: false }, duration({...nextRow.cost, rng:false}), statAction(next.skill, 'unlock', 'Mark unlocked'), inventory));
-    replaceMarkup($('#next-upgrade'), `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><div class="upgrade-top"><small>Next Upgrade</small></div><div class="upgrade-heading"><div class="upgrade-label"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${priorityName(nextRow.skill)} → ${nextRow.level}</strong></div>${nextRowGain === null ? '' : fdText(nextRowGain)}</div>${nextIsStat ? statStep : `${upgradeCost(`Level ${current[next.skill] || 0} → ${nextLevel}`, levelCost, duration(levelCost), upgradeAction(next.skill, nextLevel, 'Add 1 Level', true), inventory)}${nextRow.level === nextLevel ? '' : upgradeCost(`Level ${current[next.skill] || 0} → ${nextRow.level} · Checkpoint`, nextRow.cost, duration(nextRow.cost), upgradeAction(next.skill, nextRow.level, 'Add to checkpoint'), inventory)}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`);
+    replaceMarkup($('#next-upgrade'), `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><div class="upgrade-top"><small>Next Upgrade</small></div><div class="upgrade-heading"><div class="upgrade-label"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${priorityName(nextRow.skill)} → ${nextRow.level}</strong></div>${nextRowGain === null ? '' : fdText(nextRowGain,`next:${nextRow.skill}:${nextRow.level}`)}</div>${nextIsStat ? statStep : `${upgradeCost(`Level ${current[next.skill] || 0} → ${nextLevel}`, levelCost, duration(levelCost), upgradeAction(next.skill, nextLevel, 'Add 1 Level', true), inventory)}${nextRow.level === nextLevel ? '' : upgradeCost(`Level ${current[next.skill] || 0} → ${nextRow.level} · Checkpoint`, nextRow.cost, duration(nextRow.cost), upgradeAction(next.skill, nextRow.level, 'Add to checkpoint'), inventory)}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`);
     $$('#next-upgrade .upgrade-heading img').forEach(img => {
       if(!boundImages.has(img)){boundImages.add(img);img.addEventListener('error', () => { img.hidden = true; });}
       if (img.complete && !img.naturalWidth) img.hidden = true;
@@ -103,7 +103,7 @@ export function createPriorityRenderer({document}) {
       const icon = statNodes.find(node=>node.short===row.skill)?.icon || draft?.statIcons[row.skill] || nodeByShort[row.skill]?.icon;
       const isNext = row.index <= index + 1 && index + 1 <= row.endIndex;
       const gain = row.done || row.skill.startsWith('HEXA Stat') ? null : combinedSourceGain(order, row, current[row.skill] || 0);
-      const fd = gain === null ? '' : fdText(gain);
+      const fd = gain === null ? '' : fdText(gain,`priority:${row.skill}:${row.level}`);
       return `<tr class="type-${typeClass(row.skill, nodeByShort)} ${row.done ? 'done' : ''} ${isNext ? 'next' : ''}" ${isNext ? 'aria-current="step"' : ''} style="--skill-accent:${skillAccent(row.skill)}"><td>${displayIndex}</td><td><span class="skill-cell">${icon ? `<img class="stat-icon" src="${icon}" alt="">` : '<i class="dot" aria-hidden="true"></i>'}<span>${priorityName(row.skill)}</span></td><td>${row.level}</td><td>${number(cost.erda)}</td><td>${cost.rng ? `<span class="rng" aria-label="${cost.frags ? `at least ${cost.frags} Fragments` : 'variable Fragment cost'}">${cost.frags ? `${cost.frags.toLocaleString()}+` : 'RNG'}</span>` : number(cost.frags)}</td><td>${fd}</td></tr>`;
     }).join(''));
   }

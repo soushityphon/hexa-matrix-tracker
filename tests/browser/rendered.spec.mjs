@@ -196,21 +196,79 @@ for (const job of ['hoyoung', 'ren']) {
       await navigator.locks.request('hexa-tracker-progress-v1',()=>{});
       const priority=document.querySelector('#priority'),next=document.querySelector('#next-upgrade');
       const firstPriority=priority.firstChild,firstNext=next.firstChild;
+      const summaries=['#completion','#totals','#time-estimate'].map(selector=>document.querySelector(selector));
+      const inputs=[document.querySelector('#nodes'),document.querySelector('.stat-list'),document.querySelector('#priority-version')];
+      const statSummaries=[...document.querySelectorAll('.stat-selector-summary')];
+      const originalStatFd=document.querySelector('[data-fd-key="stat:HEXA Stat III"]');
+      let summaryRebuilds=0,inputRebuilds=0,statFdRebuilds=0;
       let priorityRebuilds=0,nextRebuilds=0,writes=0;
       const observer=new MutationObserver(records=>{
-        for(const record of records){if(record.target===priority)priorityRebuilds++;if(record.target===next)nextRebuilds++;}
+        for(const record of records){if(record.target===priority)priorityRebuilds++;if(record.target===next)nextRebuilds++;if(summaries.includes(record.target))summaryRebuilds++;if(inputs.includes(record.target))inputRebuilds++;if(statSummaries.includes(record.target))statFdRebuilds++;}
       });
       observer.observe(priority,{childList:true});observer.observe(next,{childList:true});
+      [...summaries,...inputs,...statSummaries].forEach(element=>observer.observe(element,{childList:true}));
       const setItem=Storage.prototype.setItem;
       Storage.prototype.setItem=function(key,value){if(key==='hexa-tracker-'+job+'-v1')writes++;return setItem.call(this,key,value);};
       try {
-        for(let index=0;index<100;index++)document.querySelector('#fd-explanation-close').dispatchEvent(new Event('input',{bubbles:true}));
+        for(let index=0;index<100;index++)document.querySelector('#owned').dispatchEvent(new Event('input',{bubbles:true}));
         await new Promise(resolve=>setTimeout(resolve,100));
-        return {events:100,writes,priorityRebuilds,nextRebuilds,priorityRetained:priority.firstChild===firstPriority,nextRetained:next.firstChild===firstNext};
+        return {events:100,writes,priorityRebuilds,nextRebuilds,priorityRetained:priority.firstChild===firstPriority,nextRetained:next.firstChild===firstNext,summaryRebuilds,inputRebuilds,statFdRebuilds,statFdRetained:document.querySelector('[data-fd-key="stat:HEXA Stat III"]')===originalStatFd};
       }finally{observer.disconnect();Storage.prototype.setItem=setItem;}
     },job);
-    expect(result).toEqual({events:100,writes:0,priorityRebuilds:0,nextRebuilds:0,priorityRetained:true,nextRetained:true});
+    expect(result).toEqual({events:100,writes:0,priorityRebuilds:0,nextRebuilds:0,priorityRetained:true,nextRetained:true,summaryRebuilds:0,inputRebuilds:0,statFdRebuilds:0,statFdRetained:true});
     await info.attach('redraw-and-save-measurement',{body:JSON.stringify(result,null,2),contentType:'application/json'});
+  });
+
+  test(job + ' unchanged refresh retains invalid Stat draft and native input focus', async ({ page }) => {
+    await open(page,job);
+    await page.locator('[data-stat-select="HEXA Stat II"]').click();
+    const field=page.locator('[data-stat-line="HEXA Stat II"][data-line-index="1"]');
+    await field.fill('15');
+    await expect(field).toHaveAttribute('aria-invalid','true');
+    const before=await page.evaluate(job=>localStorage.getItem('hexa-tracker-'+job+'-v1'),job);
+    const original=await field.elementHandle();
+    const message=await field.evaluate(node=>node.validationMessage);
+    let release;const waiting=new Promise(resolve=>release=resolve);
+    await page.route('**/api/tracker-catalogue**',async route=>{await waiting;await route.continue();});
+    await page.clock.setFixedTime(new Date(await page.evaluate(()=>Date.now())+31000));
+    await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+    await expect(field).toBeDisabled();
+    release();await expect(field).toBeEnabled();
+    await expect(field).toBeFocused();await expect(field).toHaveValue('15');
+    expect(await original.evaluate(node=>node.isConnected)).toBe(true);
+    expect(await field.evaluate(node=>node.validationMessage)).toBe(message);
+    expect(await page.evaluate(job=>localStorage.getItem('hexa-tracker-'+job+'-v1'),job)).toBe(before);
+    // The retained Stat FD opener also survives an unrelated changed setting.
+    const fd=page.locator('[data-fd-key="stat:HEXA Stat III"]');
+    const fdNode=await fd.elementHandle();
+    await page.locator('#owned').fill('43');
+    expect(await fdNode.evaluate(node=>node.isConnected)).toBe(true);
+    await fd.click();await page.keyboard.press('Escape');await expect(fd).toBeFocused();
+  });
+
+  test(job + ' changed source returns FD focus to its matching replacement or view', async ({ page }) => {
+    await open(page,job);
+    const original=page.locator('#priority [data-fd-key]').first();
+    const key=await original.getAttribute('data-fd-key');
+    const handle=await original.elementHandle();
+    await original.click();
+    const changed=structuredClone(fixtures[job].drafts);
+    const skill=key.split(':')[1];
+    for(const draft of Object.values(changed))draft.shortNames={...draft.shortNames,[skill]:'Changed reviewed skill'};
+    await page.route('**/api/priority-preview**',route=>route.fulfill({json:{drafts:changed}}));
+    await page.clock.setFixedTime(new Date(await page.evaluate(()=>Date.now())+31000));
+    await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+    await expect(page.locator('#priority')).toContainText('Changed reviewed skill');
+    expect(await handle.evaluate(node=>node.isConnected)).toBe(false);
+    await page.keyboard.press('Escape');
+    await expect.poll(()=>page.evaluate(()=>document.activeElement.dataset.fdKey)).toBe(key);
+    await page.locator('#priority [data-fd-key]').first().click();
+    for(const draft of Object.values(changed))for(const step of draft.steps){delete step.fdGain;delete step.fdFrom;}
+    await page.clock.setFixedTime(new Date(await page.evaluate(()=>Date.now())+31000));
+    await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+    await expect(page.locator('#priority [data-fd-key]')).toHaveCount(0);
+    await expect(page.locator('#priority tr:not(.done)').first()).toBeVisible();
+    await page.keyboard.press('Escape');await expect(page.locator('#view-tracker')).toBeFocused();
   });
 
   test(job + ' FD focus survives unchanged expired-cache browser-chrome refresh', async ({ page }) => {
@@ -220,8 +278,7 @@ for (const job of ['hoyoung', 'ren']) {
     await fd.focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('#fd-explanation-close')).toBeFocused();
-    // The defect remains when the existing cache is expired. Fresh returns
-    // now reuse the verified view without refreshing.
+    // Expire the cache to exercise a real refresh. Fresh returns reuse the view.
     await page.clock.setFixedTime(new Date(Date.now()+31000));
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');

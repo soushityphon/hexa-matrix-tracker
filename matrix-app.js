@@ -175,6 +175,7 @@ $('#infographic-hide').addEventListener('change',()=>{
 syncView();
 
 const {renderPriority, checkMaterialIcons}=createPriorityRenderer({document});
+const statImageHandlers=new WeakSet();
 const matrixRenderer=createMatrixRenderer({document, checkMaterialIcons});
 
 function clamp(value, max, min = 0) {
@@ -205,9 +206,11 @@ function syncPriorityOptions() {
   const modes = available.filter(mode => catalog.settings[mode].world === world && catalog.settings[mode].selectionId === select.value);
   const versions = $('#priority-version');
   const previousVersion = saved.mode || versions.value;
-  versions.replaceChildren(...modes.map(mode => new Option(catalog.labels[mode], mode)));
+  if(modes.length!==versions.options.length || modes.some((mode,index)=>versions.options[index].value!==mode || versions.options[index].textContent!==catalog.labels[mode])) {
+    versions.replaceChildren(...modes.map(mode => new Option(catalog.labels[mode], mode)));
+  }
   $('#version-picker').hidden = modes.length < 2;
-  if (modes.includes(previousVersion)) versions.value = previousVersion;
+  versions.value = modes.includes(previousVersion) ? previousVersion : modes[0] || '';
   return versions.value;
 }
 
@@ -262,18 +265,22 @@ $('.stat-list').addEventListener('click',event=>{
 function highlightCurrentSkill(skill) {matrixRenderer.highlightCurrentSkill(skill);}
 
 const fdDialog=$('#fd-explanation');
-let fdOpener=null;
+let fdOpener=null,fdContext=null;
 document.addEventListener('click',event=>{
   const button=event.target.closest('[data-fd-note]');
   if(!button)return;
-  fdOpener=button;
+  fdOpener=button;fdContext={className:activeClass,mode:saved.mode,view,key:button.dataset.fdKey};
   $('#fd-explanation-text').textContent=button.dataset.fdNote;
   fdDialog.showModal();
 });
 $('#fd-explanation-close').addEventListener('click',()=>fdDialog.close());
 fdDialog.addEventListener('close',()=>{
-  if(fdOpener?.isConnected)fdOpener.focus();
-  fdOpener=null;
+  const sameContext=fdContext?.className===activeClass && fdContext?.mode===saved.mode && fdContext?.view===view;
+  const usable=button=>button?.isConnected && !button.disabled && !button.closest('[hidden]');
+  const replacement=sameContext && fdContext?.key && $$('[data-fd-key]').find(button=>button.dataset.fdKey===fdContext.key && usable(button));
+  const target=sameContext && usable(fdOpener) ? fdOpener : replacement || $('#view-'+view);
+  target?.focus();
+  fdOpener=null;fdContext=null;
 });
 
 function render(allowConflict=false) {
@@ -369,7 +376,7 @@ function render(allowConflict=false) {
   renderPriority({nodeByShort, statNodes, draft:previewDrafts[mode], order, current,
     next, index, steps, displayRows, nextRow, statUnlocked, duration, inventory,
     hideDone:$('#hideDone').checked});
-  $$('.stat-icon').forEach(img => { img.addEventListener('error', () => { img.hidden = true; }); });
+  $$('.stat-icon').forEach(img => { if(!statImageHandlers.has(img)){statImageHandlers.add(img);img.addEventListener('error', () => { img.hidden = true; });} });
   $('.priority-table').classList.toggle('hide-done', $('#hideDone').checked);
   matrixRenderer.renderSummary({matrix, heroic, rate, days, duration});
   matrixRenderer.renderProgress({draft:previewDrafts[mode], saved, current, nodeByShort,
@@ -411,6 +418,7 @@ function updateStatLine(input) {
   if(input.value!=='')row.querySelector('[data-stat-unlocked]').checked=true;
   render();finishProgressEdit(edit);
 }
+const renderSettings='#patch, #priority-version, [name="world"], #owned, #perday, #erdaRequest, #epicDungeon, #includeJanus, #hideDone, #infographic-hide';
 document.addEventListener('input', event=>{
   if(editsPaused())return;
   if(event.target.matches('[data-stat-line]')) {updateStatLine(event.target);return;}
@@ -419,7 +427,7 @@ document.addEventListener('input', event=>{
     if(validLevel(event.target)!==saved.levels?.[edit.skill])invalidateInfographicUndo(saved,edit.skill);
     render();finishProgressEdit(edit);return;
   }
-  if(!['class','music-volume'].includes(event.target.id))render();
+  if(event.target.matches(renderSettings))render();
 });
 document.addEventListener('change', event => {
   if(editsPaused()){if(event.target.id==='infographic-hide')render();return;}
@@ -434,7 +442,7 @@ document.addEventListener('change', event => {
     if(event.target.matches('[data-node]'))event.target.value=validLevel(event.target);
     render();finishProgressEdit(edit,true);return;
   }
-  render();
+  if(event.target.matches(renderSettings))render();
 });
 $('#next-upgrade').addEventListener('click', event => {
   if(editsPaused())return;
@@ -482,6 +490,10 @@ async function refreshSharedPriorities({force=false}={}) {
   if(playerStorage.conflict(storageKey) && verifiedClass===activeClass){syncConflict();return;}
   const hadView=verifiedClass===activeClass;
   const classAtStart=activeClass,sequence=++refreshSequence;
+  const focused=document.activeElement;
+  let focusMoved=false;
+  const observeFocus=event=>{if(event.target!==focused && event.target!==document.body && event.target!==document.documentElement)focusMoved=true;};
+  document.addEventListener('focusin',observeFocus);
   $('#retry-priorities').hidden=true;
   pendingProgressEdit=null;
   classLoading=true;classLoadFailed=false;
@@ -495,13 +507,18 @@ async function refreshSharedPriorities({force=false}={}) {
     classLoading=false;classLoadFailed=false;syncPausedControls();
     verifiedClass=activeClass;
     const {model,drafts}=snapshot;
+    const unchanged=hadView && JSON.stringify([NODES,statNodes,previewDrafts])===JSON.stringify([model.nodes,model.stats,drafts]);
     NODES=model.nodes;statNodes=model.stats;nodeByShort=Object.fromEntries(NODES.map(node=>[node.short,node]));setTrackerCatalogue(NODES);
     previewDrafts=drafts;catalog=previewCatalog(drafts);
     if (initialSharedLoad && requestedMode && catalog.settings[requestedMode]?.enabled && catalog.priorities[requestedMode]?.length) saved.mode = requestedMode;
     initialSharedLoad = false;
     if (catalog.settings[saved.mode]) $('#patch').value = catalog.settings[saved.mode].selectionId;
-    if(!playerStorage.conflict(storageKey) || !hadView)renderInputs();
+    if(!unchanged && (!playerStorage.conflict(storageKey) || !hadView))renderInputs();
     render(!hadView);syncConflict();$('#priority-sync').textContent = '';
+    // Disabling an editor during refresh can move native focus to the body.
+    // Restore only the retained editor, never a new class or deliberate focus move.
+    if(unchanged && !focusMoved && focused?.isConnected && focused.matches(progressControls) && !focused.disabled &&
+      [document.body,document.documentElement,focused].includes(document.activeElement))focused.focus();
   } catch (error) {
     classLoader.invalidate(classAtStart);
     if(classAtStart!==activeClass||sequence!==refreshSequence)return;
@@ -515,7 +532,7 @@ async function refreshSharedPriorities({force=false}={}) {
     $('#priority-sync').textContent = verifiedClass===activeClass
       ? `Refresh failed: ${error.message}. Showing the last loaded view. Progress edits are paused. Check your connection, then retry.`
       : `Shared priorities could not be loaded: ${error.message}. Check your connection, then retry.`;
-  }
+  }finally{document.removeEventListener('focusin',observeFocus);}
 }
 $('#retry-priorities').addEventListener('click',()=>refreshSharedPriorities({force:true}));
 $('#class').addEventListener('change',()=>{
