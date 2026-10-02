@@ -96,19 +96,30 @@ for (const job of ['hoyoung', 'ren']) {
     await fit(page);
   });
   test(job + ' long names and failed icons', async ({ page }, info) => {
-    await page.route('**/api/tracker-catalogue?*', async route => {
+    const longName = 'Very long reviewed skill name with more words and a longunbrokentextlabel';
+    await page.route('**/api/tracker-catalogue*', async route => {
       const response = await route.fetch();
       const model = await response.json();
       for (const node of model.nodes) {
-        node.name = 'Very long reviewed skill name with more words and a longunbrokentextlabel';
+        node.name = longName;
         node.shortName = node.name;
       }
       await route.fulfill({ json: model });
+    });
+    await page.route('**/api/priority-preview*', async route => {
+      const response = await route.fetch();
+      const data = await response.json();
+      for (const draft of Object.values(data.drafts)) {
+        draft.names = Object.fromEntries(draft.steps.map(step => [step.skill, longName]));
+        draft.shortNames = { ...draft.names };
+      }
+      await route.fulfill({ json: data });
     });
     await page.unroute('https://**/*');
     await page.route('https://**/*', route => route.abort());
     await open(page, job);
     await fit(page);
+    await expect(page.locator('.node-row:visible .node-name').first()).toHaveText(longName);
     await shot(page, info, job + '-long-broken-tracker');
     await page.locator('#view-infographic').click();
     await fit(page);
