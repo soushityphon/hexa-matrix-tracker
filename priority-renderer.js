@@ -75,7 +75,7 @@ export function createPriorityRenderer({document}) {
     });
   }
   function renderPriority({nodeByShort, statNodes, draft, order, current, next,
-    index, steps, displayRows, nextRow, statUnlocked, duration, inventory, hideDone}) {
+    index, steps, displayRows, nextRow, statUnlocked, duration, inventory}) {
     const priorityName = skill => {
       const tag=nodeByShort[skill]?.tag || statNodes.find(node=>node.short===skill)?.tag || '';
       return `${tag ? `<span class="skill-tag">${escapeHtml(tag)}</span> ` : ''}${escapeHtml(draft?.shortNames?.[skill] || nodeByShort[skill]?.shortName || statNodes.find(node=>node.short===skill)?.shortName || skill)}`;
@@ -94,17 +94,14 @@ export function createPriorityRenderer({document}) {
       if(!boundImages.has(img)){boundImages.add(img);img.addEventListener('error', () => { img.hidden = true; });}
       if (img.complete && !img.naturalWidth) img.hidden = true;
     });
-    let remainingIndex = 0;
-    replaceMarkup($('#priority'), displayRows.map((row, rowIndex) => {
+    replaceMarkup($('#priority'), displayRows.map(row => {
       const cost = row.cost;
       const number = value => value === 0 ? '<span class="zero">0</span>' : value.toLocaleString();
-      if (!row.done) remainingIndex++;
-      const displayIndex = hideDone && !row.done ? remainingIndex : rowIndex + 1;
       const icon = statNodes.find(node=>node.short===row.skill)?.icon || draft?.statIcons[row.skill] || nodeByShort[row.skill]?.icon;
       const isNext = row.index <= index + 1 && index + 1 <= row.endIndex;
       const gain = row.done || row.skill.startsWith('HEXA Stat') ? null : combinedSourceGain(order, row, current[row.skill] || 0);
       const fd = gain === null ? '' : fdText(gain,`priority:${row.skill}:${row.level}`);
-      return `<tr class="type-${typeClass(row.skill, nodeByShort)} ${row.done ? 'done' : ''} ${isNext ? 'next' : ''}" ${isNext ? 'aria-current="step"' : ''} style="--skill-accent:${skillAccent(row.skill)}"><td>${displayIndex}</td><td><span class="skill-cell">${icon ? `<img class="stat-icon" src="${icon}" alt="">` : '<i class="dot" aria-hidden="true"></i>'}<span>${priorityName(row.skill)}</span></td><td>${row.level}</td><td>${number(cost.erda)}</td><td>${cost.rng ? `<span class="rng" aria-label="${cost.frags ? `at least ${cost.frags} Fragments` : 'variable Fragment cost'}">${cost.frags ? `${cost.frags.toLocaleString()}+` : 'RNG'}</span>` : number(cost.frags)}</td><td>${fd}</td></tr>`;
+      return `<tr class="type-${typeClass(row.skill, nodeByShort)} ${row.done ? 'done' : ''} ${isNext ? 'next' : ''}" ${isNext ? 'aria-current="step"' : ''} style="--skill-accent:${skillAccent(row.skill)}"><td><span class="skill-cell">${icon ? `<img class="stat-icon" src="${icon}" alt="">` : '<i class="dot" aria-hidden="true"></i>'}<span>${priorityName(row.skill)}</span></td><td>${row.level}</td><td>${number(cost.erda)}</td><td>${cost.rng ? `<span class="rng" aria-label="${cost.frags ? `at least ${cost.frags} Fragments` : 'variable Fragment cost'}">${cost.frags ? `${cost.frags.toLocaleString()}+` : 'RNG'}</span>` : number(cost.frags)}</td><td>${fd}</td></tr>`;
     }).join(''));
   }
   return {renderPriority, checkMaterialIcons};

@@ -36,6 +36,30 @@ async function fit(page) {
 async function shot(page, testInfo, name) {
   await page.screenshot({ path: testInfo.outputPath(name + '.png'), fullPage: true });
 }
+async function priorityPresentation(page) {
+  const headers=page.locator('.priority-table thead th');
+  await expect(headers).toHaveCount(5);
+  await expect(headers.nth(0)).toHaveText('Node');
+  await expect(headers.nth(1)).toHaveText('Target Lv.');
+  await expect(headers.nth(4)).toHaveText('FD gain');
+  await expect(headers.nth(2).locator('img')).toHaveAttribute('src','assets/sol-erda.png');
+  await expect(headers.nth(3).locator('img')).toHaveAttribute('src','assets/sol-erda-fragment.png');
+  const rows=await page.locator('#priority tr').evaluateAll(nodes=>nodes.map(row=>({cells:row.cells.length,hasNode:!!row.cells[0].querySelector('.skill-cell'),target:row.cells[1].textContent})));
+  expect(rows.length).toBeGreaterThan(0);
+  for(const row of rows){expect(row.cells).toBe(5);expect(row.hasNode).toBe(true);expect(row.target).toMatch(/^\d+$/);}
+  const geometry=await page.locator('.priority-table').evaluate(table=>{
+    const row=[...table.tBodies[0].rows].find(row=>row.getBoundingClientRect().height);
+    return [2,3].map(index=>{
+      const heading=table.tHead.rows[0].cells[index],cell=row.cells[index];
+      const icon=heading.querySelector('img').getBoundingClientRect();
+      const range=document.createRange();range.selectNodeContents(cell);
+      return {headerAlign:getComputedStyle(heading).textAlign,cellAlign:getComputedStyle(cell).textAlign,rightGap:Math.abs(icon.right-range.getBoundingClientRect().right)};
+    });
+  });
+  for(const column of geometry){expect(column.headerAlign).toBe('right');expect(column.cellAlign).toBe('right');expect(column.rightGap).toBeLessThan(1);}
+  const progressStyle=await page.locator('#progress').evaluate(node=>({width:node.getBoundingClientRect().width,clip:getComputedStyle(node).clip}));
+  expect(progressStyle.width).toBe(1);expect(progressStyle.clip).toBe('rect(0px, 0px, 0px, 0px)');
+}
 for (const job of ['hoyoung', 'ren']) {
   test(job + ' direct Stat segments, bounded entry and selected numeric replacement', async ({ page }, info) => {
     await open(page,job);
@@ -152,6 +176,7 @@ for (const job of ['hoyoung', 'ren']) {
   });
   test(job + ' views, switches, saved hidden progress and overflow', async ({ page }, info) => {
     await open(page, job);
+    await priorityPresentation(page);
     await fit(page);
     await shot(page, info, job + '-tracker');
     const before = await page.locator('[data-node]').evaluateAll(nodes => Object.fromEntries(nodes.map(n => [n.dataset.node, n.value])));
@@ -159,12 +184,14 @@ for (const job of ['hoyoung', 'ren']) {
     await expect(page.locator('#patch')).toHaveValue('qa_hidden');
     const hiddenSkill = job === 'ren' ? 'ren_reinCore1' : 'Tiger';
     await expect(page.locator(`[data-node="${hiddenSkill}"]`)).not.toBeVisible();
+    await priorityPresentation(page);
     expect(await page.evaluate(({ job, hiddenSkill }) => JSON.parse(localStorage.getItem('hexa-tracker-' + job + '-v1')).levels[hiddenSkill], { job, hiddenSkill })).toBe(6);
     await fit(page);
     await page.locator('#patch').selectOption('qa_full');
     expect(await page.locator('[data-node]').evaluateAll(nodes => Object.fromEntries(nodes.map(n => [n.dataset.node, n.value])))).toEqual(before);
     await page.locator('.world-picker label:has(input[value="interactive"])').click();
     await expect(page.locator('[name="world"][value="interactive"]')).toBeChecked();
+    await priorityPresentation(page);
     await fit(page);
     await page.locator('.world-picker label:has(input[value="heroic"])').click();
     await page.locator('#view-infographic').click();

@@ -1,4 +1,10 @@
-## Current audit batch: Hosting identity verification
+## Current UI batch: Compact Tracker priority table
+
+Tracker hides the visual step count, removes the #/number-position column, labels the target column Target Lv. and right-aligns the existing resource header icons with their numbers. Node, Target Lv., Sol Erda, Fragments and FD gain keep their relative order. The existing internal progress and accessible count remain; Hide completed stays on the right. Only table markup and styles change. Source order, cost/FD calculations, progress actions, saves and Infographic remain. Existing browser scenarios verify both classes, full/hidden orders and both worlds at desktop and two emulated phone widths, including measured resource alignment. Owner visual acceptance and deployment are recorded in Issue #30.
+
+PR #22 stays draft/unmerged; eventual release is unapproved. The hosting identity review below remains partial and is not resolved by this presentation batch. No identity/access/binding/secret/schema change is included.
+
+## Previous audit batch: Hosting identity verification
 
 Twelve read-only anonymous checks on test version 128 refuse supplied owner identity headers at both the admin API and page. New isolated Worker regressions cover protected routes, guard-before-storage/upstream behaviour and service-token scope. The full hosting verification remains partial: signed-in identity injection, non-owner spoof replacement and direct-origin assurance still need evidence. See [hosting identity review](docs/hosting-identity-review.md) for measured results, limits and remaining checks. No app or hosting change is included; version 128 remains deployed. PR #22 stays draft/unmerged and eventual release remains unapproved.
 
