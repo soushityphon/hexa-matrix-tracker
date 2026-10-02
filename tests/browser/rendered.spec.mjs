@@ -53,10 +53,10 @@ async function priorityPresentation(page) {
       const heading=table.tHead.rows[0].cells[index],cell=row.cells[index];
       const icon=heading.querySelector('img').getBoundingClientRect();
       const range=document.createRange();range.selectNodeContents(cell);
-      return {headerAlign:getComputedStyle(heading).textAlign,cellAlign:getComputedStyle(cell).textAlign,rightGap:Math.abs(icon.right-range.getBoundingClientRect().right)};
+      return {headerAlign:getComputedStyle(heading).textAlign,cellAlign:getComputedStyle(cell).textAlign,rightGap:icon.right-range.getBoundingClientRect().right,insideHeader:icon.right<=heading.getBoundingClientRect().right};
     });
   });
-  for(const column of geometry){expect(column.headerAlign).toBe('right');expect(column.cellAlign).toBe('right');expect(column.rightGap).toBeLessThan(1);}
+  for(const column of geometry){expect(column.headerAlign).toBe('right');expect(column.cellAlign).toBe('right');expect(Math.abs(column.rightGap-4)).toBeLessThan(1);expect(column.insideHeader).toBe(true);}
   const progressStyle=await page.locator('#progress').evaluate(node=>({width:node.getBoundingClientRect().width,clip:getComputedStyle(node).clip}));
   expect(progressStyle.width).toBe(1);expect(progressStyle.clip).toBe('rect(0px, 0px, 0px, 0px)');
 }

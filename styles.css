@@ -96,5 +96,5 @@ input[type="checkbox"]{accent-color:var(--ui-accent)}
 /* Thin visible Stat bars keep taller button hit areas and numeric entry beside them. */
 .stat-list .stat-line{grid-template-columns:minmax(0,1fr) 54px;gap:8px}.stat-entry-bar{height:28px;gap:0}.stat-list .stat-line .stat-entry-bar button{position:relative;padding:0;min-width:0;min-height:28px;border:0;border-radius:0;background:transparent;cursor:pointer}.stat-entry-bar button::before{content:'';position:absolute;inset:9px 1px;border:1px solid #3d4847;background:#202626}.stat-main .stat-entry-bar button.filled::before{background:var(--stat-main);border-color:var(--stat-main)}.stat-additional .stat-entry-bar button.filled::before{background:var(--stat-additional);border-color:var(--stat-additional)}.stat-entry-bar button:focus-visible{outline:2px solid var(--ui-bright);outline-offset:1px;z-index:1}
 
-/* Resource heading icons share the numeric cells' right content edge. */
-.priority-table .material-heading{display:flex;width:100%;justify-content:flex-end}.priority-table .material-heading img{display:block}
+/* Align resource heading boxes, then offset their padded/glowing artwork optically. */
+.priority-table .material-heading{display:flex;width:100%;justify-content:flex-end}.priority-table .material-heading img{display:block;transform:translateX(4px)}
