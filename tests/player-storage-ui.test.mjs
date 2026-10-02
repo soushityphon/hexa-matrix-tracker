@@ -99,22 +99,24 @@ async function importFile(value){
 }
 // Returning from the native file picker focuses the window before selection.
 // That focus must not refresh/pause the tracker and silently discard the file.
+let importPrompt='';globalThis.confirm=message=>{importPrompt=message;return true;};
 $('#import-progress').click();win.dispatchEvent(new Event('focus'));
 await importFile(incoming);
 assert.match($('#backup-status').textContent,/Imported/);assert.equal($('#owned').value,'99');assert.equal($('[data-node]').value,'2');
-assert.equal(state(renKey).owned,7);assert.equal(JSON.parse(await downloads[1].text()).classes.Hoyeong.progress.owned,42);
+assert.equal(state(renKey).owned,7);assert.equal(downloads.length,1);
+assert.match(importPrompt,/replaces saved progress/);assert.match(importPrompt,/Choose Cancel to export/);assert.doesNotMatch(importPrompt,/download first/);
 assert.deepEqual(state(hyKey).infographicUndo,{});
 const prior=localStorage.getItem(hyKey);globalThis.confirm=()=>false;
-await importFile(incoming);assert.equal(localStorage.getItem(hyKey),prior);assert.equal(downloads.length,2);
+await importFile(incoming);assert.equal(localStorage.getItem(hyKey),prior);assert.equal(downloads.length,1);
 globalThis.confirm=()=>true;incoming.classes.Hoyeong.progress.levels.masteryCore1=31;
-await importFile(incoming);assert.match($('#backup-status').textContent,/failed/);assert.equal(localStorage.getItem(hyKey),prior);assert.equal(downloads.length,2);
+await importFile(incoming);assert.match($('#backup-status').textContent,/failed/);assert.equal(localStorage.getItem(hyKey),prior);assert.equal(downloads.length,1);
 // A refresh that starts during confirmation must prevent in-flight replacement.
 incoming.classes.Hoyeong.progress.levels.masteryCore1=1;
 globalThis.confirm=()=>{const now=Date.now;Date.now=()=>now()+31000;try{win.dispatchEvent(new Event('focus'));}finally{Date.now=now;}return true;};
 await importFile(incoming);
 assert.match($('#backup-status').textContent,/Tracker data changed during import/);
 assert.equal(state(hyKey).levels.Harmony,2);assert.equal(state(hyKey).owned,99);
-assert.equal(downloads.length,2);
+assert.equal(downloads.length,1);
 // External writes pause the affected class, preserve the current view and offer
 // explicit choices between the newer save and this retained tab progress.
 let lockQueue=Promise.resolve();
@@ -184,7 +186,7 @@ $('#continue-tab-save').click();await tick();assert.equal($('#undo-progress').di
 $('#undo-progress').click();await tick();assert.equal($('[data-node]').value,'1');
 assert.equal(JSON.parse(localStorage.getItem(hyKey)).levels.Harmony,1);
 // Import rechecks the other class inside its lock, even after confirmation
-// and safety preparation. No stale backup download or replacement is allowed.
+// and preflight validation. No automatic download or stale replacement is allowed.
 await boot({[hyKey]:JSON.stringify({levels:{Harmony:1},owned:42}),[renKey]:JSON.stringify({owned:7})},null,locks);
 win.HTMLAnchorElement.prototype.click=function(){};
 const request=locks.request;let race=true;

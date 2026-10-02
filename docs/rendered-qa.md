@@ -10,7 +10,7 @@ Coverage includes both classes/views, Update/World/class switches, hidden-skill 
 
 ## Backup and focus refresh checks
 
-`backup.spec.mjs` checks both classes at all three widths using Chromium file chooser/change delivery and actual JSON downloads. Since a headless chooser has no OS window, its return-focus event is dispatched explicitly. Cancel leaves progress intact; confirmed restore downloads the current safety backup, restores exported progress and keeps the other class intact. Picker cancellation restores ordinary focus refreshes. Separate checks assert fresh-cache focus performs no requests or pause, expired-cache focus pauses while requesting, and the fixed bottom status/Retry does not move the toolbar or panels. No physical OS picker or device acceptance is claimed.
+`backup.spec.mjs` checks both classes at all three widths using Chromium file chooser/change delivery and actual JSON downloads. Since a headless chooser has no OS window, its return-focus event is dispatched explicitly. Cancel leaves progress intact; confirmed restore replaces only the included class, restores exported progress and keeps the other class intact. Both cancel and confirmed import must create zero downloads; manual Export still downloads JSON. Picker cancellation restores ordinary focus refreshes. Separate checks assert fresh-cache focus performs no requests or pause, expired-cache focus pauses while requesting, and the fixed bottom status/Retry does not move the toolbar or panels. No physical OS picker or device acceptance is claimed.
 
 ## Real browser music checks
 

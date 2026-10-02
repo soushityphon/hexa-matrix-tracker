@@ -57,6 +57,7 @@ for(const job of ['hoyoung','ren']) {
     await page.locator('#owned').fill(String(changed));
     await expect.poll(async()=>(await saved()).owned).toBe(changed);
     const otherBefore=await page.evaluate(key=>localStorage.getItem(key),other);
+    let importDownloads=0;page.on('download',()=>{importDownloads++;});
 
     async function choose(accept) {
       const picker=page.waitForEvent('filechooser');
@@ -68,6 +69,7 @@ for(const job of ['hoyoung','ren']) {
       await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
       page.once('dialog',async dialog=>{
         expect(dialog.message()).toContain('Restore progress for');
+        expect(dialog.message()).toContain('Choose Cancel to export your current progress first.');
         if(accept)await dialog.accept();else await dialog.dismiss();
       });
       await chooser.setFiles(payload);
@@ -75,14 +77,12 @@ for(const job of ['hoyoung','ren']) {
     await choose(false);
     await expect(page.locator('#backup-status')).toHaveText('Import cancelled.');
     expect((await saved()).owned).toBe(changed);
-    const safetyDownload=page.waitForEvent('download');
     await choose(true);
-    const safety=JSON.parse(await readFile(await(await safetyDownload).path(),'utf8'));
-    expect(safety.classes[job==='ren'?'Len':'Hoyeong'].progress.owned).toBe(changed);
     await expect(page.locator('#backup-status')).toContainText('Imported');
     expect((await saved()).owned).toBe(original.owned);
     expect((await saved()).levels).toEqual(original.levels);
     expect(await page.evaluate(key=>localStorage.getItem(key),other)).toBe(otherBefore);
+    expect(importDownloads).toBe(0);
     await expect(page.locator('#import-progress')).toBeEnabled();
     // Cancelling the picker itself also restores ordinary focus refreshes.
     const cancelledPicker=page.waitForEvent('filechooser');

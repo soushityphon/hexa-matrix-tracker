@@ -57,20 +57,17 @@ export function createSaveActions({document, playerStorage, classLoader, classNa
       let value;try{value=JSON.parse(await file.text());}catch{throw new Error('Backup is not valid JSON');}
       const classes=parsePlayerBackup(value,models),names=Object.keys(classes).map(name=>classNames[name]).join(', ');
       pickingFile=false;
-      if(!confirm(`Restore progress for ${names}? Existing progress for these classes will be replaced. A safety backup of your current progress will download first.`)){backupStatus('Import cancelled.');return;}
+      if(!confirm(`Restore progress for ${names}? This replaces saved progress for these classes. Choose Cancel to export your current progress first.`)){backupStatus('Import cancelled.');return;}
       await currentBackup(models);
       if(editsPaused() || importSequence!==getState().sequence)throw new Error('Tracker data changed during import. Retry after loading succeeds');
       const replacements=Object.fromEntries(Object.entries(classes).map(([className,progress])=>['hexa-tracker-'+className+'-v1',progress]));
       setPending(true);
       const replaced=await playerStorage.replaceMany(replacements,()=>{
         if(sourcePaused() || playerStorage.conflict(getState().key) || importSequence!==getState().sequence)return false;
-        // The safety download and replacement share the same cross-tab lock.
-        const current=Object.fromEntries(Object.keys(PLAYER_CLASSES).map(name=>[name,playerStorage.session('hexa-tracker-'+name+'-v1')]));
-        downloadJSON(createPlayerBackup(current,models),'hexa-matrix-before-import-'+new Date().toISOString().slice(0,10)+'.json');
         return true;
       },Object.keys(PLAYER_CLASSES).map(name=>'hexa-tracker-'+name+'-v1'));
       setPending(false);
-      if(!replaced)throw new Error('Save changed or storage failed during import. Keep this tab open and retain any safety backup');
+      if(!replaced)throw new Error('Save changed or storage failed during import. Keep this tab open');
       clearProgressUndo();
       setSaved(playerStorage.read(getState().key));
       clearSelectedStat();renderInputs();render();
