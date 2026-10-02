@@ -1,3 +1,7 @@
+## Save UI module, Issue #30
+
+`save-ui.js` now owns the existing save warning text, conflict display, Web Locks wiring and checks before input/change/click and storage events. It uses the same protected `player-storage.js` implementation and reads the active class/loading/action state from the tracker. Ordinary actions, adoption/continuation confirmation, backup/import, Reset, unfinished inputs and paused controls retain their current owners and behaviour. No save format, source data, calculation, copy or layout changes are included. This is another small step in the open storage/UI/rendering refactor; it does not complete the whole item.
+
 ## Class loading module, Issue #30
 
 `class-loader.js` now owns the existing source-only class request cache, coalesced requests and 15-second deadline across responses and bodies. It keeps the same 30-second cache lifetime, Janus input identity and numbered Stat icons. The UI still owns selected-class/sequence guards, retained views, paused controls and Retry. Export still requests both catalogues through the same loader. Save protection stays in `player-storage.js`; this small extraction changes no progress format, costs, FD, completion, source data or visible behaviour. Storage/UI and rendering extraction remain later parts of the open refactor item.

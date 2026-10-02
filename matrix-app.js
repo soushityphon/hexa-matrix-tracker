@@ -14,26 +14,19 @@ import { createInfographic } from './infographic.js';
 import { infographicCheckpoints, infographicDisplayCheckpoints, infographicContext, clickInfographicCheckpoint, reconcileInfographicUndo, invalidateInfographicUndo, reconcileStatCompletion } from './infographic-progress.js';
 
 import { captureSkillProgress, createProgressUndo, restoreProgressHistory } from './progress-undo.js';
-import { createPlayerStorage } from './player-storage.js';
+import { createSaveUI } from './save-ui.js';
 import { createPlayerBackup, parsePlayerBackup, PLAYER_CLASSES } from './player-backup.js';
 
 const PLAYER_CLASS_NAMES={hoyoung:'Hoyoung',ren:'Ren'};
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 let appReady=false;
-const playerStorage=createPlayerStorage(()=>localStorage,({key,reason})=>{
-  if(appReady && key!==storageKey)return;
-  const status=$('#save-status');
-  status.hidden=!reason || reason==='conflict';
-  status.textContent=reason==='damaged'
-    ? 'Saved progress is damaged. The original record is preserved. Changes stay in this session and cannot be saved until the record is recovered.'
-    : reason==='unreadable'
-    ? 'Saved progress could not be read. Changes stay in this session. Reload once browser storage is available to restore your saved progress.'
-    : reason==='unsaved' ? 'Changes are not saved. Keep this tab open. Progress stays in this session while browser storage is unavailable.' : '';
-  if(appReady)syncConflict();
-},operation=>window.navigator.locks?.request
-  ? window.navigator.locks.request('hexa-tracker-progress-v1',operation)
-  : Promise.reject(new Error('Cross-tab saving is unavailable')));
+const saveUI=createSaveUI({
+  document,window,getStorage:()=>localStorage,isReady:()=>appReady,
+  getContext:()=>({key:storageKey,className:activeClass,sourcePaused:sourcePaused(),pending:saveActionPending}),
+  classes:PLAYER_CLASSES,classNames:PLAYER_CLASS_NAMES,onPause:syncPausedControls
+});
+const playerStorage=saveUI.storage;
 let activeClass='hoyoung';
 try {activeClass=new URL(location.href).searchParams.get('class') || playerStorage.readPreference('hexa-tracker-class-v1') || 'hoyoung';}catch{}
 if(!['hoyoung','ren'].includes(activeClass))activeClass='hoyoung';
@@ -49,24 +42,9 @@ const pausedControls=new Map();
 const progressControls='#patch, #priority-version, [name="world"], [data-node], [data-stat-line], [data-stat-unlocked], [data-stat-select], [data-stat-cancel], #next-upgrade button:not([data-fd-note]), [data-checkpoint], #owned, #perday, #erdaRequest, #epicDungeon, #includeJanus, #hideDone, #reset, #undo-progress, #import-progress, #import-progress-file';
 const sourcePaused=()=>classLoading || classLoadFailed;
 const editsPaused=()=>sourcePaused() || saveActionPending || playerStorage.conflict(storageKey);
-function syncConflict() {
-  const conflict=playerStorage.conflict(storageKey);
-  $('#save-conflict').hidden=!conflict;
-  $('#conflict-message').textContent=conflict ? `Saved ${PLAYER_CLASS_NAMES[activeClass]} progress changed in another tab. Editing is paused.` : '';
-  $('#load-latest-save').disabled=sourcePaused() || saveActionPending;
-  $('#continue-tab-save').disabled=sourcePaused() || saveActionPending;
-  syncPausedControls();
-}
-function checkActive() {return playerStorage.check(storageKey);}
-// Input values may already contain an unfinished draft. Keep them visible, but
-// detect an external write before any handler can mutate saved progress.
-for(const type of ['input','change','click'])document.addEventListener(type,checkActive,true);
-window.addEventListener('storage',event=>{
-  if(event.key===null || event.key?.startsWith('hexa-tracker-')) {
-    for(const name of Object.keys(PLAYER_CLASSES))playerStorage.check('hexa-tracker-'+name+'-v1');
-    syncConflict();
-  }
-});
+function syncConflict() {saveUI.syncConflict();}
+function checkActive() {return saveUI.checkActive();}
+saveUI.observe();
 function syncPausedControls() {
   if(editsPaused()) {
     $$(progressControls).forEach(control=>{
