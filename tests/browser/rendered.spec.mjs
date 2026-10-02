@@ -60,9 +60,13 @@ for (const job of ['hoyoung', 'ren']) {
     await activate(field);await page.keyboard.insertText('-1');await expect(field).toHaveValue('3');
     await activate(field);await field.pressSequentially('11');await expect(field).toHaveValue('1');
     await expect.poll(async()=> (await saved()).statLines['HEXA Stat I']).toEqual([1,0,0]);
-    const bounds=await line.locator('[data-stat-segment]').evaluateAll(nodes=>nodes.map(node=>{const box=node.getBoundingClientRect(),scale=visualViewport?.scale || 1;return {width:box.width,height:box.height,scaledWidth:box.width*scale,scaledHeight:box.height*scale,hit:document.elementFromPoint(box.x+box.width/2,box.y+box.height/2)===node};}));
+    const bounds=await line.locator('[data-stat-segment]').evaluateAll(nodes=>nodes.map(node=>{const box=node.getBoundingClientRect(),scale=visualViewport?.scale || 1;return {width:box.width,height:box.height,scaledWidth:box.width*scale,scaledHeight:box.height*scale,hit:document.elementFromPoint(box.x+box.width/2,box.y+box.height/2)===node,visibleHeight:box.height-parseFloat(getComputedStyle(node,'::before').top)-parseFloat(getComputedStyle(node,'::before').bottom)};}));
     expect(bounds).toHaveLength(10);
-    for(const box of bounds){expect(box.width).toBeGreaterThanOrEqual(24);expect(box.height).toBeGreaterThanOrEqual(28);expect(box.hit).toBe(true);if(info.project.use.hasTouch){expect(box.scaledWidth).toBeGreaterThanOrEqual(24);expect(box.scaledHeight).toBeGreaterThanOrEqual(24);}}
+    for(const box of bounds){expect(box.width).toBeGreaterThanOrEqual(16);expect(box.visibleHeight).toBe(10);expect(box.height).toBeGreaterThanOrEqual(28);expect(box.hit).toBe(true);if(info.project.use.hasTouch){expect(box.scaledWidth).toBeGreaterThanOrEqual(16);expect(box.scaledHeight).toBeGreaterThanOrEqual(24);}}
+    // Side-by-side entry deliberately uses compact segments, with the full-sized
+    // number field retained as an alternative at narrow phone widths.
+    const placement=await field.evaluate(input=>{const bar=input.closest('.stat-line').querySelector('.stat-entry-bar').getBoundingClientRect(),number=input.getBoundingClientRect();return {right:number.left>=bar.right,aligned:Math.abs((number.top+number.height/2)-(bar.top+bar.height/2))<1};});
+    expect(placement).toEqual({right:true,aligned:true});
     const skill=page.locator('[data-node]:visible').first();
     await activate(skill);await page.keyboard.insertText('3');await expect(skill).toHaveValue('3');
     for(const [id,value] of [['owned','9'],['perday','6']]){

@@ -1,4 +1,8 @@
-## Current audit batch: Safe diagnostics and owner-requested numeric entry
+## Current UI follow-up: Thin Stat bars with side-by-side number entry
+
+Following the owner's version 127 functional acceptance, Stat editor bars now show 10px segments within 28px-tall buttons, with the existing 54px number field on the right. Number entry, 0–10 rejection, direct segment levels, validation, save/Undo and paused/conflict guards are unchanged. The compact segments remain centre-hit tested at desktop/390px/320px; narrow widths use a 16px minimum segment width, with numeric entry retained as the larger alternative. Native phone ergonomics and this visual refinement remain owner review. No data, calculation, storage or server change is included.
+
+## Historical audit batch: Safe diagnostics and owner-requested numeric entry
 
 Server diagnostics for stored priorities/Skills and D1 reads, writes and batches contain only fixed event, route, operation and category labels plus a count. Invalid priority counts are aggregated by category per read. Logs contain no record IDs/content, names, identities, request/header/body values, SQL/bound parameters or exception messages/stacks. Successful requests, input validation refusals and expected revision/insert conflicts are quiet. A failed logging sink cannot interrupt recovery. Storage failures inside admin validation return the existing safe 503 response rather than exposing a backend exception as a 400. Damaged raw records, insert-only restore rollback and revision guards remain intact. Fault injection uses isolated SQLite; live records and server secrets are untouched.
 
