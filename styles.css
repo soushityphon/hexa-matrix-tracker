@@ -69,3 +69,5 @@ input[type="checkbox"]{accent-color:var(--ui-accent)}
 .kofi-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;max-width:100%}
 .kofi-link img{display:block;width:160px;height:32px;max-width:100%;object-fit:contain}
 .kofi-link:focus-visible{outline:2px solid var(--ui-accent);outline-offset:3px}
+
+.save-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}.save-actions button{min-height:32px}#backup-status{margin:8px 0 0;line-height:1.4}@media(max-width:520px){.matrix-panel>.panel-head{align-items:flex-start}.save-actions{max-width:190px}.save-actions button{flex:1 1 auto}}
