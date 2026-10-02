@@ -63,7 +63,37 @@ export function createPlayerStorage(getStorage, onStatus = () => {}) {
     const result=access(storage=>storage.removeItem(key));
     entry.value={};entry.reason=result.ok?'':'unsaved';report(entry);return result.ok;
   }
-  return {read,write,remove,
+  function replaceMany(values) {
+    const pairs=Object.entries(values);
+    if(!pairs.length||pairs.some(([,value])=>!validatePlayerSave(value)))return false;
+    for(const [key] of pairs)if(!sessions.has(key))read(key);
+    if(pairs.some(([key])=>sessions.get(key).protected))return false;
+    const before=new Map();
+    for(const [key] of pairs) {
+      const raw=access(storage=>storage.getItem(key));
+      if(!raw.ok)return false;
+      before.set(key,{raw:raw.value,entry:structuredClone(sessions.get(key))});
+    }
+    const written=[];
+    for(const [key,value] of pairs) {
+      const result=access(storage=>storage.setItem(key,JSON.stringify(value)));
+      if(!result.ok) {
+        for(const rollbackKey of written.reverse()) {
+          const prior=before.get(rollbackKey).raw;
+          access(storage=>prior===null?storage.removeItem(rollbackKey):storage.setItem(rollbackKey,prior));
+        }
+        for(const [restoreKey,{entry}] of before)sessions.set(restoreKey,entry);
+        const failed=sessions.get(key);failed.reason='unsaved';report(failed);
+        return false;
+      }
+      written.push(key);
+    }
+    for(const [key,value] of pairs) {
+      const entry=sessions.get(key);entry.value=structuredClone(value);entry.raw=JSON.stringify(value);entry.reason='';entry.protected=false;report(entry);
+    }
+    return true;
+  }
+  return {read,write,remove,replaceMany,
     readPreference:key=>access(storage=>storage.getItem(key)).value ?? null,
     writePreference:(key,value)=>access(storage=>storage.setItem(key,value)).ok};
 }
