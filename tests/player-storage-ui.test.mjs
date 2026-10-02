@@ -104,6 +104,13 @@ const prior=localStorage.getItem(hyKey);globalThis.confirm=()=>false;
 await importFile(incoming);assert.equal(localStorage.getItem(hyKey),prior);assert.equal(downloads.length,2);
 globalThis.confirm=()=>true;incoming.classes.Hoyeong.progress.levels.masteryCore1=31;
 await importFile(incoming);assert.match($('#backup-status').textContent,/failed/);assert.equal(localStorage.getItem(hyKey),prior);assert.equal(downloads.length,2);
+// A refresh that starts during confirmation must prevent in-flight replacement.
+incoming.classes.Hoyeong.progress.levels.masteryCore1=1;
+globalThis.confirm=()=>{win.dispatchEvent(new Event('focus'));return true;};
+await importFile(incoming);
+assert.match($('#backup-status').textContent,/Tracker data changed during import/);
+assert.equal(state(hyKey).levels.Harmony,2);assert.equal(state(hyKey).owned,99);
+assert.equal(downloads.length,2);
 URL.createObjectURL=oldCreate;URL.revokeObjectURL=oldRevoke;
 await win.happyDOM.abort();
 console.log('Player storage app: blocked reads/writes, damaged records, reset and class switching pass');

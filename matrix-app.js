@@ -37,6 +37,22 @@ const music=createMusic({document,window,control:$('#music-control'),slider:$('#
 let storageKey='hexa-tracker-'+activeClass+'-v1';
 let refreshSequence=0;
 let classLoading=true, classLoadFailed=false;
+let verifiedClass=null;
+const pausedControls=new Map();
+const progressControls='#patch, #priority-version, [name="world"], [data-node], [data-stat-line], [data-stat-unlocked], [data-stat-select], [data-stat-cancel], #next-upgrade button, [data-checkpoint], #owned, #perday, #erdaRequest, #epicDungeon, #includeJanus, #hideDone, #reset, #import-progress, #import-progress-file';
+const editsPaused=()=>classLoading || classLoadFailed;
+function syncPausedControls() {
+  if(editsPaused()) {
+    $$(progressControls).forEach(control=>{
+      if(!pausedControls.has(control))pausedControls.set(control,control.disabled);
+      control.disabled=true;
+    });
+  }else {
+    for(const [control,disabled] of pausedControls)control.disabled=disabled;
+    pausedControls.clear();
+  }
+}
+
 const classDataCache=new Map(), classRequests=new Map();
 const CLASS_CACHE_MS=30000;
 const CLASS_REQUEST_MS=15000;
@@ -54,7 +70,7 @@ try { if(playerStorage.readPreference('hexa-tracker-view-v1')==='infographic')vi
   $('#infographic-hide').checked=playerStorage.readPreference('hexa-tracker-infographic-hide-v1')==='true'; }catch{}
 let infographicEntries=[], infographicScope=null;
 const infographic=createInfographic({document,window,grid:$('#infographic-grid'),onClick:key=>{
-  if(classLoading || !infographicScope || !clickInfographicCheckpoint(saved,infographicScope,infographicEntries,key))return;
+  if(editsPaused() || !infographicScope || !clickInfographicCheckpoint(saved,infographicScope,infographicEntries,key))return;
   const entry=infographicEntries.find(entry=>entry.key===key);
   if(entry.stat) {
     const row=$$('[data-stat]').find(output=>output.dataset.stat===entry.skill)?.closest('.stat-row');
@@ -225,6 +241,7 @@ function syncStatVisuals(skill,row) {
 }
 
 $('.stat-list').addEventListener('click',event=>{
+  if(editsPaused())return;
   const selector=event.target.closest('[data-stat-selector]');
   if(!selector)return;
   const skill=selector.dataset.statSelector;
@@ -306,6 +323,13 @@ function upgradeCost(label, cost, time, action = '', owned = null) {
 
 function render() {
   syncView();
+  // A failed refresh keeps the verified DOM and saved state read-only.
+  // View/visibility preferences can still change without writing progress.
+  if(editsPaused() && verifiedClass===activeClass) {
+    if(view==='infographic' && infographicScope)infographic.render(infographicDisplayCheckpoints(infographicEntries,saved,infographicScope),saved,infographicScope,$('#infographic-hide').checked);
+    syncPausedControls();
+    return;
+  }
   const mode = syncPriorityOptions();
   const heroic = $('[name="world"]:checked').value === 'heroic';
   $('.calculator-panel').hidden = !heroic;
@@ -460,11 +484,13 @@ function updateStatLine(input) {
   render();
 }
 document.addEventListener('input', event=>{
+  if(editsPaused())return;
   if(event.target.matches('[data-node]'))invalidateInfographicUndo(saved,event.target.dataset.node);
   if(event.target.matches('[data-stat-line]'))updateStatLine(event.target);
   else if(!['class','music-volume'].includes(event.target.id))render();
 });
 document.addEventListener('change', event => {
+  if(editsPaused()){if(event.target.id==='infographic-hide')render();return;}
   if(['class','music-volume'].includes(event.target.id))return;
   if(event.target.matches('[data-node], [data-stat-unlocked]'))invalidateInfographicUndo(saved,event.target.dataset.node || event.target.dataset.statUnlocked);
   if(event.target.matches('[data-stat-line]')) { updateStatLine(event.target); return; }
@@ -472,6 +498,7 @@ document.addEventListener('change', event => {
   render();
 });
 $('#next-upgrade').addEventListener('click', event => {
+  if(editsPaused())return;
   const button = event.target.closest('button[data-upgrade-skill]');
   if (!button || !$('#next-upgrade').contains(button)) return;
   if (button.dataset.statAction) {
@@ -558,9 +585,10 @@ $('#export-progress').addEventListener('click',async()=>{
   } catch(error) {backupStatus('Progress could not be exported: '+error.message,true);}
   finally {button.disabled=false;}
 });
-$('#import-progress').addEventListener('click',()=>$('#import-progress-file').click());
+$('#import-progress').addEventListener('click',()=>{if(!editsPaused())$('#import-progress-file').click();});
 $('#import-progress-file').addEventListener('change',async event=>{
-  const file=event.target.files?.[0];event.target.value='';if(!file)return;
+  const file=event.target.files?.[0];event.target.value='';if(!file || editsPaused())return;
+  const importSequence=refreshSequence;
   backupStatus('Checking progress backup...');
   try {
     if(file.size>500000)throw new Error('Backup file is too large');
@@ -569,6 +597,7 @@ $('#import-progress-file').addEventListener('change',async event=>{
     const classes=parsePlayerBackup(value,models),names=Object.keys(classes).map(name=>PLAYER_CLASS_NAMES[name]).join(', ');
     if(!confirm(`Restore progress for ${names}? Existing progress for these classes will be replaced. A safety backup of your current progress will download first.`)){backupStatus('Import cancelled.');return;}
     const safety=await currentBackup(models);
+    if(editsPaused() || importSequence!==refreshSequence)throw new Error('Tracker data changed during import. Retry after loading succeeds');
     downloadJSON(safety,'hexa-matrix-before-import-'+new Date().toISOString().slice(0,10)+'.json');
     const replacements=Object.fromEntries(Object.entries(classes).map(([className,progress])=>['hexa-tracker-'+className+'-v1',progress]));
     if(!playerStorage.replaceMany(replacements))throw new Error('Storage failed during import. Keep this tab open and retain the safety backup');
@@ -580,13 +609,16 @@ $('#import-progress-file').addEventListener('change',async event=>{
 async function refreshSharedPriorities({force=false}={}) {
   const classAtStart=activeClass,sequence=++refreshSequence;
   $('#retry-priorities').hidden=true;
-  if(!NODES.length){classLoading=true;classLoadFailed=false;renderInputs();render();}
-  $('#priority-sync').textContent='';
+  classLoading=true;classLoadFailed=false;
+  if(verifiedClass!==activeClass){renderInputs();render();}
+  syncPausedControls();
+  $('#priority-sync').textContent=verifiedClass===activeClass ? 'Refreshing data. Showing the last loaded view. Progress edits are paused.' : '';
   try {
     const cached=classDataCache.get(classAtStart);
     const snapshot=!force&&!classRequests.has(classAtStart)&&cached&&Date.now()-cached.loadedAt<CLASS_CACHE_MS ? cached : await requestClassData(classAtStart);
     if(classAtStart!==activeClass||sequence!==refreshSequence)return;
-    classLoading=false;classLoadFailed=false;
+    classLoading=false;classLoadFailed=false;syncPausedControls();
+    verifiedClass=activeClass;
     const {model,drafts}=snapshot;
     NODES=model.nodes;statNodes=model.stats;nodeByShort=Object.fromEntries(NODES.map(node=>[node.short,node]));setTrackerCatalogue(NODES);
     previewDrafts=drafts;catalog=previewCatalog(drafts);
@@ -598,14 +630,20 @@ async function refreshSharedPriorities({force=false}={}) {
     classDataCache.delete(classAtStart);
     if(classAtStart!==activeClass||sequence!==refreshSequence)return;
     classLoading=false;classLoadFailed=true;
-    NODES=[];statNodes=[];nodeByShort={};setTrackerCatalogue([]);
-    previewDrafts={};catalog=previewCatalog({});renderInputs();render();
+    if(verifiedClass!==activeClass) {
+      NODES=[];statNodes=[];nodeByShort={};setTrackerCatalogue([]);
+      previewDrafts={};catalog=previewCatalog({});renderInputs();render();
+    }
+    syncPausedControls();
     $('#retry-priorities').hidden=false;
-    $('#priority-sync').textContent = `Shared priorities could not be loaded: ${error.message}. Check your connection, then retry.`;
+    $('#priority-sync').textContent = verifiedClass===activeClass
+      ? `Refresh failed: ${error.message}. Showing the last loaded view. Progress edits are paused. Check your connection, then retry.`
+      : `Shared priorities could not be loaded: ${error.message}. Check your connection, then retry.`;
   }
 }
 $('#retry-priorities').addEventListener('click',()=>refreshSharedPriorities({force:true}));
 $('#class').addEventListener('change',()=>{
+  classLoading=false;classLoadFailed=false;syncPausedControls();verifiedClass=null;
   activeClass=$('#class').value;selectedStats[activeClass]=null;document.documentElement.dataset.class=activeClass;storageKey='hexa-tracker-'+activeClass+'-v1';
   decorations.setClass(activeClass);
   music.setClass(activeClass);
@@ -617,6 +655,7 @@ $('#class').addEventListener('change',()=>{
 });
 window.addEventListener('focus',()=>refreshSharedPriorities({force:true}));
 $('#reset').onclick = () => {
+  if(editsPaused())return;
   if (confirm(`Reset saved ${activeClass==='ren'?'Ren':'Hoyoung'} levels and resources?`)) {
     playerStorage.remove(storageKey);
     saved = {};

@@ -116,6 +116,78 @@ changeClass('ren');
 waiting.filter(x=>x.url.includes('%EB%A0%8C')).forEach(x=>x.resolve(response(x.url)));await tick();
 waiting.filter(x=>!x.url.includes('%EB%A0%8C')).forEach(x=>x.reject(new Error('old class failed')));await tick();
 assert.ok($('[data-node]').dataset.node.startsWith('ren_'));assert.equal($('#priority-sync').textContent,'');assert.equal($('#retry-priorities').hidden,true);
+// A failed refresh keeps only this class's verified view, without save writes.
+for(const view of ['tracker','infographic'])for(const failure of ['network','deadline']) {
+  let failed=false,stall=false;
+  await boot({[hyKey]:original},url=>{
+    if(stall)return new Promise(()=>{});
+    if(failed)throw new Error('offline refresh');
+    return response(url);
+  });
+  $('#view-infographic').click();
+  $('[data-checkpoint]:not([disabled])').click();
+  $('#view-'+view).click();
+  const before=localStorage.getItem(hyKey);
+  const node=$('[data-node]'), totals=$('#totals').innerHTML, priority=$('#priority').innerHTML;
+  const history=JSON.parse(before).infographicUndo;
+  let writes=0;const write=localStorage.setItem;
+  localStorage.setItem=(key,value)=>{if(key===hyKey)writes++;write(key,value);};
+  failed=failure==='network';stall=failure==='deadline';
+  win.dispatchEvent(new Event('focus'));
+  assert.equal(node.disabled,true);assert.equal($('#retry-priorities').hidden,true);
+  assert.match($('#priority-sync').textContent,/Refreshing data/);
+  if(stall)deadlines.at(-1)();
+  await tick();
+  assert.equal($('[data-node]'),node);assert.equal(node.value,'1');
+  assert.equal($('#totals').innerHTML,totals);assert.equal($('#priority').innerHTML,priority);
+  assert.match($('#priority-sync').textContent,/last loaded view.*edits are paused/);
+  assert.equal($('#retry-priorities').hidden,false);
+  for(const selector of ['#patch','#priority-version','[name="world"]','[data-node]','[data-stat-line]','[data-stat-unlocked]','[data-stat-select]','#next-upgrade button','#owned','#perday','#erdaRequest','#epicDungeon','#includeJanus','#hideDone','#reset','#import-progress']) {
+    for(const control of document.querySelectorAll(selector))assert.equal(control.disabled,true,selector);
+  }
+  assert.equal($('#class').disabled,false);assert.equal($('#view-tracker').disabled,false);
+  $('#reset').onclick();
+  $('#next-upgrade button')?.dispatchEvent(new Event('click',{bubbles:true}));
+  $('[data-stat-cancel]')?.dispatchEvent(new Event('click',{bubbles:true}));
+  $('#view-infographic').click();
+  for(const tile of document.querySelectorAll('[data-checkpoint]')) {
+    assert.equal(tile.disabled,true);tile.dispatchEvent(new Event('click',{bubbles:true}));
+  }
+  $('#infographic-hide').checked=true;$('#infographic-hide').dispatchEvent(new Event('change',{bubbles:true}));
+  $('#view-tracker').click();
+  assert.equal(writes,0);assert.equal(localStorage.getItem(hyKey),before);
+  failed=false;stall=false;$('#retry-priorities').click();
+  assert.equal(node.disabled,true);await tick();
+  assert.equal($('[data-node]').disabled,false);assert.equal($('[data-node]').value,'1');
+  assert.equal($('#owned').value,'42');assert.equal($('#owned').disabled,false);
+  assert.equal($('#reset').disabled,false);assert.equal($('#import-progress').disabled,false);
+  assert.equal($('#priority-sync').textContent,'');assert.equal($('#retry-priorities').hidden,true);
+  assert.deepEqual(JSON.parse(localStorage.getItem(hyKey)).infographicUndo,history);
+}
+// Changed remote data wins on recovery, including an explicitly empty priority list.
+let empty=false,offline=false;
+await boot({[hyKey]:original},url=>{
+  if(offline)throw new Error('offline');
+  return empty&&url.includes('priority-preview')?Response.json({drafts:{}}):response(url);
+});
+const retained=localStorage.getItem(hyKey);
+offline=true;win.dispatchEvent(new Event('focus'));await tick();assert.ok($('[data-node]'));
+offline=false;empty=true;$('#retry-priorities').click();await tick();
+assert.equal($('#priority').children.length,0);assert.match($('#progress').textContent,/No saved priority/);
+assert.equal($('#priority-sync').textContent,'');assert.equal(localStorage.getItem(hyKey),retained);
+// Switching away from a failed verified view never presents it as the new class.
+let failHY=false,failRen=false;
+await boot({[hyKey]:original,[renKey]:JSON.stringify({levels:{ren_skillCore1:2},owned:77})},url=>{
+  if(url.includes('%EB%A0%8C')?failRen:failHY)throw new Error('class offline');
+  return response(url);
+});
+failHY=true;win.dispatchEvent(new Event('focus'));await tick();
+failRen=true;changeClass('ren');await tick();
+assert.equal(document.querySelectorAll('[data-node]').length,0);
+assert.doesNotMatch($('#priority-sync').textContent,/last loaded view/);
+failRen=false;$('#retry-priorities').click();await tick();
+assert.ok($('[data-node]').dataset.node.startsWith('ren_'));assert.equal($('#owned').value,'77');
+assert.equal($('[data-node]').disabled,false);
 globalThis.setTimeout=realSetTimeout;
 await win.happyDOM.abort();
 console.log('Tracker loading deadlines, retry, save preservation and rapid class changes pass');
