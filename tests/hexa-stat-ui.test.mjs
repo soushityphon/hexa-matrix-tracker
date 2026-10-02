@@ -158,7 +158,7 @@ assert.match($('#next-upgrade').textContent,/Loading\.\.\./);
 assert.doesNotMatch($('#nodes').textContent,/No skills saved/);
 change('#class','hoyoung');
 assert.equal(pending.length,2);
-assert.equal(document.querySelectorAll('[data-node]').length,1);
+assert.equal(document.querySelectorAll('[data-node]').length,2);
 assert.equal(state(hyKey).owned,42);
 change('#class','ren');
 assert.equal(pending.length,2);
@@ -206,7 +206,7 @@ assert.equal(state(hyKey).owned,42);
 Date.now=realNow;
 change('#class','ren');await tick();
 // A focus refresh bypasses the short switch cache. Failure keeps verified data read-only;
-// a later successful empty catalogue has the true empty-state message.
+// a later successful empty catalogue retains only the optional Janus input.
 let focusRequests=0;
 globalThis.fetch=async()=>{focusRequests++;return new Response('Unavailable',{status:503});};
 win.dispatchEvent(new Event('focus'));await tick();
@@ -216,7 +216,8 @@ assert.equal($('[data-node]').disabled,true);
 assert.match($('#priority-sync').textContent,/Refresh failed.*last loaded view/);
 globalThis.fetch=async url=>Response.json(url.startsWith('/api/tracker-catalogue')?{nodes:[],stats:[]}:{drafts:{}});
 win.dispatchEvent(new Event('focus'));await tick();
-assert.match($('#nodes').textContent,/No skills saved/);
+assert.match($('#nodes').textContent,/Sol Janus/);
+assert.equal($('#includeJanus').disabled,true);
 assert.equal($('#priority-sync').textContent,'');
 const css=readFileSync(new URL('../styles.css',import.meta.url),'utf8');
 assert.match(css,/\.fd-gain\{color:var\(--ui-accent\)/);

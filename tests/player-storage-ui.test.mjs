@@ -67,7 +67,7 @@ const snapshot=()=>Object.fromEntries([hyKey,renKey,'hexa-tracker-class-v1','hex
 
 
 await boot({[hyKey]:JSON.stringify({mode:'pair_lines_heroic',levels:{Harmony:1},owned:42})},'write');
-assert.equal(document.querySelectorAll('[data-node]').length,1);
+assert.equal(document.querySelectorAll('[data-node]').length,2);
 assert.equal($('#priority-sync').textContent,'');
 assert.match($('#save-status').textContent,/Changes are not saved/);
 const field=$('[data-node]');field.value='2';field.dispatchEvent(new Event('input',{bubbles:true}));
@@ -76,13 +76,13 @@ change('#class','ren');await tick();change('#class','hoyoung');await tick();
 assert.equal($('[data-node]').value,'2');assert.equal($('#owned').value,'42');
 for(const raw of ['42','null','[]','{bad',JSON.stringify({statLines:{x:42}}),JSON.stringify({levels:[]})]) {
  await boot({[hyKey]:raw});
- assert.equal(document.querySelectorAll('[data-node]').length,1);
+ assert.equal(document.querySelectorAll('[data-node]').length,2);
  assert.equal($('#priority-sync').textContent,'');assert.match($('#save-status').textContent,/original record is preserved/);
  const input=$('[data-node]');input.value='2';input.dispatchEvent(new Event('input',{bubbles:true}));
  $('#reset').click();assert.equal(localStorage.getItem(hyKey),raw);
  change('#class','ren');await tick();change('#class','hoyoung');await tick();assert.equal(localStorage.getItem(hyKey),raw);
 }
-await boot({},'read');assert.equal(document.querySelectorAll('[data-node]').length,1);assert.equal($('#priority-sync').textContent,'');assert.match($('#save-status').textContent,/could not be read/);
+await boot({},'read');assert.equal(document.querySelectorAll('[data-node]').length,2);assert.equal($('#priority-sync').textContent,'');assert.match($('#save-status').textContent,/could not be read/);
 change('#class','ren');await tick();assert.ok(document.querySelectorAll('[data-node]').length);
 await win.happyDOM.abort();
 await boot({[hyKey]:JSON.stringify({levels:{Harmony:1},owned:42}),[renKey]:JSON.stringify({owned:7})});

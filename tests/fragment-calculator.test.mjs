@@ -39,10 +39,10 @@ const schedule={freeBaseLevel:0,levels:Array.from({length:30},(_,i)=>({erda:2,fr
 // Integer level costs, checkpoint 10..14 sums to 290.
 schedule.levels[10].frags=40;schedule.levels[11].frags=50;schedule.levels[12].frags=50;schedule.levels[13].frags=50;
 const janus={freeBaseLevel:0,levels:Array.from({length:30},()=>({erda:1,frags:20}))};
-const base={...currentDraft('lotus_heroic'),steps:[{skill:'Harmony',level:14,fdFrom:0,fdGain:1.25},{skill:'Janus',level:1},{skill:'HEXA Stat I',level:20}],statIcons:STAT_ICONS,capturedCosts:{Harmony:schedule,Janus:janus},costProvenance:{capturedAt:'2026-10-01T00:00:00Z',resources:[{url:'https://maplescouter.com/test.js',sha256:'a'.repeat(64)}]}};
+const base={...currentDraft('lotus_heroic'),steps:[{skill:'Harmony',level:14,fdFrom:0,fdGain:1.25},{skill:'HEXA Stat I',level:20}],statIcons:STAT_ICONS,capturedCosts:{Harmony:schedule,Hecate:janus},costProvenance:{capturedAt:'2026-10-01T00:00:00Z',resources:[{url:'https://maplescouter.com/test.js',sha256:'a'.repeat(64)}]}};
 const pair=id=>Object.fromEntries(validatePair({job:'호영',id,name:id,region:'GMS',enabled:true,orders:{heroic:base,interactive:base}}).map(d=>[d.mode,d]));
 const drafts={...pair('pair_calc'),...pair('pair_other')};
-const model={nodes:NODES.filter(n=>['Harmony','Janus'].includes(n.short)).map(n=>({...n,costs:(n.short==='Harmony'?schedule:janus).levels})),stats:[{short:'HEXA Stat I',name:'HEXA Stat I',icon:STAT_ICONS['HEXA Stat I']}]};
+const model={nodes:NODES.filter(n=>['Harmony','Hecate'].includes(n.short)).map(n=>({...n,sourceKey:n.short==='Hecate'?'generalCore2':'masteryCore1',costs:(n.short==='Harmony'?schedule:janus).levels})),stats:[{short:'HEXA Stat I',name:'HEXA Stat I',icon:STAT_ICONS['HEXA Stat I']}]};
 const evidence=JSON.parse(readFileSync(new URL('../data/scouter-ren-kms-heroic-response-2026-10-01.json',import.meta.url)));
 const renCatalogue={...evidence.catalogue,provenance:{costs:{...evidence.catalogue.provenance.costs,capturedAt:'2026-10-01T00:00:00Z'}}};
 const candidate=reconstructScouterOrder(evidence.response,renCatalogue,discoverySelection('GMS','Heroic'),renCatalogue.sourceIconOverrides);
@@ -63,7 +63,7 @@ async function boot(storage={}){
 const $=s=>document.querySelector(s);
 const change=(s,value)=>{const el=$(s);if(el.type==='radio'&&value)document.querySelectorAll('input[type=radio]').forEach(other=>{if(other!==el&&other.name===el.name)other.checked=false;});if(el.type==='checkbox'||el.type==='radio')el.checked=value;else el.value=s==='#erdaRequest'?(value?'yes':'none'):value;el.dispatchEvent(new Event('change',{bubbles:true}));};
 const state=()=>JSON.parse(localStorage.getItem(key));
-const amounts=()=>[...document.querySelectorAll('#next-upgrade .material-amount[aria-label$="Fragments still needed"]')].map(el=>el.querySelector('span').textContent);
+const amounts=()=>[...document.querySelectorAll('#next-upgrade .material-amount[aria-label$="Fragments needed"]')].map(el=>el.querySelector('span').textContent);
 const snapshot=()=>Object.fromEntries([key,renKey,'hexa-tracker-class-v1'].map(k=>[k,localStorage.getItem(k)]).filter(([,v])=>v));
 await boot({[key]:JSON.stringify({mode:'pair_calc_heroic',levels:{Harmony:9},owned:60,perday:10})});
 assert.equal($('.calculator-panel').hidden,false);
@@ -75,6 +75,12 @@ assert.equal($('.summary-panel').nextElementSibling.querySelector('h2').textCont
 assert.equal($('#includeJanus').closest('.summary-panel'),$('.summary-panel'));
 assert.equal($('#includeJanus').closest('.include-option').hidden,false);
 assert.deepEqual(amounts(),['40','230']);
+assert.equal($('.column-head'),null);
+assert.match($('#next-upgrade').textContent,/Level 9 → 10/);
+assert.match($('#next-upgrade').textContent,/Level 9 → 14 · Checkpoint/);
+assert.equal($('#next-upgrade [data-next-level]').textContent,'Add 1 Level');
+assert.equal($('#next-upgrade [data-upgrade-level="14"]').textContent,'Add to checkpoint');
+assert.doesNotMatch($('#next-upgrade').outerHTML,/Fragments still needed/);
 const fullTable=$('#priority').textContent,totals=$('#totals').textContent,completion=$('#completion').textContent,fd=$('#next-upgrade .fd-gain').textContent;
 change('#erdaRequest',true);change('#epicDungeon','nightmareParadise');
 assert.match($('#next-upgrade').textContent,/7.0 days/);
@@ -115,4 +121,31 @@ assert.match($('#next-upgrade').textContent,/Unlock/);$('#next-upgrade [data-sta
 assert.match($('#next-upgrade').textContent,/RNG/);assert.equal($('#next-upgrade .material-days'),null);assert.equal(amounts().length,0);
 const input=$('[data-stat-line]');input.value=6;input.dispatchEvent(new Event('input',{bubbles:true}));assert.equal(state().owned,60);
 assert.equal(JSON.parse(localStorage.getItem(renKey)).owned,7);
+// Captured priorities omit Janus, but its input/save and optional totals remain.
+await boot({[renKey]:JSON.stringify({mode:'pair_ren_calc_heroic',levels:{ren_generalCore1:7},includeJanus:false}),'hexa-tracker-class-v1':'ren'});
+assert.equal($('[data-node-row="ren_generalCore1"]').hidden,false);
+assert.equal($('[data-node="ren_generalCore1"]').value,'7');
+assert.equal($('#includeJanus').disabled,false);
+assert.equal($('#includeJanus').closest('.include-option').hidden,false);
+const priorityBefore=$('#priority').innerHTML,nextBefore=$('#next-upgrade').innerHTML,totalsBefore=$('#totals').textContent;
+change('#includeJanus',true);
+assert.notEqual($('#totals').textContent,totalsBefore);
+assert.equal($('#priority').innerHTML,priorityBefore);
+assert.equal($('#next-upgrade').innerHTML,nextBefore);
+assert.equal(JSON.parse(localStorage.getItem(renKey)).levels.ren_generalCore1,7);
+change('[data-node="ren_generalCore1"]',8);
+assert.equal(JSON.parse(localStorage.getItem(renKey)).levels.ren_generalCore1,8);
+$('#undo-progress').click();
+assert.equal($('[data-node="ren_generalCore1"]').value,'7');
+$('#view-infographic').click();
+assert.equal($('#includeJanus').closest('.include-option').hidden,false);
+await boot(snapshot());
+assert.equal($('[data-node="ren_generalCore1"]').value,'7');
+assert.equal($('#includeJanus').checked,true);
+for(const [number,name]of [[1,'HEXA Stat I'],[2,'HEXA Stat II'],[3,'HEXA Stat III']]){
+  const selector=$(`[data-stat-selector="${name}"]`);
+  assert.equal(selector.querySelector('img').getAttribute('src'),`assets/hexa-stats/stat-${number}-locked.png`);
+  assert.ok(selector.querySelector('.stat-selector-name').classList.contains('visually-hidden'));
+  assert.match(selector.querySelector('button').getAttribute('aria-label'),new RegExp(name));
+}
 await win.happyDOM.abort();console.log('Fragment calculator arithmetic and DOM checks passed');

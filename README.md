@@ -1,3 +1,9 @@
+## Current Matrix and priority UI, Issue #30
+
+Sol Janus is always editable in Current HEXA Matrix and is permanently excluded from Upgrade Priority. The shared Summary checkbox optionally includes it in completion and material totals in both views. Its level uses existing per-class progress and backup identity `generalCore1`. Where Janus has no captured schedule, use the selected priority's captured Sol Hecate (`generalCore2`) schedule, following the owner's confirmation that their material requirements are equal. Missing Hecate costs disable inclusion rather than inventing costs. Source captures and priority data are unchanged.
+
+The owner-supplied original numbered HEXA Stat I/II/III PNGs are bundled locally with their faded locked variants. Visible duplicate headings are removed; accessible names and line editing remain. Next Upgrade uses current-to-target level labels, Add 1 Level / Add to checkpoint actions and existing inventory shortfall amounts without the repeated shortfall caption. The proposed FD formula display was declined; existing explanations/calculations remain.
+
 ## FD explanation access, Issue #30
 
 Tap or activate an underlined FD value in Next Upgrade, the priority table or a completed Stat square to open its explanation. Native buttons support Enter/Space, the modal dialog supports Close/Escape and returns focus to the value. Stat explanation access is separate from its line editor. Explanations remain available in a paused retained view; opening them does not edit or save progress.

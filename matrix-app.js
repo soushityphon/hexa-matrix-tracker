@@ -1,5 +1,6 @@
 let NODES = [], statNodes = [];
 let nodeByShort = {};
+import { NODES as baseNodes } from './data.js';
 import { setTrackerCatalogue } from './planner.js';
 setTrackerCatalogue([]);
 import { combinedSourceGain, displayPriorityRows, matrixTotals, nextCheckpoint, rangeCost } from './planner.js';
@@ -133,7 +134,7 @@ function finishProgressEdit(edit,finished=false) {
 function undoContexts() {
   const nodes=[...NODES.map(node=>({...node,initialLevel:initialLevel(node)})),...statNodes.map(node=>({...node,isStat:true,maxLevel:node.maxLevel ?? 20}))];
   return Object.fromEntries(Object.entries(catalog.priorities).map(([mode,order])=>{
-    const entries=infographicCheckpoints(order,nodes);
+    const entries=infographicCheckpoints(order.filter(step=>!nodeByShort[step.skill]?.isJanus),nodes);
     return [mode,{entries,context:infographicContext(mode,entries)}];
   }));
 }
@@ -244,7 +245,7 @@ function renderInputs() {
     if(!playerStorage.conflict(storageKey))saved.statLines={...saved.statLines,[node.short]:lines};
     const index=statNodes.indexOf(node);
     const selector=document.createElement('div');selector.className='stat-selector';selector.dataset.statSelector=node.short;
-    selector.innerHTML=`<button type="button" class="stat-select" data-stat-select="${skill}" aria-controls="stat-panel-${index}" aria-expanded="false" aria-pressed="false"><span class="stat-unlock-icon"><span aria-hidden="true">${index+1}</span><img src="${escapeHtml(node.icon)}" alt=""></span><span class="stat-selector-name">${escapeHtml(node.name)}</span><span class="stat-mini-preview" aria-label="Saved line levels">${[0,1,2].map(line=>`<span class="stat-mini-line ${line===0?'stat-main':'stat-additional'}"><span class="stat-bar" aria-hidden="true">${Array.from({length:10},()=>'<i></i>').join('')}</span><span class="stat-mini-value"></span></span>`).join('')}</span></button><span class="stat-selector-summary"></span><button type="button" class="stat-cancel" data-stat-cancel="${skill}" aria-label="Cancel unlock for ${escapeHtml(node.name)}" title="Cancel unlock" hidden>×</button>`;
+    selector.innerHTML=`<button type="button" class="stat-select" data-stat-select="${skill}" aria-controls="stat-panel-${index}" aria-expanded="false" aria-pressed="false"><span class="stat-unlock-icon"><img src="${escapeHtml(node.icon)}" alt=""></span><span class="stat-selector-name visually-hidden">${escapeHtml(node.name)}</span><span class="stat-mini-preview" aria-label="Saved line levels">${[0,1,2].map(line=>`<span class="stat-mini-line ${line===0?'stat-main':'stat-additional'}"><span class="stat-bar" aria-hidden="true">${Array.from({length:10},()=>'<i></i>').join('')}</span><span class="stat-mini-value"></span></span>`).join('')}</span></button><span class="stat-selector-summary"></span><button type="button" class="stat-cancel" data-stat-cancel="${skill}" aria-label="Cancel unlock for ${escapeHtml(node.name)}" title="Cancel unlock" hidden>×</button>`;
     selectors.append(selector);
     row.id=`stat-panel-${index}`;
     row.innerHTML=`<span class="stat-name visually-hidden">${escapeHtml(node.name)}</span><input data-stat-unlocked="${skill}" type="checkbox" hidden tabindex="-1" aria-hidden="true"><h3 class="stat-line-heading">Main Stat</h3><div class="stat-lines">${['Main Stat','2nd additional stat','3rd additional stat'].map((label,index)=>`${index===1?'<h3 class="stat-line-heading">Additional Stats</h3>':''}<label class="stat-line ${index===0?'stat-main':'stat-additional'}"><span class="visually-hidden">${label}</span><span class="stat-bar" aria-hidden="true">${Array.from({length:10},()=>'<i></i>').join('')}</span><input data-stat-line="${skill}" data-line-index="${index}" aria-label="${escapeHtml(node.name)} ${label} level" aria-describedby="stat-note-${statNodes.indexOf(node)}" type="number" min="0" max="10" step="1" value="${lines[index] ?? ''}"></label>`).join('')}</div><div class="stat-summary" hidden><span data-stat="${skill}"></span><span class="stat-fd"></span></div><p class="stat-note" id="stat-note-${statNodes.indexOf(node)}" aria-live="polite"></p>`;
@@ -310,6 +311,8 @@ function syncStatVisuals(skill,row) {
   const icon=selector.querySelector('.stat-unlock-icon');
   selector.querySelector('.stat-selector-name').textContent=row.querySelector('.stat-name').textContent;
   icon.classList.toggle('is-unlocked',unlocked.checked);
+  const node=statNodes.find(node=>node.short===skill);
+  icon.querySelector('img').src=unlocked.checked ? node.icon : node.icon.replace('-unlocked.png','-locked.png');
   icon.title=unlocked.checked ? 'Unlocked' : 'Locked';
   selector.querySelector('[data-stat-select]').setAttribute('aria-label',`${row.querySelector('.stat-name').textContent}, ${unlocked.checked?'unlocked':'locked'}. ${selectedStats[activeClass]===skill?'Close':'Edit'} line levels.`);
   const savedLines=saved.statLines?.[skill];
@@ -365,7 +368,7 @@ const materialIcons = {
 function materialAmount(value, type, rng = false, shortfall = false) {
   const { path, name } = materialIcons[type];
   const amount = rng ? (value ? `${value.toLocaleString()}+` : 'RNG') : value.toLocaleString();
-  return `<span class="material-amount" aria-label="${rng ? (value ? `at least ${value.toLocaleString()}` : 'variable') : value.toLocaleString()} ${name}${shortfall ? ' still needed' : ''}"><img src="${path}" alt=""><span aria-hidden="true">${amount}</span><span class="material-fallback" aria-hidden="true">${name}</span></span>`;
+  return `<span class="material-amount" aria-label="${rng ? (value ? `at least ${value.toLocaleString()}` : 'variable') : value.toLocaleString()} ${name}${shortfall ? ' needed' : ''}"><img src="${path}" alt=""><span aria-hidden="true">${amount}</span><span class="material-fallback" aria-hidden="true">${name}</span></span>`;
 }
 function checkMaterialIcons() {
   $$('.material-amount img, .material-heading img').forEach(img => {
@@ -400,7 +403,7 @@ function highlightCurrentSkill(skill) {
 }
 
 function upgradeAction(skill, target, label, nextLevel = false) {
-  return `<button type="button" data-upgrade-skill="${skill}" data-upgrade-level="${target}" ${nextLevel ? 'data-next-level="true"' : ''} aria-label="${label} for ${skill}">${label}</button>`;
+  return `<button type="button" data-upgrade-skill="${skill}" data-upgrade-level="${target}" ${nextLevel ? 'data-next-level="true"' : ''} aria-label="${label} for ${skill}, to level ${target}">${label}</button>`;
 }
 
 function statAction(skill, action, label) {
@@ -435,7 +438,7 @@ fdDialog.addEventListener('close',()=>{
 function upgradeCost(label, cost, time, action = '', owned = null) {
   const shortfall = owned !== null && !cost.rng;
   const displayCost = shortfall ? {...cost, frags:fragmentShortfall(cost.frags, owned)} : cost;
-  return `<div class="upgrade-cost"><div class="upgrade-cost-details"><span>${label}</span>${materials(displayCost, time, shortfall)}${shortfall ? '<small class="fragment-needed">Fragments still needed</small>' : ''}</div>${action}</div>`;
+  return `<div class="upgrade-cost"><div class="upgrade-cost-details"><span>${label}</span>${materials(displayCost, time, shortfall)}</div>${action}</div>`;
 }
 
 function render(allowConflict=false) {
@@ -452,15 +455,18 @@ function render(allowConflict=false) {
   const heroic = $('[name="world"]:checked').value === 'heroic';
   $('.calculator-panel').hidden = !heroic;
   $('.quickstats').hidden = !heroic;
-  const order = catalog.priorities[mode] || [];
+  const order = (catalog.priorities[mode] || []).filter(step=>!nodeByShort[step.skill]?.isJanus);
   // A capture's catalogue can contain skills that its priority never uses.
-  // Keep their inputs and progress, but scope the matrix to this exact order.
+  // Keep their inputs and progress. Janus is always available as an optional
+  // material-only input and never contributes to the priority order.
   const available = new Set(order.map(step => step.skill));
-  $$('[data-node-row]').forEach(row => { row.hidden = !available.has(row.dataset.nodeRow); });
+  $$('[data-node-row]').forEach(row => { row.hidden = !nodeByShort[row.dataset.nodeRow]?.isJanus && !available.has(row.dataset.nodeRow); });
   $$('.node-group').forEach(group => { group.hidden = !group.querySelector('[data-node-row]:not([hidden])'); });
   syncStatSelection(available);
   $('#stat-heading').hidden = !statNodes.some(node => available.has(node.short));
-  $('#includeJanus').closest('.include-option').hidden = !available.has('Janus');
+  $('#includeJanus').closest('.include-option').hidden = false;
+  $('#includeJanus').disabled=true;
+  $('#includeJanus').title='Captured Sol Hecate costs unavailable for this selection';
   infographicEntries=infographicCheckpoints(order,[...NODES.map(node=>({...node,initialLevel:initialLevel(node)})),...statNodes.map(node=>({...node,isStat:true,maxLevel:node.maxLevel ?? 20}))]);
   infographicScope=infographicContext(mode,infographicEntries);
   if(pendingProgressEdit && pendingProgressEdit.scope!==undoScope())pendingProgressEdit=null;
@@ -494,7 +500,17 @@ function render(allowConflict=false) {
     infographic.clear();$('#infographic-message').textContent='Captured level costs unavailable. Grab Scouter info and save a new priority pair in the Admin Panel.';
     return;
   }
-  setTrackerCatalogue(NODES.filter(node=>available.has(node.short) && captured[node.short]).map(node => ({...node, costs:captured[node.short].levels, initialLevel:captured[node.short].freeBaseLevel})));
+  // Owner-confirmed Janus costs equal Hecate. Use this selection's captured
+  // schedule, without changing the source capture or priority order.
+  const janus=NODES.find(node=>node.isJanus);
+  const hecate=NODES.find(node=>node.sourceKey==='generalCore2' || node.short==='Hecate');
+  const janusCosts=captured[janus?.short] || captured[hecate?.short];
+  $('#includeJanus').disabled=!janusCosts;
+  $('#includeJanus').title=janusCosts ? '' : 'Captured Sol Hecate costs unavailable for this selection';
+  setTrackerCatalogue(NODES.filter(node=>node.isJanus ? !!janusCosts : available.has(node.short) && captured[node.short]).map(node => {
+    const cost=node.isJanus ? janusCosts : captured[node.short];
+    return {...node,costs:cost.levels,initialLevel:cost.freeBaseLevel};
+  }));
   const current = levels();
   const statUnlocked = {};
   $$('[data-stat-unlocked]').forEach(input => {
@@ -524,11 +540,11 @@ function render(allowConflict=false) {
   $('#version-name').textContent = `${catalog.settings[mode].selectionName} / ${catalog.settings[mode].world === 'heroic' ? 'Fragments (Heroic)' : 'Sol Erda (Interactive)'}`;
   $('#progress').textContent = steps.length ? `${completed} / ${steps.length} complete` : 'Maple Scouter order pending';
   $('#next-upgrade').style.setProperty('--skill-accent', skillAccent(nextRow?.skill));
-  const nextIcon = nextRow && (previewDrafts[mode]?.statIcons[nextRow.skill] || statNodes.find(node=>node.short===nextRow.skill)?.icon || nodeByShort[nextRow.skill]?.icon);
+  const nextIcon = nextRow && (statNodes.find(node=>node.short===nextRow.skill)?.icon || previewDrafts[mode]?.statIcons[nextRow.skill] || nodeByShort[nextRow.skill]?.icon);
   const statStep = nextIsStat && (statUnlocked[next.skill]
     ? upgradeCost(`Completion · ${nextRow.level}`, nextRow.cost, null, statAction(next.skill, 'lines', 'Enter line levels'))
     : upgradeCost('Unlock', { ...nextRow.cost, rng: false }, duration({...nextRow.cost, rng:false}), statAction(next.skill, 'unlock', 'Mark unlocked'), inventory));
-  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><div class="upgrade-top"><small>Next Upgrade</small></div><div class="upgrade-heading"><div class="upgrade-label"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${priorityName(nextRow.skill)} → ${nextRow.level}</strong></div>${nextRowGain === null ? '' : fdText(nextRowGain)}</div>${nextIsStat ? statStep : `${upgradeCost(`Next level · ${nextLevel}`, levelCost, duration(levelCost), upgradeAction(next.skill, nextLevel, `Mark level ${nextLevel}`, true), inventory)}${nextRow.level === nextLevel ? '' : upgradeCost(`Checkpoint · ${nextRow.level}`, nextRow.cost, duration(nextRow.cost), upgradeAction(next.skill, nextRow.level, `Mark checkpoint ${nextRow.level}`), inventory)}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
+  $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><div class="upgrade-top"><small>Next Upgrade</small></div><div class="upgrade-heading"><div class="upgrade-label"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${priorityName(nextRow.skill)} → ${nextRow.level}</strong></div>${nextRowGain === null ? '' : fdText(nextRowGain)}</div>${nextIsStat ? statStep : `${upgradeCost(`Level ${current[next.skill] || 0} → ${nextLevel}`, levelCost, duration(levelCost), upgradeAction(next.skill, nextLevel, 'Add 1 Level', true), inventory)}${nextRow.level === nextLevel ? '' : upgradeCost(`Level ${current[next.skill] || 0} → ${nextRow.level} · Checkpoint`, nextRow.cost, duration(nextRow.cost), upgradeAction(next.skill, nextRow.level, 'Add to checkpoint'), inventory)}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
   $$('#next-upgrade .upgrade-heading img').forEach(img => {
     img.addEventListener('error', () => { img.hidden = true; });
     if (img.complete && !img.naturalWidth) img.hidden = true;
@@ -539,7 +555,7 @@ function render(allowConflict=false) {
     const number = value => value === 0 ? '<span class="zero">0</span>' : value.toLocaleString();
     if (!row.done) remainingIndex++;
     const displayIndex = $('#hideDone').checked && !row.done ? remainingIndex : rowIndex + 1;
-    const icon = previewDrafts[mode]?.statIcons[row.skill] || statNodes.find(node=>node.short===row.skill)?.icon || nodeByShort[row.skill]?.icon;
+    const icon = statNodes.find(node=>node.short===row.skill)?.icon || previewDrafts[mode]?.statIcons[row.skill] || nodeByShort[row.skill]?.icon;
     const isNext = row.index <= index + 1 && index + 1 <= row.endIndex;
     const gain = row.done || row.skill.startsWith('HEXA Stat') ? null : combinedSourceGain(order, row, current[row.skill] || 0);
     const fd = gain === null ? '' : fdText(gain);
@@ -686,6 +702,14 @@ function requestClassData(className) {
   ]);
   const request=Promise.race([reads,deadline]).then(([model,shared])=>{
     const drafts=Object.fromEntries(Object.entries(shared).filter(([,draft])=>(draft.job==='렌'?'ren':'hoyoung')===className));
+    // Add the optional tracker input even when Scouter omits Janus. Its
+    // stable core identity also lets existing progress round-trip in backups.
+    if(!model.nodes.some(node=>node.sourceKey==='generalCore1' || node.short==='Janus'))model={...model,nodes:[...model.nodes,{...baseNodes.find(node=>node.short==='Janus'),sourceKey:'generalCore1',initialLevel:0}]};
+    model={...model,nodes:model.nodes.map(node=>({...node,isJanus:node.sourceKey==='generalCore1' || node.short==='Janus'}))};
+    model={...model,stats:model.stats.map(node=>{
+      const number={'HEXA Stat I':1,'HEXA Stat II':2,'HEXA Stat III':3}[node.short];
+      return number ? {...node,icon:`assets/hexa-stats/stat-${number}-unlocked.png`} : node;
+    })};
     const snapshot={model,drafts,loadedAt:Date.now()};
     classDataCache.set(className,snapshot);
     return snapshot;

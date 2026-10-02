@@ -44,7 +44,7 @@ export function matrixTotals(levels, mode, includeJanus = false, unlocked = {}, 
   const remaining = { erda: 0, frags: 0 };
   const total = { erda: 0, frags: 0 };
   for (const node of activeNodes(mode)) {
-    if (node.short === 'Janus' && !includeJanus) continue;
+    if ((node.isJanus || node.short === 'Janus') && !includeJanus) continue;
     const initial = node.initialLevel ?? (node.short === 'Apotheosis' ? 1 : 0);
     const current = Math.max(initial, levels[node.short] || 0);
     for (const [target, cost] of [
