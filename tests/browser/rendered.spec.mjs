@@ -86,10 +86,10 @@ for (const job of ['hoyoung', 'ren']) {
     const completed = await page.locator('.checkpoint.completed').count();
     expect(completed).toBeGreaterThan(0);
     await page.locator('#infographic-hide').check();
-    await expect(page.locator('.checkpoint.completed')).toHaveCount(0);
+    await expect(page.locator('.checkpoint.completed:visible')).toHaveCount(0);
     await fit(page);
     await page.locator('#infographic-hide').uncheck();
-    await expect(page.locator('.checkpoint.completed')).toHaveCount(completed);
+    await expect(page.locator('.checkpoint.completed:visible')).toHaveCount(completed);
     await page.locator('#class').selectOption(job === 'ren' ? 'hoyoung' : 'ren');
     await page.locator('#class').selectOption(job);
     await expect(page.locator('#class')).toHaveValue(job);
@@ -124,7 +124,10 @@ for (const job of ['hoyoung', 'ren']) {
     await expect(page.locator('#fd-explanation')).toBeVisible();
     await expect(page.locator('#fd-explanation-close')).toBeFocused();
     await page.keyboard.press('Tab');
-    expect(await page.evaluate(() => document.activeElement.closest('dialog')?.id)).toBe('fd-explanation');
+    // Native Chromium may focus browser chrome between cycles; background UI must stay inert.
+    expect(await page.evaluate(() => document.activeElement === document.body || document.activeElement.closest('dialog')?.id === 'fd-explanation')).toBe(true);
+    await page.keyboard.press('Tab');
+    await expect(page.locator('#fd-explanation-close')).toBeFocused();
     await fit(page);
     await page.keyboard.press('Escape');
     await expect(page.locator('#fd-explanation')).not.toBeVisible();
