@@ -63,3 +63,18 @@ const tabs=Array.from({length:20},()=>createPlayerStorage(()=>storage,()=>{},loc
 const results=await Promise.all(tabs.map((tab,index)=>tab.write(hy,{owned:index+1})));
 assert.equal(results.filter(Boolean).length,1);assert.equal(JSON.parse(records.get(hy)).owned,1);
 console.log('Cross-tab storage: serialised writes, conflicts, recovery, class isolation, removal and import races pass');
+
+// A proposed no-op must check again after waiting for the shared lock.
+records.set(hy,JSON.stringify({owned:42}));
+let countedWrites=0;
+const counted={...storage,setItem:(key,value)=>{countedWrites++;storage.setItem(key,value);}};
+const noop=createPlayerStorage(()=>counted,()=>{},lock);noop.read(hy);
+const waiting=noop.write(hy,{owned:42});
+records.set(hy,JSON.stringify({owned:43}));
+assert.equal(await waiting,false);assert.equal(noop.conflict(hy),true);
+assert.equal(countedWrites,0);assert.equal(JSON.parse(records.get(hy)).owned,43);
+// Repeated queued values skip only once the earlier write has succeeded.
+const queued=createPlayerStorage(()=>counted,()=>{},lock);queued.read(hy);
+assert.deepEqual(await Promise.all([queued.write(hy,{owned:44}),queued.write(hy,{owned:44})]),[true,true]);
+assert.equal(countedWrites,1);
+console.log('Queued identical saves retain lock-time peer checks and persist a changed value once');

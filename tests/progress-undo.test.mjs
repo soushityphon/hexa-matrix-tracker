@@ -193,8 +193,11 @@ for(const damaged of [false,true]) {
   await boot({[hyKey]:damaged?'42':JSON.stringify({levels:{Harmony:1}})});
   const raw=localStorage.getItem(hyKey),actual=localStorage;
   globalThis.localStorage={getItem:key=>actual.getItem(key),setItem:()=>{throw new Error('quota');},removeItem:key=>actual.removeItem(key)};
-  edit(field(),7);commit(field());undo();assert.equal(field().value,damaged?'0':'1');
-  assert.equal(actual.getItem(hyKey),raw);assert.equal($('#save-status').hidden,false);
+  edit(field(),7);commit(field());assert.equal($('#save-status').hidden,false);
+  undo();assert.equal(field().value,damaged?'0':'1');
+  assert.equal(actual.getItem(hyKey),raw);
+  // Undo to the valid persisted baseline needs no write; damaged raw stays protected.
+  assert.equal($('#save-status').hidden,!damaged);
 }
 
 // Pure guard: a later affected-skill mutation or different scope cannot be undone.

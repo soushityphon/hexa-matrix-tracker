@@ -188,10 +188,33 @@ for (const job of ['hoyoung', 'ren']) {
     await expect(fd).toBeFocused();
     expect(await page.evaluate(job => localStorage.getItem('hexa-tracker-' + job + '-v1'), job)).toBe(before);
   });
-  test(job + ' known focus loss after native browser-chrome cycle', async ({ page }) => {
-    // Issue #30: focus-triggered priority rebuilding disconnects the modal opener.
-    // Keep the desired behaviour executable until the later rendering/focus batch fixes it.
-    test.fail(true, 'Known Issue #30 priority refresh loses the FD opener after a browser-chrome focus cycle');
+  test(job + ' measured identical redraws and saves', async ({ page }, info) => {
+    await open(page, job);
+    await expect(page.locator('#priority [data-fd-note]').first()).toBeVisible();
+    const result=await page.evaluate(async job => {
+      // Let pending Web Locks from initial loading finish before counting.
+      await navigator.locks.request('hexa-tracker-progress-v1',()=>{});
+      const priority=document.querySelector('#priority'),next=document.querySelector('#next-upgrade');
+      const firstPriority=priority.firstChild,firstNext=next.firstChild;
+      let priorityRebuilds=0,nextRebuilds=0,writes=0;
+      const observer=new MutationObserver(records=>{
+        for(const record of records){if(record.target===priority)priorityRebuilds++;if(record.target===next)nextRebuilds++;}
+      });
+      observer.observe(priority,{childList:true});observer.observe(next,{childList:true});
+      const setItem=Storage.prototype.setItem;
+      Storage.prototype.setItem=function(key,value){if(key==='hexa-tracker-'+job+'-v1')writes++;return setItem.call(this,key,value);};
+      try {
+        for(let index=0;index<100;index++)document.querySelector('#fd-explanation-close').dispatchEvent(new Event('input',{bubbles:true}));
+        await new Promise(resolve=>setTimeout(resolve,100));
+        return {events:100,writes,priorityRebuilds,nextRebuilds,priorityRetained:priority.firstChild===firstPriority,nextRetained:next.firstChild===firstNext};
+      }finally{observer.disconnect();Storage.prototype.setItem=setItem;}
+    },job);
+    expect(result).toEqual({events:100,writes:0,priorityRebuilds:0,nextRebuilds:0,priorityRetained:true,nextRetained:true});
+    await info.attach('redraw-and-save-measurement',{body:JSON.stringify(result,null,2),contentType:'application/json'});
+  });
+
+  test(job + ' FD focus survives unchanged expired-cache browser-chrome refresh', async ({ page }) => {
+    // Identical verified priority markup retains the modal's original opener.
     await open(page, job);
     const fd = page.locator('#priority [data-fd-note]').first();
     await fd.focus();

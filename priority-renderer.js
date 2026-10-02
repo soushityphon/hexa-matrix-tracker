@@ -58,9 +58,19 @@ function upgradeCost(label, cost, time, action = '', owned = null) {
 export function createPriorityRenderer({document}) {
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
+  // Compare generated markup, not browser-normalised HTML or image fallbacks.
+  // Child identity also invalidates a cached value after the tracker clears it.
+  const rendered=new WeakMap(),boundImages=new WeakSet();
+  function replaceMarkup(element,markup) {
+    const prior=rendered.get(element);
+    if(prior?.markup===markup && prior.children.length===element.childNodes.length &&
+      prior.children.every((child,index)=>element.childNodes[index]===child))return;
+    element.innerHTML=markup;
+    rendered.set(element,{markup,children:[...element.childNodes]});
+  }
   function checkMaterialIcons() {
     $$('.material-amount img, .material-heading img').forEach(img => {
-      img.addEventListener('error', () => { img.parentElement.classList.add('icon-failed'); });
+      if(!boundImages.has(img)){boundImages.add(img);img.addEventListener('error', () => { img.parentElement.classList.add('icon-failed'); });}
       if (img.complete && !img.naturalWidth) img.parentElement.classList.add('icon-failed');
     });
   }
@@ -79,13 +89,13 @@ export function createPriorityRenderer({document}) {
     const statStep = nextIsStat && (statUnlocked[next.skill]
       ? upgradeCost(`Completion · ${nextRow.level}`, nextRow.cost, null, statAction(next.skill, 'lines', 'Enter line levels'))
       : upgradeCost('Unlock', { ...nextRow.cost, rng: false }, duration({...nextRow.cost, rng:false}), statAction(next.skill, 'unlock', 'Mark unlocked'), inventory));
-    $('#next-upgrade').innerHTML = `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><div class="upgrade-top"><small>Next Upgrade</small></div><div class="upgrade-heading"><div class="upgrade-label"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${priorityName(nextRow.skill)} → ${nextRow.level}</strong></div>${nextRowGain === null ? '' : fdText(nextRowGain)}</div>${nextIsStat ? statStep : `${upgradeCost(`Level ${current[next.skill] || 0} → ${nextLevel}`, levelCost, duration(levelCost), upgradeAction(next.skill, nextLevel, 'Add 1 Level', true), inventory)}${nextRow.level === nextLevel ? '' : upgradeCost(`Level ${current[next.skill] || 0} → ${nextRow.level} · Checkpoint`, nextRow.cost, duration(nextRow.cost), upgradeAction(next.skill, nextRow.level, 'Add to checkpoint'), inventory)}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`;
+    replaceMarkup($('#next-upgrade'), `${next && nextRow ? `<div class="metric" style="--skill-accent:${skillAccent(nextRow.skill)}"><div class="upgrade-top"><small>Next Upgrade</small></div><div class="upgrade-heading"><div class="upgrade-label"><span class="node-icon" aria-hidden="true"><span>${nextRow.skill[0]}</span>${nextIcon ? `<img src="${nextIcon}" alt="">` : ''}</span><strong>${priorityName(nextRow.skill)} → ${nextRow.level}</strong></div>${nextRowGain === null ? '' : fdText(nextRowGain)}</div>${nextIsStat ? statStep : `${upgradeCost(`Level ${current[next.skill] || 0} → ${nextLevel}`, levelCost, duration(levelCost), upgradeAction(next.skill, nextLevel, 'Add 1 Level', true), inventory)}${nextRow.level === nextLevel ? '' : upgradeCost(`Level ${current[next.skill] || 0} → ${nextRow.level} · Checkpoint`, nextRow.cost, duration(nextRow.cost), upgradeAction(next.skill, nextRow.level, 'Add to checkpoint'), inventory)}`}</div>` : `<div class="metric"><strong>${steps.length ? 'Priority complete' : 'Maple Scouter order pending'}</strong></div>`}`);
     $$('#next-upgrade .upgrade-heading img').forEach(img => {
-      img.addEventListener('error', () => { img.hidden = true; });
+      if(!boundImages.has(img)){boundImages.add(img);img.addEventListener('error', () => { img.hidden = true; });}
       if (img.complete && !img.naturalWidth) img.hidden = true;
     });
     let remainingIndex = 0;
-    $('#priority').innerHTML = displayRows.map((row, rowIndex) => {
+    replaceMarkup($('#priority'), displayRows.map((row, rowIndex) => {
       const cost = row.cost;
       const number = value => value === 0 ? '<span class="zero">0</span>' : value.toLocaleString();
       if (!row.done) remainingIndex++;
@@ -95,7 +105,7 @@ export function createPriorityRenderer({document}) {
       const gain = row.done || row.skill.startsWith('HEXA Stat') ? null : combinedSourceGain(order, row, current[row.skill] || 0);
       const fd = gain === null ? '' : fdText(gain);
       return `<tr class="type-${typeClass(row.skill, nodeByShort)} ${row.done ? 'done' : ''} ${isNext ? 'next' : ''}" ${isNext ? 'aria-current="step"' : ''} style="--skill-accent:${skillAccent(row.skill)}"><td>${displayIndex}</td><td><span class="skill-cell">${icon ? `<img class="stat-icon" src="${icon}" alt="">` : '<i class="dot" aria-hidden="true"></i>'}<span>${priorityName(row.skill)}</span></td><td>${row.level}</td><td>${number(cost.erda)}</td><td>${cost.rng ? `<span class="rng" aria-label="${cost.frags ? `at least ${cost.frags} Fragments` : 'variable Fragment cost'}">${cost.frags ? `${cost.frags.toLocaleString()}+` : 'RNG'}</span>` : number(cost.frags)}</td><td>${fd}</td></tr>`;
-    }).join('');
+    }).join(''));
   }
   return {renderPriority, checkMaterialIcons};
 }

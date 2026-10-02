@@ -84,6 +84,9 @@ export function createPlayerStorage(getStorage, onStatus = () => {}, withLock = 
     const raw=JSON.stringify(value);
     return run([key],()=>{
       if(!check(key))return false;
+      // Still check under the shared lock before skipping an identical write.
+      // Comparing here also handles queued edits, retries and peer changes.
+      if(sameRaw(raw,entry.raw)){entry.reason='';report(entry);return true;}
       const result=access(storage=>storage.setItem(key,raw));
       if(result.ok)entry.raw=raw;
       entry.reason=result.ok?'':'unsaved';report(entry);return result.ok;

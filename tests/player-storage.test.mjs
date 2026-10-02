@@ -33,3 +33,21 @@ records.set('damaged','42');assert.equal(guarded.canBackup('damaged'),false);
 assert.equal(guarded.canBackup(key),true);
 assert.equal(createPlayerStorage(()=>{throw Error();}).writePreference('pref','x'),false);
 console.log('Player storage legacy/current, damaged records, exceptions and session recovery pass');
+
+// Identical values, including reordered keys, do not touch persisted bytes.
+records.clear();records.set(key,JSON.stringify({levels:{Harmony:2},owned:42}));
+let identicalWrites=0;
+const measured=createPlayerStorage(()=>({...storage,setItem:(k,v)=>{identicalWrites++;storage.setItem(k,v);}}));
+measured.read(key);
+assert.equal(measured.write(key,{owned:42,levels:{Harmony:2}}),true);
+assert.equal(identicalWrites,0);
+assert.equal(records.get(key),JSON.stringify({levels:{Harmony:2},owned:42}));
+failWrite=true;assert.equal(measured.write(key,{owned:43,levels:{Harmony:2}}),false);
+assert.equal(measured.session(key).owned,43);
+failWrite=false;assert.equal(measured.write(key,{owned:43,levels:{Harmony:2}}),true);
+assert.equal(identicalWrites,2,'a failed real write is retried');
+assert.equal(measured.write(key,{levels:{Harmony:2},owned:43}),true);
+assert.equal(identicalWrites,2);
+records.delete(key);
+assert.equal(measured.write(key,{owned:43,levels:{Harmony:2}}),false,'no-op cannot bypass external Reset');
+console.log('Identical player saves skip writes; real failed saves retry and peer removal stays protected');

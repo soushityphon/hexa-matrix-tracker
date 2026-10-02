@@ -30,6 +30,8 @@ Use the current public test tracker without clearing storage. Restore any tempor
 
 No rendered fixture result proves the hosting gateway identity boundary, live source availability, audio playback or real-device ergonomics. Record implemented, automated-rendered, deployed and owner-accepted states separately in Issue #30.
 
-## Known rendered failure
+## Priority redraw and focus measurements
 
-The dedicated `known focus loss after native browser-chrome cycle` cases are marked expected failures for Issue #30. After advancing the existing 30-second cache to expiry, tabbing from the modal's single Close button through Chromium browser chrome and back fires the app's window-focus refresh. Fresh-cache returns now retain the view without a refresh. Rebuilding the priority DOM disconnects the original FD opener, so Escape does not restore focus to its replacement. Ordinary Enter/Space, Close/Escape and focus return are checked separately. An unexpected pass fails CI, prompting removal of the expected-failure marker once fixed. Carry this forward to Step 4's priority rendering/focus work; do not count these cases as passing or owner acceptance.
+The `measured identical redraws and saves` cases instrument real Storage writes and direct priority/Next Upgrade child mutations. After initial loading settles, 100 unrelated bubbling input events must produce zero class-progress writes and zero replacements, with original nodes retained. Each class/viewport attaches the counters as JSON evidence. The ordinary `FD focus survives unchanged expired-cache browser-chrome refresh` cases exercise the previous six expected failures: cache expiry, native Tab through browser chrome, return focus refresh, then Escape must focus the same priority FD opener. Their expected-failure markers are removed for this batch and CI must pass them ordinarily before deployment.
+
+This covers unchanged priority markup. It does not establish focus preservation for changed source data, rebuilt input/Stat editors or unfinished invalid drafts. Those remain in Issue #30's open optimisation item, alongside wider redundant rendering. Owner acceptance remains separate.

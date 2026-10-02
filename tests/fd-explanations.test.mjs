@@ -85,6 +85,35 @@ assert.equal($('#fd-explanation').getAttribute('aria-describedby'),'fd-explanati
 assert.equal($('#fd-explanation-close').hasAttribute('autofocus'),true);
 await explain($('#next-upgrade [data-fd-note]'),/rounded Maple Scouter step values.*compounded/);
 await explain($('#priority [data-fd-note]'),/rounded Maple Scouter/);
+// Measure actual app work for unrelated bubbling events, with identical progress.
+const priorPriority=$('#priority').firstChild,priorNext=$('#next-upgrade').firstChild;
+let measuredWrites=0;
+const originalWrite=localStorage.setItem;
+localStorage.setItem=(key,value)=>{if(savedKeys.includes(key))measuredWrites++;originalWrite(key,value);};
+for(let index=0;index<100;index++)$('#fd-explanation-close').dispatchEvent(new Event('input',{bubbles:true}));
+console.log(JSON.stringify({unrelatedEvents:100,playerWrites:measuredWrites,priorityReplaced:$('#priority').firstChild!==priorPriority,nextReplaced:$('#next-upgrade').firstChild!==priorNext}));
+assert.equal(measuredWrites,0,'identical progress must not rewrite player storage');
+assert.equal($('#priority').firstChild,priorPriority,'unrelated inputs retain priority nodes');
+assert.equal($('#next-upgrade').firstChild,priorNext,'unrelated inputs retain Next Upgrade nodes');
+// Calculator changes update its amounts while leaving the priority table intact.
+change('#owned',0);
+assert.equal($('#priority').firstChild,priorPriority);
+assert.notEqual($('#next-upgrade').firstChild,priorNext);
+assert.equal(measuredWrites,1,'real settings changes are persisted');
+localStorage.setItem=originalWrite;
+// A tracker-cleared region must be repopulated even when its markup is unchanged.
+const expectedPriority=$('#priority').innerHTML;
+$('#priority').replaceChildren();
+$('#fd-explanation-close').dispatchEvent(new Event('input',{bubbles:true}));
+assert.equal($('#priority').innerHTML,expectedPriority);
+// Image fallback changes survive an unrelated render of the same markup.
+const nextImage=$('#next-upgrade .upgrade-heading img');
+nextImage.dispatchEvent(new Event('error'));
+$('#fd-explanation-close').dispatchEvent(new Event('input',{bubbles:true}));
+assert.equal($('#next-upgrade .upgrade-heading img'),nextImage);
+assert.equal(nextImage.hidden,true);
+
+
 change('[data-node="Harmony"]',1);
 const undoDisabled=$('#undo-progress').disabled;
 await explain($('#next-upgrade [data-fd-note]'),/partly completed Scouter step.*Fragment cost.*Actual gain may differ/);
