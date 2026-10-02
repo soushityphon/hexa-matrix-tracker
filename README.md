@@ -1,3 +1,11 @@
+## Admin priority record protection, Issue #30
+
+The Admin Panel validates saved priority rows one at a time. A damaged JSON record, unsupported shape, invalid checkpoint or mismatched storage ID no longer blocks valid priorities or the other class. Saved priorities shows a separate Damaged records list across all classes, with the stored ID, validation reason and an owner-only Download raw record action. The download wraps the exact original `draft_json` string in a `hexa-invalid-priority-record` envelope. It is recovery evidence, not a normal importable priority backup. Unknown class identity is not guessed.
+
+Damaged rows remain untouched and are omitted from usable priorities. Existing IDs remain reserved, including damaged records, so pair saves, legacy imports and tracker backup restoration cannot overwrite them. The older priority-preview write/delete route also refuses damaged targets. Valid priorities retain rename, availability, download and deletion; Skills saves and unrelated class management continue. This does not add automatic repair, replacement or deletion of damaged rows. Keep the raw download and review a separate recovery change before altering those records. Database access failures still return a storage error, rather than claiming the data loaded.
+
+`tests/invalid-priorities.test.mjs` uses an isolated SQLite database and the actual admin UI to cover row isolation, exact raw downloads, owner access, collisions, legacy route protection, both classes, valid management and safe text rendering. Existing priority snapshots, schedules, source FD and player progress are unchanged.
+
 ## Player save protection, Issue #30
 
 `player-storage.js` owns tracker progress reads, writes and removal, plus class/view preferences. Storage exceptions do not propagate into priority loading. A separate live save-status message states when changes are unsaved, when saved progress cannot be read, or when a record is damaged. Session copies retain edits across class switches; closing or reloading the tab cannot preserve edits that failed to reach browser storage. Successful later writes clear the unsaved warning.

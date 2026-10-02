@@ -8,7 +8,7 @@ import { skillAccent } from './skill-colours.js';
 const $ = selector => document.querySelector(selector);
 const el = (tag, text, className) => { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; };
 let captureCatalogue = null;
-let drafts = {}, rows = [], orders = {}, captureRegion = null, skillDirty = false, loaded = false, busy = false;
+let drafts = {}, invalidRecords = [], rows = [], orders = {}, captureRegion = null, skillDirty = false, loaded = false, busy = false;
 const cache = new Map();
 const classStates=new Map();
 let currentJob='호영', currentView='skills';
@@ -106,6 +106,17 @@ function download(value,name) {
 async function mutation(method,value) {await request('/api/admin-panel',method,value);await reload();}
 function renderRegistered() {
   const groups=priorityGroups(drafts);$('#priority-count').textContent=`(${groups.length})`;$('#registered').replaceChildren();
+  if(invalidRecords.length) {
+    const warning=el('section',undefined,'invalid-priorities');warning.setAttribute('aria-label','Damaged priority records');
+    warning.append(el('h3',`Damaged records (${invalidRecords.length})`),el('p','These records are preserved and excluded from usable priorities. This list covers all classes because damaged data may not identify its class. Download the raw record for recovery. Imports cannot replace its ID.','fine'));
+    for(const record of invalidRecords) {
+      const card=el('article',undefined,'registered-row'),details=el('div',undefined,'registered-details'),button=el('button','Download raw record');
+      details.append(el('strong',record.mode),el('small',record.reason));
+      button.addEventListener('click',async()=>{button.disabled=true;try{download(await request('/api/admin-panel?record='+encodeURIComponent(record.mode)),'hexa-damaged-priority.json');}catch(error){message(error.message,true);}finally{button.disabled=false;}});
+      card.append(details,button);warning.append(card);
+    }
+    $('#registered').append(warning);
+  }
   if(!groups.length) $('#registered').append(el('p','No saved priorities.','fine'));
   for(const group of groups) {
     const card=el('article',undefined,'registered-row'),details=el('div',undefined,'registered-details'),actions=el('div',undefined,'registered-actions');
@@ -120,7 +131,7 @@ function renderRegistered() {
   }
 }
 async function reload() {
-  const result=await request('/api/admin-panel?job='+encodeURIComponent(currentJob));drafts=result.drafts;
+  const result=await request('/api/admin-panel?job='+encodeURIComponent(currentJob));drafts=result.drafts;invalidRecords=result.invalidRecords || [];
   if(!skillDirty) rows=result.skills?.rows || rows;
   renderSkills();renderRegistered();renderOrders();
 }
