@@ -1,6 +1,10 @@
+## Browser music checks, Issue #30
+
+The isolated Chromium suite now uses the original compiled MP3 and real media/Web Audio APIs to check gesture-only loading, decoded playback and output signal, gain mute/resume, native looping after seeking near the end, class-switch silence/rewind and muted reload. Both class saves must remain unchanged. Tests run at desktop and both emulated phone widths. These checks do not prove speaker output, a full-duration audible loop or physical Android/iOS behaviour. Audible playback, the supplied phone check, moving-background readability, reduced motion and Animations Off are owner-reported accepted. Remaining audio device/owner acceptance stays separate in Issue #30. This batch changes only tests and documentation; no Site deployment is required.
+
 ## Compact touch controls, Issue #30
 
-The Stat cancel cross retains its small icon within a 32px target, without increasing the Stat card size. Coarse-pointer inputs, selection controls, checkbox labels and Animations use a 28px minimum where needed for the scaled narrow-phone layout. Rendered tests cover both classes, four cancel corners, editor separation, exact Undo and scaled target sizes. Real-device ergonomics remain owner review. Audible music playback is owner-confirmed; separate mute/loop/class-switch scenarios are not inferred.
+The Stat cancel cross retains its small icon within a 32px target, without increasing the Stat card size. Coarse-pointer inputs, selection controls, checkbox labels and Animations use a 28px minimum where needed for the scaled narrow-phone layout. Rendered tests cover both classes, four cancel corners, editor separation, exact Undo and scaled target sizes. The supplied phone check is owner-reported accepted, with no particular device/browser claimed. Audible music playback is owner-confirmed; separate mute/loop/class-switch owner scenarios are not inferred.
 
 ## Automated development checks, Issue #30
 

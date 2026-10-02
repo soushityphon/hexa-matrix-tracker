@@ -8,15 +8,21 @@ Hoyoung fixture orders/costs/FD are synthetic layout stimuli. Ren uses retained 
 
 Coverage includes both classes/views, Update/World/class switches, hidden-skill preservation, completed checkpoints and Hide completed, long reviewed names, failed images, page/panel overflow, native FD Enter/Space/Escape and ordinary focus return, unchanged saved progress when opening explanations, compact pointer-target dimensions/centre hit testing and scaled mobile sizes and touch checkpoint/undo with unchanged inventory. Stat cancel checks exercise all four inner corners, closed-editor separation, ordinary Undo and unchanged inventory/lines/levels for both classes. Reports retain full-page baseline and long-name/image-failure screenshots plus target measurements. These are Chromium results at fixed widths, not physical Android/iOS acceptance. The checks do not impose a new 44px layout on owner-accepted compact controls.
 
+## Real browser music checks
+
+`music.spec.mjs` observes the browser's real detached audio element and GainNode, without replacing media playback, decoding or clocks. The original MP3 is served by the compiled Worker. A native range pointer gesture starts playback, the media clock advances and an analyser connected after gain must detect a nonzero signal. The browser must loop after seeking to half a second before the actual end, retain nonzero output, mute to zero output with paused playback, resume, rewind and silence on class switch, and remain muted after reload. Both class progress records must stay unchanged. Results include a JSON evidence attachment per viewport.
+
+This is headless Chromium and phone emulation. The accelerated loop check establishes a decoded native loop boundary, not full-track listening or audible output from a speaker. Real iOS/Android audio policies and physical volume controls remain device checks. Owner-confirmed audible playback is independent evidence, not inferred from the analyser.
+
 ## Owner/device checks still needed
 
 Use the current public test tracker without clearing storage. Restore any temporary progress edits with Undo.
 
 1. In Hoyoung and Ren, switch Tracker/Infographic, Update and World. Expect the selected class's own saved levels and resources, readable labels and no sideways page scrolling.
 2. Check the footer credit once in each view, numbered/faded Stat artwork, Janus input and optional Summary inclusion. These remain the version 111/113 owner checks; CI fixture screenshots do not count as owner acceptance.
-3. Tap a Stat square and its small cancel control when it is already unlocked with three known zero lines. Expect the intended action with no accidental editor/checkpoint action. The cancel target is 32px. Check the four edges and restore the original unlock with ordinary Undo; expect the editor to stay closed and the saved lines/resources to return.
+3. The supplied version 114 phone check is owner-reported accepted. For future regressions, tap a Stat square and its small cancel control when it is already unlocked with three known zero lines. Expect the intended action with no accidental editor/checkpoint action. The cancel target is 32px. Check the four edges and restore the original unlock with ordinary Undo; expect the editor to stay closed and the saved lines/resources to return.
 4. Open an FD explanation, close it and use a hardware keyboard if available. Expect readable wrapping, focus inside the dialog and focus back on its opener after Escape or Close.
-5. Review live artwork and connectors at your screen width. Motion/readability, reduced motion, Animations Off, audible music is owner-confirmed on 2 October. Mute, looping, class switching and specific device/browser coverage remain unconfirmed; animation checks and those audio scenarios remain separate Step 4/#28/#29 acceptance.
+5. Moving-background readability with 80% fills, reduced motion and Animations Off are owner-reported accepted on 2 October. Audible music playback is also accepted. Remaining audio checks: in Ren, raise volume and listen beyond 66 seconds for a loop; set zero and expect silence; switch to Hoyoung and back and expect Muted and silence. Refresh must also start muted. Test on a physical phone if available. Browser signal checks do not establish these audible/device outcomes.
 
 No rendered fixture result proves the hosting gateway identity boundary, live source availability, audio playback or real-device ergonomics. Record implemented, automated-rendered, deployed and owner-accepted states separately in Issue #30.
 
