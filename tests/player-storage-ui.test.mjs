@@ -195,6 +195,31 @@ assert.match($('#backup-status').textContent,/import failed/);assert.equal(downl
 assert.equal(JSON.parse(localStorage.getItem(hyKey)).owned,42);assert.equal(JSON.parse(localStorage.getItem(renKey)).owned,77);
 $('#export-progress').click();await tick();assert.match($('#backup-status').textContent,/could not be exported/);assert.equal(downloads.length,beforeRaceDownloads);
 locks.request=request;
+// A conflict choice waiting for its lock must read the current class inside
+// the lock. Switching class cancels the old choice and keeps the new view.
+for(const choice of ['#continue-tab-save','#load-latest-save']) {
+  const delayedLocks={request:(_name,run)=>run()};
+  await boot({[hyKey]:JSON.stringify({levels:{Harmony:1},owned:42}),[renKey]:JSON.stringify({owned:7})},null,delayedLocks);
+  const peerRaw=JSON.stringify({...JSON.parse(localStorage.getItem(hyKey)),owned:88});
+  localStorage.setItem(hyKey,peerRaw);
+  win.dispatchEvent(new win.StorageEvent('storage',{key:hyKey}));
+  let release,confirmations=0;
+  globalThis.confirm=()=>{confirmations++;return true;};
+  delayedLocks.request=(_name,run)=>{
+    delayedLocks.request=(_nextName,next)=>next();
+    return new Promise(resolve=>{release=()=>resolve(run());});
+  };
+  $(choice).click();await tick();
+  assert.equal(typeof release,'function');assert.equal($('#load-latest-save').disabled,true);
+  change('#class','ren');await tick();
+  assert.equal($('#owned').value,'7');
+  release();await tick();
+  assert.equal(confirmations,0);assert.equal(localStorage.getItem(hyKey),peerRaw);
+  assert.equal($('#class').value,'ren');assert.equal($('#owned').value,'7');
+  assert.equal($('#reset').disabled,false);assert.equal($('#import-progress').disabled,false);
+  change('#class','hoyoung');await tick();
+  assert.equal($('#owned').value,'42');assert.equal($('#save-conflict').hidden,false);
+}
 // Without the browser lock capability, edits remain in memory and cannot overwrite a save.
 await boot({[hyKey]:JSON.stringify({levels:{Harmony:1},owned:42})},null,null);
 change('#owned',101);await tick();assert.equal(JSON.parse(localStorage.getItem(hyKey)).owned,42);assert.match($('#save-status').textContent,/not saved/);

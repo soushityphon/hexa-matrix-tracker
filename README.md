@@ -1,3 +1,7 @@
+## Save actions module, Issue #30
+
+`save-actions.js` owns the existing Export/Import, Reset and Load latest save/Continue this save handlers. It reads current class, refresh sequence, pending action and valid progress through the tracker boundary at every existing guard, including inside save locks and after awaits. Rendering, selected Stat state, paused controls and ordinary Undo stay in `matrix-app.js`; protected writes and the backup format stay in their existing modules. Safety exports still cover all classes under the shared lock. Confirmations, invalid drafts, save/backup format, source data, calculations, copy and layout remain unchanged. The wider refactor stays open for rendering extraction. Soushi accepted the supplied version 116 retention check, with existing progress/settings and no new warnings.
+
 ## Save UI module, Issue #30
 
 `save-ui.js` now owns the existing save warning text, conflict display, Web Locks wiring and checks before input/change/click and storage events. It uses the same protected `player-storage.js` implementation and reads the active class/loading/action state from the tracker. Ordinary actions, adoption/continuation confirmation, backup/import, Reset, unfinished inputs and paused controls retain their current owners and behaviour. No save format, source data, calculation, copy or layout changes are included. This is another small step in the open storage/UI/rendering refactor; it does not complete the whole item.
