@@ -81,6 +81,14 @@ export function orderMatches(steps, world, drafts) {
   return Object.values(drafts).filter(draft => draftSettings(draft)?.world === world && draft.steps.length === steps.length && draft.steps.every((step,i)=>step.skill === steps[i].skill && step.level === steps[i].level));
 }
 
+const playerSourceKey = source => {
+  const stat=/^hexastat([123])$/i.exec(source.coreId);
+  if(stat)return 'hexaStat'+stat[1];
+  const icon=source.icon || source.effectiveIcon || '';
+  const name=icon.slice(icon.lastIndexOf('/')+1).replace(/\.png$/i,'');
+  if(!/^[A-Za-z0-9_]+$/.test(name))throw new Error('Skill source identity is unavailable');
+  return name;
+};
 export function trackerCatalogue(review) {
   const result = {nodes:[], stats:[], pending:0};
   if (!review) return result;
@@ -88,10 +96,10 @@ export function trackerCatalogue(review) {
     const known = trackerSkill(row.source,review.job);
     if (!known || !row.name || !row.shortName || !row.category) {result.pending++; continue;}
     if (row.category === 'HEXA Stat') {
-      result.stats.push({short:known.short,name:row.name,shortName:row.shortName,icon:row.source.icon,tag:row.tag}); continue;
+      result.stats.push({short:known.short,name:row.name,shortName:row.shortName,icon:row.source.icon,tag:row.tag,sourceKey:playerSourceKey(row.source)}); continue;
     }
     if (!row.source.costs?.levels?.length) {result.pending++; continue;}
-    result.nodes.push({...known,name:row.name,shortName:row.shortName,icon:row.source.effectiveIcon || row.source.icon,tag:row.tag,
+    result.nodes.push({...known,name:row.name,shortName:row.shortName,icon:row.source.effectiveIcon || row.source.icon,tag:row.tag,sourceKey:playerSourceKey(row.source),
       group:{Skill:'Skill Nodes',Mastery:'Mastery Nodes',Enhancement:'Enhancement Nodes',Common:'Common Nodes'}[row.category],
       costs:row.source.costs.levels.map(({erda,frags})=>({erda,frags})),initialLevel:row.source.costs.freeBaseLevel});
   }
