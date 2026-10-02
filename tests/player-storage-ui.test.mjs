@@ -158,14 +158,14 @@ localStorage.setItem(hyKey,JSON.stringify({...newer,owned:99}));
 change('#owned',123);await tick();assert.equal(JSON.parse(localStorage.getItem(hyKey)).owned,99);assert.equal($('#save-conflict').hidden,false);
 $('#load-latest-save').click();await tick();assert.equal($('#owned').value,'99');
 // An invalid Stat draft remains visible until the user agrees to discard it.
-enter(stats[0],0,11);const draftField=fields(stats[0])[0];assert.equal(draftField.value,'11');
+enter(stats[0],0,6.5);const draftField=fields(stats[0])[0];assert.equal(draftField.value,'6.5');
 localStorage.setItem(hyKey,JSON.stringify({...JSON.parse(localStorage.getItem(hyKey)),owned:100}));
 win.dispatchEvent(new win.StorageEvent('storage',{key:hyKey}));win.dispatchEvent(new Event('focus'));await tick();
-assert.equal(fields(stats[0])[0].value,'11');
-let prompted=0;globalThis.confirm=()=>{prompted++;return false;};$('#load-latest-save').click();await tick();assert.equal(prompted,1);assert.equal(fields(stats[0])[0].value,'11');
+assert.equal(fields(stats[0])[0].value,'6.5');
+let prompted=0;globalThis.confirm=()=>{prompted++;return false;};$('#load-latest-save').click();await tick();assert.equal(prompted,1);assert.equal(fields(stats[0])[0].value,'6.5');
 // Continuing keeps this tab's invalid draft visible, but persists only valid progress.
 globalThis.confirm=()=>true;const draftDownloads=downloads.length;
-$('#continue-tab-save').click();await tick();assert.equal(fields(stats[0])[0].value,'11');
+$('#continue-tab-save').click();await tick();assert.equal(fields(stats[0])[0].value,'6.5');
 assert.equal($('#save-conflict').hidden,true);assert.equal(JSON.parse(localStorage.getItem(hyKey)).owned,99);
 assert.deepEqual(JSON.parse(localStorage.getItem(hyKey)).statLines[stats[0]],[0,0,0]);assert.equal(downloads.length,draftDownloads);
 localStorage.setItem(hyKey,JSON.stringify({...JSON.parse(localStorage.getItem(hyKey)),owned:100}));

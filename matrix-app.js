@@ -41,7 +41,7 @@ let refreshSequence=0;
 let classLoading=true, classLoadFailed=false, saveActionPending=false;
 let verifiedClass=null;
 const pausedControls=new Map();
-const progressControls='#patch, #priority-version, [name="world"], [data-node], [data-stat-line], [data-stat-unlocked], [data-stat-select], [data-stat-cancel], #next-upgrade button:not([data-fd-note]), [data-checkpoint], #owned, #perday, #erdaRequest, #epicDungeon, #includeJanus, #hideDone, #reset, #undo-progress, #import-progress, #import-progress-file';
+const progressControls='#patch, #priority-version, [name="world"], [data-node], [data-stat-line], [data-stat-segment], [data-stat-unlocked], [data-stat-select], [data-stat-cancel], #next-upgrade button:not([data-fd-note]), [data-checkpoint], #owned, #perday, #erdaRequest, #epicDungeon, #includeJanus, #hideDone, #reset, #undo-progress, #import-progress, #import-progress-file';
 const sourcePaused=()=>classLoading || classLoadFailed;
 const editsPaused=()=>sourcePaused() || saveActionPending || playerStorage.conflict(storageKey);
 function syncConflict() {saveUI.syncConflict();}
@@ -128,7 +128,7 @@ $('#undo-progress').addEventListener('click',()=>{
     const unlocked=row.querySelector('[data-stat-unlocked]');
     unlocked.checked=saved.statUnlocked?.[step.skill]===true || saved.levels?.[step.skill]>0;
     row.querySelectorAll('[data-stat-line]').forEach((field,index)=>{
-      field.value=saved.statLines?.[step.skill]?.[index] ?? '';
+      field.value=saved.statLines?.[step.skill]?.[index] ?? '';statEntryDrafts.set(field,field.value);
       field.setCustomValidity('');field.setAttribute('aria-invalid','false');
     });
   }
@@ -148,7 +148,7 @@ const infographic=createInfographic({document,window,grid:$('#infographic-grid')
     if(row) {
       row.querySelector('[data-stat-unlocked]').checked=saved.statUnlocked[entry.skill];
       row.querySelectorAll('[data-stat-line]').forEach((input,index)=>{
-        input.value=saved.statLines[entry.skill]?.[index] ?? '';
+        input.value=saved.statLines[entry.skill]?.[index] ?? '';statEntryDrafts.set(input,input.value);
         input.setCustomValidity('');input.setAttribute('aria-invalid','false');
       });
     }
@@ -392,6 +392,32 @@ function render(allowConflict=false) {
   syncPausedControls();
 }
 
+const statEntryDrafts=new WeakMap();
+function acceptStatEntry(input) {
+  const previous=statEntryDrafts.has(input)?statEntryDrafts.get(input):String(saved.statLines?.[input.dataset.statLine]?.[Number(input.dataset.lineIndex)] ?? '');
+  if(input.value!=='' && (!Number.isFinite(Number(input.value)) || Number(input.value)<0 || Number(input.value)>10)) {
+    input.value=previous;return false;
+  }
+  if(!input.validity.badInput)statEntryDrafts.set(input,input.value);
+  return true;
+}
+const numericProgressInputs='[data-node], [data-stat-line], #owned, #perday';
+function selectNumericValue(event) {
+  if(event.target.matches(numericProgressInputs) && !event.target.disabled)event.target.select();
+}
+document.addEventListener('focusin',selectNumericValue);
+document.addEventListener('click',selectNumericValue);
+$('.stat-list').addEventListener('click',event=>{
+  const segment=event.target.closest('[data-stat-segment]');
+  if(!segment || segment.disabled || editsPaused())return;
+  const input=segment.closest('.stat-line').querySelector('[data-stat-line]');
+  if(input.disabled)return;
+  // Each segment activation is an ordinary, independently undoable line edit.
+  pendingProgressEdit=null;
+  input.value=segment.dataset.statSegment;
+  statEntryDrafts.set(input,input.value);
+  updateStatLine(input);pendingProgressEdit=null;
+});
 function updateStatLine(input) {
   const skill=input.dataset.statLine, row=input.closest('.stat-row');
   const lines=[...row.querySelectorAll('[data-stat-line]')].map(field => field.value === '' ? (field.validity.badInput ? NaN : null) : Number(field.value));
@@ -421,7 +447,7 @@ function updateStatLine(input) {
 const renderSettings='#patch, #priority-version, [name="world"], #owned, #perday, #erdaRequest, #epicDungeon, #includeJanus, #hideDone, #infographic-hide';
 document.addEventListener('input', event=>{
   if(editsPaused())return;
-  if(event.target.matches('[data-stat-line]')) {updateStatLine(event.target);return;}
+  if(event.target.matches('[data-stat-line]')) {if(acceptStatEntry(event.target))updateStatLine(event.target);return;}
   if(event.target.matches('[data-node]')) {
     const edit=beginProgressEdit(event.target,event.target.dataset.node);
     if(validLevel(event.target)!==saved.levels?.[edit.skill])invalidateInfographicUndo(saved,edit.skill);
@@ -433,7 +459,7 @@ document.addEventListener('change', event => {
   if(editsPaused()){if(event.target.id==='infographic-hide')render();return;}
   if(['class','music-volume'].includes(event.target.id))return;
   if(event.target.matches('[data-stat-line]')) {
-    updateStatLine(event.target);pendingProgressEdit=null;return;
+    if(acceptStatEntry(event.target))updateStatLine(event.target);pendingProgressEdit=null;return;
   }
   if(event.target.matches('[data-node], [data-stat-unlocked]')) {
     const edit=beginProgressEdit(event.target,event.target.dataset.node || event.target.dataset.statUnlocked);

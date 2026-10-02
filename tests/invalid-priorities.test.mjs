@@ -8,6 +8,9 @@ import { validatePair } from '../admin-panel-model.js';
 import { renDraftFromCapture } from '../ren-priority.js';
 import { reconstructScouterOrder, discoverySelection } from '../scouter-discovery.js';
 
+const diagnosticLogs=[],originalWarn=console.warn;
+console.warn=(...args)=>{assert.equal(args.length,1);assert.equal(typeof args[0],'string');diagnosticLogs.push(JSON.parse(args[0]));};
+
 const sqlite=new DatabaseSync(':memory:');
 for(const file of ['0000_priority_preview.sql','0001_admin_skills.sql'])sqlite.exec(readFileSync(new URL('../drizzle/'+file,import.meta.url),'utf8'));
 const DB={prepare(sql){let values=[];return {bind(...args){values=args;return this;},async all(){return {results:sqlite.prepare(sql).all(...values)};},async first(){return sqlite.prepare(sql).get(...values)||null;},async run(){return {meta:{changes:Number(sqlite.prepare(sql).run(...values).changes)}};}};},async batch(statements){sqlite.exec('BEGIN');try{const results=[];for(const statement of statements)results.push(await statement.run());sqlite.exec('COMMIT');return results;}catch(error){sqlite.exec('ROLLBACK');throw error;}}};
@@ -35,12 +38,17 @@ for(const [mode,raw] of broken)sqlite.prepare('INSERT INTO priority_preview VALU
 const before=()=>sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all();
 const initial=before();
 for(const job of ['호영','렌']){
+ const logStart=diagnosticLogs.length;
  const response=await call('GET',undefined,'/api/admin-panel?job='+encodeURIComponent(job));assert.equal(response.status,200);
  const state=await response.json();assert.equal(state.invalidRecords.length,broken.size);
  assert.equal(Object.keys(state.drafts).length,1);assert.equal(Object.values(state.drafts)[0].job || '호영',job);
  assert.match(state.invalidRecords.find(row=>row.mode==='identity_record').reason,/ID/);
  assert.match(state.invalidRecords.find(row=>row.mode==='shape_record').reason,/shape/);
  assert(!JSON.stringify(state.invalidRecords).includes('private-looking'));
+ const emitted=diagnosticLogs.slice(logStart);
+ assert.equal(emitted.length,4);assert.equal(emitted.reduce((sum,item)=>sum+item.count,0),broken.size);
+ assert.deepEqual(emitted.map(item=>item.category),['json','shape','identity','validation']);
+ assert(emitted.every(item=>item.route==='admin-panel' && item.event==='invalid_record' && item.operation==='priorities_read'));
 }
 assert.deepEqual(before(),initial);
 for(const [mode,raw] of broken){
@@ -153,3 +161,81 @@ assert.equal(document.querySelector('#skills input').value,'Dirty skills kept');
 console.log('Priority admin DOM rejects stale rename/availability/delete and retains entered names, skill edits and pair drafts through latest-load failure/recovery');
 URL.createObjectURL=originalCreate;await win.happyDOM.abort();sqlite.close();
 console.log('Damaged priority isolation, raw recovery, collision protection, class management and admin DOM checks passed');
+
+// Isolated fault injection, never a live storage edit or reset.
+const diagnosticSqlite=new DatabaseSync(':memory:');
+for(const file of ['0000_priority_preview.sql','0001_admin_skills.sql'])diagnosticSqlite.exec(readFileSync(new URL('../drizzle/'+file,import.meta.url),'utf8'));
+const diagnosticDB={prepare(sql){let values=[];return {bind(...args){values=args;return this;},async all(){return {results:diagnosticSqlite.prepare(sql).all(...values)};},async first(){return diagnosticSqlite.prepare(sql).get(...values)||null;},async run(){return {meta:{changes:Number(diagnosticSqlite.prepare(sql).run(...values).changes)}};}};},async batch(statements){diagnosticSqlite.exec('BEGIN');try{const results=[];for(const statement of statements)results.push(await statement.run());diagnosticSqlite.exec('COMMIT');return results;}catch(error){diagnosticSqlite.exec('ROLLBACK');throw error;}}};
+const secret='PRIVATE_ACCOUNT_TOKEN_AND_SQL_VALUES';
+const diagnosticCall=(path,method='GET',value,db=diagnosticDB,owner=true)=>worker.fetch(new Request('https://test.example'+path,{method,headers:owner?{...headers,Authorization:'Bearer '+secret}:{Authorization:'Bearer '+secret},...(value===undefined?{}:{body:JSON.stringify(value)})}),{...env,DB:db});
+const expectFailure=async(path,method,value,db,operation)=>{
+ const start=diagnosticLogs.length,response=await diagnosticCall(path,method,value,db);
+ assert.equal(response.status,503);assert(!(await response.text()).includes(secret));
+ const emitted=diagnosticLogs.slice(start);assert.equal(emitted.length,1);
+ assert.deepEqual(emitted[0],{event:'storage_failure',route:path.slice(5).split('?')[0],operation,category:'database',count:1});
+};
+const readFailure={prepare(){throw new Error(secret);}};
+for(const path of ['/api/admin-panel','/api/priority-preview','/api/tracker-catalogue','/api/admin-maintenance'])await expectFailure(path,'GET',undefined,readFailure,'read');
+for(const path of ['/api/admin-panel','/api/priority-preview']){
+ const start=diagnosticLogs.length;assert.equal((await diagnosticCall(path,'GET',undefined,null)).status,503);
+ assert.deepEqual(diagnosticLogs.slice(start),[{event:'storage_failure',route:path.slice(5),operation:'binding',category:'missing',count:1}]);
+}
+const clean=await (await diagnosticCall('/api/admin-panel')).json();
+const skillValue={job:'호영',rows:[{coreId:'masteryCore1',source:{coreId:'masteryCore1',sourceName:secret,icon:'https://maplescouter.com/hexaskill/HY_3.png'},name:secret,shortName:'Harmony',category:'Mastery',tag:'M1'}],skillsRevision:clean.skillsRevision};
+const writeFailure={...diagnosticDB,prepare(sql){const statement=diagnosticDB.prepare(sql);statement.run=async()=>{throw new Error(secret);};return statement;}};
+await expectFailure('/api/admin-panel','PUT',skillValue,writeFailure,'write');
+// A read inside the validation block is also a safe storage failure, not 400
+// containing the database's error message.
+const skillReadFailure={...diagnosticDB,prepare(sql){if(sql.includes('FROM admin_skills'))throw new Error(secret);return diagnosticDB.prepare(sql);}};
+await expectFailure('/api/admin-panel','PUT',skillValue,skillReadFailure,'read');
+assert.equal(diagnosticSqlite.prepare('SELECT count(*) n FROM admin_skills').get().n,0);
+assert.equal((await diagnosticCall('/api/admin-panel','POST',pair('diagnostic_pair'))).status,200);
+const groupState=await (await diagnosticCall('/api/admin-panel')).json();
+const snapshot=()=>diagnosticSqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all();
+const savedRows=snapshot();
+for(const method of ['PATCH','DELETE'])await expectFailure('/api/admin-panel',method,{id:'diagnostic_pair',name:secret,priorityRevision:groupState.priorityRevisions.diagnostic_pair},writeFailure,'write');
+const record=await (await diagnosticCall('/api/priority-preview?record=diagnostic_pair_heroic')).json();
+for(const method of ['PUT','DELETE'])await expectFailure('/api/priority-preview',method,{draft:record.draft,mode:record.mode,revision:record.revision},writeFailure,'write');
+const batchFailure={...diagnosticDB,async batch(){throw new Error(secret);}};
+const restore={schema:1,type:'hexa-tracker-backup',priorities:[{mode:'diagnostic_restore',draft_json:JSON.stringify({...base,mode:'diagnostic_restore',sourceMode:base.mode,isNew:true})}],skills:[]};
+await expectFailure('/api/admin-panel','POST',{restoreSnapshot:restore},batchFailure,'batch');
+await expectFailure('/api/admin-maintenance','POST',{confirm:'clear-backed-up-priorities',priorities:savedRows},batchFailure,'batch');
+assert.deepEqual(snapshot(),savedRows);
+// Normal requests, owner refusals, bad input and expected insert conflicts do
+// not produce diagnostics. The original revision and rollback tests remain.
+let quietStart=diagnosticLogs.length;
+assert.equal((await diagnosticCall('/api/admin-panel')).status,200);
+assert.equal((await diagnosticCall('/api/admin-panel','GET',undefined,diagnosticDB,false)).status,403);
+assert.equal((await diagnosticCall('/api/admin-panel','PUT',{job:secret})).status,400);
+assert.equal((await diagnosticCall('/api/admin-panel','PATCH',{id:'diagnostic_pair',name:secret,priorityRevision:'0'.repeat(64)})).status,409);
+const collisionDB={...diagnosticDB,async batch(){throw new Error('UNIQUE constraint failed: priority_preview.mode '+secret);}};
+assert.equal((await diagnosticCall('/api/admin-panel','POST',{restoreSnapshot:restore},collisionDB)).status,409);
+const insertCollisionDB={...diagnosticDB,prepare(sql){const statement=diagnosticDB.prepare(sql);statement.run=async()=>{throw new Error('UNIQUE constraint failed: priority_preview.mode '+secret);};return statement;}};
+assert.equal((await diagnosticCall('/api/admin-panel','POST',pair('collision'),insertCollisionDB)).status,409);
+assert.equal(diagnosticLogs.length,quietStart);assert.deepEqual(snapshot(),savedRows);
+for(const raw of ['{'+secret,JSON.stringify({job:secret,rows:[]})]){
+ diagnosticSqlite.prepare('INSERT INTO admin_skills VALUES (?, ?, ?) ON CONFLICT(job) DO UPDATE SET review_json=excluded.review_json').run('호영',raw,secret);
+ for(const path of ['/api/admin-panel','/api/priority-preview','/api/tracker-catalogue']){
+  const start=diagnosticLogs.length,response=await diagnosticCall(path);
+  assert.equal(response.status,503);assert(!(await response.text()).includes(secret));
+  assert.deepEqual(diagnosticLogs.slice(start),[{event:'invalid_record',route:path.slice(5),operation:'skills_read',category:raw.startsWith('{'+secret)?'json':'validation',count:1}]);
+ }
+ assert.equal(diagnosticSqlite.prepare('SELECT review_json FROM admin_skills').get().review_json,raw);
+}
+// A broken logging sink must not turn isolated invalid priorities into an outage.
+diagnosticSqlite.exec('DELETE FROM admin_skills');
+diagnosticSqlite.prepare('INSERT INTO priority_preview VALUES (?, ?, ?)').run(secret,'{'+secret,secret);
+console.warn=()=>{throw new Error(secret);};
+assert.equal((await diagnosticCall('/api/admin-panel')).status,200);
+assert.equal((await diagnosticCall('/api/priority-preview')).status,200);
+assert.equal((await diagnosticCall('/api/admin-panel','GET',undefined,readFailure)).status,503);
+console.warn=originalWarn;
+for(const item of diagnosticLogs){
+ assert.deepEqual(Object.keys(item).sort(),['category','count','event','operation','route']);
+ assert(Number.isSafeInteger(item.count) && item.count>0);
+ assert(JSON.stringify(item).length<180);
+}
+const encodedDiagnostics=JSON.stringify(diagnosticLogs);
+for(const privateValue of [secret,'private-looking','private backend',headers['oai-authenticated-user-email'],...broken.keys(),'diagnostic_pair','Ren test','Peer saved name'])assert(!encodedDiagnostics.includes(privateValue));
+assert.deepEqual(snapshot().filter(row=>row.mode!==secret),savedRows);diagnosticSqlite.close();
+console.log('Bounded private-safe record/storage diagnostics, quiet conflicts, safe failure responses and logging-sink recovery passed');

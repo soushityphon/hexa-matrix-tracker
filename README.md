@@ -1,4 +1,12 @@
-## Current audit batch: Remaining admin write protection
+## Current audit batch: Safe diagnostics and owner-requested numeric entry
+
+Server diagnostics for stored priorities/Skills and D1 reads, writes and batches contain only fixed event, route, operation and category labels plus a count. Invalid priority counts are aggregated by category per read. Logs contain no record IDs/content, names, identities, request/header/body values, SQL/bound parameters or exception messages/stacks. Successful requests, input validation refusals and expected revision/insert conflicts are quiet. A failed logging sink cannot interrupt recovery. Storage failures inside admin validation return the existing safe 503 response rather than exposing a backend exception as a 400. Damaged raw records, insert-only restore rollback and revision guards remain intact. Fault injection uses isolated SQLite; live records and server secrets are untouched.
+
+The footer now says “A project by Soushi”. Individual Stat line entries outside 0–10 revert to the previous draft value; blank/in-range drafts retain existing integer and total validation. Each editor bar has ten full-width-row buttons for direct levels 1–10, with keyboard activation and pressed-state feedback; numeric entry remains available, including zero. Segment edits use the same validation, protected save, pause/conflict and ordinary Undo paths. Relevant skill/Stat level and resource numeric inputs select their existing value on focus/click/tap. Source calculations, per-class save format, manual-only backups and infographic history are unchanged. Rendered tests cover both classes at desktop and two emulated phone widths. Actual phone/owner acceptance remains separate in Issue #30.
+
+PR #22 stays draft/unmerged and eventual release remains unapproved. Next in the documented audit order is verification of the hosting identity trust boundary before any hosting change. This batch does not change hosting access, identity handling, bindings or schema.
+
+## Historical batch: Remaining admin write protection
 
 Legacy `/api/priority-preview` PUT/DELETE now require a row revision. An authenticated GET with `?record=<mode>` returns the reviewed raw draft and its revision, including a distinct missing-record revision for safe creation. Anonymous record reads are refused; normal public catalogue reads retain their format. Missing revisions receive 428, stale revisions receive 409, and atomic raw-row/timestamp predicates preserve interleaved writes. A missing-row insert cannot replace a peer's first insert. The app has no active legacy editor; its Admin Panel continues to use the Skills/group protocol from versions 124/125.
 

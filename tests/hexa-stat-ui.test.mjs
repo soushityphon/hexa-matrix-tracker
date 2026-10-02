@@ -68,7 +68,7 @@ assert.equal(row(stats[0]).hidden,true);
 assert.equal(row(stats[1]).hidden,true);
 assert.equal(row(stats[0]).querySelector('[data-stat-unlocked]').hidden,true);
 assert.deepEqual([...row(stats[0]).querySelectorAll('.stat-line-heading')].map(el=>el.textContent),['Main Stat','Additional Stats']);
-assert.equal(row(stats[0]).querySelectorAll('.stat-bar i').length,30);
+assert.equal(row(stats[0]).querySelectorAll('[data-stat-segment]').length,30);
 const selector=skill=>[...document.querySelectorAll('[data-stat-selector]')].find(el=>el.dataset.statSelector===skill);
 assert.equal(selector(stats[2]).querySelector('[data-stat-cancel]').hidden,false);
 selector(stats[2]).querySelector('[data-stat-cancel]').click();
@@ -108,7 +108,11 @@ assert.equal(selector(stats[0]).querySelectorAll('.stat-mini-line .filled').leng
 assert.equal(selector(stats[0]).querySelector('[data-stat-cancel]').hidden,true);
 assert.equal(selector(stats[0]).querySelector('.stat-selector-summary').classList.contains('fd-gain'),true);
 const completed=structuredClone(state(hyKey));
-for(const invalid of [-1,11,6.5,7]){
+for(const rejected of [-1,11,999]){
+ enter(stats[0],0,rejected);assert.equal(fields(stats[0])[0].value,'6');
+ assert.deepEqual(state(hyKey),completed);
+}
+for(const invalid of [6.5,7]){
   enter(stats[0],0,invalid);
   assert.equal(fields(stats[0])[0].getAttribute('aria-invalid'),'true');
   assert.deepEqual(state(hyKey),completed);
@@ -223,5 +227,20 @@ assert.equal($('#includeJanus').disabled,true);
 assert.equal($('#priority-sync').textContent,'');
 const css=readFileSync(new URL('../styles.css',import.meta.url),'utf8');
 assert.match(css,/\.fd-gain\{color:var\(--ui-accent\)/);
+// Each segment is a direct line edit, with exact Undo and persisted reload.
+await boot({[hyKey]:JSON.stringify({mode:'pair_lines_heroic',statLines:{[stats[0]]:[0,0,0]},owned:42}),[renKey]:JSON.stringify({owned:88})});
+selector(stats[0]).querySelector('[data-stat-select]').click();
+const segment=level=>row(stats[0]).querySelector(`[data-stat-segment="${level}"]`);
+segment(7).click();assert.equal(fields(stats[0])[0].value,'7');
+assert.deepEqual(state(hyKey).statLines[stats[0]],[7,0,0]);
+assert.equal(segment(7).getAttribute('aria-pressed'),'true');
+segment(10).click();assert.deepEqual(state(hyKey).statLines[stats[0]],[10,0,0]);
+$('#undo-progress').click();assert.deepEqual(state(hyKey).statLines[stats[0]],[7,0,0]);
+enter(stats[0],0,11);assert.equal(fields(stats[0])[0].value,'7');
+assert.equal(state(hyKey).owned,42);assert.equal(state(renKey).owned,88);
+await boot(snapshot());assert.equal(fields(stats[0])[0].value,'7');
+globalThis.fetch=async()=>new Response('Unavailable',{status:503});focusRefresh();await tick();
+assert.equal(segment(5).disabled,true);segment(5).click();
+assert.deepEqual(state(hyKey).statLines[stats[0]],[7,0,0]);
 await win.happyDOM.abort();
 console.log('HEXA Stat DOM: legacy migration, partial reload, invalid edits, FD, all nodes/classes, hidden/update/world switching, priority actions, costs and class-only reset passed');

@@ -11,48 +11,72 @@ const noStore = { 'Cache-Control': 'no-store' };
 function isAdmin(request, env) {
   return !!env?.ADMIN_EMAIL && request.headers.get('oai-authenticated-user-email')?.toLowerCase() === env.ADMIN_EMAIL.toLowerCase();
 }
-function readPriorityRows(rows) {
+// Only code-owned labels and aggregate counts reach the server log. Never pass
+// records, request values or exception objects to this helper.
+function serverDiagnostic(route,event,operation,category,count=1) {
+  try { console.warn(JSON.stringify({event,route,operation,category,count})); } catch { /* Logging cannot interrupt recovery. */ }
+}
+class ServerDataFailure extends Error {}
+const isInsertCollision = error => /UNIQUE constraint failed: (?:priority_preview.mode|admin_skills.job)/.test(String(error?.message));
+async function storageOperation(route,operation,action,allowCollision=false) {
+  try { return await action(); }
+  catch(error) {
+    if(allowCollision && isInsertCollision(error))throw error;
+    serverDiagnostic(route,'storage_failure',operation,'database');
+    throw new ServerDataFailure('Storage unavailable');
+  }
+}
+function invalidCategory(error) {
+  return error instanceof SyntaxError ? 'json' : error instanceof TypeError ? 'shape' : 'validation';
+}
+function readStoredSkills(row,route) {
+  if(!row)return null;
+  try { const value=JSON.parse(row.review_json);validateSkills(value);return value; }
+  catch(error) {
+    serverDiagnostic(route,'invalid_record','skills_read',invalidCategory(error));
+    throw new ServerDataFailure('Stored skills unavailable');
+  }
+}
+function readPriorityRows(rows,route) {
   const drafts = Object.create(null), invalidRecords = [];
+  const counts={json:0,shape:0,identity:0,validation:0};
   for (const row of rows) {
+    let identityMismatch=false;
     try {
       const draft = validateDraft(JSON.parse(row.draft_json));
-      if (draft.mode !== row.mode) throw new Error('Stored ID does not match the priority ID');
+      if (draft.mode !== row.mode) {identityMismatch=true;throw new Error('Stored ID does not match the priority ID');}
       drafts[row.mode] = draft;
     } catch (error) {
       const reason = error instanceof SyntaxError ? 'Stored data is not valid JSON' :
         error instanceof TypeError ? 'Stored priority has an unsupported field shape' : error.message;
       invalidRecords.push({mode:row.mode, reason});
+      counts[identityMismatch?'identity':invalidCategory(error)]++;
     }
   }
+  for(const [category,count] of Object.entries(counts))if(count)serverDiagnostic(route,'invalid_record','priorities_read',category,count);
   return {drafts, invalidRecords};
 }
 async function priorityPreview(request, env) {
-  if (!env?.DB) return new Response('Priority preview storage is unavailable', { status: 503 });
+  if (!env?.DB) {serverDiagnostic('priority-preview','storage_failure','binding','missing');return new Response('Priority preview storage is unavailable', { status: 503 });}
   try {
     if (request.method === 'GET') {
       const mode=new URL(request.url).searchParams.get('record');
       if(mode!==null) {
         if(!isAdmin(request,env))return new Response('Admin access required',{status:403,headers:noStore});
         if(!/^[a-z0-9_]+$/.test(mode))return new Response('Invalid priority ID',{status:400,headers:noStore});
-        const row=await env.DB.prepare('SELECT mode, draft_json, updated_at FROM priority_preview WHERE mode = ?').bind(mode).first();
-        if(row && readPriorityRows([row]).invalidRecords.length)return new Response('Damaged priority is preserved. Download its raw record from the Admin Panel.',{status:409,headers:noStore});
-        return Response.json({mode,draft:row?readPriorityRows([row]).drafts[mode]:null,revision:await priorityRevision('record:'+mode,row?[row]:[])},{headers:noStore});
+        const row=await storageOperation('priority-preview','read',()=>env.DB.prepare('SELECT mode, draft_json, updated_at FROM priority_preview WHERE mode = ?').bind(mode).first());
+        if(row && readPriorityRows([row],'priority-preview').invalidRecords.length)return new Response('Damaged priority is preserved. Download its raw record from the Admin Panel.',{status:409,headers:noStore});
+        return Response.json({mode,draft:row?readPriorityRows([row],'priority-preview').drafts[mode]:null,revision:await priorityRevision('record:'+mode,row?[row]:[])},{headers:noStore});
       }
-      const rows = await env.DB.prepare('SELECT mode, draft_json FROM priority_preview').all();
-      const drafts = {};
-      for (const row of rows.results || []) {
-        try {
-          const draft = validateDraft(JSON.parse(row.draft_json));
-          if (draft.mode === row.mode && !draft.newNodes.length) drafts[row.mode] = draft;
-        } catch { /* An invalid saved version cannot be shown. */ }
-      }
+      const rows = await storageOperation('priority-preview','read',()=>env.DB.prepare('SELECT mode, draft_json FROM priority_preview').all());
+      const drafts=Object.fromEntries(Object.entries(readPriorityRows(rows.results || [],'priority-preview').drafts).filter(([,draft])=>!draft.newNodes.length));
       const job=new URL(request.url).searchParams.get('job');
       if(job&&!['호영','렌'].includes(job))return new Response('Choose Hoyoung or Ren',{status:400,headers:noStore});
       let visible={};
       for(const sourceJob of ['호영','렌']) {
         if(job&&job!==sourceJob)continue;
-        const review=await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind(sourceJob).first();
-        const skills=review?JSON.parse(review.review_json):null;
+        const review=await storageOperation('priority-preview','read',()=>env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind(sourceJob).first());
+        const skills=readStoredSkills(review,'priority-preview');
         const scoped=applySkills(Object.fromEntries(Object.entries(drafts).filter(([,draft])=>(draft.job || '호영')===sourceJob)),skills);
         for(const draft of Object.values(scoped)){try{requireOrderSkills([draft],skills);}catch{draft.enabled=false;}}
         Object.assign(visible,scoped);
@@ -74,14 +98,14 @@ async function priorityPreview(request, env) {
     }
     const mode=draft?.mode || selection?.mode;
     if(typeof mode!=='string' || !/^[a-z0-9_]+$/.test(mode))return new Response('Invalid priority ID',{status:400,headers:noStore});
-    const previous=await env.DB.prepare('SELECT mode, draft_json, updated_at FROM priority_preview WHERE mode = ?').bind(mode).first();
-    if(previous && readPriorityRows([previous]).invalidRecords.length)return new Response('Damaged priority is preserved. Download its raw record from the Admin Panel.',{status:409,headers:noStore});
+    const previous=await storageOperation('priority-preview','read',()=>env.DB.prepare('SELECT mode, draft_json, updated_at FROM priority_preview WHERE mode = ?').bind(mode).first());
+    if(previous && readPriorityRows([previous],'priority-preview').invalidRecords.length)return new Response('Damaged priority is preserved. Download its raw record from the Admin Panel.',{status:409,headers:noStore});
     if(typeof selection.revision!=='string' || !/^[a-f0-9]{64}$/.test(selection.revision))return new Response('Load the latest priority record before saving or deleting.',{status:428,headers:noStore});
     const conflict=()=>new Response('Priority changed since it was loaded. Nothing was changed by this action. Load the latest record and review before trying again.',{status:409,headers:noStore});
     if(selection.revision!==await priorityRevision('record:'+mode,previous?[previous]:[]))return conflict();
     if(request.method==='DELETE') {
       if(previous) {
-        const result=await env.DB.prepare('DELETE FROM priority_preview WHERE mode = ? AND draft_json = ? AND updated_at = ?').bind(mode,previous.draft_json,previous.updated_at).run();
+        const result=await storageOperation('priority-preview','write',()=>env.DB.prepare('DELETE FROM priority_preview WHERE mode = ? AND draft_json = ? AND updated_at = ?').bind(mode,previous.draft_json,previous.updated_at).run());
         if(result.meta.changes!==1)return conflict();
       }
       return Response.json({removed:mode},{headers:noStore});
@@ -89,8 +113,8 @@ async function priorityPreview(request, env) {
     const previousTime=Date.parse(previous?.updated_at);
     const next={mode,draft_json:JSON.stringify(draft),updated_at:new Date(Math.max(Date.now(),Number.isFinite(previousTime)?previousTime+1:0)).toISOString()};
     const result=previous
-      ? await env.DB.prepare('UPDATE priority_preview SET draft_json = ?, updated_at = ? WHERE mode = ? AND draft_json = ? AND updated_at = ?').bind(next.draft_json,next.updated_at,mode,previous.draft_json,previous.updated_at).run()
-      : await env.DB.prepare('INSERT INTO priority_preview (mode, draft_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(mode) DO NOTHING').bind(mode,next.draft_json,next.updated_at).run();
+      ? await storageOperation('priority-preview','write',()=>env.DB.prepare('UPDATE priority_preview SET draft_json = ?, updated_at = ? WHERE mode = ? AND draft_json = ? AND updated_at = ?').bind(next.draft_json,next.updated_at,mode,previous.draft_json,previous.updated_at).run())
+      : await storageOperation('priority-preview','write',()=>env.DB.prepare('INSERT INTO priority_preview (mode, draft_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(mode) DO NOTHING').bind(mode,next.draft_json,next.updated_at).run());
     if(result.meta.changes!==1)return conflict();
     return Response.json({saved:mode,revision:await priorityRevision('record:'+mode,[next])},{headers:noStore});
   } catch { return new Response('Priority preview storage failed. Try again later.', { status: 503 }); }
@@ -100,11 +124,12 @@ async function trackerSkills(request, env) {
   try {
     const job=new URL(request.url).searchParams.get('job') || '호영';
     if(!['호영','렌'].includes(job))return new Response('Choose Hoyoung or Ren',{status:400,headers:noStore});
-    const row=await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind(job).first();
-    const review=row?JSON.parse(row.review_json):null;
+    const row=await storageOperation('tracker-catalogue','read',()=>env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind(job).first());
+    const review=readStoredSkills(row,'tracker-catalogue');
     if(job==='렌') {
-      const rows=await env.DB.prepare('SELECT mode, draft_json FROM priority_preview').all();
-      const drafts={};for(const source of rows.results || []){try{const draft=validateDraft(JSON.parse(source.draft_json));if(draft.job==='렌')drafts[draft.mode]=draft;}catch{}}
+      const rows=await storageOperation('tracker-catalogue','read',()=>env.DB.prepare('SELECT mode, draft_json FROM priority_preview').all());
+      const drafts={},counts={json:0,shape:0,validation:0};for(const source of rows.results || []){try{const draft=validateDraft(JSON.parse(source.draft_json));if(draft.job==='렌')drafts[draft.mode]=draft;}catch(error){counts[invalidCategory(error)]++;}}
+      for(const [category,count] of Object.entries(counts))if(count)serverDiagnostic('tracker-catalogue','invalid_record','priorities_read',category,count);
       return Response.json(renCatalogueFromDrafts(drafts,review),{headers:noStore});
     }
     return Response.json(trackerCatalogue(review), {headers:noStore});
@@ -117,8 +142,8 @@ async function adminMaintenance(request, env) {
   if (!isAdmin(request,env) && !(typeof token==='string' && token.length>=32 && request.headers.get('Authorization')===`Bearer ${token}`)) return new Response('Admin access required',{status:403});
   if (!['GET','POST'].includes(request.method)) return new Response('Method not allowed',{status:405});
   try {
-    const priorities=(await env.DB.prepare('SELECT mode, draft_json, updated_at FROM priority_preview ORDER BY mode').all()).results || [];
-    const skills=(await env.DB.prepare('SELECT job, review_json, updated_at FROM admin_skills ORDER BY job').all()).results || [];
+    const priorities=(await storageOperation('admin-maintenance','read',()=>env.DB.prepare('SELECT mode, draft_json, updated_at FROM priority_preview ORDER BY mode').all())).results || [];
+    const skills=(await storageOperation('admin-maintenance','read',()=>env.DB.prepare('SELECT job, review_json, updated_at FROM admin_skills ORDER BY job').all())).results || [];
     const snapshot={schema:1,type:'hexa-tracker-backup',priorities,skills};
     if (request.method==='GET') return Response.json({...snapshot,createdAt:new Date().toISOString()},{headers:noStore});
     const body=await request.text();
@@ -126,8 +151,8 @@ async function adminMaintenance(request, env) {
     const value=JSON.parse(body);
     if(value.confirm!=='clear-backed-up-priorities' || JSON.stringify(value.priorities)!==JSON.stringify(priorities)) return new Response('Backup does not match current saved priorities',{status:409});
     // Exact row predicates preserve any edit that arrives after the snapshot read.
-    const deleted=priorities.length ? await env.DB.batch(priorities.map(row=>env.DB.prepare('DELETE FROM priority_preview WHERE mode = ? AND draft_json = ? AND updated_at = ?').bind(row.mode,row.draft_json,row.updated_at))) : [];
-    const remaining=(await env.DB.prepare('SELECT mode FROM priority_preview').all()).results || [];
+    const deleted=priorities.length ? await storageOperation('admin-maintenance','batch',()=>env.DB.batch(priorities.map(row=>env.DB.prepare('DELETE FROM priority_preview WHERE mode = ? AND draft_json = ? AND updated_at = ?').bind(row.mode,row.draft_json,row.updated_at)))) : [];
+    const remaining=(await storageOperation('admin-maintenance','read',()=>env.DB.prepare('SELECT mode FROM priority_preview').all())).results || [];
     return Response.json({removed:deleted.reduce((sum,result)=>sum+result.meta.changes,0),remaining:remaining.map(row=>row.mode)},{headers:noStore});
   } catch { return new Response('Backup or reset failed',{status:503,headers:noStore}); }
 }
@@ -157,12 +182,12 @@ function priorityGuard(id,rows) {
 }
 async function adminPanel(request, env) {
   if (!isAdmin(request, env)) return new Response('Admin access required', {status:403,headers:noStore});
-  if (!env?.DB) return new Response('Admin storage is unavailable', {status:503,headers:noStore});
+  if (!env?.DB) {serverDiagnostic('admin-panel','storage_failure','binding','missing');return new Response('Admin storage is unavailable', {status:503,headers:noStore});}
   try {
-    const rows = await env.DB.prepare('SELECT mode, draft_json, updated_at FROM priority_preview').all();
+    const rows = await storageOperation('admin-panel','read',()=>env.DB.prepare('SELECT mode, draft_json, updated_at FROM priority_preview').all());
     const storedRows = rows.results || [];
     const occupied = new Set(storedRows.map(row => row.mode));
-    const {drafts, invalidRecords} = readPriorityRows(storedRows);
+    const {drafts, invalidRecords} = readPriorityRows(storedRows,'admin-panel');
     if (request.method === 'GET') {
       const record = new URL(request.url).searchParams.get('record');
       if (record !== null) {
@@ -172,11 +197,11 @@ async function adminPanel(request, env) {
       }
       const job=new URL(request.url).searchParams.get('job') || '호영';
       if(!['호영','렌'].includes(job))return new Response('Choose Hoyoung or Ren',{status:400,headers:noStore});
-      const review = await env.DB.prepare('SELECT review_json, updated_at FROM admin_skills WHERE job = ?').bind(job).first();
+      const review = await storageOperation('admin-panel','read',()=>env.DB.prepare('SELECT review_json, updated_at FROM admin_skills WHERE job = ?').bind(job).first());
       const scoped=Object.fromEntries(Object.entries(drafts).filter(([,draft])=>(draft.job || '호영')===job));
       const ids=[...new Set(Object.values(scoped).map(draft=>draft.pairId || draft.mode))];
       const priorityRevisions=Object.fromEntries(await Promise.all(ids.map(async id=>[id,await priorityRevision(id,priorityRows(storedRows,priorityTargets(drafts,id)))])));
-      return Response.json({drafts:scoped, priorityRevisions, invalidRecords, skills:review ? validateSkills(JSON.parse(review.review_json)) : null, skillsRevision:await skillsRevision(job,review)}, {headers:noStore});
+      return Response.json({drafts:scoped, priorityRevisions, invalidRecords, skills:review ? validateSkills(readStoredSkills(review,'admin-panel')) : null, skillsRevision:await skillsRevision(job,review)}, {headers:noStore});
     }
     if (!['PUT','POST','PATCH','DELETE'].includes(request.method)) return new Response('Method not allowed', {status:405});
     if (Number(request.headers.get('content-length')) > 250000) return new Response('Payload too large', {status:413});
@@ -191,14 +216,14 @@ async function adminPanel(request, env) {
         const review = validateSkills(value);
         if(typeof value.skillsRevision!=='string' || !/^[a-f0-9]{64}$/.test(value.skillsRevision)) return new Response('Load the latest skills before saving. Your edits have not been saved.',{status:428,headers:noStore});
         const conflict=()=>new Response('Skills changed in another tab. Your edits are still here. Load latest skills to review the saved version.',{status:409,headers:noStore});
-        const previous=await env.DB.prepare('SELECT review_json, updated_at FROM admin_skills WHERE job = ?').bind(review.job).first();
+        const previous=await storageOperation('admin-panel','read',()=>env.DB.prepare('SELECT review_json, updated_at FROM admin_skills WHERE job = ?').bind(review.job).first());
         if(value.skillsRevision!==await skillsRevision(review.job,previous))return conflict();
         const previousTime=Date.parse(previous?.updated_at);
         const next={review_json:JSON.stringify(review),updated_at:new Date(Math.max(Date.now(),Number.isFinite(previousTime)?previousTime+1:0)).toISOString()};
         // The SQL predicate also rejects an edit arriving after the revision read.
         const result=previous
-          ? await env.DB.prepare('UPDATE admin_skills SET review_json = ?, updated_at = ? WHERE job = ? AND review_json = ? AND updated_at = ?').bind(next.review_json,next.updated_at,review.job,previous.review_json,previous.updated_at).run()
-          : await env.DB.prepare('INSERT INTO admin_skills (job, review_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(job) DO NOTHING').bind(review.job,next.review_json,next.updated_at).run();
+          ? await storageOperation('admin-panel','write',()=>env.DB.prepare('UPDATE admin_skills SET review_json = ?, updated_at = ? WHERE job = ? AND review_json = ? AND updated_at = ?').bind(next.review_json,next.updated_at,review.job,previous.review_json,previous.updated_at).run())
+          : await storageOperation('admin-panel','write',()=>env.DB.prepare('INSERT INTO admin_skills (job, review_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(job) DO NOTHING').bind(review.job,next.review_json,next.updated_at).run());
         if(result.meta.changes!==1)return conflict();
         return Response.json({saved:true,skillsRevision:await skillsRevision(review.job,next)}, {headers:noStore});
       }
@@ -209,9 +234,9 @@ async function adminPanel(request, env) {
         if(new Set(restored.map(draft=>draft.mode)).size!==restored.length) throw new Error('Duplicate backup priority');
         const reviews=backup.skills.map(row=>{const review=validateSkills(JSON.parse(row.review_json));if(review.job!==row.job)throw new Error('Invalid backup skill identity');return review;});
         if(new Set(reviews.map(review=>review.job)).size!==reviews.length)throw new Error('Duplicate backup skills');
-        for(const review of reviews)if(await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind(review.job).first())throw new Error('Saved skills already exist. Restore into an empty catalogue.');
+        for(const review of reviews)if(await storageOperation('admin-panel','read',()=>env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind(review.job).first()))throw new Error('Saved skills already exist. Restore into an empty catalogue.');
         try {
-          if(restored.length || reviews.length)await env.DB.batch([...restored.map(draft=>env.DB.prepare('INSERT INTO priority_preview (mode, draft_json, updated_at) VALUES (?, ?, ?)').bind(draft.mode,JSON.stringify(draft),new Date().toISOString())),...reviews.map(review=>env.DB.prepare('INSERT INTO admin_skills (job, review_json, updated_at) VALUES (?, ?, ?)').bind(review.job,JSON.stringify(review),new Date().toISOString()))]);
+          if(restored.length || reviews.length)await storageOperation('admin-panel','batch',()=>env.DB.batch([...restored.map(draft=>env.DB.prepare('INSERT INTO priority_preview (mode, draft_json, updated_at) VALUES (?, ?, ?)').bind(draft.mode,JSON.stringify(draft),new Date().toISOString())),...reviews.map(review=>env.DB.prepare('INSERT INTO admin_skills (job, review_json, updated_at) VALUES (?, ?, ?)').bind(review.job,JSON.stringify(review),new Date().toISOString()))]),true);
         }catch(error){
           if(/UNIQUE constraint failed: (?:priority_preview.mode|admin_skills.job)/.test(String(error.message)))return new Response('Saved records changed during restore. Nothing from this backup was restored. Load latest data and review before trying again.',{status:409,headers:noStore});
           return new Response('Restore storage failed. Nothing from this backup was restored. Try again later.',{status:503,headers:noStore});
@@ -240,14 +265,14 @@ async function adminPanel(request, env) {
       }
       for(const job of ['호영','렌']) {
         const scoped=changes.filter(draft=>(draft.job || '호영')===job);if(!scoped.length)continue;
-        const review=await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind(job).first();
-        requireOrderSkills(scoped,review ? JSON.parse(review.review_json) : null);
+        const review=await storageOperation('admin-panel','read',()=>env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind(job).first());
+        requireOrderSkills(scoped,readStoredSkills(review,'admin-panel'));
       }
       if (changes.some(draft => draft.newNodes.length)) throw new Error('New skills still need tracker support before saving a priority');
-    } catch (error) { return new Response(error.message, {status:400,headers:noStore}); }
+    } catch (error) { if(error instanceof ServerDataFailure)throw error;return new Response(error.message, {status:400,headers:noStore}); }
     if(request.method==='DELETE') {
       const guard=priorityGuard(value.id,expectedRows);
-      const result=await env.DB.prepare(`DELETE FROM priority_preview WHERE mode IN (${targets.map(()=>'?').join(',')}) AND ${guard.sql}`).bind(...targets.map(draft=>draft.mode),...guard.values).run();
+      const result=await storageOperation('admin-panel','write',()=>env.DB.prepare(`DELETE FROM priority_preview WHERE mode IN (${targets.map(()=>'?').join(',')}) AND ${guard.sql}`).bind(...targets.map(draft=>draft.mode),...guard.values).run());
       if(result.meta.changes!==targets.length)return conflict();
       return Response.json({removed:value.id}, {headers:noStore});
     }
@@ -255,13 +280,13 @@ async function adminPanel(request, env) {
       const guard=priorityGuard(value.id,expectedRows);
       const previousTime=Math.max(...expectedRows.map(row=>Date.parse(row.updated_at)).filter(Number.isFinite),0);
       const updatedAt=new Date(Math.max(Date.now(),previousTime+1)).toISOString();
-      const result=await env.DB.prepare(`UPDATE priority_preview SET draft_json = CASE mode ${changes.map(()=> 'WHEN ? THEN ?').join(' ')} END, updated_at = ? WHERE mode IN (${changes.map(()=>'?').join(',')}) AND ${guard.sql}`).bind(...changes.flatMap(draft=>[draft.mode,JSON.stringify(draft)]),updatedAt,...changes.map(draft=>draft.mode),...guard.values).run();
+      const result=await storageOperation('admin-panel','write',()=>env.DB.prepare(`UPDATE priority_preview SET draft_json = CASE mode ${changes.map(()=> 'WHEN ? THEN ?').join(' ')} END, updated_at = ? WHERE mode IN (${changes.map(()=>'?').join(',')}) AND ${guard.sql}`).bind(...changes.flatMap(draft=>[draft.mode,JSON.stringify(draft)]),updatedAt,...changes.map(draft=>draft.mode),...guard.values).run());
       if(result.meta.changes!==changes.length)return conflict();
     } else {
       // A single INSERT commits both variants or rolls back on any ID collision.
       // Never upsert a new pair over a record inserted after the initial read.
       try {
-        await env.DB.prepare(`INSERT INTO priority_preview (mode, draft_json, updated_at) VALUES ${changes.map(()=>'(?, ?, ?)').join(',')}`).bind(...changes.flatMap(draft=>[draft.mode,JSON.stringify(draft),new Date().toISOString()])).run();
+        await storageOperation('admin-panel','write',()=>env.DB.prepare(`INSERT INTO priority_preview (mode, draft_json, updated_at) VALUES ${changes.map(()=>'(?, ?, ?)').join(',')}`).bind(...changes.flatMap(draft=>[draft.mode,JSON.stringify(draft),new Date().toISOString()])).run(),true);
       }catch(error){if(/UNIQUE constraint failed: priority_preview.mode/.test(String(error.message)))return conflict();throw error;}
     }
     return Response.json({saved:changes.map(draft=>draft.mode)}, {headers:noStore});

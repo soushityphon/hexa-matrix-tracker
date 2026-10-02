@@ -19,7 +19,7 @@
 .stat-select{display:grid;gap:4px;justify-items:center;width:100%;min-width:0;min-height:44px;border:0;padding:2px;background:transparent}.stat-selector-name{font-size:11px;font-weight:600;overflow-wrap:anywhere}.stat-selector-summary{font-size:11px;font-variant-numeric:tabular-nums;color:var(--ui-soft);line-height:1.4}
 .stat-list .stat-row{display:grid;gap:8px;min-width:0;border:1px solid var(--ui-panel-border);border-left:2px solid var(--ui-accent);padding:10px}.stat-line-heading{font-size:11px;color:#aaa;font-weight:500;margin:0}.stat-lines{display:grid;gap:8px;min-width:0}
 .stat-list .stat-line{display:grid;grid-template-columns:minmax(0,1fr) 54px;align-items:center;gap:12px;padding:0;border:0;min-height:32px}.stat-list .stat-line:hover{background:transparent}.stat-list .stat-line input{width:54px;min-height:32px;min-width:0;text-align:center;padding:4px 2px}.stat-line input[aria-invalid="true"]{border-color:#d89494}
-.stat-bar{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:2px;min-width:0;height:10px}.stat-bar i{display:block;border:1px solid #3d4847;background:#202626}.stat-main .stat-bar i.filled{background:var(--stat-main);border-color:var(--stat-main)}.stat-additional .stat-bar i.filled{background:var(--stat-additional);border-color:var(--stat-additional)}
+.stat-bar{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:2px;min-width:0;height:10px}.stat-bar :is(i,button){display:block;border:1px solid #3d4847;background:#202626}.stat-main .stat-bar :is(i,button).filled{background:var(--stat-main);border-color:var(--stat-main)}.stat-additional .stat-bar :is(i,button).filled{background:var(--stat-additional);border-color:var(--stat-additional)}
 .stat-note{color:#aaa;font-size:11px;line-height:1.4;margin:0}.stat-note:empty{display:none}.stat-icon{width:24px;height:24px;object-fit:cover}.stat-icon[hidden],.stat-list img[hidden]{display:none}
 @media(max-width:450px){.stat-selectors{gap:5px}.stat-selector{padding:6px 2px}.stat-selector-name,.stat-selector-summary{font-size:10px}}
 
@@ -92,3 +92,6 @@ input[type="checkbox"]{accent-color:var(--ui-accent)}
 
 /* Keep compact phone controls usable when the minimum layout is scaled. */
 @media(pointer:coarse){#animations,.toolbar select,.resources input,.weekly-income select,.node-row input,.toggle,#fd-explanation-close{min-height:28px}}
+
+/* Full-width Stat targets retain numeric entry and the read-only mini bars. */
+.stat-list .stat-line{grid-template-columns:minmax(0,1fr);gap:4px}.stat-list .stat-line input{justify-self:end}.stat-entry-bar{height:28px}.stat-entry-bar button{padding:0;min-width:0;min-height:28px;border-radius:0;cursor:pointer}.stat-entry-bar button:focus-visible{outline:2px solid var(--ui-bright);outline-offset:1px;z-index:1}

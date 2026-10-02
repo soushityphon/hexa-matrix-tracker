@@ -7,7 +7,10 @@ test.beforeEach(async ({ page }) => {
   // External art is deterministic; no remote source, service or live data calls.
   await page.route('https://**/*', route => route.fulfill({ contentType: 'image/png', body: icon }));
   await page.addInitScript(saves => {
-    for (const [job, save] of Object.entries(saves)) localStorage.setItem('hexa-tracker-' + job + '-v1', JSON.stringify(save));
+    for (const [job, save] of Object.entries(saves)) {
+      const key='hexa-tracker-' + job + '-v1';
+      if(localStorage.getItem(key)===null)localStorage.setItem(key,JSON.stringify(save));
+    }
   }, progress);
 });
 async function open(page, job) {
@@ -34,6 +37,48 @@ async function shot(page, testInfo, name) {
   await page.screenshot({ path: testInfo.outputPath(name + '.png'), fullPage: true });
 }
 for (const job of ['hoyoung', 'ren']) {
+  test(job + ' direct Stat segments, bounded entry and selected numeric replacement', async ({ page }, info) => {
+    await open(page,job);
+    const saved=()=>page.evaluate(job=>JSON.parse(localStorage.getItem('hexa-tracker-'+job+'-v1')),job);
+    const otherJob=job==='hoyoung'?'ren':'hoyoung';
+    const otherBefore=await page.evaluate(job=>localStorage.getItem('hexa-tracker-'+job+'-v1'),otherJob);
+    const before=await saved();
+    const activate=async locator=>info.project.use.hasTouch?locator.tap():locator.click();
+    await activate(page.locator('[data-stat-select="HEXA Stat I"]'));
+    const field=page.locator('[data-stat-line="HEXA Stat I"][data-line-index="0"]');
+    const line=field.locator('..');
+    const segment=level=>line.locator(`[data-stat-segment="${level}"]`);
+    await activate(segment(7));await expect(field).toHaveValue('7');
+    await expect.poll(async()=> (await saved()).statLines['HEXA Stat I']).toEqual([7,0,0]);
+    await expect(segment(7)).toHaveAttribute('aria-pressed','true');
+    await segment(10).focus();await page.keyboard.press('Enter');
+    await expect(field).toHaveValue('10');
+    await page.locator('#undo-progress').click();await expect(field).toHaveValue('7');
+    // Actual native insertion proves selection, rather than assigning .value.
+    await activate(field);await page.keyboard.insertText('3');await expect(field).toHaveValue('3');
+    await activate(field);await page.keyboard.insertText('999');await expect(field).toHaveValue('3');
+    await activate(field);await page.keyboard.insertText('-1');await expect(field).toHaveValue('3');
+    await activate(field);await field.pressSequentially('11');await expect(field).toHaveValue('1');
+    await expect.poll(async()=> (await saved()).statLines['HEXA Stat I']).toEqual([1,0,0]);
+    const bounds=await line.locator('[data-stat-segment]').evaluateAll(nodes=>nodes.map(node=>{const box=node.getBoundingClientRect();return {width:box.width,height:box.height};}));
+    expect(bounds).toHaveLength(10);
+    for(const box of bounds){expect(box.width).toBeGreaterThanOrEqual(24);expect(box.height).toBeGreaterThanOrEqual(28);}
+    const skill=page.locator('[data-node]:visible').first();
+    await activate(skill);await page.keyboard.insertText('3');await expect(skill).toHaveValue('3');
+    for(const [id,value] of [['owned','9'],['perday','6']]){
+      const input=page.locator('#'+id);await activate(input);await page.keyboard.insertText(value);await expect(input).toHaveValue(value);
+    }
+    await page.locator('#view-tracker').focus();
+    await expect.poll(async()=> (await saved()).owned).toBe(9);
+    await expect.poll(async()=> (await saved()).perday).toBe(6);
+    expect((await saved()).statLines['HEXA Stat II']).toEqual(before.statLines['HEXA Stat II']);
+    expect(await page.evaluate(job=>localStorage.getItem('hexa-tracker-'+job+'-v1'),otherJob)).toBe(otherBefore);
+    await expect(page.locator('.creator-credit')).toHaveText('A project by Soushi');await fit(page);
+    await shot(page,info,job+'-stat-segment-entry');
+    await page.reload();await expect(page.locator('#priority-sync')).not.toContainText('Loading');
+    await activate(page.locator('[data-stat-select="HEXA Stat I"]'));
+    await expect(field).toHaveValue('1');await expect(page.locator('#owned')).toHaveValue('9');
+  });
   test(job + ' pointer targets and isolated checkpoint undo', async ({ page }, info) => {
     await open(page, job);
     const scale = await page.evaluate(() => visualViewport?.scale || 1);
@@ -223,7 +268,7 @@ for (const job of ['hoyoung', 'ren']) {
     await open(page,job);
     await page.locator('[data-stat-select="HEXA Stat II"]').click();
     const field=page.locator('[data-stat-line="HEXA Stat II"][data-line-index="1"]');
-    await field.fill('15');
+    await field.fill('6.5');
     await expect(field).toHaveAttribute('aria-invalid','true');
     const before=await page.evaluate(job=>localStorage.getItem('hexa-tracker-'+job+'-v1'),job);
     const original=await field.elementHandle();
@@ -234,7 +279,7 @@ for (const job of ['hoyoung', 'ren']) {
     await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
     await expect(field).toBeDisabled();
     release();await expect(field).toBeEnabled();
-    await expect(field).toBeFocused();await expect(field).toHaveValue('15');
+    await expect(field).toBeFocused();await expect(field).toHaveValue('6.5');
     expect(await original.evaluate(node=>node.isConnected)).toBe(true);
     expect(await field.evaluate(node=>node.validationMessage)).toBe(message);
     expect(await page.evaluate(job=>localStorage.getItem('hexa-tracker-'+job+'-v1'),job)).toBe(before);

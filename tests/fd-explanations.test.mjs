@@ -163,11 +163,11 @@ for(const job of ['hoyoung','ren']) {
   assert.ok(document.querySelector('[data-fd-key="stat:'+stats[0]+'"]')===fd);
   $('[data-stat-select="'+stats[1]+'"]').click();
   const invalid=document.querySelector('[data-stat-line="'+stats[1]+'"][data-line-index="1"]');
-  invalid.value='15';invalid.dispatchEvent(new Event('input',{bubbles:true}));invalid.focus();
+  invalid.value='6.5';invalid.dispatchEvent(new Event('input',{bubbles:true}));invalid.focus();
   assert.equal(invalid.getAttribute('aria-invalid'),'true');
   const before=localStorage.getItem(key),note=invalid.closest('.stat-row').querySelector('.stat-note').textContent;
   focusRefresh();await tick();await tick();
-  assert.ok(invalid.isConnected);assert.equal(invalid.value,'15');assert.equal(invalid.getAttribute('aria-invalid'),'true');
+  assert.ok(invalid.isConnected);assert.equal(invalid.value,'6.5');assert.equal(invalid.getAttribute('aria-invalid'),'true');
   assert.equal(invalid.validationMessage,note);assert.equal(document.activeElement,invalid);
   assert.equal(localStorage.getItem(key),before);
   // Rebuilt FD buttons return focus by logical key when source names change.

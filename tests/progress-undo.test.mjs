@@ -122,8 +122,8 @@ edit(statFields()[0],2);commit(statFields()[0]);undo();
 assert.equal(state().levels[stats[0]],7);assert.deepEqual(state().statLines[stats[0]],[null,null,null]);
 // Undoing a skill leaves other Stat progress and an invalid editor draft untouched.
 await boot({[hyKey]:JSON.stringify({levels:{Harmony:1,[stats[1]]:20},statLines:{[stats[1]]:[10,5,5]},statUnlocked:{[stats[1]]:true}})});
-const otherLine=$('[data-stat-line="'+stats[1]+'"]');edit(otherLine,11);commit(otherLine);
-edit(field(),7);commit(field());undo();assert.equal(otherLine.value,'11');
+const otherLine=$('[data-stat-line="'+stats[1]+'"]');edit(otherLine,6.5);commit(otherLine);
+edit(field(),7);commit(field());undo();assert.equal(otherLine.value,'6.5');
 assert.deepEqual(state().statLines[stats[1]],[10,5,5]);assert.equal(state().levels[stats[1]],20);
 
 // Restore prior infographic history for the touched skill; leave other skills alone.
