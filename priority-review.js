@@ -8,7 +8,7 @@ import { skillAccent } from './skill-colours.js';
 const $ = selector => document.querySelector(selector);
 const el = (tag, text, className) => { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; };
 let captureCatalogue = null;
-let drafts = {}, invalidRecords = [], rows = [], orders = {}, captureRegion = null, skillDirty = false, loaded = false, busy = false;
+let drafts = {}, invalidRecords = [], rows = [], orders = {}, captureRegion = null, skillDirty = false, skillsRevision = null, loaded = false, busy = false;
 const cache = new Map();
 const classStates=new Map();
 let currentJob='호영', currentView='skills';
@@ -32,8 +32,10 @@ async function cachedRequest(key, url, method, value) {
 function controls() {
   $('#grab').disabled = !loaded || busy;
   $('#save-skills').disabled = !loaded || busy || !rows.length;
+  $('#load-latest-skills').disabled = !loaded || busy;
   $('#add-tags').disabled = !loaded || busy || !rows.length;
   $('#save-pair').disabled = !loaded || busy || !orders.heroic || !orders.interactive || captureRegion !== $('#region').value;
+  for(const input of document.querySelectorAll('#skills input, #skills select'))input.disabled=busy;
   $('#job').disabled = busy; $('#region').disabled = busy;
   $('#hoyoung-tab').disabled=busy;$('#ren-tab').disabled=busy;
   $('#response-file').disabled=isRen()||busy;$('#backup').disabled=busy;
@@ -132,15 +134,15 @@ function renderRegistered() {
 }
 async function reload() {
   const result=await request('/api/admin-panel?job='+encodeURIComponent(currentJob));drafts=result.drafts;invalidRecords=result.invalidRecords || [];
-  if(!skillDirty) rows=result.skills?.rows || rows;
+  if(!skillDirty) {rows=result.skills?.rows || rows;skillsRevision=result.skillsRevision;}
   renderSkills();renderRegistered();renderOrders();
 }
 async function selectClass(job) {
   if(busy||job===currentJob)return;
-  classStates.set(currentJob,{drafts,rows,orders,captureRegion,captureCatalogue,skillDirty,region:$('#region').value,view:currentView,note:$('#capture-note').textContent,pairName:$('#pair-name').value});
+  classStates.set(currentJob,{drafts,rows,orders,captureRegion,captureCatalogue,skillDirty,skillsRevision,region:$('#region').value,view:currentView,note:$('#capture-note').textContent,pairName:$('#pair-name').value});
   currentJob=job;$('#job').value=job;
   const saved=classStates.get(job);
-  ({drafts,rows,orders,captureRegion,captureCatalogue,skillDirty}=saved || {drafts:{},rows:[],orders:{},captureRegion:null,captureCatalogue:null,skillDirty:false});
+  ({drafts,rows,orders,captureRegion,captureCatalogue,skillDirty,skillsRevision}=saved || {drafts:{},rows:[],orders:{},captureRegion:null,captureCatalogue:null,skillDirty:false,skillsRevision:null});
   $('#pair-name').value=saved?.pairName || '';
   $('#region').value=saved?.region || (isRen()?'KMS':'GMS');$('#capture-note').textContent=saved?.note || '';
   for(const [id,value] of [['hoyoung-tab','호영'],['ren-tab','렌']]) {const selected=job===value;$('#'+id).setAttribute('aria-selected',String(selected));$('#'+id).tabIndex=selected?0:-1;}
@@ -203,8 +205,18 @@ $('#grab').addEventListener('click',async()=>{
 $('#add-tags').addEventListener('click',()=>{for(const row of rows){const tag=isRen()?row.source.tag:defaultTags[trackerSkill(row.source)?.short];if(tag && !row.tag) row.tag=tag;}skillDirty=true;renderSkills();message('Standard tags added to empty fields. Save skills to keep them.');});
 $('#save-skills').addEventListener('click',async()=>{
   busy=true;controls();
-  try {const review=validateSkills({job:currentJob,rows});await request('/api/admin-panel','PUT',review);skillDirty=false;await reload();message(`Skills saved for ${jobLabel()}. Saved priority orders are unchanged.`);}
+  try {const review=validateSkills({job:currentJob,rows});const result=await request('/api/admin-panel','PUT',{...review,skillsRevision});skillsRevision=result.skillsRevision;skillDirty=false;await reload();message(`Skills saved for ${jobLabel()}. Saved priority orders are unchanged.`);}
   catch(error){message(error.message,true);}finally{busy=false;controls();}
+});
+$('#load-latest-skills').addEventListener('click',async()=>{
+  if(skillDirty && !confirm('Discard your unsaved skill edits and load the latest saved skills?'))return;
+  busy=true;controls();
+  try {
+    const result=await request('/api/admin-panel?job='+encodeURIComponent(currentJob));
+    rows=result.skills?.rows || [];skillsRevision=result.skillsRevision;skillDirty=false;
+    drafts=result.drafts;invalidRecords=result.invalidRecords || [];
+    renderSkills();renderRegistered();renderOrders();message(`Latest ${jobLabel()} skills loaded. Review them before saving.`);
+  }catch(error){message(error.message,true);}finally{busy=false;controls();}
 });
 $('#save-pair').addEventListener('click',async()=>{
   busy=true;controls();

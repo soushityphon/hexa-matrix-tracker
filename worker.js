@@ -114,6 +114,11 @@ async function adminMaintenance(request, env) {
     return Response.json({removed:priorities.length-remaining.length,remaining:remaining.map(row=>row.mode)},{headers:noStore});
   } catch { return new Response('Backup or reset failed',{status:503,headers:noStore}); }
 }
+async function skillsRevision(job, row) {
+  const bytes = new TextEncoder().encode(JSON.stringify([job, row?.review_json ?? null, row?.updated_at ?? null]));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2,'0')).join('');
+}
 async function adminPanel(request, env) {
   if (!isAdmin(request, env)) return new Response('Admin access required', {status:403,headers:noStore});
   if (!env?.DB) return new Response('Admin storage is unavailable', {status:503,headers:noStore});
@@ -131,8 +136,8 @@ async function adminPanel(request, env) {
       }
       const job=new URL(request.url).searchParams.get('job') || '호영';
       if(!['호영','렌'].includes(job))return new Response('Choose Hoyoung or Ren',{status:400,headers:noStore});
-      const review = await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind(job).first();
-      return Response.json({drafts:Object.fromEntries(Object.entries(drafts).filter(([,draft])=>(draft.job || '호영')===job)), invalidRecords, skills:review ? validateSkills(JSON.parse(review.review_json)) : null}, {headers:noStore});
+      const review = await env.DB.prepare('SELECT review_json, updated_at FROM admin_skills WHERE job = ?').bind(job).first();
+      return Response.json({drafts:Object.fromEntries(Object.entries(drafts).filter(([,draft])=>(draft.job || '호영')===job)), invalidRecords, skills:review ? validateSkills(JSON.parse(review.review_json)) : null, skillsRevision:await skillsRevision(job,review)}, {headers:noStore});
     }
     if (!['PUT','POST','PATCH','DELETE'].includes(request.method)) return new Response('Method not allowed', {status:405});
     if (Number(request.headers.get('content-length')) > 250000) return new Response('Payload too large', {status:413});
@@ -144,8 +149,18 @@ async function adminPanel(request, env) {
     try {
       if (request.method === 'PUT') {
         const review = validateSkills(value);
-        await env.DB.prepare('INSERT INTO admin_skills (job, review_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(job) DO UPDATE SET review_json = excluded.review_json, updated_at = excluded.updated_at').bind(review.job, JSON.stringify(review), new Date().toISOString()).run();
-        return Response.json({saved:true}, {headers:noStore});
+        if(typeof value.skillsRevision!=='string' || !/^[a-f0-9]{64}$/.test(value.skillsRevision)) return new Response('Load the latest skills before saving. Your edits have not been saved.',{status:428,headers:noStore});
+        const conflict=()=>new Response('Skills changed in another tab. Your edits are still here. Load latest skills to review the saved version.',{status:409,headers:noStore});
+        const previous=await env.DB.prepare('SELECT review_json, updated_at FROM admin_skills WHERE job = ?').bind(review.job).first();
+        if(value.skillsRevision!==await skillsRevision(review.job,previous))return conflict();
+        const previousTime=Date.parse(previous?.updated_at);
+        const next={review_json:JSON.stringify(review),updated_at:new Date(Math.max(Date.now(),Number.isFinite(previousTime)?previousTime+1:0)).toISOString()};
+        // The SQL predicate also rejects an edit arriving after the revision read.
+        const result=previous
+          ? await env.DB.prepare('UPDATE admin_skills SET review_json = ?, updated_at = ? WHERE job = ? AND review_json = ? AND updated_at = ?').bind(next.review_json,next.updated_at,review.job,previous.review_json,previous.updated_at).run()
+          : await env.DB.prepare('INSERT INTO admin_skills (job, review_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(job) DO NOTHING').bind(review.job,next.review_json,next.updated_at).run();
+        if(result.meta.changes!==1)return conflict();
+        return Response.json({saved:true,skillsRevision:await skillsRevision(review.job,next)}, {headers:noStore});
       }
       if (request.method === 'POST' && value.restoreSnapshot) {
         const backup=value.restoreSnapshot;

@@ -7,9 +7,11 @@ import { NODES } from '../data.js';
 import { mergeSkills, validateSkills, applySkills, validatePair, priorityGroups, orderMatches } from '../admin-panel-model.js';
 const sqlite = new DatabaseSync(':memory:');
 for(const file of ['0000_priority_preview.sql','0001_admin_skills.sql']) sqlite.exec(readFileSync(new URL('../drizzle/'+file,import.meta.url),'utf8'));
-const DB = {prepare(sql){let values=[];return {bind(...args){values=args;return this;},async all(){return {results:sqlite.prepare(sql).all(...values)};},async first(){return sqlite.prepare(sql).get(...values)||null;},async run(){return sqlite.prepare(sql).run(...values);}};},async batch(statements){sqlite.exec('BEGIN');try{for(const statement of statements)await statement.run();sqlite.exec('COMMIT');}catch(error){sqlite.exec('ROLLBACK');throw error;}}};
+const DB = {prepare(sql){let values=[];return {bind(...args){values=args;return this;},async all(){return {results:sqlite.prepare(sql).all(...values)};},async first(){return sqlite.prepare(sql).get(...values)||null;},async run(){return {meta:{changes:Number(sqlite.prepare(sql).run(...values).changes)}};}};},async batch(statements){sqlite.exec('BEGIN');try{for(const statement of statements)await statement.run();sqlite.exec('COMMIT');}catch(error){sqlite.exec('ROLLBACK');throw error;}}};
 const env={DB,ADMIN_EMAIL:'owner@example.test'}, headers={'oai-authenticated-user-email':'owner@example.test','Content-Type':'application/json'};
 const call=(method,value,owner=true)=>worker.fetch(new Request('https://test.example/api/admin-panel',{method,headers:owner?headers:{},...(value===undefined?{}:{body:JSON.stringify(value)})}),env);
+const readSkills=async(job='호영')=>(await worker.fetch(new Request('https://test.example/api/admin-panel?job='+encodeURIComponent(job),{headers}),env)).json();
+const saveSkills=async review=>call('PUT',{...review,skillsRevision:(await readSkills(review.job)).skillsRevision});
 const heroic=currentDraft('taotie_heroic'),interactive=currentDraft('taotie_interactive');
 await DB.prepare('INSERT INTO priority_preview VALUES (?, ?, ?)').bind(heroic.mode,JSON.stringify(heroic),'old-date').run();
 const original=sqlite.prepare('SELECT * FROM priority_preview').all();
@@ -42,7 +44,7 @@ newDefaults[2].tag='';
 const refreshed=mergeSkills({skills:newDefaults.map(row=>row.source)},newDefaults);
 assert.equal(refreshed[2].tag,'');
 const review=validateSkills({job:'호영',rows});
-assert.equal((await call('PUT',review)).status,200);
+assert.equal((await saveSkills(review)).status,200);
 const publicState=await (await worker.fetch(new Request('https://test.example/api/priority-preview'),env)).json();
 assert.equal(publicState.drafts.pair_test_heroic.names.Harmony,'Long edited name');assert.equal(publicState.drafts.pair_test_heroic.tags.Harmony,'M1');
 assert.deepEqual(publicState.drafts.pair_test_heroic.steps,heroic.steps);
@@ -59,7 +61,7 @@ const catalogueRequest=()=>worker.fetch(new Request('https://test.example/api/tr
 let catalogue=await (await catalogueRequest()).json();assert.equal(catalogue.nodes.length,0);assert.equal(catalogue.pending,2);
 const costs={freeBaseLevel:0,levels:Array.from({length:30},(_,i)=>({level:i+1,erda:1,frags:10}))};
 const complete=validateSkills({job:'호영',rows:[{...rows[0],source:{...rows[0].source,costs}}]});
-assert.equal((await call('PUT',complete)).status,200);
+assert.equal((await saveSkills(complete)).status,200);
 catalogue=await (await catalogueRequest()).json();assert.equal(catalogue.nodes.length,1);assert.equal(catalogue.nodes[0].name,'Long edited name');assert.equal(catalogue.nodes[0].tag,'M1');assert.equal(catalogue.stats.length,0);
 const maintenance=(method,body,token)=>worker.fetch(new Request('https://test.example/api/admin-maintenance',{method,headers:token?{Authorization:'Bearer '+token}:{},...(body?{body:JSON.stringify(body)}:{})}),{...env,ADMIN_MAINTENANCE_TOKEN:'x'.repeat(32)});
 assert.equal((await maintenance('GET')).status,403);
@@ -80,7 +82,7 @@ console.log('Complete snapshot restoration, collision refusal and unavailable-by
 
 const beforeClear=await (await call('GET')).json();
 const cleared=structuredClone(beforeClear.skills);cleared.rows[0].tag='';
-assert.equal((await call('PUT',cleared)).status,200);
+assert.equal((await saveSkills(cleared)).status,200);
 const afterClear=await (await call('GET')).json();assert.equal(afterClear.skills.rows[0].tag,'');
 assert.equal((await (await catalogueRequest()).json()).nodes[0].tag,'');
 const afterClearPublic=await (await worker.fetch(new Request('https://test.example/api/priority-preview'),env)).json();
@@ -104,10 +106,45 @@ console.log('D1 pair save and rename preserve exact captured schedules/FD; sched
 const hoyoungBefore=sqlite.prepare('SELECT review_json FROM admin_skills WHERE job = ?').get('호영').review_json;
 const prioritiesBefore=sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all();
 const renReview={job:'렌',rows:[{coreId:'skillCore1',source:{coreId:'skillCore1',sourceName:'Synthetic Ren source',icon:'https://maplescouter.com/hexaskill/Len_1.png'},name:'Reviewed Ren',shortName:'Ren Origin',category:'Skill',tag:'Origin'}]};
-assert.equal((await call('PUT',renReview)).status,200);
+assert.equal((await saveSkills(renReview)).status,200);
 const renState=await (await worker.fetch(new Request('https://test.example/api/admin-panel?job='+encodeURIComponent('렌'),{headers}),env)).json();
 assert.equal(renState.skills.job,'렌');assert.deepEqual(renState.drafts,{});
 assert.equal(sqlite.prepare('SELECT review_json FROM admin_skills WHERE job = ?').get('호영').review_json,hoyoungBefore);
 assert.deepEqual(sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all(),prioritiesBefore);
 assert.equal((await (await call('GET')).json()).skills.job,'호영');
 console.log('Ren skill reviews and class tabs retain separate D1 records without changing Hoyoung priorities');
+
+// Two tabs must carry the revision associated with their loaded rows.
+const stale=await readSkills();
+const edited=structuredClone(stale.skills);edited.rows[0].name='Newest saved name';
+const missing=await call('PUT',edited);assert.equal(missing.status,428);assert.equal(missing.headers.get('Cache-Control'),'no-store');
+assert.equal((await call('PUT',{...edited,skillsRevision:renState.skillsRevision})).status,409);
+const saved=await call('PUT',{...edited,skillsRevision:stale.skillsRevision});assert.equal(saved.status,200);
+const savedRevision=(await saved.json()).skillsRevision;
+assert.notEqual(savedRevision,stale.skillsRevision);assert.equal((await readSkills()).skillsRevision,savedRevision);
+const newerRaw=sqlite.prepare('SELECT * FROM admin_skills ORDER BY job').all();
+const rejected=await call('PUT',{...stale.skills,skillsRevision:stale.skillsRevision});
+assert.equal(rejected.status,409);assert.equal(rejected.headers.get('Cache-Control'),'no-store');
+assert.deepEqual(sqlite.prepare('SELECT * FROM admin_skills ORDER BY job').all(),newerRaw);
+assert.deepEqual(sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all(),prioritiesBefore);
+// Identical saves also advance the revision, including within one millisecond.
+assert.equal((await call('PUT',{...edited,skillsRevision:savedRevision})).status,200);
+assert.notEqual((await readSkills()).skillsRevision,savedRevision);
+
+// Inject a peer edit after the read, before the atomic SQL write.
+const raceRevision=(await readSkills()).skillsRevision;
+let raced=false;
+const raceDB={...DB,prepare(sql){const statement=DB.prepare(sql);const run=statement.run;
+  statement.run=async()=>{if(!raced && sql.startsWith('UPDATE admin_skills')){raced=true;sqlite.prepare('UPDATE admin_skills SET updated_at = ? WHERE job = ?').run('peer-update','호영');}return run();};return statement;}};
+const raceResponse=await worker.fetch(new Request('https://test.example/api/admin-panel',{method:'PUT',headers,body:JSON.stringify({...edited,skillsRevision:raceRevision})}),{...env,DB:raceDB});
+assert.equal(raceResponse.status,409);assert.equal(sqlite.prepare('SELECT updated_at FROM admin_skills WHERE job = ?').get('호영').updated_at,'peer-update');
+
+// A missing row revision cannot overwrite a peer's first insert.
+sqlite.prepare('DELETE FROM admin_skills WHERE job = ?').run('렌');
+const emptyRevision=(await readSkills('렌')).skillsRevision;
+let inserted=false;
+const insertRaceDB={...DB,prepare(sql){const statement=DB.prepare(sql);const run=statement.run;
+  statement.run=async()=>{if(!inserted && sql.startsWith('INSERT INTO admin_skills')){inserted=true;sqlite.prepare('INSERT INTO admin_skills VALUES (?, ?, ?)').run('렌',JSON.stringify(renReview),'peer-insert');}return run();};return statement;}};
+assert.equal((await worker.fetch(new Request('https://test.example/api/admin-panel',{method:'PUT',headers,body:JSON.stringify({...renReview,skillsRevision:emptyRevision})}),{...env,DB:insertRaceDB})).status,409);
+assert.equal(sqlite.prepare('SELECT updated_at FROM admin_skills WHERE job = ?').get('렌').updated_at,'peer-insert');
+console.log('Skills revisions reject missing, stale, wrong-class and interleaved update/insert writes without data loss');

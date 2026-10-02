@@ -1,10 +1,18 @@
+## Current audit batch: Skills save revisions
+
+The admin Skills panel carries a class-specific revision with its loaded rows. Save skills rejects missing revisions (428) and stale revisions (409), including a peer write between the server read and atomic SQL update/insert. Successful identical saves advance the revision too. No database migration is needed; existing raw JSON and ISO update timestamps provide the comparison.
+
+A conflict keeps the unsaved fields. Load latest skills asks before discarding dirty edits; Cancel or a failed request retains them. Switching classes or refreshing priority records cannot silently replace a dirty Skills draft's revision. Skill fields pause while a save is pending. Older admin tabs must refresh to use the new protocol.
+
+This is a partial implementation of Issue #30's admin revision item. Priority rename, availability, delete, legacy write and restore-path concurrency remain for the next batch. Existing restoration collision protection and maintenance exact-row guards remain. Tests use isolated SQLite and the actual admin DOM; deployment and owner acceptance are recorded separately in Issue #30. PR #22 remains draft/unmerged and eventual release is unapproved.
+
 ## Input, Stat and Summary retention, Issue #30, 3 October 2026
 
 An unchanged verified class refresh retains its input nodes, unfinished Stat drafts and validation messages. Editing still pauses while data loads; focus returns to the retained editor after success unless the player moved focus. Changed source still follows the existing input/migration/reconciliation path. Stable FD keys return modal focus to the matching replacement in the same class, order and view; a removed or unavailable value returns focus to the current view button.
 
 Unrelated input/change events no longer render the tracker. Unchanged version options, Stat FD markup and Summary sections retain their nodes; text and Stat icon sources update only when needed. Real settings/progress changes still update calculations and save through the existing protected paths. Dates are recalculated so a day change is reflected. Original source data, calculations, layout/copy, save/backup format and manual-only backups remain.
 
-The isolated version 122 baseline replaced Completion, totals and a Stat FD button 100 times each for 100 no-op setting inputs; the final app retains them. The prior 122 batch records priority/save improvements below. This follow-up completes the planned redraw/save/focus implementation, subject to final test/deployment evidence and separate owner acceptance in Issue #30. Browser measurements cover 100 no-op setting inputs, with zero player writes and zero replacements for priority, Next Upgrade, Summary, input/version containers and Stat FD. Further browser cases cover invalid draft/native input focus through delayed unchanged refresh, retained Stat FD after a settings change, and changed-source replacement/removal focus in both classes and all three widths. The next documented task is stale admin edit revision checks.
+The isolated version 122 baseline replaced Completion, totals and a Stat FD button 100 times each for 100 no-op setting inputs; the final app retains them. The prior 122 batch records priority/save improvements below. This follow-up completes the planned redraw/save/focus implementation, subject to final test/deployment evidence and separate owner acceptance in Issue #30. Browser measurements cover 100 no-op setting inputs, with zero player writes and zero replacements for priority, Next Upgrade, Summary, input/version containers and Stat FD. Further browser cases cover invalid draft/native input focus through delayed unchanged refresh, retained Stat FD after a settings change, and changed-source replacement/removal focus in both classes and all three widths. The following Skills batch starts the documented stale admin edit revision checks.
 
 ## Redraw and save reduction, Issue #30, 3 October 2026
 

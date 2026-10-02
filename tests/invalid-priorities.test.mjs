@@ -10,7 +10,7 @@ import { reconstructScouterOrder, discoverySelection } from '../scouter-discover
 
 const sqlite=new DatabaseSync(':memory:');
 for(const file of ['0000_priority_preview.sql','0001_admin_skills.sql'])sqlite.exec(readFileSync(new URL('../drizzle/'+file,import.meta.url),'utf8'));
-const DB={prepare(sql){let values=[];return {bind(...args){values=args;return this;},async all(){return {results:sqlite.prepare(sql).all(...values)};},async first(){return sqlite.prepare(sql).get(...values)||null;},async run(){return sqlite.prepare(sql).run(...values);}};},async batch(statements){sqlite.exec('BEGIN');try{for(const statement of statements)await statement.run();sqlite.exec('COMMIT');}catch(error){sqlite.exec('ROLLBACK');throw error;}}};
+const DB={prepare(sql){let values=[];return {bind(...args){values=args;return this;},async all(){return {results:sqlite.prepare(sql).all(...values)};},async first(){return sqlite.prepare(sql).get(...values)||null;},async run(){return {meta:{changes:Number(sqlite.prepare(sql).run(...values).changes)}};}};},async batch(statements){sqlite.exec('BEGIN');try{for(const statement of statements)await statement.run();sqlite.exec('COMMIT');}catch(error){sqlite.exec('ROLLBACK');throw error;}}};
 const env={DB,ADMIN_EMAIL:'owner@example.test'},headers={'oai-authenticated-user-email':'owner@example.test','Content-Type':'application/json'};
 const call=(method,value,path='/api/admin-panel',owner=true)=>worker.fetch(new Request('https://test.example'+path,{method,headers:owner?headers:{},...(value===undefined?{}:{body:JSON.stringify(value)})}),env);
 const base=currentDraft('lotus_heroic');
@@ -61,7 +61,7 @@ assert.deepEqual(before(),initial);
 assert.equal((await call('PATCH',{id:'good',name:'Still manageable',enabled:false})).status,200);
 assert.equal((await call('POST',pair('fresh'))).status,200);
 assert.equal((await call('DELETE',{id:'fresh'})).status,200);
-assert.equal((await call('PUT',{job:'호영',rows:[{coreId:'masteryCore1',source:{coreId:'masteryCore1',sourceName:'Harmony',icon:'https://maplescouter.com/hexaskill/HY_3.png'},name:'Harmony',shortName:'Harmony',category:'Mastery',tag:'M1'}]})).status,200);
+assert.equal((await call('PUT',{skillsRevision:(await (await call('GET')).json()).skillsRevision,job:'호영',rows:[{coreId:'masteryCore1',source:{coreId:'masteryCore1',sourceName:'Harmony',icon:'https://maplescouter.com/hexaskill/HY_3.png'},name:'Harmony',shortName:'Harmony',category:'Mastery',tag:'M1'}]})).status,200);
 assert.equal((await call('PATCH',{id:ren.pairId,name:'Ren remains manageable',enabled:false})).status,200);
 const publicState=await (await call('GET',undefined,'/api/priority-preview',false)).json();
 for(const mode of broken.keys())assert(!Object.hasOwn(publicState.drafts,mode));
@@ -89,5 +89,34 @@ assert(downloaded);const download=JSON.parse(await downloaded.text());assert.equ
 document.querySelector('#ren-tab').click();await new Promise(resolve=>setTimeout(resolve,30));
 assert(document.querySelector('#registered').textContent.includes('Ren remains manageable'));
 assert.equal(document.querySelectorAll('.invalid-priorities article').length,broken.size);
+// Retain a dirty class's original revision even when switching away and back.
+const settle=()=>new Promise(resolve=>setTimeout(resolve,30));
+document.querySelector('#hoyoung-tab').click();await settle();
+let nameInput=document.querySelector('#skills input');nameInput.value='Unsaved tab name';nameInput.dispatchEvent(new Event('input'));
+const peer=await (await call('GET')).json();peer.skills.rows[0].name='Peer saved name';
+assert.equal((await call('PUT',{...peer.skills,skillsRevision:peer.skillsRevision})).status,200);
+document.querySelector('#ren-tab').click();await settle();document.querySelector('#hoyoung-tab').click();await settle();
+document.querySelector('#save-skills').click();await settle();
+assert.match(document.querySelector('#status').textContent,/changed in another tab/);
+assert.equal(document.querySelector('#skills input').value,'Unsaved tab name');
+assert.equal((await (await call('GET')).json()).skills.rows[0].name,'Peer saved name');
+globalThis.confirm=()=>false;
+document.querySelector('#load-latest-skills').click();await settle();
+assert.equal(document.querySelector('#skills input').value,'Unsaved tab name');
+globalThis.confirm=()=>true;
+const normalFetch=globalThis.fetch;globalThis.fetch=async()=>new Response('Temporary failure',{status:503});
+document.querySelector('#load-latest-skills').click();await settle();
+assert.equal(document.querySelector('#skills input').value,'Unsaved tab name');
+assert.match(document.querySelector('#status').textContent,/Temporary failure/);
+globalThis.fetch=normalFetch;
+document.querySelector('#load-latest-skills').click();await settle();
+assert.equal(document.querySelector('#skills input').value,'Peer saved name');
+for(const name of ['Reviewed latest name','Second reviewed save']) {
+  nameInput=document.querySelector('#skills input');nameInput.value=name;nameInput.dispatchEvent(new Event('input'));
+  document.querySelector('#save-skills').click();await settle();
+  assert.match(document.querySelector('#status').textContent,/Skills saved/);
+  assert.equal((await (await call('GET')).json()).skills.rows[0].name,name);
+}
+console.log('Admin DOM retains conflicted drafts across class reloads; cancelled/failed latest loads preserve edits and reviewed saves recover');
 URL.createObjectURL=originalCreate;await win.happyDOM.abort();sqlite.close();
 console.log('Damaged priority isolation, raw recovery, collision protection, class management and admin DOM checks passed');
