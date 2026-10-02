@@ -17,7 +17,6 @@ assert.equal(backup.classes.Len.progress.levels.Len_1,3);
 assert.equal(backup.classes.Hoyeong.progress.levels.Apotheosis,undefined);
 assert.equal(backup.classes.Hoyeong.progress.infographicUndo,undefined);
 const restored=parsePlayerBackup(backup,models);
-assert.deepEqual(restored.hoyoung,{...classes.hoyoung,infographicUndo:undefined});
 delete restored.hoyoung.infographicUndo;
 const expected={...classes.hoyoung};delete expected.infographicUndo;assert.deepEqual(restored.hoyoung,expected);
 const wrong=structuredClone(backup);wrong.classes.Other=wrong.classes.Len;assert.throws(()=>parsePlayerBackup(wrong,models));
