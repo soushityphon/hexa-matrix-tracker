@@ -8,6 +8,10 @@ GitHub's **Tracker checks** workflow runs on pushes and pull requests, including
 
 This workflow only validates source. It does not publish, migrate data, change hosting or approve a release. Continue to deploy authorised app changes through the existing test Site workflow. PR #22 must remain draft and unmerged until the owner approves eventual release. Record checks and remaining owner/device acceptance in Issue #30.
 
+## Rendered desktop and phone checks, Issue #30
+
+The GitHub workflow also runs Chromium at desktop, phone and narrow-phone sizes using isolated fixtures. Run `npm run build`, `npx playwright install --with-deps chromium` and `npm run test:browser` after installing locked dependencies. It retains reports, screenshots and failure traces for seven days. See [rendered QA](docs/rendered-qa.md) for the exact coverage, fixture limits and remaining owner/device checks. The browser dependency is development-only and is not bundled into the Worker.
+
 ## Current Matrix and priority UI, Issue #30
 
 Sol Janus is always editable in Current HEXA Matrix and is permanently excluded from Upgrade Priority. The shared Summary checkbox optionally includes it in completion and material totals in both views. Its level uses existing per-class progress and backup identity `generalCore1`. Where Janus has no captured schedule, use the selected priority's captured Sol Hecate (`generalCore2`) schedule, following the owner's confirmation that their material requirements are equal. Missing Hecate costs disable inclusion rather than inventing costs. Source captures and priority data are unchanged.

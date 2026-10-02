@@ -7,9 +7,11 @@
     "build": "node scripts/build-worker.mjs",
     "check:syntax": "node scripts/check-syntax.mjs",
     "test:assets": "node tests/compiled-assets.test.mjs",
-    "check": "npm test && npm run build && npm run check:syntax && npm run test:assets"
+    "check": "npm test && npm run build && npm run check:syntax && npm run test:assets",
+    "test:browser": "playwright test --config=tests/browser/playwright.config.mjs"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "happy-dom": "^20.14.5"
   },
   "engines": {
