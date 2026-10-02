@@ -15,6 +15,7 @@ import { infographicCheckpoints, infographicDisplayCheckpoints, infographicConte
 import { createPlayerStorage } from './player-storage.js';
 import { createPlayerBackup, parsePlayerBackup, PLAYER_CLASSES } from './player-backup.js';
 
+const PLAYER_CLASS_NAMES={hoyoung:'Hoyoung',ren:'Ren'};
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 const playerStorage=createPlayerStorage(()=>localStorage,({reason})=>{
@@ -529,7 +530,7 @@ async function currentBackup(models) {
   const classes={};
   for(const className of Object.keys(PLAYER_CLASSES)) {
     const key='hexa-tracker-'+className+'-v1';
-    if(!playerStorage.canBackup(key))throw new Error('Saved progress for '+PLAYER_CLASSES[className]+' needs recovery before export');
+    if(!playerStorage.canBackup(key))throw new Error('Saved progress for '+PLAYER_CLASS_NAMES[className]+' needs recovery before export');
     classes[className]=playerStorage.read(key);
   }
   return createPlayerBackup(classes,models);
@@ -554,7 +555,7 @@ $('#import-progress-file').addEventListener('change',async event=>{
     if(file.size>500000)throw new Error('Backup file is too large');
     const models=await backupModels();
     let value;try{value=JSON.parse(await file.text());}catch{throw new Error('Backup is not valid JSON');}
-    const classes=parsePlayerBackup(value,models),names=Object.keys(classes).map(name=>PLAYER_CLASSES[name]).join(', ');
+    const classes=parsePlayerBackup(value,models),names=Object.keys(classes).map(name=>PLAYER_CLASS_NAMES[name]).join(', ');
     if(!confirm(`Restore progress for ${names}? Existing progress for these classes will be replaced. A safety backup of your current progress will download first.`)){backupStatus('Import cancelled.');return;}
     const safety=await currentBackup(models);
     downloadJSON(safety,'hexa-matrix-before-import-'+new Date().toISOString().slice(0,10)+'.json');
