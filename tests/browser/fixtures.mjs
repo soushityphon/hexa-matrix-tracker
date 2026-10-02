@@ -53,7 +53,7 @@ export const fixtures = {
 };
 export const progress = Object.fromEntries(Object.entries(fixtures).map(([job, fixture]) => [job, {
   mode: 'qa_full_heroic', owned: 42, perday: 20,
-  levels: Object.fromEntries(fixture.model.nodes.map((node, i) => [node.short, i === 3 ? 30 : node.initialLevel || 0])),
+  levels: Object.fromEntries(fixture.model.nodes.map((node, i) => [node.short, node.short === (job === 'ren' ? 'ren_reinCore1' : 'Tiger') ? 6 : i === 3 ? 30 : node.initialLevel || 0])),
   statUnlocked: { [stats[0]]: true, [stats[2]]: true },
   statLines: { [stats[0]]: [0, 0, 0], [stats[1]]: [2, null, 4], [stats[2]]: [6, 8, 6] }
 }]));

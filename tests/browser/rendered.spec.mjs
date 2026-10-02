@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { progress } from './fixtures.mjs';
+import { fixtures, progress } from './fixtures.mjs';
 
 const icon = readFileSync(new URL('../../assets/sol-erda.png', import.meta.url));
 test.beforeEach(async ({ page }) => {
@@ -71,6 +71,9 @@ for (const job of ['hoyoung', 'ren']) {
     const before = await page.locator('[data-node]').evaluateAll(nodes => Object.fromEntries(nodes.map(n => [n.dataset.node, n.value])));
     await page.locator('#patch').selectOption('qa_hidden');
     await expect(page.locator('#patch')).toHaveValue('qa_hidden');
+    const hiddenSkill = job === 'ren' ? 'ren_reinCore1' : 'Tiger';
+    await expect(page.locator(`[data-node="${hiddenSkill}"]`)).not.toBeVisible();
+    expect(await page.evaluate(({ job, hiddenSkill }) => JSON.parse(localStorage.getItem('hexa-tracker-' + job + '-v1')).levels[hiddenSkill], { job, hiddenSkill })).toBe(6);
     await fit(page);
     await page.locator('#patch').selectOption('qa_full');
     expect(await page.locator('[data-node]').evaluateAll(nodes => Object.fromEntries(nodes.map(n => [n.dataset.node, n.value])))).toEqual(before);
@@ -90,9 +93,13 @@ for (const job of ['hoyoung', 'ren']) {
     await fit(page);
     await page.locator('#infographic-hide').uncheck();
     await expect(page.locator('.checkpoint.completed:visible')).toHaveCount(completed);
-    await page.locator('#class').selectOption(job === 'ren' ? 'hoyoung' : 'ren');
+    const other = job === 'ren' ? 'hoyoung' : 'ren';
+    await page.locator('#class').selectOption(other);
+    await expect(page.locator(`[data-node="${fixtures[other].model.nodes[0].short}"]`)).toHaveCount(1);
     await page.locator('#class').selectOption(job);
     await expect(page.locator('#class')).toHaveValue(job);
+    await expect(page.locator(`[data-node="${fixtures[job].model.nodes[0].short}"]`)).toHaveCount(1);
+    expect(await page.locator('[data-node]').evaluateAll(nodes => Object.fromEntries(nodes.map(n => [n.dataset.node, n.value])))).toEqual(before);
     await fit(page);
   });
   test(job + ' long names and failed icons', async ({ page }, info) => {
