@@ -94,4 +94,4 @@ input[type="checkbox"]{accent-color:var(--ui-accent)}
 @media(pointer:coarse){#animations,.toolbar select,.resources input,.weekly-income select,.node-row input,.toggle,#fd-explanation-close{min-height:28px}}
 
 /* Full-width Stat targets retain numeric entry and the read-only mini bars. */
-.stat-list .stat-line{grid-template-columns:minmax(0,1fr);gap:4px}.stat-list .stat-line input{justify-self:end}.stat-entry-bar{height:28px}.stat-entry-bar button{padding:0;min-width:0;min-height:28px;border-radius:0;cursor:pointer}.stat-entry-bar button:focus-visible{outline:2px solid var(--ui-bright);outline-offset:1px;z-index:1}
+.stat-list .stat-line{grid-template-columns:minmax(0,1fr);gap:4px}.stat-list .stat-line input{justify-self:end}.stat-entry-bar{height:28px;gap:0}.stat-entry-bar button{padding:0;min-width:0;min-height:28px;border-radius:0;cursor:pointer}.stat-entry-bar button:focus-visible{outline:2px solid var(--ui-bright);outline-offset:1px;z-index:1}
