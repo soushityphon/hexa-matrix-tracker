@@ -1,4 +1,8 @@
-## Current UI follow-up: Thin Stat bars with side-by-side number entry
+## Current audit batch: Hosting identity verification
+
+Twelve read-only anonymous checks on test version 128 refuse supplied owner identity headers at both the admin API and page. New isolated Worker regressions cover protected routes, guard-before-storage/upstream behaviour and service-token scope. The full hosting verification remains partial: signed-in identity injection, non-owner spoof replacement and direct-origin assurance still need evidence. See [hosting identity review](docs/hosting-identity-review.md) for measured results, limits and remaining checks. No app or hosting change is included; version 128 remains deployed. PR #22 stays draft/unmerged and eventual release remains unapproved.
+
+## Previous UI follow-up: Thin Stat bars with side-by-side number entry
 
 Following the owner's version 127 functional acceptance, Stat editor bars now show 10px segments within 28px-tall buttons, with the existing 54px number field on the right. Number entry, 0–10 rejection, direct segment levels, validation, save/Undo and paused/conflict guards are unchanged. The compact segments remain centre-hit tested at desktop/390px/320px; narrow widths use a 16px minimum segment width, with numeric entry retained as the larger alternative. Native phone ergonomics and this visual refinement remain owner review. No data, calculation, storage or server change is included.
 
