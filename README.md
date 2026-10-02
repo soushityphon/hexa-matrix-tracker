@@ -1,3 +1,7 @@
+## Priority rendering module, Issue #30, 3 October 2026
+
+`priority-renderer.js` owns the existing Next Upgrade and priority-table markup, material amounts and FD display helpers. It receives the current verified selection, levels and estimates from the tracker after the existing pause/save guards. Calculation modules, selection/loading, saves, progress actions, Stat input/editor state, Summary, infographic history and the FD dialog lifecycle retain their existing owners. The module is bundled and served by the Worker. No wording, layout, source data, calculation or save/backup format changes are included. The compound refactor remains open for the remaining input/Stat and Summary rendering responsibilities. The six known expired-cache FD focus failures remain for the subsequent rendering/focus improvement item.
+
 ## Manual player backups, Issue #30, 3 October 2026
 
 Player Import now asks whether to replace the included classes' saved progress. Choose OK to continue without an automatic backup, or Cancel and use Export first. Export remains the manual all-class JSON download. This owner decision supersedes the earlier automatic safety-export requirement. Validation, save locks, cross-tab conflicts, class/refresh guards, replacement scope, backup format and agreed Undo clearing remain. Cancel and confirmed import create no downloads; browser tests cover both classes at all three widths.
