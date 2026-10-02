@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 export default defineConfig({
   testDir: '.',
-  testMatch: ['rendered.spec.mjs', 'music.spec.mjs'],
+  testMatch: ['rendered.spec.mjs', 'music.spec.mjs', 'backup.spec.mjs'],
   timeout: 30000,
   workers: 1,
   retries: 0,

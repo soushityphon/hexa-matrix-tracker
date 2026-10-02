@@ -197,6 +197,9 @@ for (const job of ['hoyoung', 'ren']) {
     await fd.focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('#fd-explanation-close')).toBeFocused();
+    // The defect remains when the existing cache is expired. Fresh returns
+    // now reuse the verified view without refreshing.
+    await page.clock.setFixedTime(new Date(Date.now()+31000));
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
     await expect(page.locator('#fd-explanation-close')).toBeFocused();

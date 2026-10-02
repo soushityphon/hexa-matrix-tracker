@@ -8,6 +8,7 @@ export function createSaveActions({document, playerStorage, classLoader, classNa
   clearProgressUndo, renderInputs, render, syncConflict}) {
   const $=selector=>document.querySelector(selector);
   const $$=selector=>[...document.querySelectorAll(selector)];
+  let pickingFile=false;
   function downloadJSON(value,name) {
     const blob=new Blob([JSON.stringify(value,null,2)+'\n'],{type:'application/json'});
     const url=URL.createObjectURL(blob),link=document.createElement('a');
@@ -39,9 +40,15 @@ export function createSaveActions({document, playerStorage, classLoader, classNa
     } catch(error) {backupStatus('Progress could not be exported: '+error.message,true);}
     finally {button.disabled=false;}
   });
-  $('#import-progress').addEventListener('click',()=>{if(!editsPaused())$('#import-progress-file').click();});
+  $('#import-progress').addEventListener('click',()=>{
+    if(editsPaused())return;
+    pickingFile=true;
+    try {$('#import-progress-file').click();}catch(error){pickingFile=false;throw error;}
+  });
+  $('#import-progress-file').addEventListener('cancel',()=>{pickingFile=false;});
   $('#import-progress-file').addEventListener('change',async event=>{
-    const file=event.target.files?.[0];event.target.value='';if(!file || editsPaused())return;
+    const file=event.target.files?.[0];event.target.value='';
+    if(!file || editsPaused()){pickingFile=false;return;}
     const importSequence=getState().sequence;
     backupStatus('Checking progress backup...');
     try {
@@ -49,6 +56,7 @@ export function createSaveActions({document, playerStorage, classLoader, classNa
       const models=await backupModels();
       let value;try{value=JSON.parse(await file.text());}catch{throw new Error('Backup is not valid JSON');}
       const classes=parsePlayerBackup(value,models),names=Object.keys(classes).map(name=>classNames[name]).join(', ');
+      pickingFile=false;
       if(!confirm(`Restore progress for ${names}? Existing progress for these classes will be replaced. A safety backup of your current progress will download first.`)){backupStatus('Import cancelled.');return;}
       await currentBackup(models);
       if(editsPaused() || importSequence!==getState().sequence)throw new Error('Tracker data changed during import. Retry after loading succeeds');
@@ -68,6 +76,7 @@ export function createSaveActions({document, playerStorage, classLoader, classNa
       clearSelectedStat();renderInputs();render();
       backupStatus(`Imported ${names}. Infographic undo history was cleared as agreed.`);
     } catch(error) {setPending(false);backupStatus('Progress import failed: '+error.message,true);}
+    finally {pickingFile=false;}
   });
   $('#continue-tab-save').addEventListener('click',async()=>{
     if(sourcePaused() || getState().pending || !playerStorage.conflict(getState().key))return;
@@ -118,5 +127,8 @@ export function createSaveActions({document, playerStorage, classLoader, classNa
       }
     };
   }
-  return {bindReset};
+  // Native file selection can focus the window before or after its change
+  // event. Keep the selected file while it is read and validated. Normal
+  // focus refreshes resume before confirmation; save checks never pause.
+  return {bindReset,pickingFile:()=>pickingFile};
 }

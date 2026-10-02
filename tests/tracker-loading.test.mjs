@@ -65,6 +65,7 @@ globalThis.setTimeout=(callback,delay,...args)=>{
   return realSetTimeout(callback,delay,...args);
 };
 function changeClass(value){$('#class').value=value;$('#class').dispatchEvent(new Event('change',{bubbles:true}));}
+function focusRefresh(){const now=Date.now;Date.now=()=>now()+31000;try{win.dispatchEvent(new Event('focus'));}finally{Date.now=now;}}
 function response(url){const job=url.includes('%EB%A0%8C')?'ren':'hoyoung';return Response.json(url.startsWith('/api/tracker-catalogue')?models[job]:{drafts:drafts[job]});}
 const original=JSON.stringify({levels:{Harmony:1},owned:42});
 for(const endpoint of ['tracker-catalogue','priority-preview'])for(const stage of ['headers','json','error-body']){
@@ -119,6 +120,14 @@ waiting.filter(x=>x.url.includes('%EB%A0%8C')).forEach(x=>x.resolve(response(x.u
 waiting.filter(x=>!x.url.includes('%EB%A0%8C')).forEach(x=>x.reject(new Error('old class failed')));await tick();
 assert.ok($('[data-node]').dataset.node.startsWith('ren_'));assert.equal($('#priority-sync').textContent,'');assert.equal($('#retry-priorities').hidden,true);
 // A failed refresh keeps only this class's verified view, without save writes.
+// Returning to a fresh verified view skips both network reads and UI rebuilding.
+let focusCalls=0;
+await boot({[hyKey]:original},url=>{focusCalls++;return response(url);});
+const freshNode=$('[data-node]'),freshCount=focusCalls;
+win.dispatchEvent(new Event('focus'));await tick();
+assert.equal(focusCalls,freshCount);assert.equal($('[data-node]'),freshNode);
+assert.equal(freshNode.disabled,false);assert.equal($('#priority-sync').textContent,'');
+focusRefresh();await tick();assert.equal(focusCalls,freshCount+2);
 for(const view of ['tracker','infographic'])for(const failure of ['network','deadline']) {
   let failed=false,stall=false;
   await boot({[hyKey]:original},url=>{
@@ -135,7 +144,7 @@ for(const view of ['tracker','infographic'])for(const failure of ['network','dea
   let writes=0;const write=localStorage.setItem;
   localStorage.setItem=(key,value)=>{if(key===hyKey)writes++;write(key,value);};
   failed=failure==='network';stall=failure==='deadline';
-  win.dispatchEvent(new Event('focus'));
+  focusRefresh();
   assert.equal(node.disabled,true);assert.equal($('#retry-priorities').hidden,true);
   assert.match($('#priority-sync').textContent,/Refreshing data/);
   if(stall)deadlines.at(-1)();
@@ -173,7 +182,7 @@ await boot({[hyKey]:original},url=>{
   return empty&&url.includes('priority-preview')?Response.json({drafts:{}}):response(url);
 });
 const retained=localStorage.getItem(hyKey);
-offline=true;win.dispatchEvent(new Event('focus'));await tick();assert.ok($('[data-node]'));
+offline=true;focusRefresh();await tick();assert.ok($('[data-node]'));
 offline=false;empty=true;$('#retry-priorities').click();await tick();
 assert.equal($('#priority').children.length,0);assert.match($('#progress').textContent,/No saved priority/);
 assert.equal($('#priority-sync').textContent,'');assert.equal(localStorage.getItem(hyKey),retained);
@@ -183,7 +192,7 @@ await boot({[hyKey]:original,[renKey]:JSON.stringify({levels:{ren_skillCore1:2},
   if(url.includes('%EB%A0%8C')?failRen:failHY)throw new Error('class offline');
   return response(url);
 });
-failHY=true;win.dispatchEvent(new Event('focus'));await tick();
+failHY=true;focusRefresh();await tick();
 failRen=true;changeClass('ren');await tick();
 assert.equal(document.querySelectorAll('[data-node]').length,0);
 assert.doesNotMatch($('#priority-sync').textContent,/last loaded view/);

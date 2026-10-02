@@ -1,3 +1,5 @@
+// These failure/reconciliation cases exercise an expired source cache.
+function focusRefresh(){const now=Date.now;Date.now=()=>now()+31000;try{window.dispatchEvent(new Event('focus'));}finally{Date.now=now;}}
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Window } from 'happy-dom';
@@ -169,7 +171,7 @@ URL.createObjectURL=oldCreate;URL.revokeObjectURL=oldRevoke;
 let fail=false;
 const response=url=>Response.json(url.startsWith('/api/tracker-catalogue')?models.hoyoung:{drafts:hy});
 await boot({[hyKey]:JSON.stringify({levels:{Harmony:1}})},url=>{if(fail)throw new Error('offline');return response(url);});
-edit(field(),7);commit(field());fail=true;win.dispatchEvent(new Event('focus'));
+edit(field(),7);commit(field());fail=true;focusRefresh();
 assert.equal($('#undo-progress').disabled,true);await tick();
 const paused=localStorage.getItem(hyKey);$('#undo-progress').dispatchEvent(new Event('click'));
 assert.equal(localStorage.getItem(hyKey),paused);
@@ -178,12 +180,12 @@ undo();assert.equal(field().value,'1');
 edit(field(),7);commit(field());
 const oldDraft=hy.pair_lines_heroic;
 hy.pair_lines_heroic={...oldDraft,steps:[...oldDraft.steps,{skill:'Harmony',level:3}]};
-win.dispatchEvent(new Event('focus'));await tick();assert.equal($('#undo-progress').disabled,true);
+focusRefresh();await tick();assert.equal($('#undo-progress').disabled,true);
 hy.pair_lines_heroic=oldDraft;
 // Empty successful source data also removes the action, without resetting saved levels.
 let empty=false;
 await boot({[hyKey]:JSON.stringify({levels:{Harmony:1}})},url=>empty?Response.json(url.startsWith('/api/tracker-catalogue')?{nodes:[],stats:[]}:{drafts:{}}):response(url));
-edit(field(),7);commit(field());empty=true;win.dispatchEvent(new Event('focus'));await tick();
+edit(field(),7);commit(field());empty=true;focusRefresh();await tick();
 assert.equal($('#undo-progress').disabled,true);assert.equal(state().levels.Harmony,7);
 
 // Storage failures keep usable session Undo and preserve protected raw records.

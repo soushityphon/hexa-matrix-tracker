@@ -1,3 +1,5 @@
+// These failure/reconciliation cases exercise an expired source cache.
+function focusRefresh(){const now=Date.now;Date.now=()=>now()+31000;try{window.dispatchEvent(new Event('focus'));}finally{Date.now=now;}}
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Window } from 'happy-dom';
@@ -209,13 +211,13 @@ change('#class','ren');await tick();
 // a later successful empty catalogue retains only the optional Janus input.
 let focusRequests=0;
 globalThis.fetch=async()=>{focusRequests++;return new Response('Unavailable',{status:503});};
-win.dispatchEvent(new Event('focus'));await tick();
+focusRefresh();await tick();
 assert.equal(focusRequests,2);
 assert.ok(document.querySelectorAll('[data-node]').length);
 assert.equal($('[data-node]').disabled,true);
 assert.match($('#priority-sync').textContent,/Refresh failed.*last loaded view/);
 globalThis.fetch=async url=>Response.json(url.startsWith('/api/tracker-catalogue')?{nodes:[],stats:[]}:{drafts:{}});
-win.dispatchEvent(new Event('focus'));await tick();
+focusRefresh();await tick();
 assert.match($('#nodes').textContent,/Sol Janus/);
 assert.equal($('#includeJanus').disabled,true);
 assert.equal($('#priority-sync').textContent,'');

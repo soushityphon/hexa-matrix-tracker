@@ -724,7 +724,12 @@ $('#class').addEventListener('change',()=>{
   infographic.clear();infographicEntries=[];infographicScope=null;
   setTrackerCatalogue([]);$('#patch').replaceChildren();renderInputs();render();refreshSharedPriorities();
 });
-window.addEventListener('focus',()=>{checkActive();refreshSharedPriorities({force:true});});
+window.addEventListener('focus',()=>{
+  checkActive();
+  if(saveActions.pickingFile())return;
+  if(verifiedClass===activeClass && classLoader.cached(activeClass))return;
+  refreshSharedPriorities({force:true});
+});
 saveActions.bindReset();
 appReady=true;
 renderInputs();

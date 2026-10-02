@@ -1,3 +1,5 @@
+// These failure/reconciliation cases exercise an expired source cache.
+function focusRefresh(){const now=Date.now;Date.now=()=>now()+31000;try{window.dispatchEvent(new Event('focus'));}finally{Date.now=now;}}
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Window } from 'happy-dom';
@@ -97,7 +99,7 @@ await explain(tile.querySelector('[data-fd-note]'),/General average.*not persona
 assert.equal(tile.querySelector('[data-stat-select]').getAttribute('aria-expanded'),selected);
 // FD information is still readable when progress editing pauses on failed refresh.
 globalThis.fetch=async()=>{throw new Error('offline');};
-window.dispatchEvent(new Event('focus'));await tick();await tick();
+focusRefresh();await tick();await tick();
 assert.equal($('#next-upgrade [data-upgrade-skill]').disabled,true);
 assert.equal($('#next-upgrade [data-fd-note]').disabled,false);
 await explain($('#next-upgrade [data-fd-note]'),/rounded Maple Scouter/);

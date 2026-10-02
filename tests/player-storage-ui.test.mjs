@@ -97,6 +97,9 @@ async function importFile(value){
   Object.defineProperty($('#import-progress-file'),'files',{configurable:true,value:[{size:100,text:async()=>JSON.stringify(value)}]});
   $('#import-progress-file').dispatchEvent(new Event('change'));await tick();
 }
+// Returning from the native file picker focuses the window before selection.
+// That focus must not refresh/pause the tracker and silently discard the file.
+$('#import-progress').click();win.dispatchEvent(new Event('focus'));
 await importFile(incoming);
 assert.match($('#backup-status').textContent,/Imported/);assert.equal($('#owned').value,'99');assert.equal($('[data-node]').value,'2');
 assert.equal(state(renKey).owned,7);assert.equal(JSON.parse(await downloads[1].text()).classes.Hoyeong.progress.owned,42);
@@ -107,7 +110,7 @@ globalThis.confirm=()=>true;incoming.classes.Hoyeong.progress.levels.masteryCore
 await importFile(incoming);assert.match($('#backup-status').textContent,/failed/);assert.equal(localStorage.getItem(hyKey),prior);assert.equal(downloads.length,2);
 // A refresh that starts during confirmation must prevent in-flight replacement.
 incoming.classes.Hoyeong.progress.levels.masteryCore1=1;
-globalThis.confirm=()=>{win.dispatchEvent(new Event('focus'));return true;};
+globalThis.confirm=()=>{const now=Date.now;Date.now=()=>now()+31000;try{win.dispatchEvent(new Event('focus'));}finally{Date.now=now;}return true;};
 await importFile(incoming);
 assert.match($('#backup-status').textContent,/Tracker data changed during import/);
 assert.equal(state(hyKey).levels.Harmony,2);assert.equal(state(hyKey).owned,99);
@@ -221,6 +224,18 @@ for(const choice of ['#continue-tab-save','#load-latest-save']) {
   assert.equal($('#owned').value,'42');assert.equal($('#save-conflict').hidden,false);
 }
 // Without the browser lock capability, edits remain in memory and cannot overwrite a save.
+// Focus can arrive after change delivery while file reading is still pending.
+await boot({[hyKey]:JSON.stringify({levels:{Harmony:1},owned:42}),[renKey]:JSON.stringify({owned:7})});
+let finishFile;
+$('#import-progress').click();
+Object.defineProperty($('#import-progress-file'),'files',{configurable:true,value:[{size:100,text:()=>new Promise(resolve=>{finishFile=resolve;})}]});
+$('#import-progress-file').dispatchEvent(new Event('change'));await tick();
+assert.equal(typeof finishFile,'function');win.dispatchEvent(new Event('focus'));
+assert.equal($('#priority-sync').textContent,'');
+globalThis.confirm=()=>false;
+finishFile(JSON.stringify(createPlayerBackup({hoyoung:{levels:{Harmony:2},owned:99}},models)));await tick();
+assert.equal($('#backup-status').textContent,'Import cancelled.');assert.equal(state(hyKey).owned,42);
+const now=Date.now;Date.now=()=>now()+31000;win.dispatchEvent(new Event('focus'));Date.now=now;assert.match($('#priority-sync').textContent,/Refreshing data/);await tick();
 await boot({[hyKey]:JSON.stringify({levels:{Harmony:1},owned:42})},null,null);
 change('#owned',101);await tick();assert.equal(JSON.parse(localStorage.getItem(hyKey)).owned,42);assert.match($('#save-status').textContent,/not saved/);
 URL.createObjectURL=oldCreate;URL.revokeObjectURL=oldRevoke;
