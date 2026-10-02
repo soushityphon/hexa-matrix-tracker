@@ -1,3 +1,9 @@
+## FD explanation access, Issue #30
+
+Tap or activate an underlined FD value in Next Upgrade, the priority table or a completed Stat square to open its explanation. Native buttons support Enter/Space, the modal dialog supports Close/Escape and returns focus to the value. Stat explanation access is separate from its line editor. Explanations remain available in a paused retained view; opening them does not edit or save progress.
+
+The existing hover notes and numbers remain. Source checkpoint gains use rounded Scouter values and compound combined transitions. Partial-step explanations identify the Fragment-cost-share estimate. Stat values use the approved general-average table, only with valid line levels totalling 20. Missing gains and invalid/incomplete Stat lines remain blank. No completion/material notes or formula changes are added. DOM regression evidence is separate from phone/native-browser acceptance in #30.
+
 ## Cross-tab player save protection, Issue #30
 
 If another tab changes a class save, this tab keeps its current view and pauses edits for that class. The choices are **Load latest save** and **Continue this save**, following the owner's version 108 refinement. The conflict-specific export action from version 107 is removed. The ordinary Export/Import controls remain.

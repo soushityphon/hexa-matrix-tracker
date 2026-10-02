@@ -45,7 +45,7 @@ let refreshSequence=0;
 let classLoading=true, classLoadFailed=false, saveActionPending=false;
 let verifiedClass=null;
 const pausedControls=new Map();
-const progressControls='#patch, #priority-version, [name="world"], [data-node], [data-stat-line], [data-stat-unlocked], [data-stat-select], [data-stat-cancel], #next-upgrade button, [data-checkpoint], #owned, #perday, #erdaRequest, #epicDungeon, #includeJanus, #hideDone, #reset, #undo-progress, #import-progress, #import-progress-file';
+const progressControls='#patch, #priority-version, [name="world"], [data-node], [data-stat-line], [data-stat-unlocked], [data-stat-select], [data-stat-cancel], #next-upgrade button:not([data-fd-note]), [data-checkpoint], #owned, #perday, #erdaRequest, #epicDungeon, #includeJanus, #hideDone, #reset, #undo-progress, #import-progress, #import-progress-file';
 const sourcePaused=()=>classLoading || classLoadFailed;
 const editsPaused=()=>sourcePaused() || saveActionPending || playerStorage.conflict(storageKey);
 function syncConflict() {
@@ -244,7 +244,7 @@ function renderInputs() {
     if(!playerStorage.conflict(storageKey))saved.statLines={...saved.statLines,[node.short]:lines};
     const index=statNodes.indexOf(node);
     const selector=document.createElement('div');selector.className='stat-selector';selector.dataset.statSelector=node.short;
-    selector.innerHTML=`<button type="button" class="stat-select" data-stat-select="${skill}" aria-controls="stat-panel-${index}" aria-expanded="false" aria-pressed="false"><span class="stat-unlock-icon"><span aria-hidden="true">${index+1}</span><img src="${escapeHtml(node.icon)}" alt=""></span><span class="stat-selector-name">${escapeHtml(node.name)}</span><span class="stat-mini-preview" aria-label="Saved line levels">${[0,1,2].map(line=>`<span class="stat-mini-line ${line===0?'stat-main':'stat-additional'}"><span class="stat-bar" aria-hidden="true">${Array.from({length:10},()=>'<i></i>').join('')}</span><span class="stat-mini-value"></span></span>`).join('')}</span><span class="stat-selector-summary"></span></button><button type="button" class="stat-cancel" data-stat-cancel="${skill}" aria-label="Cancel unlock for ${escapeHtml(node.name)}" title="Cancel unlock" hidden>×</button>`;
+    selector.innerHTML=`<button type="button" class="stat-select" data-stat-select="${skill}" aria-controls="stat-panel-${index}" aria-expanded="false" aria-pressed="false"><span class="stat-unlock-icon"><span aria-hidden="true">${index+1}</span><img src="${escapeHtml(node.icon)}" alt=""></span><span class="stat-selector-name">${escapeHtml(node.name)}</span><span class="stat-mini-preview" aria-label="Saved line levels">${[0,1,2].map(line=>`<span class="stat-mini-line ${line===0?'stat-main':'stat-additional'}"><span class="stat-bar" aria-hidden="true">${Array.from({length:10},()=>'<i></i>').join('')}</span><span class="stat-mini-value"></span></span>`).join('')}</span></button><span class="stat-selector-summary"></span><button type="button" class="stat-cancel" data-stat-cancel="${skill}" aria-label="Cancel unlock for ${escapeHtml(node.name)}" title="Cancel unlock" hidden>×</button>`;
     selectors.append(selector);
     row.id=`stat-panel-${index}`;
     row.innerHTML=`<span class="stat-name visually-hidden">${escapeHtml(node.name)}</span><input data-stat-unlocked="${skill}" type="checkbox" hidden tabindex="-1" aria-hidden="true"><h3 class="stat-line-heading">Main Stat</h3><div class="stat-lines">${['Main Stat','2nd additional stat','3rd additional stat'].map((label,index)=>`${index===1?'<h3 class="stat-line-heading">Additional Stats</h3>':''}<label class="stat-line ${index===0?'stat-main':'stat-additional'}"><span class="visually-hidden">${label}</span><span class="stat-bar" aria-hidden="true">${Array.from({length:10},()=>'<i></i>').join('')}</span><input data-stat-line="${skill}" data-line-index="${index}" aria-label="${escapeHtml(node.name)} ${label} level" aria-describedby="stat-note-${statNodes.indexOf(node)}" type="number" min="0" max="10" step="1" value="${lines[index] ?? ''}"></label>`).join('')}</div><div class="stat-summary" hidden><span data-stat="${skill}"></span><span class="stat-fd"></span></div><p class="stat-note" id="stat-note-${statNodes.indexOf(node)}" aria-live="polite"></p>`;
@@ -322,9 +322,11 @@ function syncStatVisuals(skill,row) {
     line.querySelectorAll('.stat-bar i').forEach((segment,i)=>segment.classList.toggle('filled',known&&i<level));
   });
   selector.querySelector('.stat-selector-summary').classList.toggle('fd-gain',!!row.querySelector('.stat-fd').textContent);
-  selector.querySelector('.stat-selector-summary').textContent=[row.querySelector('[data-stat]').textContent,row.querySelector('.stat-fd').textContent].filter(Boolean).join(' ');
-  selector.querySelector('.stat-selector-summary').setAttribute('aria-label',`${row.querySelector('[data-stat]').getAttribute('aria-label')}. ${row.querySelector('.stat-fd').textContent}`);
-  selector.querySelector('.stat-selector-summary').title='General average from the owner-supplied HEXA Stat table, not personalised FD.';
+  const summary=selector.querySelector('.stat-selector-summary');
+  const fd=row.querySelector('.stat-fd').textContent;
+  summary.innerHTML=fd ? fdExplanation(fd, STAT_FD_NOTE, `${row.querySelector('.stat-name').textContent} average final damage. ${STAT_FD_NOTE}`) : escapeHtml(row.querySelector('[data-stat]').textContent);
+  summary.setAttribute('aria-label',`${row.querySelector('[data-stat]').getAttribute('aria-label')}. ${fd}`);
+  summary.title=fd ? STAT_FD_NOTE : '';
   row.querySelectorAll('[data-stat-line]').forEach(field=>{
     const level=field.value === '' ? null : Number(field.value);
     const valid=Number.isInteger(level)&&level>=0&&level<=10;
@@ -333,6 +335,7 @@ function syncStatVisuals(skill,row) {
 }
 
 $('.stat-list').addEventListener('click',event=>{
+  if(event.target.closest('[data-fd-note]'))return;
   if(editsPaused())return;
   const selector=event.target.closest('[data-stat-selector]');
   if(!selector)return;
@@ -404,12 +407,30 @@ function statAction(skill, action, label) {
   return `<button type="button" data-upgrade-skill="${skill}" data-stat-action="${action}" aria-label="${label} for ${skill}">${label}</button>`;
 }
 
+const STAT_FD_NOTE='General average from the owner-supplied HEXA Stat table, not personalised FD. Shown only with valid line levels totalling 20.';
+function fdExplanation(text,note,label) {
+  return `<button type="button" class="fd-gain fd-info" data-fd-note="${escapeHtml(note)}" title="${escapeHtml(note)}" aria-label="${escapeHtml(label)} Open FD explanation." aria-haspopup="dialog" aria-controls="fd-explanation">${escapeHtml(text)}</button>`;
+}
 function fdText(result) {
   const note = result.estimated
     ? 'Approximate FD gain. The remaining gain within a partly completed Scouter step is estimated from its share of Fragment cost. Actual gain may differ.'
     : 'Approximate FD gain based on rounded Maple Scouter step values. Combined gains are compounded.';
-  return `<span class="fd-gain" title="${note}" aria-label="${result.estimated ? 'Estimated ' : ''}plus ${result.gain.toFixed(3)} percent final damage. ${note}">${result.estimated ? '≈' : ''}+${result.gain.toFixed(3)}% FD</span>`;
+  return fdExplanation(`${result.estimated ? '≈' : ''}+${result.gain.toFixed(3)}% FD`,note,`${result.estimated ? 'Estimated ' : ''}plus ${result.gain.toFixed(3)} percent final damage. ${note}`);
 }
+const fdDialog=$('#fd-explanation');
+let fdOpener=null;
+document.addEventListener('click',event=>{
+  const button=event.target.closest('[data-fd-note]');
+  if(!button)return;
+  fdOpener=button;
+  $('#fd-explanation-text').textContent=button.dataset.fdNote;
+  fdDialog.showModal();
+});
+$('#fd-explanation-close').addEventListener('click',()=>fdDialog.close());
+fdDialog.addEventListener('close',()=>{
+  if(fdOpener?.isConnected)fdOpener.focus();
+  fdOpener=null;
+});
 
 function upgradeCost(label, cost, time, action = '', owned = null) {
   const shortfall = owned !== null && !cost.rng;

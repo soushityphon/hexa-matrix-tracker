@@ -77,3 +77,14 @@ input[type="checkbox"]{accent-color:var(--ui-accent)}
 #undo-progress:disabled{opacity:.5;cursor:default}
 
 .save-conflict{margin:8px 0;padding:10px 12px;border:1px solid var(--ui-accent);border-radius:8px;background:var(--ui-panel-surface)}.save-conflict p{margin:0 0 8px;line-height:1.4}.save-conflict>div{display:flex;gap:8px;flex-wrap:wrap}.save-conflict button{min-height:32px}
+
+/* FD values retain compact placement while providing native touch/keyboard controls. */
+.fd-info{min-height:32px;padding:4px 2px;border:0;background:transparent;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.fd-info:hover{background:var(--ui-hover)}
+.stat-selector .stat-select{min-height:113px}
+.stat-selector-summary{display:grid;place-items:center;min-height:32px;width:100%}
+.stat-selector-summary .fd-info{width:100%;font-size:inherit}
+#fd-explanation{width:calc(100% - 32px);max-width:420px;max-height:calc(100dvh - 32px);overflow:auto;margin:auto;padding:18px;border:1px solid var(--ui-accent);border-radius:8px;background:var(--ui-panel);color:#d9d9d9}
+#fd-explanation::backdrop{background:rgba(0,0,0,.65)}
+#fd-explanation p{line-height:1.6;overflow-wrap:anywhere}
+#fd-explanation-close{min-height:44px;float:right}
