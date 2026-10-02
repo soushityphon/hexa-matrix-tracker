@@ -36,6 +36,7 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,20));
 async function boot(storage={},network=null){
   if(win)await win.happyDOM.abort();
   win=new Window({url:'https://test.example/'});
+  Object.defineProperty(win.navigator,'locks',{value:{request:(_name,run)=>run()}});
   win.document.write(readFileSync(new URL('../index.html',import.meta.url),'utf8').replace(/<script[^>]*>[\s\S]*?<\/script>/g,''));
   for(const key of ['window','document','location','localStorage','Event'])globalThis[key]=key==='window'?win:win[key];
   globalThis.Option=function(text,value){const option=document.createElement('option');option.textContent=text;option.value=value;return option;};

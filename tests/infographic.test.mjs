@@ -231,6 +231,7 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,30));
 async function boot(storage={}) {
   if(win)await win.happyDOM.abort();
   win=new Window({url:'https://test.example/'});
+  Object.defineProperty(win.navigator,'locks',{value:{request:(_name,run)=>run()}});
   win.document.write(readFileSync(new URL('../index.html',import.meta.url),'utf8').replace(/<script[^>]*>[\s\S]*?<\/script>/g,''));
   for(const key of ['window','document','location','localStorage','Event'])globalThis[key]=key==='window'?win:win[key];
   globalThis.Option=function(text,value){const option=document.createElement('option');option.textContent=text;option.value=value;return option;};
@@ -308,7 +309,7 @@ change('#patch','infographic_pair');button('Harmony',15).click();assert.equal(sa
 $('[name="world"][value="heroic"]').checked=false;change('[name="world"][value="interactive"]','interactive');$('[name="world"][value="interactive"]').checked=true;$('[name="world"][value="interactive"]').dispatchEvent(new Event('change',{bubbles:true}));
 assert.match(savedState(hyKey).mode,/interactive$/);assert.equal(savedState(hyKey).levels.Harmony,12);
 hide(true);await boot(snapshot());assert.equal($('#infographic-hide').checked,true);
-$('#reset').click();assert.equal(savedState(hyKey).levels.Apotheosis,1);assert.equal(savedState(hyKey).levels.Harmony,0);
+$('#reset').click();await tick();assert.equal(savedState(hyKey).levels.Apotheosis,1);assert.equal(savedState(hyKey).levels.Harmony,0);
 assert.equal($('.workspace').dataset.view,'infographic');assert.equal($('#infographic-hide').checked,true);
 assert.deepEqual(savedState(renKey).levels,renProgress.levels);
 // Actual app render/click/reload flow after non-checkpoint Tracker input.

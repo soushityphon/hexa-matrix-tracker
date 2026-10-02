@@ -75,3 +75,5 @@ input[type="checkbox"]{accent-color:var(--ui-accent)}
 .load-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.load-status p{flex:1 1 240px}.load-status button{min-height:44px}.load-status button[hidden]{display:none}
 
 #undo-progress:disabled{opacity:.5;cursor:default}
+
+.save-conflict{margin:8px 0;padding:10px 12px;border:1px solid var(--ui-accent);border-radius:8px;background:var(--ui-panel-surface)}.save-conflict p{margin:0 0 8px;line-height:1.4}.save-conflict>div{display:flex;gap:8px;flex-wrap:wrap}.save-conflict button{min-height:32px}

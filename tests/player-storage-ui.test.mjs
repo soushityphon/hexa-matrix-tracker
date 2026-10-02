@@ -33,9 +33,10 @@ models.hoyoung.stats.forEach((node,index)=>node.sourceKey='hexaStat'+(index+1));
 const hyKey='hexa-tracker-hoyoung-v1',renKey='hexa-tracker-ren-v1';
 let win;
 const tick=()=>new Promise(resolve=>setTimeout(resolve,20));
-async function boot(storage={},failure=null){
+async function boot(storage={},failure=null,locks={request:(_name,run)=>run()}){
   if(win)await win.happyDOM.abort();
   win=new Window({url:'https://test.example/'});
+  Object.defineProperty(win.navigator,'locks',{value:locks});
   win.document.write(readFileSync(new URL('../index.html',import.meta.url),'utf8').replace(/<script[^>]*>[\s\S]*?<\/script>/g,''));
   for(const key of ['window','document','location','localStorage','Event'])globalThis[key]=key==='window'?win:win[key];
   globalThis.Option=function(text,value){const option=document.createElement('option');option.textContent=text;option.value=value;return option;};
@@ -111,6 +112,70 @@ await importFile(incoming);
 assert.match($('#backup-status').textContent,/Tracker data changed during import/);
 assert.equal(state(hyKey).levels.Harmony,2);assert.equal(state(hyKey).owned,99);
 assert.equal(downloads.length,2);
+// External writes pause the affected class, preserve the current view and offer
+// a session-only recovery download without replacing the newer save.
+let lockQueue=Promise.resolve();
+const locks={request:(_name,run)=>{const result=lockQueue.then(run);lockQueue=result.catch(()=>{});return result;}};
+await boot({[hyKey]:JSON.stringify({levels:{Harmony:1},owned:42}),[renKey]:JSON.stringify({owned:7})},null,locks);
+win.HTMLAnchorElement.prototype.click=function(){};
+const localRaw=localStorage.getItem(hyKey),localValue=JSON.parse(localRaw);
+const newer={...localValue,levels:{...localValue.levels,Harmony:2},owned:88};
+localStorage.setItem(hyKey,JSON.stringify(newer));
+win.dispatchEvent(new win.StorageEvent('storage',{key:hyKey}));
+assert.equal($('#save-conflict').hidden,false);assert.match($('#conflict-message').textContent,/Hoyoung.*another tab/);
+assert.equal($('[data-node]').value,'1');assert.equal($('#owned').value,'42');
+assert.equal($('[data-node]').disabled,true);assert.equal($('#reset').disabled,true);assert.equal($('#import-progress').disabled,true);
+$('#view-infographic').click();$('#view-tracker').click();await tick();
+assert.equal(localStorage.getItem(hyKey),JSON.stringify(newer));
+change('#class','ren');await tick();assert.equal($('#save-conflict').hidden,true);
+change('#class','hoyoung');await tick();assert.equal($('#save-conflict').hidden,false);assert.equal($('[data-node]').value,'1');assert.equal($('#owned').value,'42');assert.equal($('[data-node]').disabled,true);
+const count=downloads.length;$('#export-tab-progress').click();await tick();
+assert.equal(downloads.length,count+1);const recovery=JSON.parse(await downloads.at(-1).text());
+assert.deepEqual(Object.keys(recovery.classes),['Hoyeong']);assert.equal(recovery.classes.Hoyeong.progress.levels.masteryCore1,1);
+assert.equal(recovery.classes.Hoyeong.progress.owned,42);assert.equal(localStorage.getItem(hyKey),JSON.stringify(newer));
+globalThis.confirm=()=>false;$('#load-latest-save').click();await tick();assert.equal($('#save-conflict').hidden,false);assert.equal($('[data-node]').value,'1');
+globalThis.confirm=()=>true;$('#load-latest-save').click();await tick();assert.equal($('#save-conflict').hidden,true);
+assert.equal($('[data-node]').value,'2');assert.equal($('#owned').value,'88');assert.equal($('#undo-progress').disabled,true);assert.equal($('#reset').disabled,false);
+// Another cached class conflicts independently without pausing this class.
+localStorage.setItem(renKey,JSON.stringify({owned:9}));win.dispatchEvent(new win.StorageEvent('storage',{key:renKey}));
+assert.equal($('#save-conflict').hidden,true);change('#class','ren');await tick();assert.equal($('#owned').value,'7');assert.match($('#conflict-message').textContent,/Ren.*another tab/);
+$('#load-latest-save').click();await tick();assert.equal($('#owned').value,'9');assert.equal($('#save-conflict').hidden,true);
+change('#class','hoyoung');await tick();
+// Missing events cannot bypass the guard through a synthetic mutation or Reset.
+localStorage.setItem(hyKey,JSON.stringify({...newer,owned:99}));
+change('#owned',123);await tick();assert.equal(JSON.parse(localStorage.getItem(hyKey)).owned,99);assert.equal($('#save-conflict').hidden,false);
+$('#load-latest-save').click();await tick();assert.equal($('#owned').value,'99');
+// An invalid Stat draft remains visible until the user agrees to discard it.
+enter(stats[0],0,11);const draftField=fields(stats[0])[0];assert.equal(draftField.value,'11');
+localStorage.setItem(hyKey,JSON.stringify({...JSON.parse(localStorage.getItem(hyKey)),owned:100}));
+win.dispatchEvent(new win.StorageEvent('storage',{key:hyKey}));win.dispatchEvent(new Event('focus'));await tick();
+assert.equal(fields(stats[0])[0].value,'11');
+let prompted=0;globalThis.confirm=()=>{prompted++;return false;};$('#load-latest-save').click();await tick();assert.equal(prompted,1);assert.equal(fields(stats[0])[0].value,'11');
+globalThis.confirm=()=>true;$('#load-latest-save').click();await tick();assert.equal(fields(stats[0])[0].value,'0');assert.equal($('#owned').value,'100');
+// Malformed external saves never replace the retained view or raw record.
+localStorage.setItem(hyKey,'42');win.dispatchEvent(new win.StorageEvent('storage',{key:hyKey}));
+$('#load-latest-save').click();await tick();assert.equal(localStorage.getItem(hyKey),'42');assert.equal($('#owned').value,'100');assert.equal($('#save-conflict').hidden,false);
+// External clear/Reset can be explicitly adopted as the existing baseline.
+localStorage.removeItem(hyKey);win.dispatchEvent(new win.StorageEvent('storage',{key:null}));
+$('#load-latest-save').click();await tick();assert.equal($('#save-conflict').hidden,true);assert.equal($('[data-node]').value,'0');
+// Import rechecks the other class inside its lock, even after confirmation
+// and safety preparation. No stale backup download or replacement is allowed.
+await boot({[hyKey]:JSON.stringify({levels:{Harmony:1},owned:42}),[renKey]:JSON.stringify({owned:7})},null,locks);
+win.HTMLAnchorElement.prototype.click=function(){};
+const request=locks.request;let race=true;
+locks.request=(name,run)=>{
+  if(race){race=false;request(name,()=>localStorage.setItem(renKey,JSON.stringify({owned:77})));}
+  return request(name,run);
+};
+const beforeRaceDownloads=downloads.length;
+await importFile(createPlayerBackup({hoyoung:{levels:{Harmony:2},owned:99}},models));
+assert.match($('#backup-status').textContent,/import failed/);assert.equal(downloads.length,beforeRaceDownloads);
+assert.equal(JSON.parse(localStorage.getItem(hyKey)).owned,42);assert.equal(JSON.parse(localStorage.getItem(renKey)).owned,77);
+$('#export-progress').click();await tick();assert.match($('#backup-status').textContent,/could not be exported/);assert.equal(downloads.length,beforeRaceDownloads);
+locks.request=request;
+// Without the browser lock capability, edits remain in memory and cannot overwrite a save.
+await boot({[hyKey]:JSON.stringify({levels:{Harmony:1},owned:42})},null,null);
+change('#owned',101);await tick();assert.equal(JSON.parse(localStorage.getItem(hyKey)).owned,42);assert.match($('#save-status').textContent,/not saved/);
 URL.createObjectURL=oldCreate;URL.revokeObjectURL=oldRevoke;
 await win.happyDOM.abort();
 console.log('Player storage app: blocked reads/writes, damaged records, reset and class switching pass');

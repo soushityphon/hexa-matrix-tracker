@@ -52,6 +52,7 @@ const renModel=renCatalogueFromDrafts(renDrafts);
 const key='hexa-tracker-hoyoung-v1',renKey='hexa-tracker-ren-v1';let win;
 async function boot(storage={}){
   if(win)await win.happyDOM.abort();win=new Window({url:'https://test.example/'});
+  Object.defineProperty(win.navigator,'locks',{value:{request:(_name,run)=>run()}});
   win.document.write(readFileSync(new URL('../index.html',import.meta.url),'utf8').replace(/<script[^>]*>[\s\S]*?<\/script>/g,''));
   for(const k of ['window','document','location','localStorage','Event'])globalThis[k]=k==='window'?win:win[k];
   globalThis.Option=function(text,value){const o=document.createElement('option');o.textContent=text;o.value=value;return o;};

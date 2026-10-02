@@ -1,3 +1,13 @@
+## Cross-tab player save protection, Issue #30
+
+If another tab changes a class save, this tab keeps its current view and pauses edits for that class. **Load latest save** reads and validates the newest record, asks before replacing differing progress or unfinished inputs, clears ordinary Undo and resumes editing. Existing valid infographic history follows the same reconciliation rules. **Export this tab** downloads only the retained class progress, using the existing backup format without undo history; it does not change browser saves. Invalid input drafts are not valid saved progress and are not included in this export. A removed save can be adopted as the existing baseline. A malformed or unreadable newer save remains protected.
+
+Checks run on storage events, focus, class returns and before mutation. A shared Web Lock serialises progress writes, Reset, import and adoption across tabs. Each operation checks the stored record again while holding that lock. Import checks every class used by its all-class safety backup; that download and replacement happen together inside the lock. Identical JSON content with different property order does not create a conflict. Cached changes to the other class do not pause the active class, but must be resolved when returning to the affected class or before an all-class export/import. No merge or direct overwrite action is offered. Refresh all open tracker tabs after this update so they use the guarded save code.
+
+Browsers without the Web Locks API, or where acquiring a lock fails, keep edits in memory under the unsaved warning and do not attempt unsafe writes. Keep the tab open and Export to preserve valid progress. Existing v1 per-class saves, backup identities, Stat migration, captured data and calculations are unchanged.
+
+`tests/cross-tab-storage.test.mjs` checks two-session and simultaneous stale writes, recovery, removal, malformed records, class isolation, import races and rejected locks. Actual-app tests check paused controls, recovery downloads, cancellation/adoption, class returns, invalid Stat drafts, missing events, Reset baseline and late import conflicts. DOM tests do not establish real-browser multi-tab or phone layout acceptance.
+
 ## Ordinary progress Undo, Issue #30
 
 The Current HEXA Matrix actions include **Undo** for the last ordinary skill or Stat progress edit in this tab. It covers manual levels, Next level, To checkpoint, Stat unlock/cancel and valid line edits. Typing within one field edit is grouped into one action; invalid Stat drafts and unchanged values create no action. Undo restores only that skill's actual former level or full Stat state. Resources, calculator settings and other skills retain their current values.

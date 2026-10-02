@@ -33,6 +33,7 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,20));
 async function boot(storage={}){
   if(win)await win.happyDOM.abort();
   win=new Window({url:'https://test.example/'});
+  Object.defineProperty(win.navigator,'locks',{value:{request:(_name,run)=>run()}});
   win.document.write(readFileSync(new URL('../index.html',import.meta.url),'utf8').replace(/<script[^>]*>[\s\S]*?<\/script>/g,''));
   for(const key of ['window','document','location','localStorage','Event'])globalThis[key]=key==='window'?win:win[key];
   globalThis.Option=function(text,value){const option=document.createElement('option');option.textContent=text;option.value=value;return option;};
@@ -189,7 +190,7 @@ assert.equal($('#class').value,'ren');
 assert.deepEqual(fields(stats[0]).map(el=>el.value),['6','6','8']);
 change('#class','hoyoung');await tick();
 assert.deepEqual(fields(stats[0]).map(el=>el.value),['6','8','6']);
-change('#class','ren');await tick();$('#reset').click();
+change('#class','ren');await tick();$('#reset').click();await tick();
 assert.equal(localStorage.getItem('hexa-tracker-animations-v1'),'off');
 assert.ok([...document.querySelectorAll('.decoration-layer')].every(layer=>layer.hidden));
 assert.deepEqual(state(renKey).statLines[stats[0]],[0,0,0]);

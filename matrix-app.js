@@ -19,15 +19,20 @@ import { createPlayerBackup, parsePlayerBackup, PLAYER_CLASSES } from './player-
 const PLAYER_CLASS_NAMES={hoyoung:'Hoyoung',ren:'Ren'};
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
-const playerStorage=createPlayerStorage(()=>localStorage,({reason})=>{
+let appReady=false;
+const playerStorage=createPlayerStorage(()=>localStorage,({key,reason})=>{
+  if(appReady && key!==storageKey)return;
   const status=$('#save-status');
-  status.hidden=!reason;
+  status.hidden=!reason || reason==='conflict';
   status.textContent=reason==='damaged'
     ? 'Saved progress is damaged. The original record is preserved. Changes stay in this session and cannot be saved until the record is recovered.'
     : reason==='unreadable'
     ? 'Saved progress could not be read. Changes stay in this session. Reload once browser storage is available to restore your saved progress.'
     : reason==='unsaved' ? 'Changes are not saved. Keep this tab open. Progress stays in this session while browser storage is unavailable.' : '';
-});
+  if(appReady)syncConflict();
+},operation=>window.navigator.locks?.request
+  ? window.navigator.locks.request('hexa-tracker-progress-v1',operation)
+  : Promise.reject(new Error('Cross-tab saving is unavailable')));
 let activeClass='hoyoung';
 try {activeClass=new URL(location.href).searchParams.get('class') || playerStorage.readPreference('hexa-tracker-class-v1') || 'hoyoung';}catch{}
 if(!['hoyoung','ren'].includes(activeClass))activeClass='hoyoung';
@@ -37,11 +42,29 @@ const decorations=createDecorations({document,window,control:$('#animations'),cl
 const music=createMusic({document,window,control:$('#music-control'),slider:$('#music-volume'),output:$('#music-level'),className:activeClass});
 let storageKey='hexa-tracker-'+activeClass+'-v1';
 let refreshSequence=0;
-let classLoading=true, classLoadFailed=false;
+let classLoading=true, classLoadFailed=false, saveActionPending=false;
 let verifiedClass=null;
 const pausedControls=new Map();
 const progressControls='#patch, #priority-version, [name="world"], [data-node], [data-stat-line], [data-stat-unlocked], [data-stat-select], [data-stat-cancel], #next-upgrade button, [data-checkpoint], #owned, #perday, #erdaRequest, #epicDungeon, #includeJanus, #hideDone, #reset, #undo-progress, #import-progress, #import-progress-file';
-const editsPaused=()=>classLoading || classLoadFailed;
+const sourcePaused=()=>classLoading || classLoadFailed;
+const editsPaused=()=>sourcePaused() || saveActionPending || playerStorage.conflict(storageKey);
+function syncConflict() {
+  const conflict=playerStorage.conflict(storageKey);
+  $('#save-conflict').hidden=!conflict;
+  $('#conflict-message').textContent=conflict ? `Saved ${PLAYER_CLASS_NAMES[activeClass]} progress changed in another tab. Editing is paused.` : '';
+  $('#load-latest-save').disabled=sourcePaused() || saveActionPending;
+  syncPausedControls();
+}
+function checkActive() {return playerStorage.check(storageKey);}
+// Input values may already contain an unfinished draft. Keep them visible, but
+// detect an external write before any handler can mutate saved progress.
+for(const type of ['input','change','click'])document.addEventListener(type,checkActive,true);
+window.addEventListener('storage',event=>{
+  if(event.key===null || event.key?.startsWith('hexa-tracker-')) {
+    for(const name of Object.keys(PLAYER_CLASSES))playerStorage.check('hexa-tracker-'+name+'-v1');
+    syncConflict();
+  }
+});
 function syncPausedControls() {
   if(editsPaused()) {
     $$(progressControls).forEach(control=>{
@@ -217,7 +240,7 @@ function renderInputs() {
     row.style.setProperty('--skill-accent','var(--ui-accent)');
     const skill=escapeHtml(node.short);
     const lines=restoreStatLines(saved.statLines?.[node.short], clamp(saved.levels?.[node.short],20));
-    saved.statLines={...saved.statLines,[node.short]:lines};
+    if(!playerStorage.conflict(storageKey))saved.statLines={...saved.statLines,[node.short]:lines};
     const index=statNodes.indexOf(node);
     const selector=document.createElement('div');selector.className='stat-selector';selector.dataset.statSelector=node.short;
     selector.innerHTML=`<button type="button" class="stat-select" data-stat-select="${skill}" aria-controls="stat-panel-${index}" aria-expanded="false" aria-pressed="false"><span class="stat-unlock-icon"><span aria-hidden="true">${index+1}</span><img src="${escapeHtml(node.icon)}" alt=""></span><span class="stat-selector-name">${escapeHtml(node.name)}</span><span class="stat-mini-preview" aria-label="Saved line levels">${[0,1,2].map(line=>`<span class="stat-mini-line ${line===0?'stat-main':'stat-additional'}"><span class="stat-bar" aria-hidden="true">${Array.from({length:10},()=>'<i></i>').join('')}</span><span class="stat-mini-value"></span></span>`).join('')}</span><span class="stat-selector-summary"></span></button><button type="button" class="stat-cancel" data-stat-cancel="${skill}" aria-label="Cancel unlock for ${escapeHtml(node.name)}" title="Cancel unlock" hidden>×</button>`;
@@ -393,11 +416,12 @@ function upgradeCost(label, cost, time, action = '', owned = null) {
   return `<div class="upgrade-cost"><div class="upgrade-cost-details"><span>${label}</span>${materials(displayCost, time, shortfall)}${shortfall ? '<small class="fragment-needed">Fragments still needed</small>' : ''}</div>${action}</div>`;
 }
 
-function render() {
+function render(allowConflict=false) {
+  checkActive();
   syncView();
   // A failed refresh keeps the verified DOM and saved state read-only.
   // View/visibility preferences can still change without writing progress.
-  if(editsPaused() && verifiedClass===activeClass) {
+  if((playerStorage.conflict(storageKey) && !allowConflict) || (sourcePaused() && verifiedClass===activeClass)) {
     if(view==='infographic' && infographicScope)infographic.render(infographicDisplayCheckpoints(infographicEntries,saved,infographicScope),saved,infographicScope,$('#infographic-hide').checked);
     syncPausedControls();
     return;
@@ -528,13 +552,15 @@ function render() {
     if (tagText && !tag) { tag = document.createElement('span'); tag.className = 'skill-tag'; label.prepend(tag); }
     if (tag) { tag.textContent = tagText; tag.hidden = !tagText; }
   });
+  if(!playerStorage.conflict(storageKey)) {
   saved = { statCompleted:saved.statCompleted || {}, infographicUndo:saved.infographicUndo || {}, mode, levels: current, statUnlocked: {...saved.statUnlocked,...statUnlocked}, statLines: saved.statLines || {}, owned, perday, erdaRequest, epicDungeon, hideDone: $('#hideDone').checked, includeJanus };
   reconcileInfographicUndo(saved,infographicScope,infographicEntries);
+  }
   $('#infographic-context').textContent=`${$('#class').selectedOptions[0]?.textContent || activeClass} / ${$('#version-name').textContent}`;
   $('#infographic-message').textContent=infographicEntries.length ? '' : 'No checkpoints are available for this priority.';
   if(view==='infographic')infographic.render(infographicDisplayCheckpoints(infographicEntries,saved,infographicScope),saved,infographicScope,$('#infographic-hide').checked);
-  playerStorage.write(storageKey,saved);
-  syncProgressUndo();
+  if(!playerStorage.conflict(storageKey))playerStorage.write(storageKey,saved);
+  syncPausedControls();
 }
 
 function updateStatLine(input) {
@@ -659,6 +685,7 @@ async function backupModels() {
   return Object.fromEntries(entries);
 }
 async function currentBackup(models) {
+  await playerStorage.flush();
   const classes={};
   for(const className of Object.keys(PLAYER_CLASSES)) {
     const key='hexa-tracker-'+className+'-v1';
@@ -690,18 +717,57 @@ $('#import-progress-file').addEventListener('change',async event=>{
     let value;try{value=JSON.parse(await file.text());}catch{throw new Error('Backup is not valid JSON');}
     const classes=parsePlayerBackup(value,models),names=Object.keys(classes).map(name=>PLAYER_CLASS_NAMES[name]).join(', ');
     if(!confirm(`Restore progress for ${names}? Existing progress for these classes will be replaced. A safety backup of your current progress will download first.`)){backupStatus('Import cancelled.');return;}
-    const safety=await currentBackup(models);
+    await currentBackup(models);
     if(editsPaused() || importSequence!==refreshSequence)throw new Error('Tracker data changed during import. Retry after loading succeeds');
-    downloadJSON(safety,'hexa-matrix-before-import-'+new Date().toISOString().slice(0,10)+'.json');
     const replacements=Object.fromEntries(Object.entries(classes).map(([className,progress])=>['hexa-tracker-'+className+'-v1',progress]));
-    if(!playerStorage.replaceMany(replacements))throw new Error('Storage failed during import. Keep this tab open and retain the safety backup');
+    saveActionPending=true;syncConflict();
+    const replaced=await playerStorage.replaceMany(replacements,()=>{
+      if(sourcePaused() || playerStorage.conflict(storageKey) || importSequence!==refreshSequence)return false;
+      // The safety download and replacement share the same cross-tab lock.
+      const current=Object.fromEntries(Object.keys(PLAYER_CLASSES).map(name=>[name,playerStorage.session('hexa-tracker-'+name+'-v1')]));
+      downloadJSON(createPlayerBackup(current,models),'hexa-matrix-before-import-'+new Date().toISOString().slice(0,10)+'.json');
+      return true;
+    },Object.keys(PLAYER_CLASSES).map(name=>'hexa-tracker-'+name+'-v1'));
+    saveActionPending=false;syncConflict();
+    if(!replaced)throw new Error('Save changed or storage failed during import. Keep this tab open and retain any safety backup');
     clearProgressUndo();
     saved=playerStorage.read(storageKey);
     selectedStats[activeClass]=null;renderInputs();render();
     backupStatus(`Imported ${names}. Infographic undo history was cleared as agreed.`);
-  } catch(error) {backupStatus('Progress import failed: '+error.message,true);}
+  } catch(error) {saveActionPending=false;syncConflict();backupStatus('Progress import failed: '+error.message,true);}
+});
+$('#export-tab-progress').addEventListener('click',async()=>{
+  const className=activeClass,key=storageKey,progress=structuredClone(saved);
+  const button=$('#export-tab-progress');button.disabled=true;
+  try {
+    if(!playerStorage.canRecover(key))throw new Error('The original save needs recovery before export');
+    const models=await backupModels();
+    downloadJSON(createPlayerBackup({[className]:progress},models),'hexa-matrix-'+className+'-tab-recovery-'+new Date().toISOString().slice(0,10)+'.json');
+    backupStatus(`Exported this tab's ${PLAYER_CLASS_NAMES[className]} progress. The newer saved progress was kept.`);
+  }catch(error){backupStatus('This tab could not be exported: '+error.message,true);}
+  finally{button.disabled=false;}
+});
+$('#load-latest-save').addEventListener('click',async()=>{
+  if(sourcePaused() || saveActionPending)return;
+  const key=storageKey,className=activeClass;
+  saveActionPending=true;syncConflict();
+  const adopted=await playerStorage.adopt(key,latest=>{
+    if(key!==storageKey || sourcePaused())return false;
+    const drafts=$$('[data-node], [data-stat-line]').some(input=>input.validity.badInput || !input.validity.valid ||
+      (input.dataset.statLine && String(input.value)!==String(saved.statLines?.[input.dataset.statLine]?.[Number(input.dataset.lineIndex)] ?? '')));
+    return (JSON.stringify(latest)===JSON.stringify(saved) && !drafts) ||
+      confirm(`Load the latest saved ${PLAYER_CLASS_NAMES[className]} progress? This replaces this tab's progress and unfinished inputs. Export this tab first if you want to keep a copy.`);
+  });
+  saveActionPending=false;syncConflict();
+  if(key!==storageKey)return;
+  if(!adopted){backupStatus('Latest save was not loaded. It may be unreadable or damaged, or loading was cancelled. This tab and the saved record were kept.',true);syncConflict();return;}
+  saved=playerStorage.read(key);clearProgressUndo();selectedStats[activeClass]=null;
+  renderInputs();render();syncConflict();backupStatus(`Loaded latest saved ${PLAYER_CLASS_NAMES[className]} progress.`);
 });
 async function refreshSharedPriorities({force=false}={}) {
+  checkActive();
+  if(playerStorage.conflict(storageKey) && verifiedClass===activeClass){syncConflict();return;}
+  const hadView=verifiedClass===activeClass;
   const classAtStart=activeClass,sequence=++refreshSequence;
   $('#retry-priorities').hidden=true;
   pendingProgressEdit=null;
@@ -721,7 +787,8 @@ async function refreshSharedPriorities({force=false}={}) {
     if (initialSharedLoad && requestedMode && catalog.settings[requestedMode]?.enabled && catalog.priorities[requestedMode]?.length) saved.mode = requestedMode;
     initialSharedLoad = false;
     if (catalog.settings[saved.mode]) $('#patch').value = catalog.settings[saved.mode].selectionId;
-    renderInputs();render();$('#priority-sync').textContent = '';
+    if(!playerStorage.conflict(storageKey) || !hadView)renderInputs();
+    render(!hadView);syncConflict();$('#priority-sync').textContent = '';
   } catch (error) {
     classDataCache.delete(classAtStart);
     if(classAtStart!==activeClass||sequence!==refreshSequence)return;
@@ -748,20 +815,26 @@ $('#class').addEventListener('change',()=>{
   saved=playerStorage.read(storageKey);
   classLoading=true;classLoadFailed=false;$('#priority-sync').textContent='';
   previewDrafts={};catalog=previewCatalog({});NODES=[];statNodes=[];nodeByShort={};
+  infographic.clear();infographicEntries=[];infographicScope=null;
   setTrackerCatalogue([]);$('#patch').replaceChildren();renderInputs();render();refreshSharedPriorities();
 });
-window.addEventListener('focus',()=>refreshSharedPriorities({force:true}));
-$('#reset').onclick = () => {
+window.addEventListener('focus',()=>{checkActive();refreshSharedPriorities({force:true});});
+$('#reset').onclick = async () => {
   if(editsPaused())return;
   if (confirm(`Reset saved ${activeClass==='ren'?'Ren':'Hoyoung'} levels and resources?`)) {
     clearProgressUndo();
-    playerStorage.remove(storageKey);
-    saved = {};
+    const resetKey=storageKey;
+    saveActionPending=true;syncConflict();
+    await playerStorage.remove(resetKey);
+    saveActionPending=false;syncConflict();
+    if(resetKey!==storageKey || playerStorage.conflict(resetKey))return;
+    saved = playerStorage.session(resetKey);
     renderInputs();
     render();
   }
 };
+appReady=true;
 renderInputs();
-render();
+render();syncConflict();
 
 refreshSharedPriorities();

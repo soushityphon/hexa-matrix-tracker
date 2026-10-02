@@ -37,6 +37,7 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,20));
 async function boot(storage={},network=null){
   if(win)await win.happyDOM.abort();
   win=new Window({url:'https://test.example/'});
+  Object.defineProperty(win.navigator,'locks',{value:{request:(_name,run)=>run()}});
   win.document.write(readFileSync(new URL('../index.html',import.meta.url),'utf8').replace(/<script[^>]*>[\s\S]*?<\/script>/g,''));
   for(const key of ['window','document','location','localStorage','Event'])globalThis[key]=key==='window'?win:win[key];
   globalThis.Option=function(text,value){const option=document.createElement('option');option.textContent=text;option.value=value;return option;};
@@ -153,8 +154,8 @@ edit(field(),9);commit(field());
 $('[name="world"][value="heroic"]').checked=false;$('[name="world"][value="interactive"]').checked=true;
 $('[name="world"][value="interactive"]').dispatchEvent(new Event('change',{bubbles:true}));
 assert.equal($('#undo-progress').disabled,true);
-edit(field(),10);commit(field());globalThis.confirm=()=>false;$('#reset').click();assert.equal($('#undo-progress').disabled,false);
-globalThis.confirm=()=>true;$('#reset').click();assert.equal($('#undo-progress').disabled,true);
+edit(field(),10);commit(field());globalThis.confirm=()=>false;$('#reset').click();await tick();assert.equal($('#undo-progress').disabled,false);
+globalThis.confirm=()=>true;$('#reset').click();await tick();assert.equal($('#undo-progress').disabled,true);
 edit(field(),2);commit(field());
 const incoming=createPlayerBackup({hoyoung:{levels:{Harmony:1},owned:77}},models);
 const oldCreate=URL.createObjectURL,oldRevoke=URL.revokeObjectURL;

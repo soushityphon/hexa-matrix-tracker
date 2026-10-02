@@ -30,71 +30,127 @@ export function validatePlayerSave(value) {
   return Object.keys(value).every(safeKey);
 }
 
-export function createPlayerStorage(getStorage, onStatus = () => {}) {
+// Compare JSON values rather than property order. Missing saves are distinct
+// from an explicitly saved empty record, so external Reset is detected.
+const canonical=value=>JSON.stringify(value,(_key,item)=>object(item)?Object.fromEntries(Object.keys(item).sort().map(key=>[key,item[key]])):item);
+const sameRaw=(a,b)=>{if(a===b)return true;if(a==null||b==null)return false;try{return canonical(JSON.parse(a))===canonical(JSON.parse(b));}catch{return false;}};
+
+export function createPlayerStorage(getStorage, onStatus = () => {}, withLock = operation => operation()) {
   const sessions=new Map();
+  let pending=Promise.resolve();
   const report=entry=>onStatus({key:entry.key,reason:entry.reason});
-  const access = operation => {try{return {ok:true,value:operation(getStorage())};}catch{return {ok:false};}};
+  const access=operation=>{try{return {ok:true,value:operation(getStorage())};}catch{return {ok:false};}};
   function read(key) {
     const cached=sessions.get(key);
-    if(cached){report(cached);return structuredClone(cached.value);}
+    if(cached){check(key);report(cached);return structuredClone(cached.value);}
     const result=access(storage=>storage.getItem(key));
     let value={},reason='',raw=result.value;
     if(!result.ok)reason='unreadable';
-    else if(raw !== null) {
+    else if(raw!==null) {
       try{const parsed=JSON.parse(raw);if(!validatePlayerSave(parsed))throw new Error();value=parsed;}
       catch{reason='damaged';}
     }
     const entry={key,value,raw,reason,protected:!!reason};sessions.set(key,entry);report(entry);
     return structuredClone(value);
   }
+  function check(key) {
+    const entry=sessions.get(key);if(!entry)return true;
+    if(entry.reason==='conflict')return false;
+    if(entry.protected)return true;
+    const latest=access(storage=>storage.getItem(key));
+    if(!latest.ok){entry.reason='unsaved';report(entry);return false;}
+    if(!sameRaw(latest.value,entry.raw)) {entry.reason='conflict';report(entry);return false;}
+    return true;
+  }
+  function run(keys,operation) {
+    let result;
+    try{result=withLock(operation);}catch{result=false;}
+    const failed=()=>{for(const key of keys){const entry=sessions.get(key);if(entry && entry.reason!=='conflict' && !entry.protected){entry.reason='unsaved';report(entry);}}return false;};
+    if(result?.then) {
+      const job=Promise.resolve(result).catch(failed);
+      pending=Promise.all([pending,job]).then(()=>undefined);
+      return job;
+    }
+    if(result===false)failed();
+    return result;
+  }
   function write(key,value) {
     if(!sessions.has(key))read(key);
-    const entry=sessions.get(key);entry.value=structuredClone(value);
+    const entry=sessions.get(key);
+    if(!check(key)){if(entry.reason!=='conflict')entry.value=structuredClone(value);report(entry);return false;}
+    entry.value=structuredClone(value);
     if(entry.protected){report(entry);return false;}
     if(!validatePlayerSave(value)){entry.reason='unsaved';report(entry);return false;}
-    const result=access(storage=>storage.setItem(key,JSON.stringify(value)));
-    entry.reason=result.ok?'':'unsaved';report(entry);return result.ok;
+    const raw=JSON.stringify(value);
+    return run([key],()=>{
+      if(!check(key))return false;
+      const result=access(storage=>storage.setItem(key,raw));
+      if(result.ok)entry.raw=raw;
+      entry.reason=result.ok?'':'unsaved';report(entry);return result.ok;
+    });
   }
   function remove(key) {
     if(!sessions.has(key))read(key);
     const entry=sessions.get(key);
-    // A reset must never discard the only copy of an unreadable/damaged save.
+    if(!check(key))return false;
+    // Preserve unreadable/damaged raw records under the existing Reset policy.
     if(entry.protected){entry.value={};report(entry);return false;}
-    const result=access(storage=>storage.removeItem(key));
-    entry.value={};entry.reason=result.ok?'':'unsaved';report(entry);return result.ok;
+    return run([key],()=>{
+      if(!check(key))return false;
+      const result=access(storage=>storage.removeItem(key));
+      entry.value={};if(result.ok)entry.raw=null;
+      entry.reason=result.ok?'':'unsaved';report(entry);return result.ok;
+    });
   }
-  function replaceMany(values) {
-    const pairs=Object.entries(values);
+  function replaceMany(values,beforeReplace=()=>true,guardKeys=Object.keys(values)) {
+    const pairs=Object.entries(values).map(([key,value])=>[key,structuredClone(value)]);
     if(!pairs.length||pairs.some(([,value])=>!validatePlayerSave(value)))return false;
-    for(const [key] of pairs)if(!sessions.has(key))read(key);
-    if(pairs.some(([key])=>sessions.get(key).protected))return false;
-    const before=new Map();
-    for(const [key] of pairs) {
-      const raw=access(storage=>storage.getItem(key));
-      if(!raw.ok)return false;
-      before.set(key,{raw:raw.value,entry:structuredClone(sessions.get(key))});
-    }
-    const written=[];
-    for(const [key,value] of pairs) {
-      const result=access(storage=>storage.setItem(key,JSON.stringify(value)));
-      if(!result.ok) {
-        for(const rollbackKey of written.reverse()) {
-          const prior=before.get(rollbackKey).raw;
-          access(storage=>prior===null?storage.removeItem(rollbackKey):storage.setItem(rollbackKey,prior));
-        }
-        for(const [restoreKey,{entry}] of before)sessions.set(restoreKey,entry);
-        const failed=sessions.get(key);failed.reason='unsaved';report(failed);
-        return false;
+    for(const key of guardKeys)if(!sessions.has(key))read(key);
+    return run(guardKeys,()=>{
+      if(guardKeys.some(key=>!check(key)||sessions.get(key).protected))return false;
+      if(!beforeReplace())return false;
+      const before=new Map();
+      for(const [key] of pairs) {
+        const raw=access(storage=>storage.getItem(key));if(!raw.ok)return false;
+        before.set(key,{raw:raw.value,entry:structuredClone(sessions.get(key))});
       }
-      written.push(key);
-    }
-    for(const [key,value] of pairs) {
-      const entry=sessions.get(key);entry.value=structuredClone(value);entry.raw=JSON.stringify(value);entry.reason='';entry.protected=false;report(entry);
-    }
-    return true;
+      const written=[];
+      for(const [key,value] of pairs) {
+        const result=access(storage=>storage.setItem(key,JSON.stringify(value)));
+        if(!result.ok) {
+          for(const rollbackKey of written.reverse()) {
+            const prior=before.get(rollbackKey).raw;
+            access(storage=>prior===null?storage.removeItem(rollbackKey):storage.setItem(rollbackKey,prior));
+          }
+          for(const [restoreKey,{entry}] of before)sessions.set(restoreKey,entry);
+          const failed=sessions.get(key);failed.reason='unsaved';report(failed);return false;
+        }
+        written.push(key);
+      }
+      for(const [key,value] of pairs) {
+        const entry=sessions.get(key);entry.value=value;entry.raw=JSON.stringify(value);entry.reason='';entry.protected=false;report(entry);
+      }
+      return true;
+    });
   }
-  return {read,write,remove,replaceMany,
-    canBackup:key=>{if(!sessions.has(key))read(key);return !sessions.get(key).protected;},
+  function adopt(key,confirmReplacement=()=>true) {
+    if(!sessions.has(key))read(key);
+    return run([key],()=>{
+      const entry=sessions.get(key),latest=access(storage=>storage.getItem(key));
+      if(!latest.ok){entry.reason='conflict';report(entry);return false;}
+      let value={};
+      try{if(latest.value!==null){value=JSON.parse(latest.value);if(!validatePlayerSave(value))throw new Error();}}
+      catch{entry.reason='conflict';report(entry);return false;}
+      if(!confirmReplacement(structuredClone(value)))return false;
+      entry.raw=latest.value;entry.value=value;entry.reason='';entry.protected=false;report(entry);return true;
+    });
+  }
+  return {read,write,remove,replaceMany,check,adopt,
+    flush:()=>pending,
+    conflict:key=>sessions.get(key)?.reason==='conflict',
+    session:key=>structuredClone(sessions.get(key)?.value ?? read(key)),
+    canBackup:key=>{if(!sessions.has(key))read(key);return check(key)&&!sessions.get(key).protected;},
+    canRecover:key=>{if(!sessions.has(key))read(key);return !sessions.get(key).protected;},
     readPreference:key=>access(storage=>storage.getItem(key)).value ?? null,
     writePreference:(key,value)=>access(storage=>storage.setItem(key,value)).ok};
 }
