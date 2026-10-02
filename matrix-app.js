@@ -1,10 +1,10 @@
 let NODES = [], statNodes = [];
 let nodeByShort = {};
-import { NODES as baseNodes } from './data.js';
 import { setTrackerCatalogue } from './planner.js';
 setTrackerCatalogue([]);
 import { combinedSourceGain, displayPriorityRows, matrixTotals, nextCheckpoint, rangeCost } from './planner.js';
-import { fetchSharedPreview, previewCatalog } from './preview-priorities.js';
+import { previewCatalog } from './preview-priorities.js';
+import { createClassLoader } from './class-loader.js';
 import { skillAccent } from './skill-colours.js';
 import { fragmentDays, fragmentDuration, fragmentCompletionDate, fragmentShortfall, effectiveDailyFragments, normaliseDungeon } from './fragment-calculator.js';
 import { restoreStatLines, statProgress, validateStatLines } from './hexa-stat.js';
@@ -80,9 +80,7 @@ function syncPausedControls() {
   syncProgressUndo();
 }
 
-const classDataCache=new Map(), classRequests=new Map();
-const CLASS_CACHE_MS=30000;
-const CLASS_REQUEST_MS=15000;
+const classLoader=createClassLoader();
 const selectedStats={};
 const initialLevel=node=>node.initialLevel ?? (node.short==='Apotheosis'?1:0);
 let saved=playerStorage.read(storageKey);
@@ -683,43 +681,6 @@ $('#next-upgrade').addEventListener('click', event => {
   input.dispatchEvent(new Event('input', { bubbles: true }));
   pendingProgressEdit=null;
 });
-function requestClassData(className) {
-  if(classRequests.has(className))return classRequests.get(className);
-  const job=className==='ren'?'렌':undefined;
-  const controller=new AbortController();
-  let timer;
-  const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>{
-    reject(new Error('Loading timed out'));
-    controller.abort();
-  },CLASS_REQUEST_MS);});
-  // Bound the whole operation, including response bodies.
-  const reads=Promise.all([
-    fetch('/api/tracker-catalogue'+(job?'?job='+encodeURIComponent(job):''),{cache:'no-store',signal:controller.signal}).then(async response=>{
-      if(!response.ok)throw new Error('Saved skills are unavailable');
-      return response.json();
-    }),
-    fetchSharedPreview(job,{signal:controller.signal})
-  ]);
-  const request=Promise.race([reads,deadline]).then(([model,shared])=>{
-    const drafts=Object.fromEntries(Object.entries(shared).filter(([,draft])=>(draft.job==='렌'?'ren':'hoyoung')===className));
-    // Add the optional tracker input even when Scouter omits Janus. Its
-    // stable core identity also lets existing progress round-trip in backups.
-    if(!model.nodes.some(node=>node.sourceKey==='generalCore1' || node.short==='Janus'))model={...model,nodes:[...model.nodes,{...baseNodes.find(node=>node.short==='Janus'),sourceKey:'generalCore1',initialLevel:0}]};
-    model={...model,nodes:model.nodes.map(node=>({...node,isJanus:node.sourceKey==='generalCore1' || node.short==='Janus'}))};
-    model={...model,stats:model.stats.map(node=>{
-      const number={'HEXA Stat I':1,'HEXA Stat II':2,'HEXA Stat III':3}[node.short];
-      return number ? {...node,icon:`assets/hexa-stats/stat-${number}-unlocked.png`} : node;
-    })};
-    const snapshot={model,drafts,loadedAt:Date.now()};
-    classDataCache.set(className,snapshot);
-    return snapshot;
-  }).finally(()=>{
-    clearTimeout(timer);controller.abort();
-    if(classRequests.get(className)===request)classRequests.delete(className);
-  });
-  classRequests.set(className,request);
-  return request;
-}
 
 function downloadJSON(value,name) {
   const blob=new Blob([JSON.stringify(value,null,2)+'\n'],{type:'application/json'});
@@ -727,7 +688,7 @@ function downloadJSON(value,name) {
   link.href=url;link.download=name;document.body.append(link);link.click();link.remove();URL.revokeObjectURL(url);
 }
 async function backupModels() {
-  const entries=await Promise.all(Object.keys(PLAYER_CLASSES).map(async className=>[className,(await requestClassData(className)).model]));
+  const entries=await Promise.all(Object.keys(PLAYER_CLASSES).map(async className=>[className,(await classLoader.request(className)).model]));
   return Object.fromEntries(entries);
 }
 async function currentBackup(models) {
@@ -826,8 +787,8 @@ async function refreshSharedPriorities({force=false}={}) {
   syncPausedControls();
   $('#priority-sync').textContent=verifiedClass===activeClass ? 'Refreshing data. Showing the last loaded view. Progress edits are paused.' : '';
   try {
-    const cached=classDataCache.get(classAtStart);
-    const snapshot=!force&&!classRequests.has(classAtStart)&&cached&&Date.now()-cached.loadedAt<CLASS_CACHE_MS ? cached : await requestClassData(classAtStart);
+    const cached=force ? null : classLoader.cached(classAtStart);
+    const snapshot=cached || await classLoader.request(classAtStart);
     if(classAtStart!==activeClass||sequence!==refreshSequence)return;
     classLoading=false;classLoadFailed=false;syncPausedControls();
     verifiedClass=activeClass;
@@ -840,7 +801,7 @@ async function refreshSharedPriorities({force=false}={}) {
     if(!playerStorage.conflict(storageKey) || !hadView)renderInputs();
     render(!hadView);syncConflict();$('#priority-sync').textContent = '';
   } catch (error) {
-    classDataCache.delete(classAtStart);
+    classLoader.invalidate(classAtStart);
     if(classAtStart!==activeClass||sequence!==refreshSequence)return;
     classLoading=false;classLoadFailed=true;
     if(verifiedClass!==activeClass) {

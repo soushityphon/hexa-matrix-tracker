@@ -1,6 +1,12 @@
+## Class loading module, Issue #30
+
+`class-loader.js` now owns the existing source-only class request cache, coalesced requests and 15-second deadline across responses and bodies. It keeps the same 30-second cache lifetime, Janus input identity and numbered Stat icons. The UI still owns selected-class/sequence guards, retained views, paused controls and Retry. Export still requests both catalogues through the same loader. Save protection stays in `player-storage.js`; this small extraction changes no progress format, costs, FD, completion, source data or visible behaviour. Storage/UI and rendering extraction remain later parts of the open refactor item.
+
+All audio checks are owner-reported accepted on 2 October. The browser signal tests below remain separate evidence, with their stated emulation and listening limits.
+
 ## Browser music checks, Issue #30
 
-The isolated Chromium suite now uses the original compiled MP3 and real media/Web Audio APIs to check gesture-only loading, decoded playback and output signal, gain mute/resume, native looping after seeking near the end, class-switch silence/rewind and muted reload. Both class saves must remain unchanged. Tests run at desktop and both emulated phone widths. These checks do not prove speaker output, a full-duration audible loop or physical Android/iOS behaviour. Audible playback, the supplied phone check, moving-background readability, reduced motion and Animations Off are owner-reported accepted. Remaining audio device/owner acceptance stays separate in Issue #30. This batch changes only tests and documentation; no Site deployment is required.
+The isolated Chromium suite now uses the original compiled MP3 and real media/Web Audio APIs to check gesture-only loading, decoded playback and output signal, gain mute/resume, native looping after seeking near the end, class-switch silence/rewind and muted reload. Both class saves must remain unchanged. Tests run at desktop and both emulated phone widths. These checks do not prove speaker output, a full-duration audible loop or physical Android/iOS behaviour. Audio, the supplied phone check, moving-background readability, reduced motion and Animations Off are owner-reported accepted. No particular device/browser is claimed. The earlier audio batch changed only tests and documentation and needed no Site deployment.
 
 ## Compact touch controls, Issue #30
 

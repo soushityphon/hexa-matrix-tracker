@@ -7,6 +7,7 @@ import { validatePair } from '../admin-panel-model.js';
 import { reconstructScouterOrder, discoverySelection } from '../scouter-discovery.js';
 import { renDraftFromCapture, renCatalogueFromDrafts } from '../ren-priority.js';
 import {createPlayerBackup} from '../player-backup.js';
+import { createClassLoader } from '../class-loader.js';
 
 const stats=Object.keys(STAT_ICONS);
 const statSteps=stats.map(skill=>({skill,level:20}));
@@ -189,6 +190,31 @@ assert.doesNotMatch($('#priority-sync').textContent,/last loaded view/);
 failRen=false;$('#retry-priorities').click();await tick();
 assert.ok($('[data-node]').dataset.node.startsWith('ren_'));assert.equal($('#owned').value,'77');
 assert.equal($('[data-node]').disabled,false);
+// The extracted cache retains the same strict 30-second lifetime. A pending
+// forced read takes precedence over an otherwise fresh snapshot.
+const realNow=Date.now;
+let now=1000,loaderCalls=0,release;
+Date.now=()=>now;
+globalThis.fetch=async url=>{loaderCalls++;return response(url);};
+try {
+  const loader=createClassLoader();
+  const first=loader.request('hoyoung');
+  assert.equal(loader.request('hoyoung'),first);
+  const snapshot=await first;
+  assert.equal(loaderCalls,2);
+  assert.equal(loader.cached('hoyoung'),snapshot);
+  now=30999;assert.equal(loader.cached('hoyoung'),snapshot);
+  now=31000;assert.equal(loader.cached('hoyoung'),null);
+  now=1001;
+  globalThis.fetch=url=>new Promise(resolve=>{if(url.includes('tracker-catalogue'))release=()=>resolve(response(url));else resolve(response(url));});
+  const refreshing=loader.request('hoyoung');
+  assert.equal(loader.cached('hoyoung'),null);
+  assert.equal(loader.request('hoyoung'),refreshing);
+  release();await refreshing;
+  assert.ok(loader.cached('hoyoung'));
+  loader.invalidate('hoyoung');assert.equal(loader.cached('hoyoung'),null);
+  assert.equal(loader.cached('ren'),null);
+} finally {Date.now=realNow;}
 globalThis.setTimeout=realSetTimeout;
 await win.happyDOM.abort();
 console.log('Tracker loading deadlines, retry, save preservation and rapid class changes pass');
