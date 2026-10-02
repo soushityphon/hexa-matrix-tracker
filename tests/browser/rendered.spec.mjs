@@ -14,7 +14,7 @@ async function open(page, job) {
   await page.goto('/');
   await page.locator('#class').selectOption(job);
   await expect(page.locator('#priority-sync')).not.toContainText('Loading');
-  await expect(page.locator('[data-node]').first()).toBeVisible();
+  await expect(page.locator('[data-node]:visible').first()).toBeVisible();
 }
 async function fit(page) {
   const measure = await page.evaluate(() => ({

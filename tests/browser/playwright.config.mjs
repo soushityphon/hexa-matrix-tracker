@@ -9,8 +9,8 @@ export default defineConfig({
   retries: 0,
   maxFailures: 3,
   globalTimeout: 180000,
-  reporter: [['list'], ['html', { outputFolder: 'browser-report', open: 'never' }]],
-  outputDir: 'browser-results',
+  reporter: [['list'], ['html', { outputFolder: resolve(import.meta.dirname, '../../browser-report'), open: 'never' }]],
+  outputDir: resolve(import.meta.dirname, '../../browser-results'),
   use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', trace: 'retain-on-failure', screenshot: 'only-on-failure' },
   projects: [
     { name: 'desktop', use: { viewport: { width: 1440, height: 1000 } } },
