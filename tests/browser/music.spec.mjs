@@ -7,7 +7,10 @@ const icon = readFileSync(new URL('../../assets/sol-erda.png', import.meta.url))
 test('real MP3 gesture, gain, native loop and class silence', async ({ page }, info) => {
   // Observe real browser objects, without replacing playback, decoding or clocks.
   await page.addInitScript(saves => {
-    for (const [job, save] of Object.entries(saves)) localStorage.setItem('hexa-tracker-' + job + '-v1', JSON.stringify(save));
+    for (const [job, save] of Object.entries(saves)) {
+      const key = 'hexa-tracker-' + job + '-v1';
+      if (localStorage.getItem(key) === null) localStorage.setItem(key, JSON.stringify(save));
+    }
     window.musicProbe = { audio: null, context: null, gain: null, analyser: null };
     const create = document.createElement.bind(document);
     document.createElement = (...args) => {
