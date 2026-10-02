@@ -55,11 +55,13 @@ for (const job of ['hoyoung', 'ren']) {
     const key = await tile.getAttribute('data-checkpoint');
     const before = await page.evaluate(job => JSON.parse(localStorage.getItem('hexa-tracker-' + job + '-v1')), job);
     if (info.project.use.hasTouch) await tile.tap(); else await tile.click();
+    await expect.poll(() => page.evaluate(job => JSON.parse(localStorage.getItem('hexa-tracker-' + job + '-v1')).levels, job)).not.toEqual(before.levels);
     const changed = await page.evaluate(job => JSON.parse(localStorage.getItem('hexa-tracker-' + job + '-v1')), job);
     expect(changed.levels).not.toEqual(before.levels);
     expect(changed.owned).toBe(before.owned);
     const undo = page.locator(`.checkpoint[data-checkpoint='${key}']`);
     if (info.project.use.hasTouch) await undo.tap(); else await undo.click();
+    await expect.poll(() => page.evaluate(job => JSON.parse(localStorage.getItem('hexa-tracker-' + job + '-v1')).levels, job)).toEqual(before.levels);
     const after = await page.evaluate(job => JSON.parse(localStorage.getItem('hexa-tracker-' + job + '-v1')), job);
     expect(after.levels).toEqual(before.levels);
     expect(after.owned).toBe(before.owned);
