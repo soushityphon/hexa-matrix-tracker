@@ -58,11 +58,11 @@ assert.equal((await call('DELETE',{id:'broken_heroic'})).status,400);
 assert.equal((await call('PUT',{draft:{...base,mode:'broken_heroic',sourceMode:base.mode,isNew:true}},'/api/priority-preview')).status,409);
 assert.equal((await call('DELETE',{mode:'broken_heroic'},'/api/priority-preview')).status,409);
 assert.deepEqual(before(),initial);
-assert.equal((await call('PATCH',{id:'good',name:'Still manageable',enabled:false})).status,200);
+assert.equal((await call('PATCH',{priorityRevision:(await (await call('GET')).json()).priorityRevisions.good,id:'good',name:'Still manageable',enabled:false})).status,200);
 assert.equal((await call('POST',pair('fresh'))).status,200);
-assert.equal((await call('DELETE',{id:'fresh'})).status,200);
+assert.equal((await call('DELETE',{id:'fresh',priorityRevision:(await (await call('GET')).json()).priorityRevisions.fresh})).status,200);
 assert.equal((await call('PUT',{skillsRevision:(await (await call('GET')).json()).skillsRevision,job:'호영',rows:[{coreId:'masteryCore1',source:{coreId:'masteryCore1',sourceName:'Harmony',icon:'https://maplescouter.com/hexaskill/HY_3.png'},name:'Harmony',shortName:'Harmony',category:'Mastery',tag:'M1'}]})).status,200);
-assert.equal((await call('PATCH',{id:ren.pairId,name:'Ren remains manageable',enabled:false})).status,200);
+assert.equal((await call('PATCH',{priorityRevision:(await (await call('GET',undefined,'/api/admin-panel?job='+encodeURIComponent('렌'))).json()).priorityRevisions[ren.pairId],id:ren.pairId,name:'Ren remains manageable',enabled:false})).status,200);
 const publicState=await (await call('GET',undefined,'/api/priority-preview',false)).json();
 for(const mode of broken.keys())assert(!Object.hasOwn(publicState.drafts,mode));
 assert(!JSON.stringify(publicState).includes('invalidRecords'));
@@ -118,5 +118,38 @@ for(const name of ['Reviewed latest name','Second reviewed save']) {
   assert.equal((await (await call('GET')).json()).skills.rows[0].name,name);
 }
 console.log('Admin DOM retains conflicted drafts across class reloads; cancelled/failed latest loads preserve edits and reviewed saves recover');
+const cardNamed=name=>[...document.querySelectorAll('#registered .registered-row')].find(card=>card.querySelector('strong')?.textContent===name);
+const action=(card,name)=>[...card.querySelectorAll('button')].find(button=>button.textContent===name);
+const staleCard=cardNamed('Still manageable');assert(staleCard);
+const latestGood=await (await call('GET')).json();
+assert.equal((await call('PATCH',{id:'good',name:'Peer priority',priorityRevision:latestGood.priorityRevisions.good})).status,200);
+let prefill;globalThis.prompt=(_label,value)=>{prefill=value;return 'Unsaved priority name';};
+action(staleCard,'Rename').click();await settle();
+assert.match(document.querySelector('#status').textContent,/Priority changed in another tab/);
+assert.equal((await (await call('GET')).json()).drafts.good_heroic.pairName,'Peer priority');
+// A rejected delete or availability action keeps every peer row too.
+const peerRows=sqlite.prepare('SELECT * FROM priority_preview WHERE mode LIKE ? ORDER BY mode').all('good_%');
+for(const label of ['Delete','Make available']) {
+  action(staleCard,label).click();await settle();
+  assert.match(document.querySelector('#status').textContent,/Priority changed in another tab/);
+  assert.deepEqual(sqlite.prepare('SELECT * FROM priority_preview WHERE mode LIKE ? ORDER BY mode').all('good_%'),peerRows);
+}
+nameInput=document.querySelector('#skills input');nameInput.value='Dirty skills kept';nameInput.dispatchEvent(new Event('input'));
+document.querySelector('#pair-name').value='Captured pair draft kept';
+globalThis.fetch=async()=>new Response('Priority refresh failed',{status:503});
+document.querySelector('#load-latest-priorities').click();await settle();
+assert.match(document.querySelector('#status').textContent,/Priority refresh failed/);
+assert(cardNamed('Still manageable'));assert.equal(document.querySelector('#skills input').value,'Dirty skills kept');
+globalThis.fetch=normalFetch;
+document.querySelector('#load-latest-priorities').click();await settle();
+assert(cardNamed('Peer priority'));assert.equal(document.querySelector('#skills input').value,'Dirty skills kept');
+assert.equal(document.querySelector('#pair-name').value,'Captured pair draft kept');
+action(cardNamed('Peer priority'),'Rename').click();await settle();
+assert.equal(prefill,'Unsaved priority name');assert.match(document.querySelector('#status').textContent,/Priority name saved/);
+const renamedGood=await (await call('GET')).json();
+for(const draft of Object.values(renamedGood.drafts).filter(draft=>draft.pairId==='good'))assert.equal(draft.pairName,'Unsaved priority name');
+assert.equal(sqlite.prepare('SELECT draft_json FROM priority_preview WHERE mode = ?').get('good_interactive').draft_json,broken.get('good_interactive'));
+assert.equal(document.querySelector('#skills input').value,'Dirty skills kept');
+console.log('Priority admin DOM rejects stale rename/availability/delete and retains entered names, skill edits and pair drafts through latest-load failure/recovery');
 URL.createObjectURL=originalCreate;await win.happyDOM.abort();sqlite.close();
 console.log('Damaged priority isolation, raw recovery, collision protection, class management and admin DOM checks passed');

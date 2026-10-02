@@ -8,9 +8,10 @@ import { skillAccent } from './skill-colours.js';
 const $ = selector => document.querySelector(selector);
 const el = (tag, text, className) => { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; };
 let captureCatalogue = null;
-let drafts = {}, invalidRecords = [], rows = [], orders = {}, captureRegion = null, skillDirty = false, skillsRevision = null, loaded = false, busy = false;
+let drafts = {}, priorityRevisions = {}, invalidRecords = [], rows = [], orders = {}, captureRegion = null, skillDirty = false, skillsRevision = null, loaded = false, busy = false;
 const cache = new Map();
 const classStates=new Map();
+const pendingNames=new Map();
 let currentJob='호영', currentView='skills';
 const isRen=()=>currentJob==='렌';
 const jobLabel=()=>isRen()?'Ren':'Hoyoung';
@@ -33,6 +34,8 @@ function controls() {
   $('#grab').disabled = !loaded || busy;
   $('#save-skills').disabled = !loaded || busy || !rows.length;
   $('#load-latest-skills').disabled = !loaded || busy;
+  $('#load-latest-priorities').disabled = !loaded || busy;
+  for(const button of document.querySelectorAll('.registered-actions button'))button.disabled=busy;
   $('#add-tags').disabled = !loaded || busy || !rows.length;
   $('#save-pair').disabled = !loaded || busy || !orders.heroic || !orders.interactive || captureRegion !== $('#region').value;
   for(const input of document.querySelectorAll('#skills input, #skills select'))input.disabled=busy;
@@ -121,28 +124,29 @@ function renderRegistered() {
   }
   if(!groups.length) $('#registered').append(el('p','No saved priorities.','fine'));
   for(const group of groups) {
+    const priorityRevision=priorityRevisions[group.id];
     const card=el('article',undefined,'registered-row'),details=el('div',undefined,'registered-details'),actions=el('div',undefined,'registered-actions');
     details.append(el('strong',group.name),el('small',group.drafts.map(draft=>`${draft.sourceMode.endsWith('_heroic')?'Heroic':'Interactive'} · ${draft.steps.length} steps · ${draft.enabled?'Available':'Unavailable'}`).join(' / ')),el('small',`${group.createdAt || 'Date not recorded'}${group.drafts[0].sourceRegion ? ` · ${group.drafts[0].sourceRegion} source` : ' · Existing saved version'}`));
-    const button=(label,handler)=>{const btn=el('button',label);btn.addEventListener('click',async()=>{btn.disabled=true;try{await handler();}catch(error){message(error.message,true);}finally{btn.disabled=false;}});actions.append(btn);return btn;};
+    const button=(label,handler)=>{const btn=el('button',label);btn.addEventListener('click',async()=>{if(busy)return;busy=true;controls();try{await handler();}catch(error){message(error.message,true);}finally{busy=false;controls();}});actions.append(btn);return btn;};
     const enabled=group.drafts.every(draft=>draft.enabled);
-    button(enabled?'Make unavailable':'Make available',()=>mutation('PATCH',{id:group.id,enabled:!enabled}));
-    button('Rename',async()=>{const name=prompt('Priority name',group.name);if(name?.trim())await mutation('PATCH',{id:group.id,name});});
+    button(enabled?'Make unavailable':'Make available',async()=>{await mutation('PATCH',{id:group.id,enabled:!enabled,priorityRevision});message('Priority availability saved.');});
+    button('Rename',async()=>{const name=prompt('Priority name',pendingNames.get(group.id) ?? group.name);if(name?.trim()){pendingNames.set(group.id,name);await mutation('PATCH',{id:group.id,name,priorityRevision});pendingNames.delete(group.id);message('Priority name saved.');}});
     button('Download',()=>download({schema:1,type:'hexa-priority-backup',name:group.name,drafts:group.drafts,skills:rows.length?{job:currentJob,rows}:null},`hexa-${group.id}.json`));
-    button('Delete',async()=>{if(confirm(`Delete ${group.name} and its ${group.drafts.length} saved order(s)?`))await mutation('DELETE',{id:group.id});});
+    button('Delete',async()=>{if(confirm(`Delete ${group.name} and its ${group.drafts.length} saved order(s)?`)){await mutation('DELETE',{id:group.id,priorityRevision});pendingNames.delete(group.id);message('Priority deleted.');}});
     card.append(details,actions);$('#registered').append(card);
   }
 }
 async function reload() {
-  const result=await request('/api/admin-panel?job='+encodeURIComponent(currentJob));drafts=result.drafts;invalidRecords=result.invalidRecords || [];
+  const result=await request('/api/admin-panel?job='+encodeURIComponent(currentJob));drafts=result.drafts;priorityRevisions=result.priorityRevisions || {};invalidRecords=result.invalidRecords || [];
   if(!skillDirty) {rows=result.skills?.rows || rows;skillsRevision=result.skillsRevision;}
   renderSkills();renderRegistered();renderOrders();
 }
 async function selectClass(job) {
   if(busy||job===currentJob)return;
-  classStates.set(currentJob,{drafts,rows,orders,captureRegion,captureCatalogue,skillDirty,skillsRevision,region:$('#region').value,view:currentView,note:$('#capture-note').textContent,pairName:$('#pair-name').value});
+  classStates.set(currentJob,{drafts,priorityRevisions,rows,orders,captureRegion,captureCatalogue,skillDirty,skillsRevision,region:$('#region').value,view:currentView,note:$('#capture-note').textContent,pairName:$('#pair-name').value});
   currentJob=job;$('#job').value=job;
   const saved=classStates.get(job);
-  ({drafts,rows,orders,captureRegion,captureCatalogue,skillDirty,skillsRevision}=saved || {drafts:{},rows:[],orders:{},captureRegion:null,captureCatalogue:null,skillDirty:false,skillsRevision:null});
+  ({drafts,priorityRevisions,rows,orders,captureRegion,captureCatalogue,skillDirty,skillsRevision}=saved || {drafts:{},priorityRevisions:{},rows:[],orders:{},captureRegion:null,captureCatalogue:null,skillDirty:false,skillsRevision:null});
   $('#pair-name').value=saved?.pairName || '';
   $('#region').value=saved?.region || (isRen()?'KMS':'GMS');$('#capture-note').textContent=saved?.note || '';
   for(const [id,value] of [['hoyoung-tab','호영'],['ren-tab','렌']]) {const selected=job===value;$('#'+id).setAttribute('aria-selected',String(selected));$('#'+id).tabIndex=selected?0:-1;}
@@ -214,9 +218,14 @@ $('#load-latest-skills').addEventListener('click',async()=>{
   try {
     const result=await request('/api/admin-panel?job='+encodeURIComponent(currentJob));
     rows=result.skills?.rows || [];skillsRevision=result.skillsRevision;skillDirty=false;
-    drafts=result.drafts;invalidRecords=result.invalidRecords || [];
+    drafts=result.drafts;priorityRevisions=result.priorityRevisions || {};invalidRecords=result.invalidRecords || [];
     renderSkills();renderRegistered();renderOrders();message(`Latest ${jobLabel()} skills loaded. Review them before saving.`);
   }catch(error){message(error.message,true);}finally{busy=false;controls();}
+});
+$('#load-latest-priorities').addEventListener('click',async()=>{
+  busy=true;controls();
+  try{await reload();message('Latest priorities loaded. Review them before changing a saved priority. Unsaved skill edits and priority names are kept.');}
+  catch(error){message(error.message,true);}finally{busy=false;controls();}
 });
 $('#save-pair').addEventListener('click',async()=>{
   busy=true;controls();

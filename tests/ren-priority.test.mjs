@@ -45,24 +45,25 @@ assert.equal(overlaid.tags.ren_skillCore1,'');assert.equal(overlaid.names.ren_sk
 
 const sqlite=new DatabaseSync(':memory:');
 for(const file of ['0000_priority_preview.sql','0001_admin_skills.sql'])sqlite.exec(readFileSync(new URL('../drizzle/'+file,import.meta.url),'utf8'));
-const DB={prepare(sql){let values=[];return {bind(...args){values=args;return this;},async all(){return {results:sqlite.prepare(sql).all(...values)};},async first(){return sqlite.prepare(sql).get(...values)||null;},async run(){return sqlite.prepare(sql).run(...values);}};},async batch(statements){sqlite.exec('BEGIN');try{for(const statement of statements)await statement.run();sqlite.exec('COMMIT');}catch(error){sqlite.exec('ROLLBACK');throw error;}}};
+const DB={prepare(sql){let values=[];return {bind(...args){values=args;return this;},async all(){return {results:sqlite.prepare(sql).all(...values)};},async first(){return sqlite.prepare(sql).get(...values)||null;},async run(){return {meta:{changes:Number(sqlite.prepare(sql).run(...values).changes)}};}};},async batch(statements){sqlite.exec('BEGIN');try{for(const statement of statements)await statement.run();sqlite.exec('COMMIT');}catch(error){sqlite.exec('ROLLBACK');throw error;}}};
 const env={DB,ADMIN_EMAIL:'owner@example.test'},headers={'oai-authenticated-user-email':'owner@example.test','Content-Type':'application/json'};
 const call=(method,value,path='/api/admin-panel')=>worker.fetch(new Request('https://test.example'+path,{method,headers,...(value===undefined?{}:{body:JSON.stringify(value)})}),env);
+const changePriority=async(method,value)=>{const state=await (await call('GET',undefined,'/api/admin-panel?job='+encodeURIComponent('렌'))).json();return call(method,{...value,priorityRevision:state.priorityRevisions[value.id]});};
 for(const region of ['GMS','KMS']){
  const pair={job:'렌',id:'pair_ren_'+region.toLowerCase(),name:'Ren '+region,region,enabled:false,orders:orders[region]};
  let r=await call('POST',pair);assert.equal(r.status,200,await r.text());
- r=await call('PATCH',{id:pair.id,enabled:true});assert.equal(r.status,200,await r.text());
+ r=await changePriority('PATCH',{id:pair.id,enabled:true});assert.equal(r.status,200,await r.text());
 }
 let state=await (await call('GET',undefined,'/api/admin-panel?job='+encodeURIComponent('렌'))).json();assert.equal(Object.keys(state.drafts).length,4);
 assert.deepEqual((await (await call('GET')).json()).drafts,{});
 const before=structuredClone(state.drafts);
-await call('PATCH',{id:'pair_ren_kms',name:'My Ren update'});
+assert.equal((await changePriority('PATCH',{id:'pair_ren_kms',name:'My Ren update'})).status,200);
 state=await (await call('GET',undefined,'/api/admin-panel?job='+encodeURIComponent('렌'))).json();
 assert.deepEqual(state.drafts.pair_ren_kms_heroic.steps,before.pair_ren_kms_heroic.steps);assert.deepEqual(state.drafts.pair_ren_kms_heroic.capturedCosts,before.pair_ren_kms_heroic.capturedCosts);
 const visible=await (await worker.fetch(new Request('https://test.example/api/priority-preview?job='+encodeURIComponent('렌')),env)).json();assert.equal(Object.keys(visible.drafts).length,4);assert(Object.values(visible.drafts).every(draft=>draft.enabled));
 const model=await (await worker.fetch(new Request('https://test.example/api/tracker-catalogue?job='+encodeURIComponent('렌')),env)).json();assert.equal(model.nodes.length,14);
 const snapshot=await (await call('GET',undefined,'/api/admin-maintenance')).json();
-await call('DELETE',{id:'pair_ren_gms'});await call('DELETE',{id:'pair_ren_kms'});
+assert.equal((await changePriority('DELETE',{id:'pair_ren_gms'})).status,200);assert.equal((await changePriority('DELETE',{id:'pair_ren_kms'})).status,200);
 let r=await call('POST',{restoreSnapshot:snapshot});assert.equal(r.status,200,await r.text());
 state=await (await call('GET',undefined,'/api/admin-panel?job='+encodeURIComponent('렌'))).json();assert(Object.values(state.drafts).every(draft=>!draft.enabled));
 assert.deepEqual(state.drafts.pair_ren_kms_heroic.steps,before.pair_ren_kms_heroic.steps);

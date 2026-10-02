@@ -12,6 +12,7 @@ const env={DB,ADMIN_EMAIL:'owner@example.test'}, headers={'oai-authenticated-use
 const call=(method,value,owner=true)=>worker.fetch(new Request('https://test.example/api/admin-panel',{method,headers:owner?headers:{},...(value===undefined?{}:{body:JSON.stringify(value)})}),env);
 const readSkills=async(job='호영')=>(await worker.fetch(new Request('https://test.example/api/admin-panel?job='+encodeURIComponent(job),{headers}),env)).json();
 const saveSkills=async review=>call('PUT',{...review,skillsRevision:(await readSkills(review.job)).skillsRevision});
+const changePriority=async(method,value)=>call(method,{...value,priorityRevision:(await readSkills()).priorityRevisions[value.id]});
 const heroic=currentDraft('taotie_heroic'),interactive=currentDraft('taotie_interactive');
 await DB.prepare('INSERT INTO priority_preview VALUES (?, ?, ?)').bind(heroic.mode,JSON.stringify(heroic),'old-date').run();
 const original=sqlite.prepare('SELECT * FROM priority_preview').all();
@@ -27,7 +28,7 @@ assert.equal(state.drafts.pair_test_heroic.name,'Ride or Die | Heroic');
 assert.equal(state.drafts.pair_test_interactive.name,'Ride or Die | Interactive');
 assert.deepEqual(state.drafts.pair_test_heroic.steps,heroic.steps);
 assert.equal((await call('POST',pair)).status,400);
-assert.equal((await call('PATCH',{id:'pair_test',name:'New Name',enabled:false})).status,200);
+assert.equal((await changePriority('PATCH',{id:'pair_test',name:'New Name',enabled:false})).status,200);
 state=await (await call('GET')).json();
 assert(state.drafts.pair_test_heroic.name.startsWith('New Name'));
 assert.equal(state.drafts.pair_test_interactive.enabled,false);
@@ -53,7 +54,7 @@ assert.equal((await call('PUT',{...review,rows:[...rows,rows[0]]})).status,400);
 assert.throws(()=>validateSkills({...review,rows:[{...rows[0],category:'HEXA Stat'}]}));
 const differing={...heroic,names:{...heroic.names,Harmony:'Different name'}};
 const conflicts=mergeSkills({skills:[source]},[],{a:heroic,b:differing});assert.equal(conflicts[0].name,'');assert.equal(conflicts[0].conflicts.length,2);
-assert.equal((await call('DELETE',{id:'pair_test'})).status,200);
+assert.equal((await changePriority('DELETE',{id:'pair_test'})).status,200);
 assert.deepEqual(sqlite.prepare('SELECT * FROM priority_preview').all(),original);
 console.log('Admin skills, exact pair preservation, backup validation and atomic routes passed');
 
@@ -94,7 +95,7 @@ const costProvenance={capturedAt:'2026-10-01T00:00:00Z',resources:[{url:'https:/
 const capturedOrder={...currentDraft('lotus_heroic'),capturedCosts:snapshotCosts,costProvenance,steps:[{skill:'Harmony',level:2,sourceCost:{from:0,erda:5,frags:25},fdFrom:0,fdGain:1.25}]};
 const capturedPair={id:'pair_capture',name:'Captured',region:'GMS',enabled:false,orders:{heroic:capturedOrder,interactive:capturedOrder}};
 assert.equal((await call('POST',capturedPair)).status,200);
-assert.equal((await call('PATCH',{id:'pair_capture',name:'Renamed'})).status,200);
+assert.equal((await changePriority('PATCH',{id:'pair_capture',name:'Renamed'})).status,200);
 const storedCapture=(await (await call('GET')).json()).drafts.pair_capture_heroic;
 assert.deepEqual(storedCapture.capturedCosts,snapshotCosts);
 assert.deepEqual(storedCapture.costProvenance,costProvenance);
@@ -148,3 +149,64 @@ const insertRaceDB={...DB,prepare(sql){const statement=DB.prepare(sql);const run
 assert.equal((await worker.fetch(new Request('https://test.example/api/admin-panel',{method:'PUT',headers,body:JSON.stringify({...renReview,skillsRevision:emptyRevision})}),{...env,DB:insertRaceDB})).status,409);
 assert.equal(sqlite.prepare('SELECT updated_at FROM admin_skills WHERE job = ?').get('렌').updated_at,'peer-insert');
 console.log('Skills revisions reject missing, stale, wrong-class and interleaved update/insert writes without data loss');
+
+const revisionPair={...capturedPair,id:'pair_revision',name:'Revision original'};
+assert.equal((await call('POST',revisionPair)).status,200);
+const firstPriority=await readSkills(), oldRevision=firstPriority.priorityRevisions.pair_revision;
+assert.match(oldRevision,/^[a-f0-9]{64}$/);
+assert.equal((await call('PATCH',{id:'pair_revision',name:'Missing token'})).status,428);
+assert.equal((await call('DELETE',{id:'pair_revision'})).status,428);
+assert.equal((await call('PATCH',{id:'pair_revision',name:'Wrong group',priorityRevision:firstPriority.priorityRevisions.pair_capture})).status,409);
+// Changing an unrelated priority leaves this group's revision usable.
+assert.equal((await changePriority('PATCH',{id:'pair_capture',name:'Unrelated edit'})).status,200);
+assert.equal((await call('PATCH',{id:'pair_revision',name:'Latest name',enabled:false,priorityRevision:oldRevision})).status,200);
+const latestPriority=await readSkills();assert.notEqual(latestPriority.priorityRevisions.pair_revision,oldRevision);
+for(const mode of ['pair_revision_heroic','pair_revision_interactive']) {
+  const draft=latestPriority.drafts[mode];assert.equal(draft.pairName,'Latest name');assert.equal(draft.enabled,false);
+  assert.deepEqual(draft.steps,capturedOrder.steps);assert.deepEqual(draft.capturedCosts,snapshotCosts);assert.deepEqual(draft.costProvenance,costProvenance);
+}
+const allBeforeStale=sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all();
+for(const method of ['PATCH','DELETE']) {
+  const response=await call(method,{id:'pair_revision',name:'Stale name',enabled:true,priorityRevision:oldRevision});
+  assert.equal(response.status,409);assert.equal(response.headers.get('Cache-Control'),'no-store');
+  assert.deepEqual(sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all(),allBeforeStale);
+}
+const priorityRequest=(method,value,DB)=>worker.fetch(new Request('https://test.example/api/admin-panel',{method,headers,body:JSON.stringify(value)}),{...env,DB});
+const interleaveDB=(prefix,peer)=>({...DB,prepare(sql){const statement=DB.prepare(sql),run=statement.run;statement.run=async()=>{if(sql.startsWith(prefix))peer();return run();};return statement;}});
+for(const method of ['PATCH','DELETE']) {
+  const before=await readSkills();let peerSnapshot;
+  const peerDB=interleaveDB(method==='PATCH'?'UPDATE priority_preview':'DELETE FROM priority_preview',()=>{
+    sqlite.prepare('UPDATE priority_preview SET updated_at = ? WHERE mode = ?').run('peer-'+method,'pair_revision_interactive');
+    peerSnapshot=sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all();
+  });
+  assert.equal((await priorityRequest(method,{id:'pair_revision',name:'Race name',priorityRevision:before.priorityRevisions.pair_revision},peerDB)).status,409);
+  assert.deepEqual(sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all(),peerSnapshot);
+}
+// Membership changes after the read must leave all remaining/new rows intact.
+const beforeAddition=await readSkills();let additionSnapshot;
+const extra={...beforeAddition.drafts.pair_revision_heroic,mode:'pair_revision_extra'};
+const addedDB=interleaveDB('UPDATE priority_preview',()=>{
+  sqlite.prepare('INSERT INTO priority_preview VALUES (?, ?, ?)').run(extra.mode,JSON.stringify(extra),'peer-addition');
+  additionSnapshot=sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all();
+});
+assert.equal((await priorityRequest('PATCH',{id:'pair_revision',enabled:true,priorityRevision:beforeAddition.priorityRevisions.pair_revision},addedDB)).status,409);
+assert.deepEqual(sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all(),additionSnapshot);
+sqlite.prepare('DELETE FROM priority_preview WHERE mode = ?').run(extra.mode);
+const beforeRemoval=await readSkills();let removalSnapshot;
+const removedDB=interleaveDB('DELETE FROM priority_preview',()=>{
+  sqlite.prepare('DELETE FROM priority_preview WHERE mode = ?').run('pair_revision_interactive');
+  removalSnapshot=sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all();
+});
+assert.equal((await priorityRequest('DELETE',{id:'pair_revision',priorityRevision:beforeRemoval.priorityRevisions.pair_revision},removedDB)).status,409);
+assert.deepEqual(sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all(),removalSnapshot);
+assert.equal((await changePriority('DELETE',{id:'pair_revision'})).status,200);
+assert.equal((await call('PATCH',{id:'pair_revision',enabled:true,priorityRevision:beforeRemoval.priorityRevisions.pair_revision})).status,409);
+assert.equal(sqlite.prepare('SELECT count(*) AS n FROM priority_preview WHERE mode LIKE ?').get('pair_revision%').n,0);
+// A collision on the second inserted variant rolls back the first variant too.
+const newPair={...capturedPair,id:'pair_insert_race'};
+const peerDraft=validatePair(newPair)[1];
+const insertedPriorityDB=interleaveDB('INSERT INTO priority_preview',()=>sqlite.prepare('INSERT INTO priority_preview VALUES (?, ?, ?)').run(peerDraft.mode,JSON.stringify(peerDraft),'peer-insert'));
+assert.equal((await priorityRequest('POST',newPair,insertedPriorityDB)).status,409);
+assert.equal(sqlite.prepare('SELECT * FROM priority_preview WHERE mode = ?').get('pair_insert_race_heroic'),undefined);
+assert.equal(sqlite.prepare('SELECT updated_at FROM priority_preview WHERE mode = ?').get(peerDraft.mode).updated_at,'peer-insert');
+console.log('Priority revisions protect whole groups against stale edits/deletes, interleaved row/membership changes and pair insert collisions');
