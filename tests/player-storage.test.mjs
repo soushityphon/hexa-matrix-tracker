@@ -17,5 +17,12 @@ for(const raw of ['42','null','[]','{bad',JSON.stringify({levels:[]}),JSON.strin
  records.set(key,raw);saves=make();assert.deepEqual(saves.read(key),{});assert.equal(status.reason,'damaged');assert.equal(saves.write(key,{levels:{Harmony:1}}),false);assert.equal(saves.remove(key),false);assert.equal(records.get(key),raw);
 }
 failRead=true;saves=make();assert.deepEqual(saves.read(key),{});assert.equal(status.reason,'unreadable');failRead=false;assert.equal(saves.write(key,edited),false);assert.equal(status.reason,'unreadable');
+// Multi-class replacement validates first and rolls back earlier writes if a later write fails.
+failRead=false;failWrite=false;failRemove=false;records.clear();saves=make();
+records.set(key,JSON.stringify({levels:{Harmony:1}}));records.set('hexa-tracker-ren-v1',JSON.stringify({levels:{RenSkill:2}}));
+saves.read(key);saves.read('hexa-tracker-ren-v1');
+assert.equal(saves.replaceMany({[key]:{levels:{Harmony:3}},'hexa-tracker-ren-v1':{levels:{RenSkill:4}}}),true);
+assert.equal(JSON.parse(records.get(key)).levels.Harmony,3);assert.equal(JSON.parse(records.get('hexa-tracker-ren-v1')).levels.RenSkill,4);
+assert.equal(saves.replaceMany({[key]:{levels:{Harmony:31}}}),false);assert.equal(JSON.parse(records.get(key)).levels.Harmony,3);
 assert.equal(createPlayerStorage(()=>{throw Error();}).writePreference('pref','x'),false);
 console.log('Player storage legacy/current, damaged records, exceptions and session recovery pass');
