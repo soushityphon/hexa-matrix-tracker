@@ -1,10 +1,18 @@
+## Current audit batch: Remaining admin write protection
+
+Legacy `/api/priority-preview` PUT/DELETE now require a row revision. An authenticated GET with `?record=<mode>` returns the reviewed raw draft and its revision, including a distinct missing-record revision for safe creation. Anonymous record reads are refused; normal public catalogue reads retain their format. Missing revisions receive 428, stale revisions receive 409, and atomic raw-row/timestamp predicates preserve interleaved writes. A missing-row insert cannot replace a peer's first insert. The app has no active legacy editor; its Admin Panel continues to use the Skills/group protocol from versions 124/125.
+
+Snapshot restore remains insert-only and transactional. Duplicate skill identities are rejected before writes; a peer priority/skills insert during restore returns 409 after rolling back the whole backup batch. Storage errors return a safe 503. Empty restores do not issue an empty D1 batch. Maintenance keeps its existing backed-up-row comparison and exact delete predicates, preserves peer edits/additions, and reports actual D1 deletion counts rather than subtracting the final row count. An empty reset is a no-op.
+
+Together with versions 124/125, this completes the implemented admin revision item in Issue #30, subject to final test/deployment evidence and separate owner acceptance. Tests use isolated SQLite and cross-route races; no live record restore/reset/edit, schema migration, source/calculation/player-save change, new UI or automatic backup is part of this batch. PR #22 stays draft/unmerged and eventual release is unapproved. Next in the documented order is safe server diagnostics.
+
 ## Current audit batch: Saved priority revisions
 
 Saved priority Rename, availability and Delete carry the group's loaded revision. Missing revisions receive 428; stale or deleted groups receive 409. Each action changes all its usable orders in one SQL statement, guarded by group membership and every original raw row/timestamp. An interleaved peer edit, addition or deletion leaves the remaining saved group intact. Unrelated priority edits do not invalidate this group's revision. New pairs use one insert without upsert, so an ID collision rolls back both variants and preserves the peer record.
 
 Load latest priorities refreshes the saved list while keeping dirty Skills fields, their original revision, captured orders, the pair-name draft and entered rename text. After a conflict, Rename offers the entered name again, including after loading latest records; the owner can review and confirm it. Registered actions pause during a request. Older admin tabs must refresh before using the revised protocol.
 
-This continues Issue #30's admin revision item, which remains partial. The separate legacy `/api/priority-preview` write paths and snapshot restore concurrency review are next. Skills revision protection from version 124 remains. No schema migration, live data/source/calculation change or player storage change is part of this batch. SQLite and actual admin DOM regressions cover interleaved writes, partial/malformed groups, conflict recovery and retained drafts. CI/deployment and owner acceptance are recorded in Issue #30. PR #22 remains draft/unmerged; eventual release is unapproved.
+This continues Issue #30's admin revision item, which remains partial. The remaining legacy write/restore concurrency work is covered by the batch above. Skills revision protection from version 124 remains. No schema migration, live data/source/calculation change or player storage change is part of this batch. SQLite and actual admin DOM regressions cover interleaved writes, partial/malformed groups, conflict recovery and retained drafts. CI/deployment and owner acceptance are recorded in Issue #30. PR #22 remains draft/unmerged; eventual release is unapproved.
 
 ## Current audit batch: Skills save revisions
 
@@ -12,7 +20,7 @@ The admin Skills panel carries a class-specific revision with its loaded rows. S
 
 A conflict keeps the unsaved fields. Load latest skills asks before discarding dirty edits; Cancel or a failed request retains them. Switching classes or refreshing priority records cannot silently replace a dirty Skills draft's revision. Skill fields pause while a save is pending. Older admin tabs must refresh to use the new protocol.
 
-This is a partial implementation of Issue #30's admin revision item. The saved-priority batch above covers rename, availability and delete; separate legacy write and restore-path concurrency remain. Existing restoration collision protection and maintenance exact-row guards remain. Tests use isolated SQLite and the actual admin DOM; deployment and owner acceptance are recorded separately in Issue #30. PR #22 remains draft/unmerged and eventual release is unapproved.
+This is a partial implementation of Issue #30's admin revision item. The saved-priority batch above covers rename, availability and delete; the remaining legacy write/restore work is covered above. Existing restoration collision protection and maintenance exact-row guards remain. Tests use isolated SQLite and the actual admin DOM; deployment and owner acceptance are recorded separately in Issue #30. PR #22 remains draft/unmerged and eventual release is unapproved.
 
 ## Input, Stat and Summary retention, Issue #30, 3 October 2026
 

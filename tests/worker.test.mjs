@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {readFileSync} from 'node:fs';
 import worker from '../worker.js';
 import { currentDraft } from '../priority-draft.js';
 
@@ -70,32 +72,31 @@ try {
 } finally { globalThis.fetch = originalFetch; }
 
 
-const previews = new Map();
-const DB = {
-  prepare(sql) {
-    let values = [];
-    return {
-      bind(...args) { values = args; return this; },
-      async first() { return null; },
-      async all() { assert.match(sql, /^SELECT /); return { results: [...previews].map(([mode, draft_json]) => ({ mode, draft_json })) }; },
-      async run() {
-        if (sql.startsWith('DELETE ')) previews.delete(values[0]);
-        else { assert.match(sql, /^INSERT /); previews.set(values[0], values[1]); }
-      }
-    };
-  }
-};
+const sqlite=new DatabaseSync(':memory:');
+for(const file of ['0000_priority_preview.sql','0001_admin_skills.sql'])sqlite.exec(readFileSync(new URL('../drizzle/'+file,import.meta.url),'utf8'));
+const DB={prepare(sql){
+  let values=[];
+  return {
+    bind(...args){values=args;return this;},
+    async first(){return sqlite.prepare(sql).get(...values)||null;},
+    async all(){return {results:sqlite.prepare(sql).all(...values)};},
+    async run(){return {meta:{changes:Number(sqlite.prepare(sql).run(...values).changes)}};}
+  };
+}};
+
 const previewUrl = 'https://preview.example/api/priority-preview';
 const adminEnv = { DB, ADMIN_EMAIL: 'owner@example.test' };
 const adminHeaders = { 'Content-Type': 'application/json', 'oai-authenticated-user-email': 'owner@example.test' };
 const previewRequest = (method, body, headers = adminHeaders) => new Request(previewUrl, { method, headers, body: JSON.stringify(body) });
+const readRecord=async mode=>(await worker.fetch(new Request(previewUrl+'?record='+encodeURIComponent(mode),{headers:adminHeaders}),adminEnv)).json();
+const writeRecord=async(method,value,headers=adminHeaders)=>worker.fetch(previewRequest(method,{...value,revision:(await readRecord(value.draft?.mode || value.mode)).revision},headers),adminEnv);
 assert.equal((await worker.fetch(new Request(previewUrl), {})).status, 503);
 assert.deepEqual((await (await worker.fetch(new Request(previewUrl), adminEnv)).json()).drafts, {});
 assert.equal((await worker.fetch(previewRequest('PUT', { draft: currentDraft('lotus_heroic') }, { 'Content-Type': 'application/json' }), adminEnv)).status, 403);
 const hidden = { ...currentDraft('lotus_heroic'), enabled: false };
-assert.equal((await worker.fetch(previewRequest('PUT', { draft: hidden }), adminEnv)).status, 200);
+assert.equal((await writeRecord('PUT',{draft:hidden})).status, 200);
 const named = { ...hidden, names: { ...hidden.names, Harmony: 'Long Harmony' }, shortNames: { ...hidden.shortNames, Harmony: 'Short Harmony' } };
-assert.equal((await worker.fetch(previewRequest('PUT', { draft: named }), adminEnv)).status, 200);
+assert.equal((await writeRecord('PUT',{draft:named})).status, 200);
 const loadedNames = (await (await worker.fetch(new Request(previewUrl), adminEnv)).json()).drafts.lotus_heroic;
 assert.equal(loadedNames.names.Harmony, 'Long Harmony');
 assert.equal(loadedNames.shortNames.Harmony, 'Short Harmony');
@@ -103,20 +104,57 @@ assert.equal(loadedNames.steps[0].skill, 'Harmony');
 assert.equal((await worker.fetch(previewRequest('PUT', { draft: { ...hidden, steps: [] } }), adminEnv)).status, 400);
 assert.equal((await (await worker.fetch(new Request(previewUrl), adminEnv)).json()).drafts.lotus_heroic.enabled, false);
 const newOrder = { ...currentDraft('lotus_interactive'), mode: 'lotus_interactive_20260929', sourceMode: 'lotus_interactive', isNew: true, name: 'Imported order', enabled: true, steps: [{ skill: 'Harmony', level: 1, sourceCost: { from: 0, erda: 3, frags: 50 } }] };
-assert.equal((await worker.fetch(previewRequest('PUT', { draft: newOrder }), adminEnv)).status, 200);
+assert.equal((await writeRecord('PUT',{draft:newOrder})).status, 200);
 assert.equal((await (await worker.fetch(new Request(previewUrl), adminEnv)).json()).drafts[newOrder.mode].steps.length, 1);
 assert.deepEqual((await (await worker.fetch(new Request(previewUrl), adminEnv)).json()).drafts[newOrder.mode].steps[0].sourceCost, { from: 0, erda: 3, frags: 50 });
 const unknownOrder = { ...newOrder, newNodes: [{ short: 'New', name: 'New', type: 'Skill', icon: 'https://maplescouter.com/hexaskill/New.png' }], steps: [{ skill: 'New', level: 1 }] };
 assert.equal((await worker.fetch(previewRequest('PUT', { draft: unknownOrder }), adminEnv)).status, 400);
 assert.equal((await worker.fetch(previewRequest('DELETE', { mode: newOrder.mode }, { 'Content-Type': 'application/json' }), adminEnv)).status, 403);
-assert.equal((await worker.fetch(previewRequest('DELETE', { mode: newOrder.mode }), adminEnv)).status, 200);
+assert.equal((await writeRecord('DELETE',{mode:newOrder.mode})).status, 200);
 assert.equal((await (await worker.fetch(new Request(previewUrl), adminEnv)).json()).drafts[newOrder.mode], undefined);
 const signInPage = await worker.fetch(new Request('https://preview.example/priority-review.html'), adminEnv);
 assert.equal(signInPage.status, 200);
 assert.match(await signInPage.text(), /href="\/signin-with-chatgpt\?return_to=%2Fpriority-review\.html"/);
 assert.equal(signInPage.headers.get('Cache-Control'), 'no-store');
 assert.equal((await worker.fetch(previewRequest('PUT', { draft: hidden }, { ...adminHeaders, 'oai-authenticated-user-email': 'other@example.test' }), adminEnv)).status, 403);
-assert.equal((await worker.fetch(previewRequest('PUT', { draft: hidden }, { ...adminHeaders, 'oai-authenticated-user-email': 'OWNER@example.test' }), adminEnv)).status, 200);
+assert.equal((await writeRecord('PUT',{draft:hidden},{...adminHeaders,'oai-authenticated-user-email':'OWNER@example.test'})).status, 200);
+
+assert.equal((await worker.fetch(new Request(previewUrl+'?record=lotus_heroic'),adminEnv)).status,403);
+assert.equal((await worker.fetch(new Request(previewUrl+'?record=invalid%20id',{headers:adminHeaders}),adminEnv)).status,400);
+assert.equal((await worker.fetch(previewRequest('PUT',{draft:hidden}),adminEnv)).status,428);
+assert.equal((await worker.fetch(previewRequest('DELETE',{mode:hidden.mode}),adminEnv)).status,428);
+const staleRecord=await readRecord(hidden.mode);
+assert.equal((await writeRecord('PUT',{draft:hidden})).status,200);
+assert.notEqual((await readRecord(hidden.mode)).revision,staleRecord.revision);
+const unchangedRows=sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all();
+for(const method of ['PUT','DELETE']){
+  const response=await worker.fetch(previewRequest(method,{draft:hidden,mode:hidden.mode,revision:staleRecord.revision}),adminEnv);
+  assert.equal(response.status,409);assert.equal(response.headers.get('Cache-Control'),'no-store');
+  assert.deepEqual(sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all(),unchangedRows);
+}
+for(const method of ['PUT','DELETE']){
+  const latest=await readRecord(hidden.mode);let peerRows;
+  const raceDB={prepare(sql){const statement=DB.prepare(sql),run=statement.run;statement.run=async()=>{
+    if(sql.startsWith(method==='PUT'?'UPDATE priority_preview':'DELETE FROM priority_preview')){
+      sqlite.prepare('UPDATE priority_preview SET updated_at = ? WHERE mode = ?').run('peer-'+method,hidden.mode);
+      peerRows=sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all();
+    }return run();};return statement;}};
+  assert.equal((await worker.fetch(previewRequest(method,{draft:hidden,mode:hidden.mode,revision:latest.revision}),{...adminEnv,DB:raceDB})).status,409);
+  assert.deepEqual(sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all(),peerRows);
+}
+const insertedDraft={...newOrder,mode:'race_insert'},emptyRecord=await readRecord('race_insert');
+const insertDB={prepare(sql){const statement=DB.prepare(sql),run=statement.run;statement.run=async()=>{
+  if(sql.startsWith('INSERT INTO priority_preview'))sqlite.prepare('INSERT INTO priority_preview VALUES (?, ?, ?)').run(insertedDraft.mode,JSON.stringify(insertedDraft),'peer-insert');
+  return run();};return statement;}};
+assert.equal((await worker.fetch(previewRequest('PUT',{draft:insertedDraft,revision:emptyRecord.revision}),{...adminEnv,DB:insertDB})).status,409);
+assert.equal(sqlite.prepare('SELECT updated_at FROM priority_preview WHERE mode = ?').get('race_insert').updated_at,'peer-insert');
+const beforeDelete=await readRecord(hidden.mode);
+assert.equal((await writeRecord('DELETE',{mode:hidden.mode})).status,200);
+assert.equal((await worker.fetch(previewRequest('PUT',{draft:hidden,revision:beforeDelete.revision}),adminEnv)).status,409);
+assert.equal((await readRecord(hidden.mode)).draft,null);
+assert.equal((await worker.fetch(previewRequest('PUT',{draft:hidden,revision:emptyRecord.revision}),adminEnv)).status,409);
+assert(!Object.hasOwn(await (await worker.fetch(new Request(previewUrl),adminEnv)).json(),'revision'));
+console.log('Legacy record reads and atomic writes reject stale/missing/wrong-ID revisions, peer races and deleted-row resurrection');
 
 console.log('Worker route validation passed');
 

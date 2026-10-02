@@ -7,7 +7,7 @@ import { NODES } from '../data.js';
 import { mergeSkills, validateSkills, applySkills, validatePair, priorityGroups, orderMatches } from '../admin-panel-model.js';
 const sqlite = new DatabaseSync(':memory:');
 for(const file of ['0000_priority_preview.sql','0001_admin_skills.sql']) sqlite.exec(readFileSync(new URL('../drizzle/'+file,import.meta.url),'utf8'));
-const DB = {prepare(sql){let values=[];return {bind(...args){values=args;return this;},async all(){return {results:sqlite.prepare(sql).all(...values)};},async first(){return sqlite.prepare(sql).get(...values)||null;},async run(){return {meta:{changes:Number(sqlite.prepare(sql).run(...values).changes)}};}};},async batch(statements){sqlite.exec('BEGIN');try{for(const statement of statements)await statement.run();sqlite.exec('COMMIT');}catch(error){sqlite.exec('ROLLBACK');throw error;}}};
+const DB = {prepare(sql){let values=[];return {bind(...args){values=args;return this;},async all(){return {results:sqlite.prepare(sql).all(...values)};},async first(){return sqlite.prepare(sql).get(...values)||null;},async run(){return {meta:{changes:Number(sqlite.prepare(sql).run(...values).changes)}};}};},async batch(statements){sqlite.exec('BEGIN');try{const results=[];for(const statement of statements)results.push(await statement.run());sqlite.exec('COMMIT');return results;}catch(error){sqlite.exec('ROLLBACK');throw error;}}};
 const env={DB,ADMIN_EMAIL:'owner@example.test'}, headers={'oai-authenticated-user-email':'owner@example.test','Content-Type':'application/json'};
 const call=(method,value,owner=true)=>worker.fetch(new Request('https://test.example/api/admin-panel',{method,headers:owner?headers:{},...(value===undefined?{}:{body:JSON.stringify(value)})}),env);
 const readSkills=async(job='호영')=>(await worker.fetch(new Request('https://test.example/api/admin-panel?job='+encodeURIComponent(job),{headers}),env)).json();
@@ -210,3 +210,55 @@ assert.equal((await priorityRequest('POST',newPair,insertedPriorityDB)).status,4
 assert.equal(sqlite.prepare('SELECT * FROM priority_preview WHERE mode = ?').get('pair_insert_race_heroic'),undefined);
 assert.equal(sqlite.prepare('SELECT updated_at FROM priority_preview WHERE mode = ?').get(peerDraft.mode).updated_at,'peer-insert');
 console.log('Priority revisions protect whole groups against stale edits/deletes, interleaved row/membership changes and pair insert collisions');
+
+const legacyRecord=async mode=>(await worker.fetch(new Request('https://test.example/api/priority-preview?record='+mode,{headers}),env)).json();
+const groupBeforeLegacy=await readSkills();
+const legacyBefore=await legacyRecord('pair_capture_heroic');
+assert.equal((await worker.fetch(new Request('https://test.example/api/priority-preview',{method:'PUT',headers,body:JSON.stringify({draft:legacyBefore.draft,revision:legacyBefore.revision})}),env)).status,200);
+assert.equal((await call('PATCH',{id:'pair_capture',name:'Stale admin group',priorityRevision:groupBeforeLegacy.priorityRevisions.pair_capture})).status,409);
+const oldLegacy=await legacyRecord('pair_capture_heroic');
+assert.equal((await changePriority('PATCH',{id:'pair_capture',name:'New admin name'})).status,200);
+assert.equal((await worker.fetch(new Request('https://test.example/api/priority-preview',{method:'PUT',headers,body:JSON.stringify({draft:oldLegacy.draft,revision:oldLegacy.revision})}),env)).status,409);
+console.log('Legacy row revisions and Admin Panel group revisions detect writes across both routes');
+
+const restoreDraft=mode=>({...capturedOrder,mode,sourceMode:capturedOrder.mode,isNew:true});
+const restoreRows=['restore_race_a','restore_race_b'].map(mode=>({mode,draft_json:JSON.stringify(restoreDraft(mode))}));
+const restoreBackup={schema:1,type:'hexa-tracker-backup',priorities:restoreRows,skills:[{job:'렌',review_json:JSON.stringify(renReview)}]};
+for(const collision of ['priority','skills']){
+  sqlite.prepare('DELETE FROM admin_skills WHERE job = ?').run('렌');
+  sqlite.prepare('DELETE FROM priority_preview WHERE mode IN (?, ?)').run(...restoreRows.map(row=>row.mode));
+  let peerPriorities,peerSkills;
+  const restoreDB={...DB,async batch(statements){
+    if(collision==='priority')sqlite.prepare('INSERT INTO priority_preview VALUES (?, ?, ?)').run(restoreRows[1].mode,restoreRows[1].draft_json,'peer-restore');
+    else sqlite.prepare('INSERT INTO admin_skills VALUES (?, ?, ?)').run('렌',JSON.stringify(renReview),'peer-restore');
+    peerPriorities=sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all();peerSkills=sqlite.prepare('SELECT * FROM admin_skills ORDER BY job').all();
+    return DB.batch(statements);
+  }};
+  const response=await priorityRequest('POST',{restoreSnapshot:restoreBackup},restoreDB);
+  assert.equal(response.status,409);assert.equal(response.headers.get('Cache-Control'),'no-store');
+  assert.deepEqual(sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all(),peerPriorities);
+  assert.deepEqual(sqlite.prepare('SELECT * FROM admin_skills ORDER BY job').all(),peerSkills);
+}
+assert.equal((await call('POST',{restoreSnapshot:{...restoreBackup,skills:[...restoreBackup.skills,...restoreBackup.skills]}})).status,400);
+const failedRestore=await priorityRequest('POST',{restoreSnapshot:{schema:1,type:'hexa-tracker-backup',priorities:[{mode:'restore_storage_fail',draft_json:JSON.stringify(restoreDraft('restore_storage_fail'))}],skills:[]}},{...DB,async batch(){throw new Error('private backend detail');}});
+assert.equal(failedRestore.status,503);assert(!(await failedRestore.text()).includes('private backend'));
+assert.equal((await call('POST',{restoreSnapshot:{schema:1,type:'hexa-tracker-backup',priorities:[],skills:[]}})).status,200);
+console.log('Snapshot restore refuses duplicate skills, rolls back priority/skills insert races and returns safe storage errors');
+
+sqlite.exec('DELETE FROM priority_preview');
+for(const mode of ['maintenance_a','maintenance_b'])sqlite.prepare('INSERT INTO priority_preview VALUES (?, ?, ?)').run(mode,JSON.stringify(restoreDraft(mode)),'backed-up');
+const resetBackup=await (await maintenance('GET',null,'x'.repeat(32))).json();
+const resetDB={...DB,async batch(statements){
+  sqlite.prepare('UPDATE priority_preview SET updated_at = ? WHERE mode = ?').run('peer-edit','maintenance_a');
+  for(let i=0;i<4;i++){const mode='maintenance_peer_'+i;sqlite.prepare('INSERT INTO priority_preview VALUES (?, ?, ?)').run(mode,JSON.stringify(restoreDraft(mode)),'peer-addition');}
+  return DB.batch(statements);
+}};
+const resetResponse=await worker.fetch(new Request('https://test.example/api/admin-maintenance',{method:'POST',headers,body:JSON.stringify({confirm:'clear-backed-up-priorities',priorities:resetBackup.priorities})}),{...env,DB:resetDB});
+assert.equal(resetResponse.status,200);const resetResult=await resetResponse.json();assert.equal(resetResult.removed,1);assert.equal(resetResult.remaining.length,5);
+assert.equal(sqlite.prepare('SELECT updated_at FROM priority_preview WHERE mode = ?').get('maintenance_a').updated_at,'peer-edit');
+const retainedSnapshot=sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all();
+assert.equal((await maintenance('POST',{confirm:'clear-backed-up-priorities',priorities:resetBackup.priorities},'x'.repeat(32))).status,409);
+assert.deepEqual(sqlite.prepare('SELECT * FROM priority_preview ORDER BY mode').all(),retainedSnapshot);
+sqlite.exec('DELETE FROM priority_preview');
+const emptyReset=await maintenance('POST',{confirm:'clear-backed-up-priorities',priorities:[]},'x'.repeat(32));assert.equal(emptyReset.status,200);assert.deepEqual(await emptyReset.json(),{removed:0,remaining:[]});
+console.log('Maintenance preserves peer edits/additions and reports actual deletion counts, including an empty reset');

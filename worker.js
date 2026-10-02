@@ -26,14 +26,18 @@ function readPriorityRows(rows) {
   }
   return {drafts, invalidRecords};
 }
-async function protectedPriority(mode, env) {
-  const row = await env.DB.prepare('SELECT mode, draft_json FROM priority_preview WHERE mode = ?').bind(mode).first();
-  return row && readPriorityRows([row]).invalidRecords.length > 0;
-}
 async function priorityPreview(request, env) {
   if (!env?.DB) return new Response('Priority preview storage is unavailable', { status: 503 });
   try {
     if (request.method === 'GET') {
+      const mode=new URL(request.url).searchParams.get('record');
+      if(mode!==null) {
+        if(!isAdmin(request,env))return new Response('Admin access required',{status:403,headers:noStore});
+        if(!/^[a-z0-9_]+$/.test(mode))return new Response('Invalid priority ID',{status:400,headers:noStore});
+        const row=await env.DB.prepare('SELECT mode, draft_json, updated_at FROM priority_preview WHERE mode = ?').bind(mode).first();
+        if(row && readPriorityRows([row]).invalidRecords.length)return new Response('Damaged priority is preserved. Download its raw record from the Admin Panel.',{status:409,headers:noStore});
+        return Response.json({mode,draft:row?readPriorityRows([row]).drafts[mode]:null,revision:await priorityRevision('record:'+mode,row?[row]:[])},{headers:noStore});
+      }
       const rows = await env.DB.prepare('SELECT mode, draft_json FROM priority_preview').all();
       const drafts = {};
       for (const row of rows.results || []) {
@@ -62,20 +66,33 @@ async function priorityPreview(request, env) {
     if (body.length > 100_000) return new Response('Payload too large', { status: 413 });
     let selection;
     try { selection = JSON.parse(body); } catch { return new Response('Invalid JSON', { status: 400 }); }
-    if (request.method === 'DELETE') {
-      if (typeof selection?.mode !== 'string' || !/^[a-z0-9_]+$/.test(selection.mode)) return new Response('Invalid priority ID', { status: 400 });
-      if (await protectedPriority(selection.mode, env)) return new Response('Damaged priority is preserved. Download its raw record from the Admin Panel.', {status:409,headers:noStore});
-      await env.DB.prepare('DELETE FROM priority_preview WHERE mode = ?').bind(selection.mode).run();
-      return Response.json({ removed: selection.mode }, { headers: noStore });
-    }
     let draft;
-    try { draft = validateDraft(selection?.draft); }
-    catch (error) { return new Response(error.message, { status: 400 }); }
-    if (draft.newNodes.length) return new Response('New skills need a reviewed GitHub update before their costs can be used in the tracker', { status: 400 });
-    if (await protectedPriority(draft.mode, env)) return new Response('Damaged priority is preserved. Download its raw record from the Admin Panel.', {status:409,headers:noStore});
-    await env.DB.prepare('INSERT INTO priority_preview (mode, draft_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(mode) DO UPDATE SET draft_json = excluded.draft_json, updated_at = excluded.updated_at')
-      .bind(draft.mode, JSON.stringify(draft), new Date().toISOString()).run();
-    return Response.json({ saved: draft.mode }, { headers: noStore });
+    if(request.method==='PUT') {
+      try { draft = validateDraft(selection?.draft); }
+      catch (error) { return new Response(error.message, { status: 400 }); }
+      if(draft.newNodes.length)return new Response('New skills need a reviewed GitHub update before their costs can be used in the tracker',{status:400});
+    }
+    const mode=draft?.mode || selection?.mode;
+    if(typeof mode!=='string' || !/^[a-z0-9_]+$/.test(mode))return new Response('Invalid priority ID',{status:400,headers:noStore});
+    const previous=await env.DB.prepare('SELECT mode, draft_json, updated_at FROM priority_preview WHERE mode = ?').bind(mode).first();
+    if(previous && readPriorityRows([previous]).invalidRecords.length)return new Response('Damaged priority is preserved. Download its raw record from the Admin Panel.',{status:409,headers:noStore});
+    if(typeof selection.revision!=='string' || !/^[a-f0-9]{64}$/.test(selection.revision))return new Response('Load the latest priority record before saving or deleting.',{status:428,headers:noStore});
+    const conflict=()=>new Response('Priority changed since it was loaded. Nothing was changed by this action. Load the latest record and review before trying again.',{status:409,headers:noStore});
+    if(selection.revision!==await priorityRevision('record:'+mode,previous?[previous]:[]))return conflict();
+    if(request.method==='DELETE') {
+      if(previous) {
+        const result=await env.DB.prepare('DELETE FROM priority_preview WHERE mode = ? AND draft_json = ? AND updated_at = ?').bind(mode,previous.draft_json,previous.updated_at).run();
+        if(result.meta.changes!==1)return conflict();
+      }
+      return Response.json({removed:mode},{headers:noStore});
+    }
+    const previousTime=Date.parse(previous?.updated_at);
+    const next={mode,draft_json:JSON.stringify(draft),updated_at:new Date(Math.max(Date.now(),Number.isFinite(previousTime)?previousTime+1:0)).toISOString()};
+    const result=previous
+      ? await env.DB.prepare('UPDATE priority_preview SET draft_json = ?, updated_at = ? WHERE mode = ? AND draft_json = ? AND updated_at = ?').bind(next.draft_json,next.updated_at,mode,previous.draft_json,previous.updated_at).run()
+      : await env.DB.prepare('INSERT INTO priority_preview (mode, draft_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(mode) DO NOTHING').bind(mode,next.draft_json,next.updated_at).run();
+    if(result.meta.changes!==1)return conflict();
+    return Response.json({saved:mode,revision:await priorityRevision('record:'+mode,[next])},{headers:noStore});
   } catch { return new Response('Priority preview storage failed. Try again later.', { status: 503 }); }
 }
 async function trackerSkills(request, env) {
@@ -109,9 +126,9 @@ async function adminMaintenance(request, env) {
     const value=JSON.parse(body);
     if(value.confirm!=='clear-backed-up-priorities' || JSON.stringify(value.priorities)!==JSON.stringify(priorities)) return new Response('Backup does not match current saved priorities',{status:409});
     // Exact row predicates preserve any edit that arrives after the snapshot read.
-    await env.DB.batch(priorities.map(row=>env.DB.prepare('DELETE FROM priority_preview WHERE mode = ? AND draft_json = ? AND updated_at = ?').bind(row.mode,row.draft_json,row.updated_at)));
+    const deleted=priorities.length ? await env.DB.batch(priorities.map(row=>env.DB.prepare('DELETE FROM priority_preview WHERE mode = ? AND draft_json = ? AND updated_at = ?').bind(row.mode,row.draft_json,row.updated_at))) : [];
     const remaining=(await env.DB.prepare('SELECT mode FROM priority_preview').all()).results || [];
-    return Response.json({removed:priorities.length-remaining.length,remaining:remaining.map(row=>row.mode)},{headers:noStore});
+    return Response.json({removed:deleted.reduce((sum,result)=>sum+result.meta.changes,0),remaining:remaining.map(row=>row.mode)},{headers:noStore});
   } catch { return new Response('Backup or reset failed',{status:503,headers:noStore}); }
 }
 async function skillsRevision(job, row) {
@@ -191,8 +208,14 @@ async function adminPanel(request, env) {
         const restored=backup.priorities.map(row=>{const draft=validateDraft(JSON.parse(row.draft_json));if(draft.mode!==row.mode || occupied.has(row.mode)) throw new Error('Backup priority already exists or has an invalid identity');return {...draft,enabled:false};});
         if(new Set(restored.map(draft=>draft.mode)).size!==restored.length) throw new Error('Duplicate backup priority');
         const reviews=backup.skills.map(row=>{const review=validateSkills(JSON.parse(row.review_json));if(review.job!==row.job)throw new Error('Invalid backup skill identity');return review;});
+        if(new Set(reviews.map(review=>review.job)).size!==reviews.length)throw new Error('Duplicate backup skills');
         for(const review of reviews)if(await env.DB.prepare('SELECT review_json FROM admin_skills WHERE job = ?').bind(review.job).first())throw new Error('Saved skills already exist. Restore into an empty catalogue.');
-        await env.DB.batch([...restored.map(draft=>env.DB.prepare('INSERT INTO priority_preview (mode, draft_json, updated_at) VALUES (?, ?, ?)').bind(draft.mode,JSON.stringify(draft),new Date().toISOString())),...reviews.map(review=>env.DB.prepare('INSERT INTO admin_skills (job, review_json, updated_at) VALUES (?, ?, ?)').bind(review.job,JSON.stringify(review),new Date().toISOString()))]);
+        try {
+          if(restored.length || reviews.length)await env.DB.batch([...restored.map(draft=>env.DB.prepare('INSERT INTO priority_preview (mode, draft_json, updated_at) VALUES (?, ?, ?)').bind(draft.mode,JSON.stringify(draft),new Date().toISOString())),...reviews.map(review=>env.DB.prepare('INSERT INTO admin_skills (job, review_json, updated_at) VALUES (?, ?, ?)').bind(review.job,JSON.stringify(review),new Date().toISOString()))]);
+        }catch(error){
+          if(/UNIQUE constraint failed: (?:priority_preview.mode|admin_skills.job)/.test(String(error.message)))return new Response('Saved records changed during restore. Nothing from this backup was restored. Load latest data and review before trying again.',{status:409,headers:noStore});
+          return new Response('Restore storage failed. Nothing from this backup was restored. Try again later.',{status:503,headers:noStore});
+        }
         return Response.json({restored:restored.length},{headers:noStore});
       }
       if (request.method === 'POST') {
