@@ -81,14 +81,7 @@ export function orderMatches(steps, world, drafts) {
   return Object.values(drafts).filter(draft => draftSettings(draft)?.world === world && draft.steps.length === steps.length && draft.steps.every((step,i)=>step.skill === steps[i].skill && step.level === steps[i].level));
 }
 
-const playerSourceKey = source => {
-  const stat=/^hexastat([123])$/i.exec(source.coreId);
-  if(stat)return 'hexaStat'+stat[1];
-  const icon=source.icon || source.effectiveIcon || '';
-  const name=icon.slice(icon.lastIndexOf('/')+1).replace(/\.png$/i,'');
-  if(!/^[A-Za-z0-9_]+$/.test(name))throw new Error('Skill source identity is unavailable');
-  return name;
-};
+const playerSourceKey = source => source.coreId;
 export function trackerCatalogue(review) {
   const result = {nodes:[], stats:[], pending:0};
   if (!review) return result;
