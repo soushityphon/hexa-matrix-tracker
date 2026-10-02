@@ -139,6 +139,8 @@ Tracker Update choices use saved priority pair IDs and the owner’s pair names.
 
 Class loading shows Loading... while data is pending, rather than the empty-catalogue message. Catalogue and saved-priority reads run in parallel. Successful class data is cached in memory for 30 seconds, so a return switch can render at once; concurrent requests for the same class are coalesced. Focus refreshes bypass the cache, and failures clear the failed class cache and unavailable view. Only source/catalogue data is cached, with player progress still read from the existing class-specific storage. No permanent browser or server cache is added.
 
+Class loads have a 15-second deadline covering both requests and their response bodies. A timeout or failure aborts the remaining work, clears the unavailable view and shows Retry loading. Retry fetches the selected class again without using the cache. Rapid switches coalesce pending requests for each class; only the latest selected view can render. Late timed-out results cannot populate the cache. This also bounds catalogue reads used by player export/import. Saved player progress remains intact. Retaining an editable stale view remains a separate decision under #30.
+
 ## Fragment Calculator
 
 Summary sits above the left-column matrix and retains the Fragment-spending completion formula and full material totals. Include Sol Janus remains available in either world when Janus belongs to the selected order. The Fragment Calculator is Heroic-only; its per-class inventory, daily farming and weekly selections stay saved while hidden.

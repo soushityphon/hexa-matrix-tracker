@@ -39,6 +39,7 @@ let refreshSequence=0;
 let classLoading=true, classLoadFailed=false;
 const classDataCache=new Map(), classRequests=new Map();
 const CLASS_CACHE_MS=30000;
+const CLASS_REQUEST_MS=15000;
 const selectedStats={};
 const initialLevel=node=>node.initialLevel ?? (node.short==='Apotheosis'?1:0);
 let saved=playerStorage.read(storageKey);
@@ -500,19 +501,29 @@ $('#next-upgrade').addEventListener('click', event => {
 function requestClassData(className) {
   if(classRequests.has(className))return classRequests.get(className);
   const job=className==='ren'?'렌':undefined;
-  // These endpoints are independent. Avoid two sequential network round trips.
-  const request=Promise.all([
-    fetch('/api/tracker-catalogue'+(job?'?job='+encodeURIComponent(job):''),{cache:'no-store'}).then(async response=>{
+  const controller=new AbortController();
+  let timer;
+  const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>{
+    reject(new Error('Loading timed out'));
+    controller.abort();
+  },CLASS_REQUEST_MS);});
+  // Bound the whole operation, including response bodies.
+  const reads=Promise.all([
+    fetch('/api/tracker-catalogue'+(job?'?job='+encodeURIComponent(job):''),{cache:'no-store',signal:controller.signal}).then(async response=>{
       if(!response.ok)throw new Error('Saved skills are unavailable');
       return response.json();
     }),
-    fetchSharedPreview(job)
-  ]).then(([model,shared])=>{
+    fetchSharedPreview(job,{signal:controller.signal})
+  ]);
+  const request=Promise.race([reads,deadline]).then(([model,shared])=>{
     const drafts=Object.fromEntries(Object.entries(shared).filter(([,draft])=>(draft.job==='렌'?'ren':'hoyoung')===className));
     const snapshot={model,drafts,loadedAt:Date.now()};
     classDataCache.set(className,snapshot);
     return snapshot;
-  }).finally(()=>{classRequests.delete(className);});
+  }).finally(()=>{
+    clearTimeout(timer);controller.abort();
+    if(classRequests.get(className)===request)classRequests.delete(className);
+  });
   classRequests.set(className,request);
   return request;
 }
@@ -568,6 +579,9 @@ $('#import-progress-file').addEventListener('change',async event=>{
 });
 async function refreshSharedPriorities({force=false}={}) {
   const classAtStart=activeClass,sequence=++refreshSequence;
+  $('#retry-priorities').hidden=true;
+  if(!NODES.length){classLoading=true;classLoadFailed=false;renderInputs();render();}
+  $('#priority-sync').textContent='';
   try {
     const cached=classDataCache.get(classAtStart);
     const snapshot=!force&&!classRequests.has(classAtStart)&&cached&&Date.now()-cached.loadedAt<CLASS_CACHE_MS ? cached : await requestClassData(classAtStart);
@@ -586,9 +600,11 @@ async function refreshSharedPriorities({force=false}={}) {
     classLoading=false;classLoadFailed=true;
     NODES=[];statNodes=[];nodeByShort={};setTrackerCatalogue([]);
     previewDrafts={};catalog=previewCatalog({});renderInputs();render();
-    $('#priority-sync').textContent = `Shared priorities could not be loaded: ${error.message}. Priorities are unavailable until storage responds.`;
+    $('#retry-priorities').hidden=false;
+    $('#priority-sync').textContent = `Shared priorities could not be loaded: ${error.message}. Check your connection, then retry.`;
   }
 }
+$('#retry-priorities').addEventListener('click',()=>refreshSharedPriorities({force:true}));
 $('#class').addEventListener('change',()=>{
   activeClass=$('#class').value;selectedStats[activeClass]=null;document.documentElement.dataset.class=activeClass;storageKey='hexa-tracker-'+activeClass+'-v1';
   decorations.setClass(activeClass);

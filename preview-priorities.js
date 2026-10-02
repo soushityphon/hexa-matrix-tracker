@@ -45,17 +45,17 @@ export function matchingPriorityVersion(steps, sourceMode, drafts) {
   return null;
 }
 
-async function previewRequest(method, value, job) {
+async function previewRequest(method, value, job, signal) {
   const response = await fetch('/api/priority-preview'+(job?'?job='+encodeURIComponent(job):''), {
     method, headers: method === 'GET' ? {} : { 'Content-Type': 'application/json' },
-    ...(method === 'GET' ? {} : { body: JSON.stringify(value) }), cache: 'no-store'
+    ...(method === 'GET' ? {} : { body: JSON.stringify(value) }), cache: 'no-store', signal
   });
   if (!response.ok) throw new Error((await response.text()).slice(0, 200) || `Priority storage returned ${response.status}`);
   return response.json();
 }
 
-export async function fetchSharedPreview(job) {
-  const { drafts } = await previewRequest('GET',undefined,job);
+export async function fetchSharedPreview(job, {signal}={}) {
+  const { drafts } = await previewRequest('GET',undefined,job,signal);
   const valid = {};
   for (const [mode, value] of Object.entries(drafts || {})) {
     try {

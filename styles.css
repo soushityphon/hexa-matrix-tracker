@@ -71,3 +71,5 @@ input[type="checkbox"]{accent-color:var(--ui-accent)}
 .kofi-link:focus-visible{outline:2px solid var(--ui-accent);outline-offset:3px}
 
 .save-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}.save-actions button{min-height:32px}#backup-status{margin:8px 0 0;line-height:1.4}@media(max-width:520px){.matrix-panel>.panel-head{align-items:flex-start}.save-actions{max-width:190px}.save-actions button{flex:1 1 auto}}
+
+.load-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.load-status p{flex:1 1 240px}.load-status button{min-height:44px}.load-status button[hidden]{display:none}
