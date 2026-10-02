@@ -117,7 +117,7 @@ for (const job of ['hoyoung', 'ren']) {
       const response = await route.fetch();
       const data = await response.json();
       for (const draft of Object.values(data.drafts)) {
-        draft.names = Object.fromEntries(draft.steps.map(step => [step.skill, longName]));
+        draft.names = Object.fromEntries([...new Set([...Object.keys(draft.names || {}), ...draft.steps.map(step => step.skill)])].map(skill => [skill, longName]));
         draft.shortNames = { ...draft.names };
       }
       await route.fulfill({ json: data });
