@@ -13,6 +13,7 @@ import { createInfographic } from './infographic.js';
 import { infographicCheckpoints, infographicDisplayCheckpoints, infographicContext, clickInfographicCheckpoint, reconcileInfographicUndo, invalidateInfographicUndo, reconcileStatCompletion } from './infographic-progress.js';
 
 import { createPlayerStorage } from './player-storage.js';
+import { createPlayerBackup, parsePlayerBackup, PLAYER_CLASSES } from './player-backup.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -515,6 +516,51 @@ function requestClassData(className) {
   return request;
 }
 
+function downloadJSON(value,name) {
+  const blob=new Blob([JSON.stringify(value,null,2)+'\n'],{type:'application/json'});
+  const url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download=name;document.body.append(link);link.click();link.remove();URL.revokeObjectURL(url);
+}
+async function backupModels() {
+  const entries=await Promise.all(Object.keys(PLAYER_CLASSES).map(async className=>[className,(await requestClassData(className)).model]));
+  return Object.fromEntries(entries);
+}
+async function currentBackup(models) {
+  const classes={};
+  for(const className of Object.keys(PLAYER_CLASSES))classes[className]=playerStorage.read('hexa-tracker-'+className+'-v1');
+  return createPlayerBackup(classes,models);
+}
+function backupStatus(message,error=false) {
+  const status=$('#backup-status');status.hidden=!message;status.textContent=message;status.classList.toggle('error',error);
+}
+$('#export-progress').addEventListener('click',async()=>{
+  const button=$('#export-progress');button.disabled=true;backupStatus('Preparing progress backup...');
+  try {
+    const backup=await currentBackup(await backupModels());
+    downloadJSON(backup,'hexa-matrix-progress-'+new Date().toISOString().slice(0,10)+'.json');
+    backupStatus('Progress backup exported for all classes.');
+  } catch(error) {backupStatus('Progress could not be exported: '+error.message,true);}
+  finally {button.disabled=false;}
+});
+$('#import-progress').addEventListener('click',()=>$('#import-progress-file').click());
+$('#import-progress-file').addEventListener('change',async event=>{
+  const file=event.target.files?.[0];event.target.value='';if(!file)return;
+  backupStatus('Checking progress backup...');
+  try {
+    if(file.size>500000)throw new Error('Backup file is too large');
+    const models=await backupModels();
+    let value;try{value=JSON.parse(await file.text());}catch{throw new Error('Backup is not valid JSON');}
+    const classes=parsePlayerBackup(value,models),names=Object.keys(classes).map(name=>PLAYER_CLASSES[name]).join(', ');
+    if(!confirm(`Restore progress for ${names}? Existing progress for these classes will be replaced. A safety backup of your current progress will download first.`)){backupStatus('Import cancelled.');return;}
+    const safety=await currentBackup(models);
+    downloadJSON(safety,'hexa-matrix-before-import-'+new Date().toISOString().slice(0,10)+'.json');
+    const replacements=Object.fromEntries(Object.entries(classes).map(([className,progress])=>['hexa-tracker-'+className+'-v1',progress]));
+    if(!playerStorage.replaceMany(replacements))throw new Error('Existing progress could not be safely replaced. No import was applied');
+    saved=playerStorage.read(storageKey);
+    selectedStats[activeClass]=null;renderInputs();render();
+    backupStatus(`Imported ${names}. Infographic undo history was cleared as agreed.`);
+  } catch(error) {backupStatus('Progress import failed: '+error.message,true);}
+});
 async function refreshSharedPriorities({force=false}={}) {
   const classAtStart=activeClass,sequence=++refreshSequence;
   try {
