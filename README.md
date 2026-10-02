@@ -1,3 +1,11 @@
+## Ordinary progress Undo, Issue #30
+
+The Current HEXA Matrix actions include **Undo** for the last ordinary skill or Stat progress edit in this tab. It covers manual levels, Next level, To checkpoint, Stat unlock/cancel and valid line edits. Typing within one field edit is grouped into one action; invalid Stat drafts and unchanged values create no action. Undo restores only that skill's actual former level or full Stat state. Resources, calculator settings and other skills retain their current values.
+
+Undo also restores that skill's prior infographic click history when its exact source context and restored progress still validate. Existing infographic reverse-per-skill Undo remains. Ordinary Undo is session-only and is cleared by reload, class/selected-order changes, successful import, Reset or an infographic progress/Undo action. Refresh/failure pauses it; identical Retry data can retain it, while changed order/catalogue identity or bounds invalidate it. No save format, source data or calculation changes are introduced. Storage warnings still apply when a restored edit cannot be persisted.
+
+`tests/progress-undo.test.mjs` checks the actual app across typed edits, actions, Stat state/legacy totals, unrelated resources, infographic history, both classes, order changes, Reset/import, source refresh and damaged/blocked saves. Rendered phone layout and live interaction remain owner review.
+
 ## Admin priority record protection, Issue #30
 
 The Admin Panel validates saved priority rows one at a time. A damaged JSON record, unsupported shape, invalid checkpoint or mismatched storage ID no longer blocks valid priorities or the other class. Saved priorities shows a separate Damaged records list across all classes, with the stored ID, validation reason and an owner-only Download raw record action. The download wraps the exact original `draft_json` string in a `hexa-invalid-priority-record` envelope. It is recovery evidence, not a normal importable priority backup. Unknown class identity is not guessed.

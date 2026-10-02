@@ -12,6 +12,7 @@ import { createMusic } from './music.js';
 import { createInfographic } from './infographic.js';
 import { infographicCheckpoints, infographicDisplayCheckpoints, infographicContext, clickInfographicCheckpoint, reconcileInfographicUndo, invalidateInfographicUndo, reconcileStatCompletion } from './infographic-progress.js';
 
+import { captureSkillProgress, createProgressUndo, restoreProgressHistory } from './progress-undo.js';
 import { createPlayerStorage } from './player-storage.js';
 import { createPlayerBackup, parsePlayerBackup, PLAYER_CLASSES } from './player-backup.js';
 
@@ -39,7 +40,7 @@ let refreshSequence=0;
 let classLoading=true, classLoadFailed=false;
 let verifiedClass=null;
 const pausedControls=new Map();
-const progressControls='#patch, #priority-version, [name="world"], [data-node], [data-stat-line], [data-stat-unlocked], [data-stat-select], [data-stat-cancel], #next-upgrade button, [data-checkpoint], #owned, #perday, #erdaRequest, #epicDungeon, #includeJanus, #hideDone, #reset, #import-progress, #import-progress-file';
+const progressControls='#patch, #priority-version, [name="world"], [data-node], [data-stat-line], [data-stat-unlocked], [data-stat-select], [data-stat-cancel], #next-upgrade button, [data-checkpoint], #owned, #perday, #erdaRequest, #epicDungeon, #includeJanus, #hideDone, #reset, #undo-progress, #import-progress, #import-progress-file';
 const editsPaused=()=>classLoading || classLoadFailed;
 function syncPausedControls() {
   if(editsPaused()) {
@@ -51,6 +52,7 @@ function syncPausedControls() {
     for(const [control,disabled] of pausedControls)control.disabled=disabled;
     pausedControls.clear();
   }
+  syncProgressUndo();
 }
 
 const classDataCache=new Map(), classRequests=new Map();
@@ -69,8 +71,74 @@ let view='tracker';
 try { if(playerStorage.readPreference('hexa-tracker-view-v1')==='infographic')view='infographic';
   $('#infographic-hide').checked=playerStorage.readPreference('hexa-tracker-infographic-hide-v1')==='true'; }catch{}
 let infographicEntries=[], infographicScope=null;
+const progressUndo=createProgressUndo();
+let pendingProgressEdit=null;
+function undoScope() {
+  return JSON.stringify([activeClass, infographicScope, [...NODES,...statNodes].map(node=>
+    [node.id || node.short,node.short,initialLevel(node),node.maxLevel ?? (statNodes.includes(node)?20:30)])]);
+}
+function syncProgressUndo() {
+  const action=progressUndo.current(saved,undoScope());
+  $('#undo-progress').disabled=editsPaused() || !action;
+  $('#undo-progress').setAttribute('aria-label',action ? `Undo last progress edit for ${action.label}` : 'Undo last progress edit');
+}
+function clearProgressUndo() {
+  pendingProgressEdit=null;progressUndo.clear();syncProgressUndo();
+  $('#undo-status').textContent='';
+}
+function beginProgressEdit(input,skill) {
+  if(pendingProgressEdit?.input!==input) {
+    $('#undo-status').textContent='';
+    const node=[...NODES,...statNodes].find(node=>node.short===skill);
+    pendingProgressEdit={input,skill,label:node?.name || skill,scope:undoScope(),before:captureSkillProgress(saved,skill),previous:progressUndo.current(saved,undoScope())};
+  }
+  return pendingProgressEdit;
+}
+function finishProgressEdit(edit,finished=false) {
+  const after=captureSkillProgress(saved,edit.skill);
+  if(!progressUndo.record({...edit,after})) {
+    // Typing back to the starting value is no action. Keep the earlier Undo.
+    restoreProgressHistory(saved,edit.before.history,undoContexts());
+    if(Object.keys(edit.before.history).length)playerStorage.write(storageKey,saved);
+    progressUndo.clear();
+    if(edit.previous)progressUndo.record(edit.previous);
+  }
+  if(finished)pendingProgressEdit=null;
+  syncProgressUndo();
+}
+function undoContexts() {
+  const nodes=[...NODES.map(node=>({...node,initialLevel:initialLevel(node)})),...statNodes.map(node=>({...node,isStat:true,maxLevel:node.maxLevel ?? 20}))];
+  return Object.fromEntries(Object.entries(catalog.priorities).map(([mode,order])=>{
+    const entries=infographicCheckpoints(order,nodes);
+    return [mode,{entries,context:infographicContext(mode,entries)}];
+  }));
+}
+$('#undo-progress').addEventListener('click',()=>{
+  if(editsPaused())return;
+  const step=progressUndo.restore(saved,undoScope(),undoContexts());
+  if(!step)return;
+  pendingProgressEdit=null;
+  const input=$$('[data-node]').find(input=>input.dataset.node===step.skill);
+  if(input)input.value=saved.levels[step.skill];
+  const row=$$('[data-stat]').find(output=>output.dataset.stat===step.skill)?.closest('.stat-row');
+  if(row) {
+    const unlocked=row.querySelector('[data-stat-unlocked]');
+    unlocked.checked=saved.statUnlocked?.[step.skill]===true || saved.levels?.[step.skill]>0;
+    row.querySelectorAll('[data-stat-line]').forEach((field,index)=>{
+      field.value=saved.statLines?.[step.skill]?.[index] ?? '';
+      field.setCustomValidity('');field.setAttribute('aria-invalid','false');
+    });
+  }
+  render();syncProgressUndo();
+  $('#undo-status').textContent=`Restored previous progress for ${step.label}.`;
+});
+// A focus session is one edit, even though valid input previews save live.
+document.addEventListener('focusout',event=>{
+  if(pendingProgressEdit?.input===event.target)pendingProgressEdit=null;
+});
 const infographic=createInfographic({document,window,grid:$('#infographic-grid'),onClick:key=>{
   if(editsPaused() || !infographicScope || !clickInfographicCheckpoint(saved,infographicScope,infographicEntries,key))return;
+  clearProgressUndo();
   const entry=infographicEntries.find(entry=>entry.key===key);
   if(entry.stat) {
     const row=$$('[data-stat]').find(output=>output.dataset.stat===entry.skill)?.closest('.stat-row');
@@ -248,7 +316,11 @@ $('.stat-list').addEventListener('click',event=>{
   if(event.target.closest('[data-stat-cancel]')){
     const unlocked=$$('[data-stat-unlocked]').find(field=>field.dataset.statUnlocked===skill);
     const lines=saved.statLines?.[skill];
-    if(!unlocked.disabled&&validateStatLines(lines).complete&&lines.every(level=>level===0)){invalidateInfographicUndo(saved,skill);unlocked.checked=false;}
+    if(!unlocked.disabled&&validateStatLines(lines).complete&&lines.every(level=>level===0)){
+      const edit=beginProgressEdit(unlocked,skill);
+      invalidateInfographicUndo(saved,skill);unlocked.checked=false;
+      render();finishProgressEdit(edit,true);return;
+    }
   }else{
     selectedStats[activeClass]=selectedStats[activeClass]===skill ? null : skill;
   }
@@ -345,6 +417,8 @@ function render() {
   $('#includeJanus').closest('.include-option').hidden = !available.has('Janus');
   infographicEntries=infographicCheckpoints(order,[...NODES.map(node=>({...node,initialLevel:initialLevel(node)})),...statNodes.map(node=>({...node,isStat:true,maxLevel:node.maxLevel ?? 20}))]);
   infographicScope=infographicContext(mode,infographicEntries);
+  if(pendingProgressEdit && pendingProgressEdit.scope!==undoScope())pendingProgressEdit=null;
+  syncProgressUndo();
   setTrackerCatalogue([]);
   if (!mode) {
     highlightCurrentSkill(null);
@@ -460,6 +534,7 @@ function render() {
   $('#infographic-message').textContent=infographicEntries.length ? '' : 'No checkpoints are available for this priority.';
   if(view==='infographic')infographic.render(infographicDisplayCheckpoints(infographicEntries,saved,infographicScope),saved,infographicScope,$('#infographic-hide').checked);
   playerStorage.write(storageKey,saved);
+  syncProgressUndo();
 }
 
 function updateStatLine(input) {
@@ -477,24 +552,40 @@ function updateStatLine(input) {
     syncStatVisuals(skill,row);
     return;
   }
+  const edit=beginProgressEdit(input,skill);
+  const sameLines=JSON.stringify(lines)===JSON.stringify(saved.statLines?.[skill]);
+  const unlockChanges=input.value!=='' && !row.querySelector('[data-stat-unlocked]').checked;
+  const markChanges=checked.complete && saved.statCompleted?.[skill]===true;
+  if(sameLines && !unlockChanges && !markChanges) {render();finishProgressEdit(edit);return;}
   invalidateInfographicUndo(saved,skill);
   reconcileStatCompletion(saved,skill,lines);
   saved.statLines={...saved.statLines,[skill]:lines};
   if(input.value!=='')row.querySelector('[data-stat-unlocked]').checked=true;
-  render();
+  render();finishProgressEdit(edit);
 }
 document.addEventListener('input', event=>{
   if(editsPaused())return;
-  if(event.target.matches('[data-node]'))invalidateInfographicUndo(saved,event.target.dataset.node);
-  if(event.target.matches('[data-stat-line]'))updateStatLine(event.target);
-  else if(!['class','music-volume'].includes(event.target.id))render();
+  if(event.target.matches('[data-stat-line]')) {updateStatLine(event.target);return;}
+  if(event.target.matches('[data-node]')) {
+    const edit=beginProgressEdit(event.target,event.target.dataset.node);
+    if(validLevel(event.target)!==saved.levels?.[edit.skill])invalidateInfographicUndo(saved,edit.skill);
+    render();finishProgressEdit(edit);return;
+  }
+  if(!['class','music-volume'].includes(event.target.id))render();
 });
 document.addEventListener('change', event => {
   if(editsPaused()){if(event.target.id==='infographic-hide')render();return;}
   if(['class','music-volume'].includes(event.target.id))return;
-  if(event.target.matches('[data-node], [data-stat-unlocked]'))invalidateInfographicUndo(saved,event.target.dataset.node || event.target.dataset.statUnlocked);
-  if(event.target.matches('[data-stat-line]')) { updateStatLine(event.target); return; }
-  if (event.target.matches('[data-node]')) event.target.value = validLevel(event.target);
+  if(event.target.matches('[data-stat-line]')) {
+    updateStatLine(event.target);pendingProgressEdit=null;return;
+  }
+  if(event.target.matches('[data-node], [data-stat-unlocked]')) {
+    const edit=beginProgressEdit(event.target,event.target.dataset.node || event.target.dataset.statUnlocked);
+    const changed=event.target.matches('[data-node]') ? validLevel(event.target)!==saved.levels?.[edit.skill] : event.target.checked!==saved.statUnlocked?.[edit.skill];
+    if(changed)invalidateInfographicUndo(saved,edit.skill);
+    if(event.target.matches('[data-node]'))event.target.value=validLevel(event.target);
+    render();finishProgressEdit(edit,true);return;
+  }
   render();
 });
 $('#next-upgrade').addEventListener('click', event => {
@@ -505,6 +596,7 @@ $('#next-upgrade').addEventListener('click', event => {
     const stat = [...$$('[data-stat]')].find(field => field.dataset.stat === button.dataset.upgradeSkill);
     const unlocked = [...$$('[data-stat-unlocked]')].find(field => field.dataset.statUnlocked === button.dataset.upgradeSkill);
     if (!stat || !unlocked) return;
+    pendingProgressEdit=null;
     if (button.dataset.statAction === 'unlock' && !unlocked.checked && !unlocked.disabled) {
       unlocked.checked = true;
       unlocked.dispatchEvent(new Event('change', { bubbles: true }));
@@ -522,8 +614,10 @@ $('#next-upgrade').addEventListener('click', event => {
   const current = validLevel(input);
   const target = button.dataset.nextLevel ? Math.min(current + 1, Number(input.max)) : clamp(button.dataset.upgradeLevel, Number(input.max), Number(input.min));
   if (target <= current) return;
+  pendingProgressEdit=null;
   input.value = target;
   input.dispatchEvent(new Event('input', { bubbles: true }));
+  pendingProgressEdit=null;
 });
 function requestClassData(className) {
   if(classRequests.has(className))return classRequests.get(className);
@@ -601,6 +695,7 @@ $('#import-progress-file').addEventListener('change',async event=>{
     downloadJSON(safety,'hexa-matrix-before-import-'+new Date().toISOString().slice(0,10)+'.json');
     const replacements=Object.fromEntries(Object.entries(classes).map(([className,progress])=>['hexa-tracker-'+className+'-v1',progress]));
     if(!playerStorage.replaceMany(replacements))throw new Error('Storage failed during import. Keep this tab open and retain the safety backup');
+    clearProgressUndo();
     saved=playerStorage.read(storageKey);
     selectedStats[activeClass]=null;renderInputs();render();
     backupStatus(`Imported ${names}. Infographic undo history was cleared as agreed.`);
@@ -609,6 +704,7 @@ $('#import-progress-file').addEventListener('change',async event=>{
 async function refreshSharedPriorities({force=false}={}) {
   const classAtStart=activeClass,sequence=++refreshSequence;
   $('#retry-priorities').hidden=true;
+  pendingProgressEdit=null;
   classLoading=true;classLoadFailed=false;
   if(verifiedClass!==activeClass){renderInputs();render();}
   syncPausedControls();
@@ -643,6 +739,7 @@ async function refreshSharedPriorities({force=false}={}) {
 }
 $('#retry-priorities').addEventListener('click',()=>refreshSharedPriorities({force:true}));
 $('#class').addEventListener('change',()=>{
+  clearProgressUndo();
   classLoading=false;classLoadFailed=false;syncPausedControls();verifiedClass=null;
   activeClass=$('#class').value;selectedStats[activeClass]=null;document.documentElement.dataset.class=activeClass;storageKey='hexa-tracker-'+activeClass+'-v1';
   decorations.setClass(activeClass);
@@ -657,6 +754,7 @@ window.addEventListener('focus',()=>refreshSharedPriorities({force:true}));
 $('#reset').onclick = () => {
   if(editsPaused())return;
   if (confirm(`Reset saved ${activeClass==='ren'?'Ren':'Hoyoung'} levels and resources?`)) {
+    clearProgressUndo();
     playerStorage.remove(storageKey);
     saved = {};
     renderInputs();
