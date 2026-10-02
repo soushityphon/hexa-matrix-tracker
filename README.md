@@ -1,3 +1,13 @@
+## Automated development checks, Issue #30
+
+Use Node 24.19.0, pinned in `.node-version`. Run `npm ci --ignore-scripts` and `npm run check` from the repository root. The check command runs the existing 27-file regression suite, builds the Worker, checks source/test/compiled JavaScript syntax, then tests compiled asset delivery. Dependencies remain locked in `package-lock.json`; no new package is required.
+
+GitHub's **Tracker checks** workflow runs on pushes and pull requests, including draft PR #22. The **Tests, Worker build and asset delivery** job uses the same commands, read-only repository access, pinned action commits and a ten-minute limit. It needs no application secrets, live D1 database or Scouter calls. New runs cancel older runs for the same ref.
+
+`tests/compiled-assets.test.mjs` checks exact GET bytes, empty HEAD bodies, MIME types and existing cache headers for the real HTML/module/style dependency graph, resource/Stat/background PNGs and Ren music. It also checks anonymous admin-page sign-in, root/query routes and that server-only files, source evidence, manifests and development files remain unavailable. Identity tests use a synthetic header in the isolated handler; they do not verify the hosting gateway's trust boundary. Existing music tests separately cover byte ranges. These are offline compiled-handler checks, not rendered browser, audible playback or live hosting acceptance.
+
+This workflow only validates source. It does not publish, migrate data, change hosting or approve a release. Continue to deploy authorised app changes through the existing test Site workflow. PR #22 must remain draft and unmerged until the owner approves eventual release. Record checks and remaining owner/device acceptance in Issue #30.
+
 ## Current Matrix and priority UI, Issue #30
 
 Sol Janus is always editable in Current HEXA Matrix and is permanently excluded from Upgrade Priority. The shared Summary checkbox optionally includes it in completion and material totals in both views. Its level uses existing per-class progress and backup identity `generalCore1`. Where Janus has no captured schedule, use the selected priority's captured Sol Hecate (`generalCore2`) schedule, following the owner's confirmation that their material requirements are equal. Missing Hecate costs disable inclusion rather than inventing costs. Source captures and priority data are unchanged.
