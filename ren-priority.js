@@ -29,11 +29,11 @@ export function renCatalogueFromDrafts(drafts,review) {
   for(const draft of Object.values(drafts))if(draft.job==='렌') {
     for(const source of draft.sourceSkills) {
       const node=renNode(source),row=rows.get(source.coreId),cost=draft.capturedCosts[node.short];
-      nodes.set(node.short,{...node,name:row?.name || source.sourceName,shortName:row?.shortName || source.sourceName,icon:source.icon,tag:row?.tag || '',group:sourceGroup(row?.category || source.category),costs:cost.levels,initialLevel:cost.freeBaseLevel});
+      nodes.set(node.short,{...node,name:row?.name || source.sourceName,shortName:row?.shortName || source.sourceName,icon:source.icon,sourceKey:source.icon.slice(source.icon.lastIndexOf('/')+1).replace(/\\.png$/i,''),tag:row?.tag || '',group:sourceGroup(row?.category || source.category),costs:cost.levels,initialLevel:cost.freeBaseLevel});
     }
     for(const [short,icon] of Object.entries(draft.statIcons)) {
       const n=['HEXA Stat I','HEXA Stat II','HEXA Stat III'].indexOf(short)+1,row=rows.get('hexastat'+n);
-      stats.set(short,{short,name:row?.name || short,shortName:row?.shortName || short,icon,tag:row?.tag || ''});
+      stats.set(short,{short,name:row?.name || short,shortName:row?.shortName || short,icon,sourceKey:'hexaStat'+n,tag:row?.tag || ''});
     }
   }
   return {nodes:[...nodes.values()],stats:[...stats.values()],pending:0};
