@@ -1,6 +1,6 @@
 ## Automated development checks, Issue #30
 
-Use Node 24.19.0, pinned in `.node-version`. Run `npm ci --ignore-scripts` and `npm run check` from the repository root. The check command runs the existing 27-file regression suite, builds the Worker, checks source/test/compiled JavaScript syntax, then tests compiled asset delivery. Dependencies remain locked in `package-lock.json`; no new package is required.
+Use Node 24.19.0, pinned in `.node-version`. Run `npm ci --ignore-scripts` and `npm run check` from the repository root. The check command runs the existing 27-file regression suite, builds the Worker, checks source/test/compiled JavaScript syntax, then tests compiled asset delivery. Dependencies, including development-only Playwright, remain locked in `package-lock.json`.
 
 GitHub's **Tracker checks** workflow runs on pushes and pull requests, including draft PR #22. The **Tests, Worker build and asset delivery** job uses the same commands, read-only repository access, pinned action commits and a ten-minute limit. It needs no application secrets, live D1 database or Scouter calls. New runs cancel older runs for the same ref.
 

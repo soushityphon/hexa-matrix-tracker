@@ -6,7 +6,7 @@ The suite runs Chromium at 1440 x 1000, 390 x 844 and 320 x 800. Phone projects 
 
 Hoyoung fixture orders/costs/FD are synthetic layout stimuli. Ren uses retained capture order/schedules with synthetic selection labels and saved progress. Both have a full/hidden selection and Heroic/Interactive choices for exercising the shared UI, not verifying live game availability or order accuracy. External artwork is replaced with a local PNG during normal checks and blocked for image-failure checks. Screenshots therefore establish layout, not authentic skill artwork or live hotlink delivery.
 
-Coverage includes both classes/views, Update/World/class switches, hidden-skill preservation, completed checkpoints and Hide completed, long reviewed names, failed images, page/panel overflow, native FD Enter/Space/Escape/focus behaviour, unchanged saved progress when opening explanations, compact pointer-target dimensions/centre hit testing and touch checkpoint/undo with unchanged inventory. Reports retain full-page baseline and long-name/image-failure screenshots plus target measurements. These are Chromium results at fixed widths, not physical Android/iOS acceptance. The checks do not impose a new 44px layout on owner-accepted compact controls.
+Coverage includes both classes/views, Update/World/class switches, hidden-skill preservation, completed checkpoints and Hide completed, long reviewed names, failed images, page/panel overflow, native FD Enter/Space/Escape and ordinary focus return, unchanged saved progress when opening explanations, compact pointer-target dimensions/centre hit testing and touch checkpoint/undo with unchanged inventory. Reports retain full-page baseline and long-name/image-failure screenshots plus target measurements. These are Chromium results at fixed widths, not physical Android/iOS acceptance. The checks do not impose a new 44px layout on owner-accepted compact controls.
 
 ## Owner/device checks still needed
 
@@ -19,3 +19,7 @@ Use the current public test tracker without clearing storage. Restore any tempor
 5. Review live artwork and connectors at your screen width. Motion/readability, reduced motion, Animations Off, audible music/mute/looping and real mobile playback remain the next separate Step 4 checks and #28/#29 acceptance.
 
 No rendered fixture result proves the hosting gateway identity boundary, live source availability, audio playback or real-device ergonomics. Record implemented, automated-rendered, deployed and owner-accepted states separately in Issue #30.
+
+## Known rendered failure
+
+The dedicated `known focus loss after native browser-chrome cycle` cases are marked expected failures for Issue #30. Tabbing from the modal's single Close button through Chromium browser chrome and back fires the app's window-focus refresh. Rebuilding the priority DOM disconnects the original FD opener, so Escape does not restore focus to its replacement. Ordinary Enter/Space, Close/Escape and focus return are checked separately. An unexpected pass fails CI, prompting removal of the expected-failure marker once fixed. Carry this forward to Step 4's priority rendering/focus work; do not count these cases as passing or owner acceptance.
