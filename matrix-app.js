@@ -407,7 +407,7 @@ function statAction(skill, action, label) {
   return `<button type="button" data-upgrade-skill="${skill}" data-stat-action="${action}" aria-label="${label} for ${skill}">${label}</button>`;
 }
 
-const STAT_FD_NOTE='General average from the owner-supplied HEXA Stat table, not personalised FD. Shown only with valid line levels totalling 20.';
+const STAT_FD_NOTE='General average from the Inven-supplied HEXA Stat table, not personalised FD. Shown only with valid line levels totalling 20.';
 function fdExplanation(text,note,label) {
   return `<button type="button" class="fd-gain fd-info" data-fd-note="${escapeHtml(note)}" title="${escapeHtml(note)}" aria-label="${escapeHtml(label)} Open FD explanation." aria-haspopup="dialog" aria-controls="fd-explanation">${escapeHtml(text)}</button>`;
 }
