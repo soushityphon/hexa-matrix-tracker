@@ -1,3 +1,7 @@
+## Compact touch controls, Issue #30
+
+The Stat cancel cross retains its small icon within a 32px target, without increasing the Stat card size. Coarse-pointer inputs, selection controls, checkbox labels and Animations use a 28px minimum where needed for the scaled narrow-phone layout. Rendered tests cover both classes, four cancel corners, editor separation, exact Undo and scaled target sizes. Real-device ergonomics remain owner review. Audible music playback is owner-confirmed; separate mute/loop/class-switch scenarios are not inferred.
+
 ## Automated development checks, Issue #30
 
 Use Node 24.19.0, pinned in `.node-version`. Run `npm ci --ignore-scripts` and `npm run check` from the repository root. The check command runs the existing 27-file regression suite, builds the Worker, checks source/test/compiled JavaScript syntax, then tests compiled asset delivery. Dependencies, including development-only Playwright, remain locked in `package-lock.json`.

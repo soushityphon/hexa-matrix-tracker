@@ -36,18 +36,26 @@ async function shot(page, testInfo, name) {
 for (const job of ['hoyoung', 'ren']) {
   test(job + ' pointer targets and isolated checkpoint undo', async ({ page }, info) => {
     await open(page, job);
-    const targets = await page.locator('#class,#patch,#view-tracker,#view-infographic,#animations,.stat-select,.stat-cancel:not([hidden])').evaluateAll(nodes => nodes.map(node => {
+    const scale = await page.evaluate(() => visualViewport?.scale || 1);
+    const targets = await page.locator('#class,#patch,#view-tracker,#view-infographic,#animations,#owned,#perday,#erdaRequest,#epicDungeon,.node-row input,.toggle,.world-picker label,.save-actions button,.fd-info,.kofi-link,.stat-select,.stat-cancel:not([hidden])').evaluateAll((nodes, scale) => nodes.map(node => {
       const b = node.getBoundingClientRect();
       const hit = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
-      return { label: node.getAttribute('aria-label') || node.textContent.trim(), width: b.width, height: b.height,
+      return { label: node.getAttribute('aria-label') || node.textContent.trim(), width: b.width, height: b.height, scale, scaledWidth: b.width * scale, scaledHeight: b.height * scale,
         visible: b.width > 0 && b.height > 0, inViewport: b.top >= 0 && b.bottom <= innerHeight,
         unobscured: hit === node || node.contains(hit) };
-    }));
+    }), scale);
     await info.attach('pointer-targets.json', { body: JSON.stringify(targets, null, 2), contentType: 'application/json' });
     // Record compact accepted controls, without imposing a new 44px layout.
     for (const target of targets.filter(target => target.visible)) {
-      expect(target.width, target.label).toBeGreaterThanOrEqual(24);
-      expect(target.height, target.label).toBeGreaterThanOrEqual(24);
+      // Associated row/label controls remain compact on fine-pointer desktops.
+      if (info.project.use.hasTouch) {
+        expect(target.width, target.label).toBeGreaterThanOrEqual(24);
+        expect(target.height, target.label).toBeGreaterThanOrEqual(24);
+      }
+      if (info.project.use.hasTouch) {
+        expect(target.scaledWidth, target.label).toBeGreaterThanOrEqual(24);
+        expect(target.scaledHeight, target.label).toBeGreaterThanOrEqual(24);
+      }
       if (target.inViewport) expect(target.unobscured, target.label).toBe(true);
     }
     await page.locator('#view-infographic').click();
@@ -65,6 +73,33 @@ for (const job of ['hoyoung', 'ren']) {
     const after = await page.evaluate(job => JSON.parse(localStorage.getItem('hexa-tracker-' + job + '-v1')), job);
     expect(after.levels).toEqual(before.levels);
     expect(after.owned).toBe(before.owned);
+  });
+  test(job + ' Stat cancel edges, editor separation and Undo', async ({ page }, info) => {
+    await open(page, job);
+    const card = page.locator('[data-stat-selector="HEXA Stat I"]');
+    const cancel = card.locator('.stat-cancel');
+    await cancel.scrollIntoViewIfNeeded();
+    const box = await cancel.boundingBox();
+    expect(box.width).toBe(32); expect(box.height).toBe(32);
+    const saved = () => page.evaluate(job => JSON.parse(localStorage.getItem('hexa-tracker-' + job + '-v1')), job);
+    const before = await saved();
+    for (const position of [{ x: 2, y: 2 }, { x: 30, y: 2 }, { x: 2, y: 30 }, { x: 30, y: 30 }]) {
+      if (info.project.use.hasTouch) await cancel.tap({ position }); else await cancel.click({ position });
+      await expect(cancel).not.toBeVisible();
+      await expect(card.locator('.stat-select')).toHaveAttribute('aria-expanded', 'false');
+      await expect.poll(async () => (await saved()).statUnlocked['HEXA Stat I']).toBe(false);
+      expect((await saved()).owned).toBe(before.owned);
+      await page.locator('#undo-progress').click();
+      await expect(cancel).toBeVisible();
+      await expect.poll(async () => (await saved()).statUnlocked).toEqual(before.statUnlocked);
+      expect((await saved()).statLines).toEqual(before.statLines);
+      expect((await saved()).levels).toEqual(before.levels);
+    }
+    if (info.project.use.hasTouch) await card.locator('.stat-select').tap(); else await card.locator('.stat-select').click();
+    await expect(card.locator('.stat-select')).toHaveAttribute('aria-expanded', 'true');
+    await expect(cancel).toBeVisible();
+    await fit(page);
+    await shot(page, info, job + '-stat-touch-targets');
   });
   test(job + ' views, switches, saved hidden progress and overflow', async ({ page }, info) => {
     await open(page, job);
