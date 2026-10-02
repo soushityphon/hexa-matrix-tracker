@@ -1,3 +1,13 @@
+## Player save protection, Issue #30
+
+`player-storage.js` owns tracker progress reads, writes and removal, plus class/view preferences. Storage exceptions do not propagate into priority loading. A separate live save-status message states when changes are unsaved, when saved progress cannot be read, or when a record is damaged. Session copies retain edits across class switches; closing or reloading the tab cannot preserve edits that failed to reach browser storage. Successful later writes clear the unsaved warning.
+
+The existing per-class v1 format remains. Validation accepts legacy saves without Stat lines, completion marks or infographic history. Existing migration keeps legacy Stat totals without inferring line splits. Supported levels, partial/full Stat lines, unlocks, completion marks, inventory, weekly calculator choices, hidden-skill levels and undo records pass through unchanged. Catalogue bounds and existing history reconciliation still apply in the renderer. No calculation or source data changes are made.
+
+Invalid JSON or unsupported field shapes protect the original storage entry from writes and Reset. The UI can run with defaults and session edits, with a warning; it does not replace the damaged raw record. An unreadable entry also stays protected for that session because its prior contents are unknown. Reload after storage access is restored to recover persisted progress. This batch does not add player import/export, cross-tab conflict handling or an automatic repair/replacement flow. Malformed admin priority isolation is the next item in #30.
+
+`tests/player-storage.test.mjs` exercises shape validation, legacy/current preservation, quota/blocked reads, failed removal, raw-record protection and session switching. `tests/player-storage-ui.test.mjs` reproduces blocked writes and malformed records through the actual app, including Reset and both classes. Existing Stat and infographic tests cover detailed migration/history restoration. Rendered warning layout and normal saved-progress checks remain owner review.
+
 ## Infographic view, Issue #29
 
 The toolbar offers Tracker and Infographic. A first visit starts in Tracker; `hexa-tracker-view-v1` remembers the last view. Infographic contains two full-width sections, the existing Summary followed by the icon guide. Its Summary places the completion bar and both material blocks on one row on desktop: the bar uses half the width and each material block uses a quarter. Phones stack both material blocks below the bar. The regular tracker layout and material/completion calculations are unchanged.

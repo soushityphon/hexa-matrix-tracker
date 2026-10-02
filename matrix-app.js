@@ -12,10 +12,21 @@ import { createMusic } from './music.js';
 import { createInfographic } from './infographic.js';
 import { infographicCheckpoints, infographicDisplayCheckpoints, infographicContext, clickInfographicCheckpoint, reconcileInfographicUndo, invalidateInfographicUndo, reconcileStatCompletion } from './infographic-progress.js';
 
+import { createPlayerStorage } from './player-storage.js';
+
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
+const playerStorage=createPlayerStorage(()=>localStorage,({reason})=>{
+  const status=$('#save-status');
+  status.hidden=!reason;
+  status.textContent=reason==='damaged'
+    ? 'Saved progress is damaged. The original record is preserved. Changes stay in this session and cannot be saved until the record is recovered.'
+    : reason==='unreadable'
+    ? 'Saved progress could not be read. Changes stay in this session. Reload once browser storage is available to restore your saved progress.'
+    : reason==='unsaved' ? 'Changes are not saved. Keep this tab open. Progress stays in this session while browser storage is unavailable.' : '';
+});
 let activeClass='hoyoung';
-try {activeClass=new URL(location.href).searchParams.get('class') || localStorage.getItem('hexa-tracker-class-v1') || 'hoyoung';}catch{}
+try {activeClass=new URL(location.href).searchParams.get('class') || playerStorage.readPreference('hexa-tracker-class-v1') || 'hoyoung';}catch{}
 if(!['hoyoung','ren'].includes(activeClass))activeClass='hoyoung';
 $('#class').value=activeClass;
 document.documentElement.dataset.class=activeClass;
@@ -28,9 +39,7 @@ const classDataCache=new Map(), classRequests=new Map();
 const CLASS_CACHE_MS=30000;
 const selectedStats={};
 const initialLevel=node=>node.initialLevel ?? (node.short==='Apotheosis'?1:0);
-let saved;
-try { saved = JSON.parse(localStorage.getItem(storageKey) || '{}') || {}; }
-catch { saved = {}; }
+let saved=playerStorage.read(storageKey);
 let previewDrafts = {};
 let catalog = previewCatalog(previewDrafts);
 const requestedMode = new URL(location.href).searchParams.get('mode');
@@ -38,8 +47,8 @@ let initialSharedLoad = true;
 if (requestedMode && catalog.settings[requestedMode]?.enabled && catalog.priorities[requestedMode]?.length) saved.mode = requestedMode;
 
 let view='tracker';
-try { if(localStorage.getItem('hexa-tracker-view-v1')==='infographic')view='infographic';
-  $('#infographic-hide').checked=localStorage.getItem('hexa-tracker-infographic-hide-v1')==='true'; }catch{}
+try { if(playerStorage.readPreference('hexa-tracker-view-v1')==='infographic')view='infographic';
+  $('#infographic-hide').checked=playerStorage.readPreference('hexa-tracker-infographic-hide-v1')==='true'; }catch{}
 let infographicEntries=[], infographicScope=null;
 const infographic=createInfographic({document,window,grid:$('#infographic-grid'),onClick:key=>{
   if(classLoading || !infographicScope || !clickInfographicCheckpoint(saved,infographicScope,infographicEntries,key))return;
@@ -67,11 +76,11 @@ function syncView() {
 }
 for(const name of ['tracker','infographic'])$('#view-'+name).addEventListener('click',()=>{
   view=name;if(view==='infographic')selectedStats[activeClass]=null;
-  try{localStorage.setItem('hexa-tracker-view-v1',view);}catch{}
+  try{playerStorage.writePreference('hexa-tracker-view-v1',view);}catch{}
   syncView();render();
 });
 $('#infographic-hide').addEventListener('change',()=>{
-  try{localStorage.setItem('hexa-tracker-infographic-hide-v1',String($('#infographic-hide').checked));}catch{}
+  try{playerStorage.writePreference('hexa-tracker-infographic-hide-v1',String($('#infographic-hide').checked));}catch{}
 });
 syncView();
 
@@ -423,7 +432,7 @@ function render() {
   $('#infographic-context').textContent=`${$('#class').selectedOptions[0]?.textContent || activeClass} / ${$('#version-name').textContent}`;
   $('#infographic-message').textContent=infographicEntries.length ? '' : 'No checkpoints are available for this priority.';
   if(view==='infographic')infographic.render(infographicDisplayCheckpoints(infographicEntries,saved,infographicScope),saved,infographicScope,$('#infographic-hide').checked);
-  localStorage.setItem(storageKey, JSON.stringify(saved));
+  playerStorage.write(storageKey,saved);
 }
 
 function updateStatLine(input) {
@@ -533,8 +542,8 @@ $('#class').addEventListener('change',()=>{
   activeClass=$('#class').value;selectedStats[activeClass]=null;document.documentElement.dataset.class=activeClass;storageKey='hexa-tracker-'+activeClass+'-v1';
   decorations.setClass(activeClass);
   music.setClass(activeClass);
-  localStorage.setItem('hexa-tracker-class-v1',activeClass);
-  try{saved=JSON.parse(localStorage.getItem(storageKey) || '{}') || {};}catch{saved={};}
+  playerStorage.writePreference('hexa-tracker-class-v1',activeClass);
+  saved=playerStorage.read(storageKey);
   classLoading=true;classLoadFailed=false;$('#priority-sync').textContent='';
   previewDrafts={};catalog=previewCatalog({});NODES=[];statNodes=[];nodeByShort={};
   setTrackerCatalogue([]);$('#patch').replaceChildren();renderInputs();render();refreshSharedPriorities();
@@ -542,7 +551,7 @@ $('#class').addEventListener('change',()=>{
 window.addEventListener('focus',()=>refreshSharedPriorities({force:true}));
 $('#reset').onclick = () => {
   if (confirm(`Reset saved ${activeClass==='ren'?'Ren':'Hoyoung'} levels and resources?`)) {
-    localStorage.removeItem(storageKey);
+    playerStorage.remove(storageKey);
     saved = {};
     renderInputs();
     render();
