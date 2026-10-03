@@ -40,7 +40,11 @@ for(const job of ['hoyoung','ren'])test(job+' hover Helper popup, unchanged Summ
   // Use the actual next checkpoint and existing reverse Undo, with no automatic guide.
   const first=grid.locator('[aria-current="step"]'),checkpoint=await first.getAttribute('data-checkpoint');
   await first.click();await expect(panel).toBeHidden();await grid.locator('[data-checkpoint='+JSON.stringify(checkpoint)+']').click();await expect(panel).toBeHidden();
-  expect(await page.evaluate(job=>localStorage.getItem('hexa-tracker-'+job+'-v1'),job)).toBe(before);
+  const restored=JSON.parse(await page.evaluate(job=>localStorage.getItem('hexa-tracker-'+job+'-v1'),job));
+  const original=JSON.parse(before),{infographicUndo:originalUndo,...originalProgress}=original,{infographicUndo:restoredUndo,...restoredProgress}=restored;
+  expect(restoredProgress).toEqual(originalProgress);
+  // Existing Undo keeps empty source-scoped bookkeeping after restoring the save.
+  expect(Object.values(restoredUndo || {}).flatMap(history=>Object.values(history.skills || {})).flat()).toHaveLength(0);
   await control.uncheck();await tiles.first().hover();await expect(grid.locator('.skill-hover')).toHaveCount(await tiles.count());await expect(panel).toBeHidden();expect(await geometry()).toEqual(summary);
   await page.reload();await expect(control).not.toBeChecked();await expect(panel).toBeHidden();expect(await geometry()).toEqual(summary);
   await page.locator('#class').selectOption(job==='hoyoung'?'ren':'hoyoung');await expect(control).toBeDisabled();await expect(page.locator('#helper-support')).toContainText('Not supported');expect(await page.evaluate(()=>localStorage.getItem('hexa-tracker-helper-v1'))).toBe('false');
