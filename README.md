@@ -9,10 +9,11 @@ with separate saved progress for each class.
 - Development is on `restore-scouter-retrieval`. [PR #22](https://github.com/soushityphon/hexa-matrix-tracker/pull/22)
   stays **draft and unmerged**. Main is older than the test implementation.
 - The [public test tracker](https://soushi-hexa-matrix-test.xsoushi.chatgpt.site)
-  is deployed version **131**, Site source
-  `549f4a3ab8c9854d4ec44daf1a36bc11b9e0c688`, deployment
-  `appgdep_6ac074cf086081918968afaccb72b447`, environment revision **11**.
-  This increment changes only footer wording. Prototype/docs are not served.
+  is deployed version **132**, Site source
+  `0dd6709bafcd57ff10d42d6004e0fc7267bef4b6`, deployment
+  `appgdep_6ac0795db9ac81918b4464b442f4d3f3`, environment revision **11**.
+  This increment adds Admin Helper explanations and a safe content preview.
+  Player Helper is not yet integrated. Prototype/docs are not served.
   Deployment succeeded; no signed-in requests or hosting proof are inferred.
 - [Issue #30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
   is the audit authority. Read its latest body and all comments before continuing.

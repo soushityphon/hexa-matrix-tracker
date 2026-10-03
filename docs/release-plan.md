@@ -25,7 +25,26 @@ Preparation is complete as a scope/acceptance/target/rollback record. Hosting pr
 is explicitly blocked, not complete. Independent Helper mapping/prototype work may
 continue with no hosting/access change. Preserve the existing test Site for rollback.
 
-## Verified current test deployment
+## Verified current test deployment, version 132
+
+Admin Helper explanation/preview increment deployed successfully, environment
+revision 11. GitHub implementation 2414303900580c2f1bf8b85c079a41fd61c5533b has
+successful PR/push CI, including 78 ordinary browser passes. Owner acceptance of
+this increment is pending. No live Admin data was edited.
+
+| Field | Current test value |
+| --- | --- |
+| Saved version | appgprj_6aba0413861881918dc7fe10da066627~appgver_049078bf01ec8191a4675b5a8805c315 |
+| Site source SHA | 0dd6709bafcd57ff10d42d6004e0fc7267bef4b6 |
+| Deployment | appgdep_6ac0795db9ac81918b4464b442f4d3f3, succeeded |
+| Archive hash | sha256:e3e3c34904ed52518823445f27254d13eb777c349f213764b68cb90551ffdbec |
+| URL | https://soushi-hexa-matrix-test.xsoushi.chatgpt.site |
+
+Compatible rollback must retain the explanation-aware backend once this field is
+saved; see helper-content-review.md. Do not use the older Skills writer or restore
+stale data. Full Helper integration is next.
+
+## Historical test deployment, version 131
 
 Version 131 deployment succeeded on 3 October, preserving the public test
 audience and environment revision 11. It changes only the footer copy; prototype

@@ -34,6 +34,23 @@ integration is added here. The player views remain as before. Next is that live
 integration under the accepted Matrix/50:50 direction and Stat-icon exception.
 New field/preview owner acceptance is separate from existing app acceptance.
 
+## Tested and deployed status
+
+Implemented in GitHub 2414303900580c2f1bf8b85c079a41fd61c5533b, draft/unmerged PR #22.
+Local full checks pass: 29 regressions, Worker build, 93 syntax files and 68
+compiled assets, plus inventory/source parity/Markdown links/whitespace. Local
+Chromium installation failed because its download was not a valid ZIP; no local
+browser pass is claimed. GitHub PR 37093830550 and push 37093827978 both succeeded.
+PR logs confirm 78 ordinary browser passes, zero expected failures, including the
+new Admin test at all three widths. Three Admin screenshots were inspected.
+These use isolated data and failed remote art, not live owner/session evidence.
+
+Test version 132 deployment succeeded, environment revision 11. Site source
+0dd6709bafcd57ff10d42d6004e0fc7267bef4b6, saved version appgprj_6aba0413861881918dc7fe10da066627~appgver_049078bf01ec8191a4675b5a8805c315,
+deployment appgdep_6ac0795db9ac81918b4464b442f4d3f3. No live data writes, schema,
+binding, secret, audience, auth or source/cost/FD/progress/save change. New field
+and preview owner acceptance remain pending. No full Helper deployment is claimed.
+
 ## Verification and rollback
 
 Isolated SQLite and actual Admin DOM regressions cover save/reload, invalid content,
