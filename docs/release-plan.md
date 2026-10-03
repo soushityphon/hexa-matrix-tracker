@@ -1,6 +1,60 @@
 # Eventual release and rollback plan
 
-## Current sign-in failure follow-up, version140
+## Current Discord runtime correction, version141
+
+Soushi reports140 still fails, not accepted. Recent native fixed diagnostics:
+`Admin sign-in failed token request 0`, before any Discord HTTP response.
+Cloudflare [workerd source](https://github.com/cloudflare/workerd/blob/main/src/workerd/api/http.c%2B%2B)
+explicitly rejects `redirect:error`; the higher-level Request docs list it.
+Our code and Node/fake-fetch tests used/accepted that unsupported setting.
+This establishes a runtime incompatibility matching the observed request-stage
+failure, not a completed live owner login.
+
+[Implementation 002ed47](https://github.com/soushityphon/hexa-matrix-tracker/commit/002ed4725c669b1a40e19db3cff3423b615cbc75)
+uses `redirect:manual` on both fixed Discord API calls and rejects all3xx
+responses before body parsing. No redirect is followed, credentials remain on
+the fixed Discord destinations, and rejected responses grant no Admin session.
+Tests exercise301/302/303/307/308 at token and identity stages, no subsequent
+request, no session and fixed stage/reason/status diagnostics. Required
+User-Agent, deadlines/body limits/state/cookies/owner/origin safeguards remain.
+Neutral Admin Panel / Sign in copy stays. No secret re-entry or OAuth setup change.
+
+Local31 regression files, build,99syntax/70compiled-assets, offline inventory
+and whitespace pass. Hosted build/syntax/assets pass. All199 local source files
+matched repo and Site checkout before this docs-only record.
+[CI37108805759](https://github.com/soushityphon/hexa-matrix-tracker/actions/runs/37108805759) succeeds on002ed47, logs confirm84 ordinary Chromium passes. Default-build/browser and isolated auth tests are not live OAuth/device/cookie proof.
+
+**Deployed141 succeeded**, environment **14**, unchanged configuration:
+- Saved version: `appgprj_6aba0413861881918dc7fe10da066627~appgver_78ebfc8e46948191a98e31e2002837b5`.
+- Source: `69634124b4a19e35522259bb9c9c145d27cb7525`.
+- Deployment: `appgdep_6ac0b966fd908191879233621f149ee3`.
+- Archive: `sha256:dc88ab032d470abe6ef28b4becd39ce195fffa4007d825e5eca19067a9bcb694`.
+- URL: https://soushi-hexa-matrix-test.xsoushi.chatgpt.site.
+
+- [x] Version141 deployed successfully with manual redirect mode.
+
+Compatible code rollback is saved140/source68043cb11ad96d4f0b2e570b607be65564058480
+with Discord env14 and current data, although it retains the known login error.
+Never roll back to header-trusting138 while activated. No Admin/data/D1/schema/
+binding/secret/audience/source/capture/calculation/progress/player-save changes.
+No live Admin data reads or writes, new gateway/device proof or main/Pages release.
+PR22 stays draft/unmerged. Final documentation record needs no deployment.
+
+- [x] Unsupported redirect mode removed; redirects refused explicitly.
+- [x] Security/full local checks and hosted build/assets passed.
+- [ ] Real owner OAuth login and supplied owner ID verification.
+- [ ] Real non-owner/cookie/logout/public checks.
+- [ ] Owner acceptance of activated login.
+
+Next: start a fresh Sign in from /priority-review.html, not an old callback.
+Expect unchanged current Skills/explanations/priorities. If successful, Sign out
+and revisit Admin, expect login page. Do not edit/reset/clear data. Real login
+and acceptance remain pending, no success inferred from code/CI/deployment.
+Helper complete. Old-host identity proof stays separately blocked; Pages32
+follows verified Admin login. Optional player sync remains separate later work.
+
+
+## Historical sign-in failure follow-up, version140
 
 Soushi reports activated139 sign-in failed, not accepted. Native callback logs
 confirm502 after state validation, without a reason for exchange/identity failure.
