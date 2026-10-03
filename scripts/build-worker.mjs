@@ -7,6 +7,9 @@ files.push('helper-content.js','helper-matrix.js','infographic-helper.js');
 const assets = Object.fromEntries(files.map(file => [`/${file}`, readFileSync(resolve(root, file), 'utf8')]));
 for (const file of ['decorations.js', 'decoration-assets.js', 'decorations.css', 'music.js']) assets[`/${file}`] = readFileSync(resolve(root, file), 'utf8');
 const decorations = JSON.parse(readFileSync(resolve(root, 'assets/backgrounds/manifest.json'), 'utf8'));
+for (const file of ['favicon.ico', ...[32,48,96].map(size=>`assets/favicon/favicon-${size}.png`)]) {
+  assets[`/${file}`] = readFileSync(resolve(root, file)).toString('base64');
+}
 for (const file of ['assets/sol-erda.png', 'assets/sol-erda-fragment.png', ...[1,2,3].flatMap(n=>['locked','unlocked'].map(state=>`assets/hexa-stats/stat-${n}-${state}.png`)), 'assets/music/ren-login-theme.mp3', ...decorations.map(asset => asset.path)]) {
   assets[`/${file}`] = readFileSync(resolve(root, file)).toString('base64');
 }
