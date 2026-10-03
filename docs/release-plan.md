@@ -25,6 +25,67 @@ Preparation is complete as a scope/acceptance/target/rollback record. Hosting pr
 is explicitly blocked, not complete. Independent Helper mapping/prototype work may
 continue with no hosting/access change. Preserve the existing test Site for rollback.
 
+## Verified current test deployment, version 136
+
+Owner-authorised permanent hover-only Helper replaces the rejected version133
+Summary split and next-guide presentation. Summary and priority width are restored.
+Desktop popup order is Matrix (matching numbered Stat icon for Stats), then existing
+icon/tag/name, then optional Admin text. No guide at rest. Popup accepts pointer
+entry/reading/scrolling; exit, Escape, page scroll/resize, blur, view/scope changes
+and completion dismiss it. No click pinning or automatic next guide.
+Phone/no-hover devices hide the control and cannot activate the popup/highlight;
+their stored preference and normal progress behaviour remain intact.
+
+GitHub implementation 7881506abb0b87e71a4ddee711ee8a5a118b9a9d, test correction
+e8c86105c5a5b7badc509fce00d5f92ec834def9, phone/scroll revision 956f20a89639b0d96c2e1007d4637292b08a206c,
+and final viewport QA b73fd9e2468e06c3201fc6d747da57bd37752c1f, draft/unmerged PR #22.
+PR CI 37098137653 and push CI 37098135080 succeeded on the final QA SHA.
+Logs confirm **84 ordinary Chromium passes, zero expected failures**: two desktop
+popup cases, four phone-exclusion cases plus existing baseline coverage. Two
+desktop popup and four phone-exclusion viewport screenshots inspected. Isolated
+catalogues/external-image stubs do not establish live art/device/gateway proof.
+
+Local full checks pass: 30 regression files, build, 96 syntax files and 70 compiled
+asset checks, plus offline inventory, affected links/whitespace and all 167 final
+GitHub/Site source blob matches. Mapping code/evidence is unchanged. App DOM checks
+also verify capability changes preserve preference and never open a resting guide.
+
+| Field | Current test value |
+| --- | --- |
+| Saved version | appgprj_6aba0413861881918dc7fe10da066627~appgver_c1c5ec641578819180e83ef5b797ba2d |
+| Site source SHA | 2c132ae636ca3a9e871c07d17ff8b9792f0890c3 |
+| Deployment | appgdep_6ac08b8a78bc81918d52f739b1f2e85c, succeeded |
+| Archive hash | sha256:50dfff697cb5c8c66022b6243ee782154a793ba7c788a70cc75248f2c652d810 |
+| Environment revision | 11 |
+| URL | https://soushi-hexa-matrix-test.xsoushi.chatgpt.site |
+| Compatible rollback | Saved version133, source 6df463818e41a6dd8a866c3ea8ad5179aae844d2, explanation-aware backend |
+
+Public audience, D1/bindings/secrets/auth and Admin content remain. No live Admin
+writes, source requests, schema/migration, capture/cost/FD/calculation or save
+change. Hover/toggle/reading never writes progress. Existing completion and reverse
+Undo retain their handler; empty source-scoped Undo bookkeeping is normal.
+Intermediate saved candidates134/135 were never deployed. Final136 and135 share
+the same app archive;136 records the final viewport-QA source. No documentation-only
+redeployment is needed. Code rollback preserves current Admin/player data and
+restores the earlier Summary layout; never reset/restore stale Admin data or use
+version131's older writable Skills backend once explanations exist.
+
+Existing app/footer/Admin content acceptance remains complete. The hover-only
+direction/permanent implementation/phone exclusion are explicitly owner-authorised;
+actual new desktop UI acceptance remains pending. Version133's UI acceptance is
+superseded, not marked passed. Hosting evidence stays separately blocked; release
+preparation complete. Next is the new desktop check, then Discord Admin login #15
+and pages.dev #32. Export/print and multiple characters remain deferred.
+
+Only new manual check: refresh on desktop without clearing saves and open
+Infographic for the class with existing explanation. Expect the old Summary and
+no resting guide. Hover an icon: Matrix then icon/tag/name then optional text;
+Stats show numbered icons. Move into text to read/scroll, then leave: popup closes.
+Complete one step and reverse Undo: progress restores, no next guide opens.
+Helper Off persists after reload and retains same-skill glow. No repeated Admin,
+old app or phone Helper check is requested.
+
+
 ## Historical test deployment, version 133, Summary layout superseded
 
 Live Infographic Helper is implemented in 468a4d9, with geometry/overflow fixes

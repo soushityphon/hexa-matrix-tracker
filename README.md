@@ -9,11 +9,11 @@ with separate saved progress for each class.
 - Development is on `restore-scouter-retrieval`. [PR #22](https://github.com/soushityphon/hexa-matrix-tracker/pull/22)
   stays **draft and unmerged**. Main is older than the test implementation.
 - The [public test tracker](https://soushi-hexa-matrix-test.xsoushi.chatgpt.site)
-  is deployed version **133**, Site source
-  `6df463818e41a6dd8a866c3ea8ad5179aae844d2`, deployment
-  `appgdep_6ac082226a348191b693672e05d2d2ab`, environment revision **11**.
-  This increment integrates player Helper with the accepted layout, next/hover
-  guide and remembered preference. Admin content editing is owner-accepted;
+  is deployed version **136**, Site source
+  `2c132ae636ca3a9e871c07d17ff8b9792f0890c3`, deployment
+  `appgdep_6ac08b8a78bc81918d52f739b1f2e85c`, environment revision **11**.
+  This increment restores Summary and adds the owner-requested desktop hover
+  popup. Helper is excluded on phones/no-hover devices. Admin content is accepted;
   new live Helper acceptance remains pending. Prototype/docs are not served.
   Deployment succeeded; no signed-in requests or hosting proof are inferred.
 - [Issue #30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
@@ -37,8 +37,8 @@ with separate saved progress for each class.
   Summary split: restore the old Summary and use a hover-only popup, Matrix above
   icon/tag/name above optional text, matching Stat icon for Stats. No guide at rest
   or automatic next-step preview. Helper is excluded on phones/no-hover devices.
-  Hover-only integration is implemented; tests,
-  deployment and new owner acceptance are recorded separately in #30/#31.
+  Hover-only integration is implemented, tested and deployed in version136;
+  new desktop UI acceptance remains pending in #30/#31.
   See [integration review](docs/helper-integration-review.md).
 - Existing browser saves do not require migration. Preserve all Admin-managed
   server data at cutover, including intervening edits and future Helper content.

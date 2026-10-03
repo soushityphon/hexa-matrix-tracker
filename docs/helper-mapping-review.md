@@ -1,6 +1,15 @@
 # Helper mapping and visual checkpoint, 3 October 2026
 
-## Current owner review
+## Current owner UI decision
+
+The owner supersedes the initial Summary split and automatic next guide. Restore
+Summary and use a hover-only popup: Matrix, then icon/tag/name, then optional text.
+Stats use the matching numbered icon. Helper is excluded on phones/no-hover devices.
+Permanent implementation is authorised without another visual prototype checkpoint.
+Mapping and Admin content acceptance remain; new hover UI acceptance is separate.
+See [current integration review](helper-integration-review.md).
+
+## Historical prototype owner review
 
 Soushi chose **Keep this layout** after seeing the Matrix/50/50 prototype.
 For HEXA Stat steps, Soushi chose **Show matching icon**: replace the location
