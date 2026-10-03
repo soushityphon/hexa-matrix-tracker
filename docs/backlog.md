@@ -14,8 +14,9 @@ eventual release is unapproved.
    No app deployment. See [review](asset-delivery-review.md).
 3. README/backlog cleanup: this documentation batch reconciles current behaviour
    and archives history. No app or hosting change.
-4. Next independent batch: document eventual-release commit selection, required
-   acceptance and rollback. No release commit is selected or approved here.
+4. [Release plan](release-plan.md): acceptance, commit selection procedure and
+   rollback documentation complete. Actual release SHA/destination/approval remain
+   pending; documentation does not select or approve them.
 5. Infographic export/print: owner must decide format and full-guide/current-
    progress scope before implementation.
 6. Further classes and optional Discord sync: later review only, with verified

@@ -13,7 +13,8 @@ with separate saved progress for each class.
   `f4f6257d7402c8c9032593431509b250f5ee4393`, deployment
   `appgdep_6abff2baf52481918069d978043a85ad`, environment revision **11**.
   Asset checks and this documentation cleanup do not change its served build.
-  This is recorded deployment evidence, not a fresh live verification.
+  Native Sites metadata was rechecked for the release plan; this does not verify
+  signed-in requests or live app behaviour.
 - [Issue #30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
   is the audit authority. Read its latest body and all comments before continuing.
   [Issue #23](https://github.com/soushityphon/hexa-matrix-tracker/issues/23)
@@ -22,9 +23,10 @@ with separate saved progress for each class.
   redraw/focus improvements and admin revisions are implemented and tested.
   Owner acceptance is separate and partial. Version 130 icon alignment is accepted.
 - Hosting identity verification remains **blocked/partial**. Asset delivery review
-  is complete; retain current policy. Next independent task is eventual-release
-  commit/acceptance/rollback documentation. No release commit has been selected;
-  eventual release is **unapproved**.
+  is complete; retain current policy. [Release planning](docs/release-plan.md) now
+  records acceptance, publication and rollback. No release commit is selected;
+  eventual release is **unapproved**. Next feature decision is infographic export
+  format/scope, with hosting evidence still open.
 
 See the [backlog index](docs/backlog.md) for old issues, acceptance and deferred
 work. [Historical notes](docs/development-history.md) preserve the previous README.
