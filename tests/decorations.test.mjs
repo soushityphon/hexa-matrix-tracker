@@ -1,0 +1,162 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { Window } from 'happy-dom';
+import { createDecorations } from '../decorations.js';
+
+const key = 'hexa-tracker-animations-v1';
+const win = new Window({ url: 'https://test.example/' });
+const doc = win.document;
+const control = doc.createElement('button'); doc.body.append(control);
+const media = query => {
+  const target = new win.EventTarget(); target.matches = false;
+  target.set = value => { target.matches = value; target.dispatchEvent(new win.Event('change')); };
+  return target;
+};
+const reduced = media(), mobile = media();
+win.matchMedia = query => query.includes('reduced-motion') ? reduced : mobile;
+const storageBefore = JSON.stringify({ levels: { Harmony: 6 }, owned: 60, statLines: { 'HEXA Stat I': [6,8,6] } });
+win.localStorage.setItem('hexa-tracker-hoyoung-v1', storageBefore);
+const boot = className => createDecorations({ document: doc, window: win, control, className });
+const layers = () => [...doc.querySelectorAll('.decoration-layer')];
+const count = selector => doc.querySelectorAll(selector).length;
+// Fixed varied random sequence gives a reproducible scene without relying on chance.
+const random = Math.random; let seed = 43;
+Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+let renderer = boot('hoyoung');
+assert.equal(count('.cloud'), 8); assert.equal(count('.petal'), 0);
+const cloudStyles = [...doc.querySelectorAll('.cloud')].map(node => ({
+  duration: parseFloat(node.style.getPropertyValue('--duration')),
+  top: parseFloat(node.style.getPropertyValue('--top')),
+  phase: -parseFloat(node.style.getPropertyValue('--delay')) / parseFloat(node.style.getPropertyValue('--duration'))
+}));
+assert.ok([2,3].includes(cloudStyles.filter(node => node.duration < 120).length));
+assert.ok([1,2].includes(cloudStyles.filter(node => node.duration >= 170).length));
+assert.ok(cloudStyles.some((node,i) => i && node.top < cloudStyles[i-1].top));
+assert.ok(cloudStyles.some((node,i) => i && node.top > cloudStyles[i-1].top));
+assert.ok(cloudStyles.some((node,i) => i && node.phase < cloudStyles[i-1].phase));
+assert.ok(layers().every(layer => layer.getAttribute('aria-hidden') === 'true'));
+assert.equal(control.getAttribute('aria-pressed'), 'true');
+const original = doc.querySelector('.cloud');
+renderer.setClass('hoyoung'); assert.equal(doc.querySelector('.cloud'), original);
+renderer.setClass('ren');
+assert.equal(count('.cloud'), 0); assert.equal(count('.decoration-background .petal'), 36);
+assert.equal(count('.petal-front'), 6);
+assert.equal(parseFloat(doc.querySelector('.petal').style.getPropertyValue('--size')), Math.round(doc.querySelector('.petal img').width * .85));
+assert.equal(parseFloat(doc.querySelector('.petal-front').style.getPropertyValue('--size')), Math.round(doc.querySelector('.petal-front img').width * .6));
+const petals = [...doc.querySelectorAll('.petal')];
+const value = (node, name) => parseFloat(node.style.getPropertyValue(name));
+assert.ok(new Set(petals.map(node => node.style.getPropertyValue('--start-x'))).size > 30);
+assert.ok(new Set(petals.map(node => node.style.getPropertyValue('--alpha'))).size > 12);
+assert.ok(petals.some(node => value(node, '--blur') > 0));
+assert.ok(petals.some(node => value(node, '--blur') === 0));
+for (const node of petals) {
+  const front = node.classList.contains('petal-front');
+  assert.ok(value(node, '--start-x') > value(node, '--x1'));
+  assert.ok(value(node, '--x1') > value(node, '--x2'));
+  assert.ok(value(node, '--x2') > value(node, '--end-x'));
+  assert.ok(value(node, '--y1') < value(node, '--y2'));
+  assert.ok(value(node, '--alpha') >= (front ? .36 : .44));
+  assert.ok(value(node, '--alpha') <= (front ? .60 : .72));
+  assert.ok(value(node, '--blur') <= (front ? .8 : .35));
+  assert.ok(value(node, '--duration') >= (front ? 70 : 32));
+  assert.ok(value(node, '--duration') <= (front ? 90 : 50));
+}
+const iteration = (node, name) => {
+  const event = new win.Event('animationiteration', { bubbles: true });
+  Object.defineProperty(event, 'animationName', { value: name });
+  node.dispatchEvent(event);
+};
+const tracked = doc.querySelector('.petal');
+const timeline = ['--duration', '--delay', '--size', '--sway-duration', '--sway-delay'].map(name => tracked.style.getPropertyValue(name));
+let previousPath = tracked.style.cssText;
+iteration(tracked.querySelector('img'), 'petal-turn');
+assert.equal(tracked.style.cssText, previousPath);
+for (let i = 0; i < 10; i++) {
+  iteration(tracked, 'petal-drift');
+  assert.notEqual(tracked.style.cssText, previousPath);
+  previousPath = tracked.style.cssText;
+  assert.deepEqual(['--duration', '--delay', '--size', '--sway-duration', '--sway-delay'].map(name => tracked.style.getPropertyValue(name)), timeline);
+  assert.equal(count('.petal'), 42);
+}
+Object.defineProperty(doc, 'hidden', { configurable: true, value: true });
+iteration(tracked, 'petal-drift'); assert.equal(tracked.style.cssText, previousPath);
+Object.defineProperty(doc, 'hidden', { configurable: true, value: false });
+const front = doc.querySelector('.petal-front'), oldFront = front.style.cssText;
+iteration(front, 'foreground-drift'); assert.notEqual(front.style.cssText, oldFront);
+for (let i = 0; i < 50; i++) renderer.setClass(i % 2 ? 'ren' : 'hoyoung');
+assert.equal(layers().length, 2); assert.equal(count('.petal'), 42);
+iteration(tracked, 'petal-drift'); assert.equal(tracked.style.cssText, previousPath); // Detached particles stay inert.
+mobile.set(true); assert.equal(count('.decoration-background .petal'), 18);
+assert.equal(count('.petal-front'), 6);
+for (const node of doc.querySelectorAll('.petal')) {
+  const front = node.classList.contains('petal-front');
+  assert.ok(value(node, '--alpha') >= (front ? .28 : .36));
+  assert.ok(value(node, '--alpha') <= (front ? .48 : .62));
+}
+const broken = doc.querySelector('.petal');
+broken.querySelector('img').dispatchEvent(new win.Event('error')); assert.equal(broken.hidden, true);
+const loaded = doc.querySelector('.petal-front');
+loaded.querySelector('img').dispatchEvent(new win.Event('load')); assert.ok(loaded.classList.contains('is-loaded'));
+control.click(); assert.equal(win.localStorage.getItem(key), 'off');
+assert.ok(layers().every(layer => layer.hidden));
+const pausedPath = loaded.style.cssText;
+iteration(loaded, 'foreground-drift'); assert.equal(loaded.style.cssText, pausedPath);
+assert.equal(win.localStorage.getItem('hexa-tracker-hoyoung-v1'), storageBefore);
+renderer.destroy(); assert.equal(layers().length, 0);
+iteration(loaded, 'foreground-drift'); assert.equal(loaded.style.cssText, pausedPath);
+renderer = boot('ren'); assert.ok(layers().every(layer => layer.hidden));
+assert.equal(count('.petal'), 0); // Saved Off does not request decoration images.
+renderer.setClass('hoyoung'); control.click(); assert.equal(count('.cloud'), 5);
+reduced.set(true); assert.ok(layers().every(layer => layer.hidden)); assert.equal(control.disabled, true);
+assert.equal(win.localStorage.getItem(key), 'on'); // OS preference does not overwrite the choice.
+reduced.set(false); assert.ok(layers().every(layer => !layer.hidden));
+Object.defineProperty(doc, 'hidden', { configurable: true, value: true });
+doc.dispatchEvent(new win.Event('visibilitychange'));
+assert.ok(layers().every(layer => layer.classList.contains('is-paused')));
+control.click();
+Object.defineProperty(doc, 'hidden', { configurable: true, value: false });
+doc.dispatchEvent(new win.Event('visibilitychange'));
+assert.ok(layers().every(layer => layer.hidden && layer.classList.contains('is-paused')));
+control.click(); assert.ok(layers().every(layer => !layer.hidden && !layer.classList.contains('is-paused')));
+renderer.setClass('unknown'); assert.ok(layers().every(layer => layer.hidden)); assert.equal(count('.decoration-particle'), 0);
+renderer.destroy();
+const storedMediaState = reduced.matches;
+reduced.set(true); renderer = boot('ren'); assert.equal(count('.petal'), 0); renderer.destroy();
+reduced.set(storedMediaState);
+// Storage denied: decoration control still works, with no tracker failure.
+Object.defineProperty(win, 'localStorage', { configurable: true, get() { throw new Error('Storage denied'); } });
+renderer = boot('hoyoung'); control.click(); assert.ok(layers().every(layer => layer.hidden));
+renderer.destroy(); assert.equal(layers().length, 0);
+Math.random = random;
+await win.happyDOM.abort();
+
+const layoutWindow = new Window();
+layoutWindow.document.write(readFileSync(new URL('../index.html', import.meta.url), 'utf8').replace(/<script[^>]*>[\s\S]*?<\/script>/g, ''));
+assert.ok(layoutWindow.document.querySelector('.masthead .header-actions #animations'));
+assert.equal(layoutWindow.document.querySelector('.toolbar #animations'), null);
+await layoutWindow.happyDOM.abort();
+
+// Test actual compiled Worker delivery, not just files copied into a directory.
+execFileSync(process.execPath, ['scripts/build-worker.mjs'], { cwd: new URL('..', import.meta.url), stdio: 'pipe' });
+const worker = (await import('../dist/server/index.js')).default;
+const manifest = JSON.parse(readFileSync(new URL('../assets/backgrounds/manifest.json', import.meta.url)));
+assert.equal(manifest.length, 23);
+for (const asset of manifest) {
+  const bytes = readFileSync(new URL('../' + asset.path, import.meta.url));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), asset.sha256);
+  const response = await worker.fetch(new Request('https://test.example/' + asset.path), {});
+  assert.equal(response.status, 200); assert.equal(response.headers.get('content-type'), 'image/png');
+  assert.deepEqual(Buffer.from(await response.arrayBuffer()), bytes);
+  const head = await worker.fetch(new Request('https://test.example/' + asset.path, { method: 'HEAD' }), {});
+  assert.equal(head.status, 200); assert.equal((await head.arrayBuffer()).byteLength, 0);
+}
+for (const path of ['decorations.js', 'decoration-assets.js', 'decorations.css']) {
+  const response = await worker.fetch(new Request('https://test.example/' + path), {});
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), readFileSync(new URL('../' + path, import.meta.url), 'utf8'));
+}
+assert.equal((await worker.fetch(new Request('https://test.example/assets/backgrounds/missing.png'), {})).status, 404);
+assert.equal((await worker.fetch(new Request('https://test.example/assets/backgrounds/manifest.json'), {})).status, 404);
+console.log('Decorations lifecycle, preferences, original PNG hashes and compiled Worker delivery pass.');

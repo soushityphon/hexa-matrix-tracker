@@ -1,0 +1,4572 @@
+{
+  "schema": 1,
+  "mode": "taotie_heroic",
+  "source": {
+    "standard": "허수아비",
+    "patch": "밸패반영",
+    "hexaUpdated": true
+  },
+  "count": 206,
+  "rows": [
+    {
+      "position": 1,
+      "skill": "Harmony",
+      "level": 1,
+      "sourceName": "멸화염 : 천 VI/지진쇄 : 지 VI/금고봉 : 인 VI",
+      "coreId": "masteryCore1",
+      "icon": "/hexaskill/Hoyeong_2.png",
+      "transition": "0→1",
+      "materials": {
+        "erda": 3,
+        "frags": 50
+      },
+      "cumulative": {
+        "erda": 3,
+        "frags": 50
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 2,
+      "skill": "Talisman",
+      "level": 1,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "0→1",
+      "materials": {
+        "erda": 3,
+        "frags": 50
+      },
+      "cumulative": {
+        "erda": 6,
+        "frags": 100
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 3,
+      "skill": "Harmony",
+      "level": 6,
+      "sourceName": "멸화염 : 천 VI/지진쇄 : 지 VI/금고봉 : 인 VI",
+      "coreId": "masteryCore1",
+      "icon": "/hexaskill/Hoyeong_2.png",
+      "transition": "1→6",
+      "materials": {
+        "erda": 5,
+        "frags": 101
+      },
+      "cumulative": {
+        "erda": 11,
+        "frags": 201
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 4,
+      "skill": "Talisman",
+      "level": 2,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "1→2",
+      "materials": {
+        "erda": 1,
+        "frags": 15
+      },
+      "cumulative": {
+        "erda": 12,
+        "frags": 216
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 5,
+      "skill": "HEXA Stat I",
+      "level": 20,
+      "sourceName": "헥사스탯1 떡작",
+      "coreId": "hexaStat1",
+      "icon": "https://open.api.nexon.com/static/maplestory/skill/icon/KAPCLAPBMA",
+      "transition": "헥사스탯1 0→20",
+      "materials": {
+        "erda": 5,
+        "frags": 324
+      },
+      "cumulative": {
+        "erda": 17,
+        "frags": 540
+      },
+      "materialBasis": "Scouter estimate; HEXA Stat leveling is random"
+    },
+    {
+      "position": 6,
+      "skill": "Apparition",
+      "level": 1,
+      "sourceName": "선기 : 천지인 환영",
+      "coreId": "reinCore4",
+      "icon": "/hexaskill/Hoyeong_6.png",
+      "transition": "0→1",
+      "materials": {
+        "erda": 4,
+        "frags": 75
+      },
+      "cumulative": {
+        "erda": 21,
+        "frags": 615
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 7,
+      "skill": "Scroll",
+      "level": 2,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "0→2",
+      "materials": {
+        "erda": 4,
+        "frags": 65
+      },
+      "cumulative": {
+        "erda": 25,
+        "frags": 680
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 8,
+      "skill": "Hecate",
+      "level": 1,
+      "sourceName": "솔 헤카테",
+      "coreId": "generalCore2",
+      "icon": "/hexaskill/General/General_2.png",
+      "transition": "0→1",
+      "materials": {
+        "erda": 7,
+        "frags": 125
+      },
+      "cumulative": {
+        "erda": 32,
+        "frags": 805
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 9,
+      "skill": "Taotie",
+      "level": 1,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "0→1",
+      "materials": {
+        "erda": 7,
+        "frags": 140
+      },
+      "cumulative": {
+        "erda": 39,
+        "frags": 945
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 10,
+      "skill": "Talisman",
+      "level": 3,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "2→3",
+      "materials": {
+        "erda": 1,
+        "frags": 18
+      },
+      "cumulative": {
+        "erda": 40,
+        "frags": 963
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 11,
+      "skill": "Talisman",
+      "level": 4,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "3→4",
+      "materials": {
+        "erda": 1,
+        "frags": 20
+      },
+      "cumulative": {
+        "erda": 41,
+        "frags": 983
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 12,
+      "skill": "HEXA Stat II",
+      "level": 20,
+      "sourceName": "헥사스탯2 떡작",
+      "coreId": "hexaStat2",
+      "icon": "https://open.api.nexon.com/static/maplestory/skill/icon/KAPCLAPBMA",
+      "transition": "헥사스탯2 0→20",
+      "materials": {
+        "erda": 10,
+        "frags": 524
+      },
+      "cumulative": {
+        "erda": 51,
+        "frags": 1507
+      },
+      "materialBasis": "Scouter estimate; HEXA Stat leveling is random"
+    },
+    {
+      "position": 13,
+      "skill": "Talisman",
+      "level": 5,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "4→5",
+      "materials": {
+        "erda": 1,
+        "frags": 23
+      },
+      "cumulative": {
+        "erda": 52,
+        "frags": 1530
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 14,
+      "skill": "Talisman",
+      "level": 6,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "5→6",
+      "materials": {
+        "erda": 1,
+        "frags": 25
+      },
+      "cumulative": {
+        "erda": 53,
+        "frags": 1555
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 15,
+      "skill": "Harmony",
+      "level": 12,
+      "sourceName": "멸화염 : 천 VI/지진쇄 : 지 VI/금고봉 : 인 VI",
+      "coreId": "masteryCore1",
+      "icon": "/hexaskill/Hoyeong_2.png",
+      "transition": "6→12",
+      "materials": {
+        "erda": 14,
+        "frags": 276
+      },
+      "cumulative": {
+        "erda": 67,
+        "frags": 1831
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 16,
+      "skill": "Scroll",
+      "level": 3,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "2→3",
+      "materials": {
+        "erda": 1,
+        "frags": 18
+      },
+      "cumulative": {
+        "erda": 68,
+        "frags": 1849
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 17,
+      "skill": "Scroll",
+      "level": 4,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "3→4",
+      "materials": {
+        "erda": 1,
+        "frags": 20
+      },
+      "cumulative": {
+        "erda": 69,
+        "frags": 1869
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 18,
+      "skill": "HEXA Stat III",
+      "level": 20,
+      "sourceName": "헥사스탯3 떡작",
+      "coreId": "hexaStat3",
+      "icon": "https://open.api.nexon.com/static/maplestory/skill/icon/KAPCLAPBMA",
+      "transition": "헥사스탯3 0→20",
+      "materials": {
+        "erda": 15,
+        "frags": 674
+      },
+      "cumulative": {
+        "erda": 84,
+        "frags": 2543
+      },
+      "materialBasis": "Scouter estimate; HEXA Stat leveling is random"
+    },
+    {
+      "position": 19,
+      "skill": "Talisman",
+      "level": 7,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "6→7",
+      "materials": {
+        "erda": 1,
+        "frags": 28
+      },
+      "cumulative": {
+        "erda": 85,
+        "frags": 2571
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 20,
+      "skill": "Talisman",
+      "level": 8,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "7→8",
+      "materials": {
+        "erda": 2,
+        "frags": 30
+      },
+      "cumulative": {
+        "erda": 87,
+        "frags": 2601
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 21,
+      "skill": "Basics",
+      "level": 1,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "0→1",
+      "materials": {
+        "erda": 3,
+        "frags": 50
+      },
+      "cumulative": {
+        "erda": 90,
+        "frags": 2651
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 22,
+      "skill": "Basics",
+      "level": 2,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "1→2",
+      "materials": {
+        "erda": 1,
+        "frags": 15
+      },
+      "cumulative": {
+        "erda": 91,
+        "frags": 2666
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 23,
+      "skill": "Basics",
+      "level": 3,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "2→3",
+      "materials": {
+        "erda": 1,
+        "frags": 18
+      },
+      "cumulative": {
+        "erda": 92,
+        "frags": 2684
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 24,
+      "skill": "Basics",
+      "level": 4,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "3→4",
+      "materials": {
+        "erda": 1,
+        "frags": 20
+      },
+      "cumulative": {
+        "erda": 93,
+        "frags": 2704
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 25,
+      "skill": "Basics",
+      "level": 5,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "4→5",
+      "materials": {
+        "erda": 1,
+        "frags": 23
+      },
+      "cumulative": {
+        "erda": 94,
+        "frags": 2727
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 26,
+      "skill": "Basics",
+      "level": 6,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "5→6",
+      "materials": {
+        "erda": 1,
+        "frags": 25
+      },
+      "cumulative": {
+        "erda": 95,
+        "frags": 2752
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 27,
+      "skill": "Wrath of Gods",
+      "level": 1,
+      "sourceName": "선기 : 강림 괴력난신",
+      "coreId": "reinCore3",
+      "icon": "/hexaskill/Hoyeong_5.png",
+      "transition": "0→1",
+      "materials": {
+        "erda": 4,
+        "frags": 75
+      },
+      "cumulative": {
+        "erda": 99,
+        "frags": 2827
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 28,
+      "skill": "Talisman",
+      "level": 9,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "8→9",
+      "materials": {
+        "erda": 2,
+        "frags": 33
+      },
+      "cumulative": {
+        "erda": 101,
+        "frags": 2860
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 29,
+      "skill": "Scroll",
+      "level": 5,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "4→5",
+      "materials": {
+        "erda": 1,
+        "frags": 23
+      },
+      "cumulative": {
+        "erda": 102,
+        "frags": 2883
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 30,
+      "skill": "Scroll",
+      "level": 6,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "5→6",
+      "materials": {
+        "erda": 1,
+        "frags": 25
+      },
+      "cumulative": {
+        "erda": 103,
+        "frags": 2908
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 31,
+      "skill": "Basics",
+      "level": 7,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "6→7",
+      "materials": {
+        "erda": 1,
+        "frags": 28
+      },
+      "cumulative": {
+        "erda": 104,
+        "frags": 2936
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 32,
+      "skill": "Harmony",
+      "level": 18,
+      "sourceName": "멸화염 : 천 VI/지진쇄 : 지 VI/금고봉 : 인 VI",
+      "coreId": "masteryCore1",
+      "icon": "/hexaskill/Hoyeong_2.png",
+      "transition": "12→18",
+      "materials": {
+        "erda": 12,
+        "frags": 375
+      },
+      "cumulative": {
+        "erda": 116,
+        "frags": 3311
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 33,
+      "skill": "Rampage",
+      "level": 4,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "0→4",
+      "materials": {
+        "erda": 7,
+        "frags": 155
+      },
+      "cumulative": {
+        "erda": 123,
+        "frags": 3466
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 34,
+      "skill": "Rampage",
+      "level": 5,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "4→5",
+      "materials": {
+        "erda": 2,
+        "frags": 34
+      },
+      "cumulative": {
+        "erda": 125,
+        "frags": 3500
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 35,
+      "skill": "Rampage",
+      "level": 6,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "5→6",
+      "materials": {
+        "erda": 2,
+        "frags": 38
+      },
+      "cumulative": {
+        "erda": 127,
+        "frags": 3538
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 36,
+      "skill": "Basics",
+      "level": 8,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "7→8",
+      "materials": {
+        "erda": 2,
+        "frags": 30
+      },
+      "cumulative": {
+        "erda": 129,
+        "frags": 3568
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 37,
+      "skill": "Rampage",
+      "level": 7,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "6→7",
+      "materials": {
+        "erda": 2,
+        "frags": 42
+      },
+      "cumulative": {
+        "erda": 131,
+        "frags": 3610
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 38,
+      "skill": "Basics",
+      "level": 9,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "8→9",
+      "materials": {
+        "erda": 2,
+        "frags": 33
+      },
+      "cumulative": {
+        "erda": 133,
+        "frags": 3643
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 39,
+      "skill": "Scroll",
+      "level": 7,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "6→7",
+      "materials": {
+        "erda": 1,
+        "frags": 28
+      },
+      "cumulative": {
+        "erda": 134,
+        "frags": 3671
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 40,
+      "skill": "Scroll",
+      "level": 8,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "7→8",
+      "materials": {
+        "erda": 2,
+        "frags": 30
+      },
+      "cumulative": {
+        "erda": 136,
+        "frags": 3701
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 41,
+      "skill": "Rampage",
+      "level": 8,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "7→8",
+      "materials": {
+        "erda": 3,
+        "frags": 45
+      },
+      "cumulative": {
+        "erda": 139,
+        "frags": 3746
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 42,
+      "skill": "Rampage",
+      "level": 9,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "8→9",
+      "materials": {
+        "erda": 3,
+        "frags": 49
+      },
+      "cumulative": {
+        "erda": 142,
+        "frags": 3795
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 43,
+      "skill": "Ascent",
+      "level": 1,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "0→1",
+      "materials": {
+        "erda": 5,
+        "frags": 100
+      },
+      "cumulative": {
+        "erda": 147,
+        "frags": 3895
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 44,
+      "skill": "Scroll",
+      "level": 9,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "8→9",
+      "materials": {
+        "erda": 2,
+        "frags": 33
+      },
+      "cumulative": {
+        "erda": 149,
+        "frags": 3928
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 45,
+      "skill": "Apparition",
+      "level": 2,
+      "sourceName": "선기 : 천지인 환영",
+      "coreId": "reinCore4",
+      "icon": "/hexaskill/Hoyeong_6.png",
+      "transition": "1→2",
+      "materials": {
+        "erda": 1,
+        "frags": 23
+      },
+      "cumulative": {
+        "erda": 150,
+        "frags": 3951
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 46,
+      "skill": "Scroll",
+      "level": 14,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "9→14",
+      "materials": {
+        "erda": 13,
+        "frags": 290
+      },
+      "cumulative": {
+        "erda": 163,
+        "frags": 4241
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 47,
+      "skill": "Taotie",
+      "level": 2,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "1→2",
+      "materials": {
+        "erda": 1,
+        "frags": 21
+      },
+      "cumulative": {
+        "erda": 164,
+        "frags": 4262
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 48,
+      "skill": "Lotus",
+      "level": 1,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "0→1",
+      "materials": {
+        "erda": 4,
+        "frags": 90
+      },
+      "cumulative": {
+        "erda": 168,
+        "frags": 4352
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 49,
+      "skill": "Harmony",
+      "level": 24,
+      "sourceName": "멸화염 : 천 VI/지진쇄 : 지 VI/금고봉 : 인 VI",
+      "coreId": "masteryCore1",
+      "icon": "/hexaskill/Hoyeong_2.png",
+      "transition": "18→24",
+      "materials": {
+        "erda": 23,
+        "frags": 625
+      },
+      "cumulative": {
+        "erda": 191,
+        "frags": 4977
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 50,
+      "skill": "Tiger",
+      "level": 1,
+      "sourceName": "권술 : 산령소환",
+      "coreId": "reinCore2",
+      "icon": "/hexaskill/Hoyeong_4.png",
+      "transition": "0→1",
+      "materials": {
+        "erda": 4,
+        "frags": 75
+      },
+      "cumulative": {
+        "erda": 195,
+        "frags": 5052
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 51,
+      "skill": "Talisman",
+      "level": 14,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "9→14",
+      "materials": {
+        "erda": 13,
+        "frags": 290
+      },
+      "cumulative": {
+        "erda": 208,
+        "frags": 5342
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 52,
+      "skill": "Talisman",
+      "level": 15,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "14→15",
+      "materials": {
+        "erda": 2,
+        "frags": 60
+      },
+      "cumulative": {
+        "erda": 210,
+        "frags": 5402
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 53,
+      "skill": "Apotheosis",
+      "level": 2,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "1→2",
+      "materials": {
+        "erda": 1,
+        "frags": 30
+      },
+      "cumulative": {
+        "erda": 211,
+        "frags": 5432
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 54,
+      "skill": "Apparition",
+      "level": 3,
+      "sourceName": "선기 : 천지인 환영",
+      "coreId": "reinCore4",
+      "icon": "/hexaskill/Hoyeong_6.png",
+      "transition": "2→3",
+      "materials": {
+        "erda": 1,
+        "frags": 27
+      },
+      "cumulative": {
+        "erda": 212,
+        "frags": 5459
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 55,
+      "skill": "Talisman",
+      "level": 16,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "15→16",
+      "materials": {
+        "erda": 2,
+        "frags": 65
+      },
+      "cumulative": {
+        "erda": 214,
+        "frags": 5524
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 56,
+      "skill": "Lotus",
+      "level": 2,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "1→2",
+      "materials": {
+        "erda": 1,
+        "frags": 25
+      },
+      "cumulative": {
+        "erda": 215,
+        "frags": 5549
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 57,
+      "skill": "Taotie",
+      "level": 3,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "2→3",
+      "materials": {
+        "erda": 1,
+        "frags": 26
+      },
+      "cumulative": {
+        "erda": 216,
+        "frags": 5575
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 58,
+      "skill": "Apparition",
+      "level": 4,
+      "sourceName": "선기 : 천지인 환영",
+      "coreId": "reinCore4",
+      "icon": "/hexaskill/Hoyeong_6.png",
+      "transition": "3→4",
+      "materials": {
+        "erda": 1,
+        "frags": 30
+      },
+      "cumulative": {
+        "erda": 217,
+        "frags": 5605
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 59,
+      "skill": "Talisman",
+      "level": 17,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "16→17",
+      "materials": {
+        "erda": 2,
+        "frags": 70
+      },
+      "cumulative": {
+        "erda": 219,
+        "frags": 5675
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 60,
+      "skill": "Basics",
+      "level": 14,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "9→14",
+      "materials": {
+        "erda": 13,
+        "frags": 290
+      },
+      "cumulative": {
+        "erda": 232,
+        "frags": 5965
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 61,
+      "skill": "Apotheosis",
+      "level": 3,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "2→3",
+      "materials": {
+        "erda": 1,
+        "frags": 35
+      },
+      "cumulative": {
+        "erda": 233,
+        "frags": 6000
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 62,
+      "skill": "Harmony",
+      "level": 30,
+      "sourceName": "멸화염 : 천 VI/지진쇄 : 지 VI/금고봉 : 인 VI",
+      "coreId": "masteryCore1",
+      "icon": "/hexaskill/Hoyeong_2.png",
+      "transition": "24→30",
+      "materials": {
+        "erda": 26,
+        "frags": 825
+      },
+      "cumulative": {
+        "erda": 259,
+        "frags": 6825
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 63,
+      "skill": "Basics",
+      "level": 15,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "14→15",
+      "materials": {
+        "erda": 2,
+        "frags": 60
+      },
+      "cumulative": {
+        "erda": 261,
+        "frags": 6885
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 64,
+      "skill": "Apparition",
+      "level": 10,
+      "sourceName": "선기 : 천지인 환영",
+      "coreId": "reinCore4",
+      "icon": "/hexaskill/Hoyeong_6.png",
+      "transition": "4→10",
+      "materials": {
+        "erda": 20,
+        "frags": 358
+      },
+      "cumulative": {
+        "erda": 281,
+        "frags": 7243
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 65,
+      "skill": "Talisman",
+      "level": 18,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "17→18",
+      "materials": {
+        "erda": 2,
+        "frags": 75
+      },
+      "cumulative": {
+        "erda": 283,
+        "frags": 7318
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 66,
+      "skill": "Taotie",
+      "level": 4,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "3→4",
+      "materials": {
+        "erda": 1,
+        "frags": 30
+      },
+      "cumulative": {
+        "erda": 284,
+        "frags": 7348
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 67,
+      "skill": "Basics",
+      "level": 16,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "15→16",
+      "materials": {
+        "erda": 2,
+        "frags": 65
+      },
+      "cumulative": {
+        "erda": 286,
+        "frags": 7413
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 68,
+      "skill": "Lotus",
+      "level": 3,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "2→3",
+      "materials": {
+        "erda": 1,
+        "frags": 30
+      },
+      "cumulative": {
+        "erda": 287,
+        "frags": 7443
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 69,
+      "skill": "Talisman",
+      "level": 19,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "18→19",
+      "materials": {
+        "erda": 3,
+        "frags": 80
+      },
+      "cumulative": {
+        "erda": 290,
+        "frags": 7523
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 70,
+      "skill": "Apotheosis",
+      "level": 4,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "3→4",
+      "materials": {
+        "erda": 1,
+        "frags": 40
+      },
+      "cumulative": {
+        "erda": 291,
+        "frags": 7563
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 71,
+      "skill": "Rampage",
+      "level": 14,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "9→14",
+      "materials": {
+        "erda": 20,
+        "frags": 436
+      },
+      "cumulative": {
+        "erda": 311,
+        "frags": 7999
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 72,
+      "skill": "Ascent",
+      "level": 2,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "1→2",
+      "materials": {
+        "erda": 1,
+        "frags": 30
+      },
+      "cumulative": {
+        "erda": 312,
+        "frags": 8029
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 73,
+      "skill": "Rampage",
+      "level": 15,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "14→15",
+      "materials": {
+        "erda": 3,
+        "frags": 90
+      },
+      "cumulative": {
+        "erda": 315,
+        "frags": 8119
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 74,
+      "skill": "Basics",
+      "level": 17,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "16→17",
+      "materials": {
+        "erda": 2,
+        "frags": 70
+      },
+      "cumulative": {
+        "erda": 317,
+        "frags": 8189
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 75,
+      "skill": "Taotie",
+      "level": 5,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "4→5",
+      "materials": {
+        "erda": 1,
+        "frags": 34
+      },
+      "cumulative": {
+        "erda": 318,
+        "frags": 8223
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 76,
+      "skill": "Scroll",
+      "level": 15,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "14→15",
+      "materials": {
+        "erda": 2,
+        "frags": 60
+      },
+      "cumulative": {
+        "erda": 320,
+        "frags": 8283
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 77,
+      "skill": "Scroll",
+      "level": 16,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "15→16",
+      "materials": {
+        "erda": 2,
+        "frags": 65
+      },
+      "cumulative": {
+        "erda": 322,
+        "frags": 8348
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 78,
+      "skill": "Apotheosis",
+      "level": 5,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "4→5",
+      "materials": {
+        "erda": 2,
+        "frags": 45
+      },
+      "cumulative": {
+        "erda": 324,
+        "frags": 8393
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 79,
+      "skill": "Rampage",
+      "level": 16,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "15→16",
+      "materials": {
+        "erda": 3,
+        "frags": 98
+      },
+      "cumulative": {
+        "erda": 327,
+        "frags": 8491
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 80,
+      "skill": "Basics",
+      "level": 18,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "17→18",
+      "materials": {
+        "erda": 2,
+        "frags": 75
+      },
+      "cumulative": {
+        "erda": 329,
+        "frags": 8566
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 81,
+      "skill": "Lotus",
+      "level": 4,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "3→4",
+      "materials": {
+        "erda": 1,
+        "frags": 35
+      },
+      "cumulative": {
+        "erda": 330,
+        "frags": 8601
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 82,
+      "skill": "Hecate",
+      "level": 2,
+      "sourceName": "솔 헤카테",
+      "coreId": "generalCore2",
+      "icon": "/hexaskill/General/General_2.png",
+      "transition": "1→2",
+      "materials": {
+        "erda": 2,
+        "frags": 38
+      },
+      "cumulative": {
+        "erda": 332,
+        "frags": 8639
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 83,
+      "skill": "Taotie",
+      "level": 6,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "5→6",
+      "materials": {
+        "erda": 2,
+        "frags": 38
+      },
+      "cumulative": {
+        "erda": 334,
+        "frags": 8677
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 84,
+      "skill": "Ascent",
+      "level": 3,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "2→3",
+      "materials": {
+        "erda": 1,
+        "frags": 35
+      },
+      "cumulative": {
+        "erda": 335,
+        "frags": 8712
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 85,
+      "skill": "Basics",
+      "level": 19,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "18→19",
+      "materials": {
+        "erda": 3,
+        "frags": 80
+      },
+      "cumulative": {
+        "erda": 338,
+        "frags": 8792
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 86,
+      "skill": "Rampage",
+      "level": 17,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "16→17",
+      "materials": {
+        "erda": 3,
+        "frags": 105
+      },
+      "cumulative": {
+        "erda": 341,
+        "frags": 8897
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 87,
+      "skill": "Apotheosis",
+      "level": 6,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "5→6",
+      "materials": {
+        "erda": 2,
+        "frags": 50
+      },
+      "cumulative": {
+        "erda": 343,
+        "frags": 8947
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 88,
+      "skill": "Scroll",
+      "level": 17,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "16→17",
+      "materials": {
+        "erda": 2,
+        "frags": 70
+      },
+      "cumulative": {
+        "erda": 345,
+        "frags": 9017
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 89,
+      "skill": "Scroll",
+      "level": 18,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "17→18",
+      "materials": {
+        "erda": 2,
+        "frags": 75
+      },
+      "cumulative": {
+        "erda": 347,
+        "frags": 9092
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 90,
+      "skill": "Rampage",
+      "level": 18,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "17→18",
+      "materials": {
+        "erda": 3,
+        "frags": 113
+      },
+      "cumulative": {
+        "erda": 350,
+        "frags": 9205
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 91,
+      "skill": "Lotus",
+      "level": 5,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "4→5",
+      "materials": {
+        "erda": 2,
+        "frags": 40
+      },
+      "cumulative": {
+        "erda": 352,
+        "frags": 9245
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 92,
+      "skill": "Wrath of Gods",
+      "level": 2,
+      "sourceName": "선기 : 강림 괴력난신",
+      "coreId": "reinCore3",
+      "icon": "/hexaskill/Hoyeong_5.png",
+      "transition": "1→2",
+      "materials": {
+        "erda": 1,
+        "frags": 23
+      },
+      "cumulative": {
+        "erda": 353,
+        "frags": 9268
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 93,
+      "skill": "Talisman",
+      "level": 25,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "19→25",
+      "materials": {
+        "erda": 23,
+        "frags": 650
+      },
+      "cumulative": {
+        "erda": 376,
+        "frags": 9918
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 94,
+      "skill": "Taotie",
+      "level": 7,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "6→7",
+      "materials": {
+        "erda": 2,
+        "frags": 43
+      },
+      "cumulative": {
+        "erda": 378,
+        "frags": 9961
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 95,
+      "skill": "Hecate",
+      "level": 3,
+      "sourceName": "솔 헤카테",
+      "coreId": "generalCore2",
+      "icon": "/hexaskill/General/General_2.png",
+      "transition": "2→3",
+      "materials": {
+        "erda": 2,
+        "frags": 44
+      },
+      "cumulative": {
+        "erda": 380,
+        "frags": 10005
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 96,
+      "skill": "Talisman",
+      "level": 26,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "25→26",
+      "materials": {
+        "erda": 3,
+        "frags": 110
+      },
+      "cumulative": {
+        "erda": 383,
+        "frags": 10115
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 97,
+      "skill": "Ascent",
+      "level": 4,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "3→4",
+      "materials": {
+        "erda": 1,
+        "frags": 40
+      },
+      "cumulative": {
+        "erda": 384,
+        "frags": 10155
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 98,
+      "skill": "Apotheosis",
+      "level": 7,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "6→7",
+      "materials": {
+        "erda": 2,
+        "frags": 55
+      },
+      "cumulative": {
+        "erda": 386,
+        "frags": 10210
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 99,
+      "skill": "Rampage",
+      "level": 19,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "18→19",
+      "materials": {
+        "erda": 4,
+        "frags": 120
+      },
+      "cumulative": {
+        "erda": 390,
+        "frags": 10330
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 100,
+      "skill": "Talisman",
+      "level": 27,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "26→27",
+      "materials": {
+        "erda": 3,
+        "frags": 115
+      },
+      "cumulative": {
+        "erda": 393,
+        "frags": 10445
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 101,
+      "skill": "Scroll",
+      "level": 19,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "18→19",
+      "materials": {
+        "erda": 3,
+        "frags": 80
+      },
+      "cumulative": {
+        "erda": 396,
+        "frags": 10525
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 102,
+      "skill": "Scroll",
+      "level": 25,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "19→25",
+      "materials": {
+        "erda": 23,
+        "frags": 650
+      },
+      "cumulative": {
+        "erda": 419,
+        "frags": 11175
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 103,
+      "skill": "Scroll",
+      "level": 26,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "25→26",
+      "materials": {
+        "erda": 3,
+        "frags": 110
+      },
+      "cumulative": {
+        "erda": 422,
+        "frags": 11285
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 104,
+      "skill": "Lotus",
+      "level": 6,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "5→6",
+      "materials": {
+        "erda": 2,
+        "frags": 45
+      },
+      "cumulative": {
+        "erda": 424,
+        "frags": 11330
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 105,
+      "skill": "Taotie",
+      "level": 8,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "7→8",
+      "materials": {
+        "erda": 2,
+        "frags": 47
+      },
+      "cumulative": {
+        "erda": 426,
+        "frags": 11377
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 106,
+      "skill": "Apotheosis",
+      "level": 8,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "7→8",
+      "materials": {
+        "erda": 3,
+        "frags": 60
+      },
+      "cumulative": {
+        "erda": 429,
+        "frags": 11437
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 107,
+      "skill": "Talisman",
+      "level": 29,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "27→29",
+      "materials": {
+        "erda": 7,
+        "frags": 245
+      },
+      "cumulative": {
+        "erda": 436,
+        "frags": 11682
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 108,
+      "skill": "Hecate",
+      "level": 4,
+      "sourceName": "솔 헤카테",
+      "coreId": "generalCore2",
+      "icon": "/hexaskill/General/General_2.png",
+      "transition": "3→4",
+      "materials": {
+        "erda": 2,
+        "frags": 50
+      },
+      "cumulative": {
+        "erda": 438,
+        "frags": 11732
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 109,
+      "skill": "Wrath of Gods",
+      "level": 3,
+      "sourceName": "선기 : 강림 괴력난신",
+      "coreId": "reinCore3",
+      "icon": "/hexaskill/Hoyeong_5.png",
+      "transition": "2→3",
+      "materials": {
+        "erda": 1,
+        "frags": 27
+      },
+      "cumulative": {
+        "erda": 439,
+        "frags": 11759
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 110,
+      "skill": "Ascent",
+      "level": 5,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "4→5",
+      "materials": {
+        "erda": 2,
+        "frags": 45
+      },
+      "cumulative": {
+        "erda": 441,
+        "frags": 11804
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 111,
+      "skill": "Taotie",
+      "level": 9,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "8→9",
+      "materials": {
+        "erda": 2,
+        "frags": 51
+      },
+      "cumulative": {
+        "erda": 443,
+        "frags": 11855
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 112,
+      "skill": "Apotheosis",
+      "level": 9,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "8→9",
+      "materials": {
+        "erda": 3,
+        "frags": 65
+      },
+      "cumulative": {
+        "erda": 446,
+        "frags": 11920
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 113,
+      "skill": "Basics",
+      "level": 25,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "19→25",
+      "materials": {
+        "erda": 23,
+        "frags": 650
+      },
+      "cumulative": {
+        "erda": 469,
+        "frags": 12570
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 114,
+      "skill": "Lotus",
+      "level": 7,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "6→7",
+      "materials": {
+        "erda": 2,
+        "frags": 50
+      },
+      "cumulative": {
+        "erda": 471,
+        "frags": 12620
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 115,
+      "skill": "Basics",
+      "level": 26,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "25→26",
+      "materials": {
+        "erda": 3,
+        "frags": 110
+      },
+      "cumulative": {
+        "erda": 474,
+        "frags": 12730
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 116,
+      "skill": "Apparition",
+      "level": 11,
+      "sourceName": "선기 : 천지인 환영",
+      "coreId": "reinCore4",
+      "icon": "/hexaskill/Hoyeong_6.png",
+      "transition": "10→11",
+      "materials": {
+        "erda": 3,
+        "frags": 60
+      },
+      "cumulative": {
+        "erda": 477,
+        "frags": 12790
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 117,
+      "skill": "Wrath of Gods",
+      "level": 4,
+      "sourceName": "선기 : 강림 괴력난신",
+      "coreId": "reinCore3",
+      "icon": "/hexaskill/Hoyeong_5.png",
+      "transition": "3→4",
+      "materials": {
+        "erda": 1,
+        "frags": 30
+      },
+      "cumulative": {
+        "erda": 478,
+        "frags": 12820
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 118,
+      "skill": "Ascent",
+      "level": 6,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "5→6",
+      "materials": {
+        "erda": 2,
+        "frags": 50
+      },
+      "cumulative": {
+        "erda": 480,
+        "frags": 12870
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 119,
+      "skill": "Basics",
+      "level": 27,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "26→27",
+      "materials": {
+        "erda": 3,
+        "frags": 115
+      },
+      "cumulative": {
+        "erda": 483,
+        "frags": 12985
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 120,
+      "skill": "Hecate",
+      "level": 5,
+      "sourceName": "솔 헤카테",
+      "coreId": "generalCore2",
+      "icon": "/hexaskill/General/General_2.png",
+      "transition": "4→5",
+      "materials": {
+        "erda": 3,
+        "frags": 57
+      },
+      "cumulative": {
+        "erda": 486,
+        "frags": 13042
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 121,
+      "skill": "Lotus",
+      "level": 8,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "7→8",
+      "materials": {
+        "erda": 3,
+        "frags": 55
+      },
+      "cumulative": {
+        "erda": 489,
+        "frags": 13097
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 122,
+      "skill": "Basics",
+      "level": 29,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "27→29",
+      "materials": {
+        "erda": 7,
+        "frags": 245
+      },
+      "cumulative": {
+        "erda": 496,
+        "frags": 13342
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 123,
+      "skill": "Wrath of Gods",
+      "level": 10,
+      "sourceName": "선기 : 강림 괴력난신",
+      "coreId": "reinCore3",
+      "icon": "/hexaskill/Hoyeong_5.png",
+      "transition": "4→10",
+      "materials": {
+        "erda": 20,
+        "frags": 358
+      },
+      "cumulative": {
+        "erda": 516,
+        "frags": 13700
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 124,
+      "skill": "Rampage",
+      "level": 24,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "19→24",
+      "materials": {
+        "erda": 28,
+        "frags": 819
+      },
+      "cumulative": {
+        "erda": 544,
+        "frags": 14519
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 125,
+      "skill": "Rampage",
+      "level": 25,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "24→25",
+      "materials": {
+        "erda": 4,
+        "frags": 158
+      },
+      "cumulative": {
+        "erda": 548,
+        "frags": 14677
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 126,
+      "skill": "Ascent",
+      "level": 7,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "6→7",
+      "materials": {
+        "erda": 2,
+        "frags": 55
+      },
+      "cumulative": {
+        "erda": 550,
+        "frags": 14732
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 127,
+      "skill": "Apparition",
+      "level": 12,
+      "sourceName": "선기 : 천지인 환영",
+      "coreId": "reinCore4",
+      "icon": "/hexaskill/Hoyeong_6.png",
+      "transition": "11→12",
+      "materials": {
+        "erda": 3,
+        "frags": 68
+      },
+      "cumulative": {
+        "erda": 553,
+        "frags": 14800
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 128,
+      "skill": "Rampage",
+      "level": 26,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "25→26",
+      "materials": {
+        "erda": 5,
+        "frags": 165
+      },
+      "cumulative": {
+        "erda": 558,
+        "frags": 14965
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 129,
+      "skill": "Hecate",
+      "level": 6,
+      "sourceName": "솔 헤카테",
+      "coreId": "generalCore2",
+      "icon": "/hexaskill/General/General_2.png",
+      "transition": "5→6",
+      "materials": {
+        "erda": 3,
+        "frags": 63
+      },
+      "cumulative": {
+        "erda": 561,
+        "frags": 15028
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 130,
+      "skill": "Lotus",
+      "level": 9,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "8→9",
+      "materials": {
+        "erda": 3,
+        "frags": 60
+      },
+      "cumulative": {
+        "erda": 564,
+        "frags": 15088
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 131,
+      "skill": "Rampage",
+      "level": 27,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "26→27",
+      "materials": {
+        "erda": 5,
+        "frags": 173
+      },
+      "cumulative": {
+        "erda": 569,
+        "frags": 15261
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 132,
+      "skill": "Apparition",
+      "level": 20,
+      "sourceName": "선기 : 천지인 환영",
+      "coreId": "reinCore4",
+      "icon": "/hexaskill/Hoyeong_6.png",
+      "transition": "12→20",
+      "materials": {
+        "erda": 34,
+        "frags": 947
+      },
+      "cumulative": {
+        "erda": 603,
+        "frags": 16208
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 133,
+      "skill": "Ascent",
+      "level": 8,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "7→8",
+      "materials": {
+        "erda": 3,
+        "frags": 60
+      },
+      "cumulative": {
+        "erda": 606,
+        "frags": 16268
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 134,
+      "skill": "Rampage",
+      "level": 28,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "27→28",
+      "materials": {
+        "erda": 5,
+        "frags": 180
+      },
+      "cumulative": {
+        "erda": 611,
+        "frags": 16448
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 135,
+      "skill": "Scroll",
+      "level": 27,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "26→27",
+      "materials": {
+        "erda": 3,
+        "frags": 115
+      },
+      "cumulative": {
+        "erda": 614,
+        "frags": 16563
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 136,
+      "skill": "Scroll",
+      "level": 29,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "27→29",
+      "materials": {
+        "erda": 7,
+        "frags": 245
+      },
+      "cumulative": {
+        "erda": 621,
+        "frags": 16808
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 137,
+      "skill": "Scroll",
+      "level": 30,
+      "sourceName": "흡성와류 VI/권술 : 호접지몽 VI",
+      "coreId": "masteryCore4",
+      "icon": "/hexaskill/Hoyeong_9.png",
+      "transition": "29→30",
+      "materials": {
+        "erda": 10,
+        "frags": 250
+      },
+      "cumulative": {
+        "erda": 631,
+        "frags": 17058
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 138,
+      "skill": "Hecate",
+      "level": 7,
+      "sourceName": "솔 헤카테",
+      "coreId": "generalCore2",
+      "icon": "/hexaskill/General/General_2.png",
+      "transition": "6→7",
+      "materials": {
+        "erda": 3,
+        "frags": 69
+      },
+      "cumulative": {
+        "erda": 634,
+        "frags": 17127
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 139,
+      "skill": "Rampage",
+      "level": 29,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "28→29",
+      "materials": {
+        "erda": 6,
+        "frags": 188
+      },
+      "cumulative": {
+        "erda": 640,
+        "frags": 17315
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 140,
+      "skill": "Ascent",
+      "level": 9,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "8→9",
+      "materials": {
+        "erda": 3,
+        "frags": 65
+      },
+      "cumulative": {
+        "erda": 643,
+        "frags": 17380
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 141,
+      "skill": "Hecate",
+      "level": 8,
+      "sourceName": "솔 헤카테",
+      "coreId": "generalCore2",
+      "icon": "/hexaskill/General/General_2.png",
+      "transition": "7→8",
+      "materials": {
+        "erda": 5,
+        "frags": 75
+      },
+      "cumulative": {
+        "erda": 648,
+        "frags": 17455
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 142,
+      "skill": "Tiger",
+      "level": 2,
+      "sourceName": "권술 : 산령소환",
+      "coreId": "reinCore2",
+      "icon": "/hexaskill/Hoyeong_4.png",
+      "transition": "1→2",
+      "materials": {
+        "erda": 1,
+        "frags": 23
+      },
+      "cumulative": {
+        "erda": 649,
+        "frags": 17478
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 143,
+      "skill": "Apparition",
+      "level": 30,
+      "sourceName": "선기 : 천지인 환영",
+      "coreId": "reinCore4",
+      "icon": "/hexaskill/Hoyeong_6.png",
+      "transition": "20→30",
+      "materials": {
+        "erda": 56,
+        "frags": 1795
+      },
+      "cumulative": {
+        "erda": 705,
+        "frags": 19273
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 144,
+      "skill": "Hecate",
+      "level": 9,
+      "sourceName": "솔 헤카테",
+      "coreId": "generalCore2",
+      "icon": "/hexaskill/General/General_2.png",
+      "transition": "8→9",
+      "materials": {
+        "erda": 5,
+        "frags": 82
+      },
+      "cumulative": {
+        "erda": 710,
+        "frags": 19355
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 145,
+      "skill": "Apotheosis",
+      "level": 13,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "9→13",
+      "materials": {
+        "erda": 20,
+        "frags": 470
+      },
+      "cumulative": {
+        "erda": 730,
+        "frags": 19825
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 146,
+      "skill": "Apotheosis",
+      "level": 14,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "13→14",
+      "materials": {
+        "erda": 4,
+        "frags": 110
+      },
+      "cumulative": {
+        "erda": 734,
+        "frags": 19935
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 147,
+      "skill": "Taotie",
+      "level": 14,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "9→14",
+      "materials": {
+        "erda": 18,
+        "frags": 433
+      },
+      "cumulative": {
+        "erda": 752,
+        "frags": 20368
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 148,
+      "skill": "Tiger",
+      "level": 3,
+      "sourceName": "권술 : 산령소환",
+      "coreId": "reinCore2",
+      "icon": "/hexaskill/Hoyeong_4.png",
+      "transition": "2→3",
+      "materials": {
+        "erda": 1,
+        "frags": 27
+      },
+      "cumulative": {
+        "erda": 753,
+        "frags": 20395
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 149,
+      "skill": "Taotie",
+      "level": 15,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "14→15",
+      "materials": {
+        "erda": 3,
+        "frags": 91
+      },
+      "cumulative": {
+        "erda": 756,
+        "frags": 20486
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 150,
+      "skill": "Apotheosis",
+      "level": 15,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "14→15",
+      "materials": {
+        "erda": 4,
+        "frags": 120
+      },
+      "cumulative": {
+        "erda": 760,
+        "frags": 20606
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 151,
+      "skill": "Taotie",
+      "level": 16,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "15→16",
+      "materials": {
+        "erda": 3,
+        "frags": 98
+      },
+      "cumulative": {
+        "erda": 763,
+        "frags": 20704
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 152,
+      "skill": "Talisman",
+      "level": 30,
+      "sourceName": "환영 분신부 VI/추적 귀화부 VI",
+      "coreId": "masteryCore3",
+      "icon": "/hexaskill/Hoyeong_8.png",
+      "transition": "29→30",
+      "materials": {
+        "erda": 10,
+        "frags": 250
+      },
+      "cumulative": {
+        "erda": 773,
+        "frags": 20954
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 153,
+      "skill": "Tiger",
+      "level": 4,
+      "sourceName": "권술 : 산령소환",
+      "coreId": "reinCore2",
+      "icon": "/hexaskill/Hoyeong_4.png",
+      "transition": "3→4",
+      "materials": {
+        "erda": 1,
+        "frags": 30
+      },
+      "cumulative": {
+        "erda": 774,
+        "frags": 20984
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 154,
+      "skill": "Apotheosis",
+      "level": 16,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "15→16",
+      "materials": {
+        "erda": 4,
+        "frags": 130
+      },
+      "cumulative": {
+        "erda": 778,
+        "frags": 21114
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 155,
+      "skill": "Taotie",
+      "level": 17,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "16→17",
+      "materials": {
+        "erda": 3,
+        "frags": 105
+      },
+      "cumulative": {
+        "erda": 781,
+        "frags": 21219
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 156,
+      "skill": "Lotus",
+      "level": 14,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "9→14",
+      "materials": {
+        "erda": 21,
+        "frags": 522
+      },
+      "cumulative": {
+        "erda": 802,
+        "frags": 21741
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 157,
+      "skill": "Tiger",
+      "level": 10,
+      "sourceName": "권술 : 산령소환",
+      "coreId": "reinCore2",
+      "icon": "/hexaskill/Hoyeong_4.png",
+      "transition": "4→10",
+      "materials": {
+        "erda": 20,
+        "frags": 358
+      },
+      "cumulative": {
+        "erda": 822,
+        "frags": 22099
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 158,
+      "skill": "Wrath of Gods",
+      "level": 11,
+      "sourceName": "선기 : 강림 괴력난신",
+      "coreId": "reinCore3",
+      "icon": "/hexaskill/Hoyeong_5.png",
+      "transition": "10→11",
+      "materials": {
+        "erda": 3,
+        "frags": 60
+      },
+      "cumulative": {
+        "erda": 825,
+        "frags": 22159
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 159,
+      "skill": "Apotheosis",
+      "level": 17,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "16→17",
+      "materials": {
+        "erda": 4,
+        "frags": 140
+      },
+      "cumulative": {
+        "erda": 829,
+        "frags": 22299
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 160,
+      "skill": "Lotus",
+      "level": 15,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "14→15",
+      "materials": {
+        "erda": 4,
+        "frags": 107
+      },
+      "cumulative": {
+        "erda": 833,
+        "frags": 22406
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 161,
+      "skill": "Taotie",
+      "level": 18,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "17→18",
+      "materials": {
+        "erda": 3,
+        "frags": 112
+      },
+      "cumulative": {
+        "erda": 836,
+        "frags": 22518
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 162,
+      "skill": "Apotheosis",
+      "level": 18,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "17→18",
+      "materials": {
+        "erda": 4,
+        "frags": 150
+      },
+      "cumulative": {
+        "erda": 840,
+        "frags": 22668
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 163,
+      "skill": "Ascent",
+      "level": 14,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "9→14",
+      "materials": {
+        "erda": 24,
+        "frags": 580
+      },
+      "cumulative": {
+        "erda": 864,
+        "frags": 23248
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 164,
+      "skill": "Lotus",
+      "level": 16,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "15→16",
+      "materials": {
+        "erda": 4,
+        "frags": 115
+      },
+      "cumulative": {
+        "erda": 868,
+        "frags": 23363
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 165,
+      "skill": "Basics",
+      "level": 30,
+      "sourceName": "파초풍 : 천 VI/토파류 : 지 VI/여의선 : 인 VI",
+      "coreId": "masteryCore2",
+      "icon": "/hexaskill/Hoyeong_7.png",
+      "transition": "29→30",
+      "materials": {
+        "erda": 10,
+        "frags": 250
+      },
+      "cumulative": {
+        "erda": 878,
+        "frags": 23613
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 166,
+      "skill": "Taotie",
+      "level": 19,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "18→19",
+      "materials": {
+        "erda": 3,
+        "frags": 120
+      },
+      "cumulative": {
+        "erda": 881,
+        "frags": 23733
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 167,
+      "skill": "Apotheosis",
+      "level": 20,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "18→20",
+      "materials": {
+        "erda": 20,
+        "frags": 510
+      },
+      "cumulative": {
+        "erda": 901,
+        "frags": 24243
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 168,
+      "skill": "Wrath of Gods",
+      "level": 12,
+      "sourceName": "선기 : 강림 괴력난신",
+      "coreId": "reinCore3",
+      "icon": "/hexaskill/Hoyeong_5.png",
+      "transition": "11→12",
+      "materials": {
+        "erda": 3,
+        "frags": 68
+      },
+      "cumulative": {
+        "erda": 904,
+        "frags": 24311
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 169,
+      "skill": "Ascent",
+      "level": 15,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "14→15",
+      "materials": {
+        "erda": 4,
+        "frags": 120
+      },
+      "cumulative": {
+        "erda": 908,
+        "frags": 24431
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 170,
+      "skill": "Lotus",
+      "level": 17,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "16→17",
+      "materials": {
+        "erda": 4,
+        "frags": 124
+      },
+      "cumulative": {
+        "erda": 912,
+        "frags": 24555
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 171,
+      "skill": "Apotheosis",
+      "level": 21,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "20→21",
+      "materials": {
+        "erda": 5,
+        "frags": 170
+      },
+      "cumulative": {
+        "erda": 917,
+        "frags": 24725
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 172,
+      "skill": "Wrath of Gods",
+      "level": 20,
+      "sourceName": "선기 : 강림 괴력난신",
+      "coreId": "reinCore3",
+      "icon": "/hexaskill/Hoyeong_5.png",
+      "transition": "12→20",
+      "materials": {
+        "erda": 34,
+        "frags": 947
+      },
+      "cumulative": {
+        "erda": 951,
+        "frags": 25672
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 173,
+      "skill": "Lotus",
+      "level": 18,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "17→18",
+      "materials": {
+        "erda": 4,
+        "frags": 132
+      },
+      "cumulative": {
+        "erda": 955,
+        "frags": 25804
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 174,
+      "skill": "Rampage",
+      "level": 30,
+      "sourceName": "선기 : 극대 분신난무",
+      "coreId": "reinCore1",
+      "icon": "/hexaskill/Hoyeong_3.png",
+      "transition": "29→30",
+      "materials": {
+        "erda": 15,
+        "frags": 375
+      },
+      "cumulative": {
+        "erda": 970,
+        "frags": 26179
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 175,
+      "skill": "Apotheosis",
+      "level": 22,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "21→22",
+      "materials": {
+        "erda": 5,
+        "frags": 180
+      },
+      "cumulative": {
+        "erda": 975,
+        "frags": 26359
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 176,
+      "skill": "Hecate",
+      "level": 15,
+      "sourceName": "솔 헤카테",
+      "coreId": "generalCore2",
+      "icon": "/hexaskill/General/General_2.png",
+      "transition": "9→15",
+      "materials": {
+        "erda": 42,
+        "frags": 989
+      },
+      "cumulative": {
+        "erda": 1017,
+        "frags": 27348
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 177,
+      "skill": "Ascent",
+      "level": 16,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "15→16",
+      "materials": {
+        "erda": 4,
+        "frags": 130
+      },
+      "cumulative": {
+        "erda": 1021,
+        "frags": 27478
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 178,
+      "skill": "Apotheosis",
+      "level": 23,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "22→23",
+      "materials": {
+        "erda": 5,
+        "frags": 190
+      },
+      "cumulative": {
+        "erda": 1026,
+        "frags": 27668
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 179,
+      "skill": "Lotus",
+      "level": 19,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "18→19",
+      "materials": {
+        "erda": 4,
+        "frags": 141
+      },
+      "cumulative": {
+        "erda": 1030,
+        "frags": 27809
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 180,
+      "skill": "Apotheosis",
+      "level": 30,
+      "sourceName": "선기 : 파천황",
+      "coreId": "skillCore1",
+      "icon": "/hexaskill/Hoyeong_1.png",
+      "transition": "23→30",
+      "materials": {
+        "erda": 55,
+        "frags": 1850
+      },
+      "cumulative": {
+        "erda": 1085,
+        "frags": 29659
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 181,
+      "skill": "Ascent",
+      "level": 17,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "16→17",
+      "materials": {
+        "erda": 4,
+        "frags": 140
+      },
+      "cumulative": {
+        "erda": 1089,
+        "frags": 29799
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 182,
+      "skill": "Ascent",
+      "level": 18,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "17→18",
+      "materials": {
+        "erda": 4,
+        "frags": 150
+      },
+      "cumulative": {
+        "erda": 1093,
+        "frags": 29949
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 183,
+      "skill": "Taotie",
+      "level": 25,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "19→25",
+      "materials": {
+        "erda": 32,
+        "frags": 974
+      },
+      "cumulative": {
+        "erda": 1125,
+        "frags": 30923
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 184,
+      "skill": "Wrath of Gods",
+      "level": 30,
+      "sourceName": "선기 : 강림 괴력난신",
+      "coreId": "reinCore3",
+      "icon": "/hexaskill/Hoyeong_5.png",
+      "transition": "20→30",
+      "materials": {
+        "erda": 56,
+        "frags": 1795
+      },
+      "cumulative": {
+        "erda": 1181,
+        "frags": 32718
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 185,
+      "skill": "Taotie",
+      "level": 26,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "25→26",
+      "materials": {
+        "erda": 4,
+        "frags": 168
+      },
+      "cumulative": {
+        "erda": 1185,
+        "frags": 32886
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 186,
+      "skill": "Hecate",
+      "level": 16,
+      "sourceName": "솔 헤카테",
+      "coreId": "generalCore2",
+      "icon": "/hexaskill/General/General_2.png",
+      "transition": "15→16",
+      "materials": {
+        "erda": 6,
+        "frags": 179
+      },
+      "cumulative": {
+        "erda": 1191,
+        "frags": 33065
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 187,
+      "skill": "Ascent",
+      "level": 19,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "18→19",
+      "materials": {
+        "erda": 5,
+        "frags": 160
+      },
+      "cumulative": {
+        "erda": 1196,
+        "frags": 33225
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 188,
+      "skill": "Taotie",
+      "level": 27,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "26→27",
+      "materials": {
+        "erda": 5,
+        "frags": 177
+      },
+      "cumulative": {
+        "erda": 1201,
+        "frags": 33402
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 189,
+      "skill": "Hecate",
+      "level": 17,
+      "sourceName": "솔 헤카테",
+      "coreId": "generalCore2",
+      "icon": "/hexaskill/General/General_2.png",
+      "transition": "16→17",
+      "materials": {
+        "erda": 6,
+        "frags": 193
+      },
+      "cumulative": {
+        "erda": 1207,
+        "frags": 33595
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 190,
+      "skill": "Hecate",
+      "level": 30,
+      "sourceName": "솔 헤카테",
+      "coreId": "generalCore2",
+      "icon": "/hexaskill/General/General_2.png",
+      "transition": "17→30",
+      "materials": {
+        "erda": 122,
+        "frags": 4304
+      },
+      "cumulative": {
+        "erda": 1329,
+        "frags": 37899
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 191,
+      "skill": "Taotie",
+      "level": 29,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "27→29",
+      "materials": {
+        "erda": 10,
+        "frags": 377
+      },
+      "cumulative": {
+        "erda": 1339,
+        "frags": 38276
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 192,
+      "skill": "Tiger",
+      "level": 11,
+      "sourceName": "권술 : 산령소환",
+      "coreId": "reinCore2",
+      "icon": "/hexaskill/Hoyeong_4.png",
+      "transition": "10→11",
+      "materials": {
+        "erda": 3,
+        "frags": 60
+      },
+      "cumulative": {
+        "erda": 1342,
+        "frags": 38336
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 193,
+      "skill": "Lotus",
+      "level": 25,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "19→25",
+      "materials": {
+        "erda": 38,
+        "frags": 1164
+      },
+      "cumulative": {
+        "erda": 1380,
+        "frags": 39500
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 194,
+      "skill": "Lotus",
+      "level": 26,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "25→26",
+      "materials": {
+        "erda": 5,
+        "frags": 198
+      },
+      "cumulative": {
+        "erda": 1385,
+        "frags": 39698
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 195,
+      "skill": "Ascent",
+      "level": 25,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "19→25",
+      "materials": {
+        "erda": 40,
+        "frags": 1300
+      },
+      "cumulative": {
+        "erda": 1425,
+        "frags": 40998
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 196,
+      "skill": "Lotus",
+      "level": 27,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "26→27",
+      "materials": {
+        "erda": 5,
+        "frags": 208
+      },
+      "cumulative": {
+        "erda": 1430,
+        "frags": 41206
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 197,
+      "skill": "Tiger",
+      "level": 12,
+      "sourceName": "권술 : 산령소환",
+      "coreId": "reinCore2",
+      "icon": "/hexaskill/Hoyeong_4.png",
+      "transition": "11→12",
+      "materials": {
+        "erda": 3,
+        "frags": 68
+      },
+      "cumulative": {
+        "erda": 1433,
+        "frags": 41274
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 198,
+      "skill": "Lotus",
+      "level": 29,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "27→29",
+      "materials": {
+        "erda": 11,
+        "frags": 444
+      },
+      "cumulative": {
+        "erda": 1444,
+        "frags": 41718
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 199,
+      "skill": "Ascent",
+      "level": 26,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "25→26",
+      "materials": {
+        "erda": 6,
+        "frags": 220
+      },
+      "cumulative": {
+        "erda": 1450,
+        "frags": 41938
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 200,
+      "skill": "Ascent",
+      "level": 27,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "26→27",
+      "materials": {
+        "erda": 6,
+        "frags": 230
+      },
+      "cumulative": {
+        "erda": 1456,
+        "frags": 42168
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 201,
+      "skill": "Tiger",
+      "level": 20,
+      "sourceName": "권술 : 산령소환",
+      "coreId": "reinCore2",
+      "icon": "/hexaskill/Hoyeong_4.png",
+      "transition": "12→20",
+      "materials": {
+        "erda": 34,
+        "frags": 947
+      },
+      "cumulative": {
+        "erda": 1490,
+        "frags": 43115
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 202,
+      "skill": "Ascent",
+      "level": 29,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "27→29",
+      "materials": {
+        "erda": 13,
+        "frags": 490
+      },
+      "cumulative": {
+        "erda": 1503,
+        "frags": 43605
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 203,
+      "skill": "Tiger",
+      "level": 30,
+      "sourceName": "권술 : 산령소환",
+      "coreId": "reinCore2",
+      "icon": "/hexaskill/Hoyeong_4.png",
+      "transition": "20→30",
+      "materials": {
+        "erda": 56,
+        "frags": 1795
+      },
+      "cumulative": {
+        "erda": 1559,
+        "frags": 45400
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 204,
+      "skill": "Taotie",
+      "level": 30,
+      "sourceName": "선기 : 사흉해방 도철",
+      "coreId": "skillCore3",
+      "icon": "/hexaskill/Hoyeong_12.png",
+      "transition": "29→30",
+      "materials": {
+        "erda": 14,
+        "frags": 357
+      },
+      "cumulative": {
+        "erda": 1573,
+        "frags": 45757
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 205,
+      "skill": "Ascent",
+      "level": 30,
+      "sourceName": "천세휘령",
+      "coreId": "skillCore2",
+      "icon": "/hexaskill/Hoyeong_10.png",
+      "transition": "29→30",
+      "materials": {
+        "erda": 20,
+        "frags": 500
+      },
+      "cumulative": {
+        "erda": 1593,
+        "frags": 46257
+      },
+      "materialBasis": "checkpoint"
+    },
+    {
+      "position": 206,
+      "skill": "Lotus",
+      "level": 30,
+      "sourceName": "화중군자 VI",
+      "coreId": "generalCore3",
+      "icon": "/hexaskill/Hoyeong_11.png",
+      "transition": "29→30",
+      "materials": {
+        "erda": 18,
+        "frags": 450
+      },
+      "cumulative": {
+        "erda": 1611,
+        "frags": 46707
+      },
+      "materialBasis": "checkpoint"
+    }
+  ],
+  "steps": [
+    {
+      "skill": "Harmony",
+      "level": 1
+    },
+    {
+      "skill": "Talisman",
+      "level": 1
+    },
+    {
+      "skill": "Harmony",
+      "level": 6
+    },
+    {
+      "skill": "Talisman",
+      "level": 2
+    },
+    {
+      "skill": "HEXA Stat I",
+      "level": 20
+    },
+    {
+      "skill": "Apparition",
+      "level": 1
+    },
+    {
+      "skill": "Scroll",
+      "level": 2
+    },
+    {
+      "skill": "Hecate",
+      "level": 1
+    },
+    {
+      "skill": "Taotie",
+      "level": 1
+    },
+    {
+      "skill": "Talisman",
+      "level": 3
+    },
+    {
+      "skill": "Talisman",
+      "level": 4
+    },
+    {
+      "skill": "HEXA Stat II",
+      "level": 20
+    },
+    {
+      "skill": "Talisman",
+      "level": 5
+    },
+    {
+      "skill": "Talisman",
+      "level": 6
+    },
+    {
+      "skill": "Harmony",
+      "level": 12
+    },
+    {
+      "skill": "Scroll",
+      "level": 3
+    },
+    {
+      "skill": "Scroll",
+      "level": 4
+    },
+    {
+      "skill": "HEXA Stat III",
+      "level": 20
+    },
+    {
+      "skill": "Talisman",
+      "level": 7
+    },
+    {
+      "skill": "Talisman",
+      "level": 8
+    },
+    {
+      "skill": "Basics",
+      "level": 1
+    },
+    {
+      "skill": "Basics",
+      "level": 2
+    },
+    {
+      "skill": "Basics",
+      "level": 3
+    },
+    {
+      "skill": "Basics",
+      "level": 4
+    },
+    {
+      "skill": "Basics",
+      "level": 5
+    },
+    {
+      "skill": "Basics",
+      "level": 6
+    },
+    {
+      "skill": "Wrath of Gods",
+      "level": 1
+    },
+    {
+      "skill": "Talisman",
+      "level": 9
+    },
+    {
+      "skill": "Scroll",
+      "level": 5
+    },
+    {
+      "skill": "Scroll",
+      "level": 6
+    },
+    {
+      "skill": "Basics",
+      "level": 7
+    },
+    {
+      "skill": "Harmony",
+      "level": 18
+    },
+    {
+      "skill": "Rampage",
+      "level": 4
+    },
+    {
+      "skill": "Rampage",
+      "level": 5
+    },
+    {
+      "skill": "Rampage",
+      "level": 6
+    },
+    {
+      "skill": "Basics",
+      "level": 8
+    },
+    {
+      "skill": "Rampage",
+      "level": 7
+    },
+    {
+      "skill": "Basics",
+      "level": 9
+    },
+    {
+      "skill": "Scroll",
+      "level": 7
+    },
+    {
+      "skill": "Scroll",
+      "level": 8
+    },
+    {
+      "skill": "Rampage",
+      "level": 8
+    },
+    {
+      "skill": "Rampage",
+      "level": 9
+    },
+    {
+      "skill": "Ascent",
+      "level": 1
+    },
+    {
+      "skill": "Scroll",
+      "level": 9
+    },
+    {
+      "skill": "Apparition",
+      "level": 2
+    },
+    {
+      "skill": "Scroll",
+      "level": 14
+    },
+    {
+      "skill": "Taotie",
+      "level": 2
+    },
+    {
+      "skill": "Lotus",
+      "level": 1
+    },
+    {
+      "skill": "Harmony",
+      "level": 24
+    },
+    {
+      "skill": "Tiger",
+      "level": 1
+    },
+    {
+      "skill": "Talisman",
+      "level": 14
+    },
+    {
+      "skill": "Talisman",
+      "level": 15
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 2
+    },
+    {
+      "skill": "Apparition",
+      "level": 3
+    },
+    {
+      "skill": "Talisman",
+      "level": 16
+    },
+    {
+      "skill": "Lotus",
+      "level": 2
+    },
+    {
+      "skill": "Taotie",
+      "level": 3
+    },
+    {
+      "skill": "Apparition",
+      "level": 4
+    },
+    {
+      "skill": "Talisman",
+      "level": 17
+    },
+    {
+      "skill": "Basics",
+      "level": 14
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 3
+    },
+    {
+      "skill": "Harmony",
+      "level": 30
+    },
+    {
+      "skill": "Basics",
+      "level": 15
+    },
+    {
+      "skill": "Apparition",
+      "level": 10
+    },
+    {
+      "skill": "Talisman",
+      "level": 18
+    },
+    {
+      "skill": "Taotie",
+      "level": 4
+    },
+    {
+      "skill": "Basics",
+      "level": 16
+    },
+    {
+      "skill": "Lotus",
+      "level": 3
+    },
+    {
+      "skill": "Talisman",
+      "level": 19
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 4
+    },
+    {
+      "skill": "Rampage",
+      "level": 14
+    },
+    {
+      "skill": "Ascent",
+      "level": 2
+    },
+    {
+      "skill": "Rampage",
+      "level": 15
+    },
+    {
+      "skill": "Basics",
+      "level": 17
+    },
+    {
+      "skill": "Taotie",
+      "level": 5
+    },
+    {
+      "skill": "Scroll",
+      "level": 15
+    },
+    {
+      "skill": "Scroll",
+      "level": 16
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 5
+    },
+    {
+      "skill": "Rampage",
+      "level": 16
+    },
+    {
+      "skill": "Basics",
+      "level": 18
+    },
+    {
+      "skill": "Lotus",
+      "level": 4
+    },
+    {
+      "skill": "Hecate",
+      "level": 2
+    },
+    {
+      "skill": "Taotie",
+      "level": 6
+    },
+    {
+      "skill": "Ascent",
+      "level": 3
+    },
+    {
+      "skill": "Basics",
+      "level": 19
+    },
+    {
+      "skill": "Rampage",
+      "level": 17
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 6
+    },
+    {
+      "skill": "Scroll",
+      "level": 17
+    },
+    {
+      "skill": "Scroll",
+      "level": 18
+    },
+    {
+      "skill": "Rampage",
+      "level": 18
+    },
+    {
+      "skill": "Lotus",
+      "level": 5
+    },
+    {
+      "skill": "Wrath of Gods",
+      "level": 2
+    },
+    {
+      "skill": "Talisman",
+      "level": 25
+    },
+    {
+      "skill": "Taotie",
+      "level": 7
+    },
+    {
+      "skill": "Hecate",
+      "level": 3
+    },
+    {
+      "skill": "Talisman",
+      "level": 26
+    },
+    {
+      "skill": "Ascent",
+      "level": 4
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 7
+    },
+    {
+      "skill": "Rampage",
+      "level": 19
+    },
+    {
+      "skill": "Talisman",
+      "level": 27
+    },
+    {
+      "skill": "Scroll",
+      "level": 19
+    },
+    {
+      "skill": "Scroll",
+      "level": 25
+    },
+    {
+      "skill": "Scroll",
+      "level": 26
+    },
+    {
+      "skill": "Lotus",
+      "level": 6
+    },
+    {
+      "skill": "Taotie",
+      "level": 8
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 8
+    },
+    {
+      "skill": "Talisman",
+      "level": 29
+    },
+    {
+      "skill": "Hecate",
+      "level": 4
+    },
+    {
+      "skill": "Wrath of Gods",
+      "level": 3
+    },
+    {
+      "skill": "Ascent",
+      "level": 5
+    },
+    {
+      "skill": "Taotie",
+      "level": 9
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 9
+    },
+    {
+      "skill": "Basics",
+      "level": 25
+    },
+    {
+      "skill": "Lotus",
+      "level": 7
+    },
+    {
+      "skill": "Basics",
+      "level": 26
+    },
+    {
+      "skill": "Apparition",
+      "level": 11
+    },
+    {
+      "skill": "Wrath of Gods",
+      "level": 4
+    },
+    {
+      "skill": "Ascent",
+      "level": 6
+    },
+    {
+      "skill": "Basics",
+      "level": 27
+    },
+    {
+      "skill": "Hecate",
+      "level": 5
+    },
+    {
+      "skill": "Lotus",
+      "level": 8
+    },
+    {
+      "skill": "Basics",
+      "level": 29
+    },
+    {
+      "skill": "Wrath of Gods",
+      "level": 10
+    },
+    {
+      "skill": "Rampage",
+      "level": 24
+    },
+    {
+      "skill": "Rampage",
+      "level": 25
+    },
+    {
+      "skill": "Ascent",
+      "level": 7
+    },
+    {
+      "skill": "Apparition",
+      "level": 12
+    },
+    {
+      "skill": "Rampage",
+      "level": 26
+    },
+    {
+      "skill": "Hecate",
+      "level": 6
+    },
+    {
+      "skill": "Lotus",
+      "level": 9
+    },
+    {
+      "skill": "Rampage",
+      "level": 27
+    },
+    {
+      "skill": "Apparition",
+      "level": 20
+    },
+    {
+      "skill": "Ascent",
+      "level": 8
+    },
+    {
+      "skill": "Rampage",
+      "level": 28
+    },
+    {
+      "skill": "Scroll",
+      "level": 27
+    },
+    {
+      "skill": "Scroll",
+      "level": 29
+    },
+    {
+      "skill": "Scroll",
+      "level": 30
+    },
+    {
+      "skill": "Hecate",
+      "level": 7
+    },
+    {
+      "skill": "Rampage",
+      "level": 29
+    },
+    {
+      "skill": "Ascent",
+      "level": 9
+    },
+    {
+      "skill": "Hecate",
+      "level": 8
+    },
+    {
+      "skill": "Tiger",
+      "level": 2
+    },
+    {
+      "skill": "Apparition",
+      "level": 30
+    },
+    {
+      "skill": "Hecate",
+      "level": 9
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 13
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 14
+    },
+    {
+      "skill": "Taotie",
+      "level": 14
+    },
+    {
+      "skill": "Tiger",
+      "level": 3
+    },
+    {
+      "skill": "Taotie",
+      "level": 15
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 15
+    },
+    {
+      "skill": "Taotie",
+      "level": 16
+    },
+    {
+      "skill": "Talisman",
+      "level": 30
+    },
+    {
+      "skill": "Tiger",
+      "level": 4
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 16
+    },
+    {
+      "skill": "Taotie",
+      "level": 17
+    },
+    {
+      "skill": "Lotus",
+      "level": 14
+    },
+    {
+      "skill": "Tiger",
+      "level": 10
+    },
+    {
+      "skill": "Wrath of Gods",
+      "level": 11
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 17
+    },
+    {
+      "skill": "Lotus",
+      "level": 15
+    },
+    {
+      "skill": "Taotie",
+      "level": 18
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 18
+    },
+    {
+      "skill": "Ascent",
+      "level": 14
+    },
+    {
+      "skill": "Lotus",
+      "level": 16
+    },
+    {
+      "skill": "Basics",
+      "level": 30
+    },
+    {
+      "skill": "Taotie",
+      "level": 19
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 20
+    },
+    {
+      "skill": "Wrath of Gods",
+      "level": 12
+    },
+    {
+      "skill": "Ascent",
+      "level": 15
+    },
+    {
+      "skill": "Lotus",
+      "level": 17
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 21
+    },
+    {
+      "skill": "Wrath of Gods",
+      "level": 20
+    },
+    {
+      "skill": "Lotus",
+      "level": 18
+    },
+    {
+      "skill": "Rampage",
+      "level": 30
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 22
+    },
+    {
+      "skill": "Hecate",
+      "level": 15
+    },
+    {
+      "skill": "Ascent",
+      "level": 16
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 23
+    },
+    {
+      "skill": "Lotus",
+      "level": 19
+    },
+    {
+      "skill": "Apotheosis",
+      "level": 30
+    },
+    {
+      "skill": "Ascent",
+      "level": 17
+    },
+    {
+      "skill": "Ascent",
+      "level": 18
+    },
+    {
+      "skill": "Taotie",
+      "level": 25
+    },
+    {
+      "skill": "Wrath of Gods",
+      "level": 30
+    },
+    {
+      "skill": "Taotie",
+      "level": 26
+    },
+    {
+      "skill": "Hecate",
+      "level": 16
+    },
+    {
+      "skill": "Ascent",
+      "level": 19
+    },
+    {
+      "skill": "Taotie",
+      "level": 27
+    },
+    {
+      "skill": "Hecate",
+      "level": 17
+    },
+    {
+      "skill": "Hecate",
+      "level": 30
+    },
+    {
+      "skill": "Taotie",
+      "level": 29
+    },
+    {
+      "skill": "Tiger",
+      "level": 11
+    },
+    {
+      "skill": "Lotus",
+      "level": 25
+    },
+    {
+      "skill": "Lotus",
+      "level": 26
+    },
+    {
+      "skill": "Ascent",
+      "level": 25
+    },
+    {
+      "skill": "Lotus",
+      "level": 27
+    },
+    {
+      "skill": "Tiger",
+      "level": 12
+    },
+    {
+      "skill": "Lotus",
+      "level": 29
+    },
+    {
+      "skill": "Ascent",
+      "level": 26
+    },
+    {
+      "skill": "Ascent",
+      "level": 27
+    },
+    {
+      "skill": "Tiger",
+      "level": 20
+    },
+    {
+      "skill": "Ascent",
+      "level": 29
+    },
+    {
+      "skill": "Tiger",
+      "level": 30
+    },
+    {
+      "skill": "Taotie",
+      "level": 30
+    },
+    {
+      "skill": "Ascent",
+      "level": 30
+    },
+    {
+      "skill": "Lotus",
+      "level": 30
+    }
+  ],
+  "unknown": [],
+  "statIcons": {
+    "HEXA Stat I": "https://open.api.nexon.com/static/maplestory/skill/icon/KAPCLAPBMA",
+    "HEXA Stat II": "https://open.api.nexon.com/static/maplestory/skill/icon/KAPCLAPBMA",
+    "HEXA Stat III": "https://open.api.nexon.com/static/maplestory/skill/icon/KAPCLAPBMA"
+  },
+  "validation": {
+    "issues": [],
+    "finalCumulative": {
+      "erda": 1611,
+      "frags": 46707
+    }
+  },
+  "comparison": {
+    "savedCount": 178,
+    "exact": false,
+    "firstDifference": 5,
+    "incomingAtDifference": {
+      "skill": "HEXA Stat I",
+      "level": 20
+    },
+    "savedAtDifference": {
+      "skill": "Apparition",
+      "level": 1
+    }
+  }
+}

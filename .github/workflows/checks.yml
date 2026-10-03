@@ -1,0 +1,55 @@
+name: Tracker checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tracker-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-build:
+    name: Tests, Worker build and asset delivery
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Set up supported Node runtime
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Install locked development dependencies
+        run: npm ci --ignore-scripts
+      - name: Run regression tests
+        run: npm test
+      - name: Build Worker
+        run: npm run build
+      - name: Check Pages adapter, private output and Admin snapshot preservation
+        run: npm run check:pages
+      - name: Check source and compiled JavaScript syntax
+        run: npm run check:syntax
+      - name: Check compiled asset delivery
+        run: npm run test:assets
+      - name: Measure compiled asset inventory without network requests
+        run: node scripts/review-asset-delivery.mjs
+      - name: Install Chromium for rendered checks
+        run: npx playwright install --with-deps chromium
+      - name: Run isolated desktop and phone browser checks
+        run: npm run test:browser
+      - name: Keep browser screenshots and failure traces
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: browser-qa-${{ github.run_id }}
+          path: |
+            browser-report/
+            browser-results/
+          retention-days: 7

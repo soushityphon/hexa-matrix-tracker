@@ -4,46 +4,65 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HEXA Matrix Tracker</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=matrix-grid-2">
+  <link rel="stylesheet" href="decorations.css">
+  <link rel="stylesheet" href="infographic.css">
 </head>
 <body>
   <main class="shell">
     <header class="masthead">
       <div>
-        <p class="kicker">MapleStory / Hoyoung</p>
+        <p class="kicker">MapleStory / GMS</p>
         <h1>HEXA Matrix Tracker</h1>
       </div>
-      <div class="version"><span id="version-name">GMS / Lotus</span></div>
-    </header>
+      <div class="header-actions">
+        <div class="header-controls">
+          <label id="music-control" class="music-control" hidden>Music
+            <input id="music-volume" type="range" min="0" max="100" step="1" value="0" aria-label="Music volume" aria-valuetext="Muted">
+            <output id="music-level" for="music-volume" aria-live="polite">Muted</output>
+          </label>
+          <button id="animations" type="button" aria-pressed="false">Animations: Off</button>
+        </div>
+      </div>
+    </header><p id="save-status" role="status" class="fine" hidden></p><div id="save-conflict" class="save-conflict" hidden><p id="conflict-message" role="status"></p><div><button id="load-latest-save" type="button">Load latest save</button><button id="continue-tab-save" type="button">Continue this save</button></div></div><div class="load-status"><p id="priority-sync" role="status" class="fine"></p><button id="retry-priorities" type="button" hidden>Retry loading</button></div>
 
     <div class="toolbar">
-      <label>Class<select id="class"><option value="hoyoung">Hoyoung</option><option value="ren" disabled>Ren</option></select></label>
-      <label>Priority<select id="patch"></select></label>
-      <fieldset class="world-picker"><legend>World</legend><label><input type="radio" name="world" value="heroic" checked><span>Heroic <small>Fragments</small></span></label><label><input type="radio" name="world" value="interactive"><span>Interactive <small>Sol Erda</small></span></label></fieldset>
+      <label>Class<select id="class"><option value="hoyoung">Hoyoung</option><option value="ren">Ren</option></select></label>
+      <label>Update<select id="patch"></select></label>
+      <fieldset class="world-picker"><legend>Priority (World)</legend><label><input type="radio" name="world" value="heroic" checked><span>Fragments (Heroic)</span></label><label><input type="radio" name="world" value="interactive"><span>Sol Erda (Interactive)</span></label></fieldset>
+      <label id="version-picker" hidden>Priority version<select id="priority-version"></select></label>
+      <div class="view-picker" role="group" aria-label="View"><button id="view-tracker" type="button" aria-pressed="true">Tracker</button><button id="view-infographic" type="button" aria-pressed="false">Infographic</button></div>
     </div>
 
-    <div class="workspace">
+    <div class="workspace" data-view="tracker">
       <aside class="inputs">
-        <section class="panel">
-          <div class="panel-head"><h2>Current HEXA levels</h2><button id="reset" type="button">Reset</button></div>
-          <div class="column-head"><span>node</span><span>level</span></div>
-          <div id="nodes" class="node-list"></div>
-          <div class="group-label">HEXA Stats</div>
-          <div class="stat-list">
-            <label>HEXA Stat I <input data-stat="HEXA Stat I" aria-label="HEXA Stat I level" type="number" min="0" max="20" value="0"></label>
-            <label>HEXA Stat II <input data-stat="HEXA Stat II" aria-label="HEXA Stat II level" type="number" min="0" max="20" value="0"></label>
-            <label>HEXA Stat III <input data-stat="HEXA Stat III" aria-label="HEXA Stat III level" type="number" min="0" max="20" value="0"></label>
+        <section class="panel summary-panel">
+          <h2>HEXA Matrix Summary</h2>
+          <div class="summary-metrics">
+            <div id="completion" class="completion"></div>
+            <div class="totals" id="totals"></div>
           </div>
+          <div class="include-option"><label class="toggle"><input id="includeJanus" type="checkbox"> Include Sol Janus in completion and spent totals</label></div>
+        </section>
+
+        <section class="panel matrix-panel">
+          <div class="panel-head"><h2>Current HEXA Matrix</h2><div class="save-actions"><button id="undo-progress" type="button" disabled>Undo</button><button id="export-progress" type="button" aria-label="Export progress">Export</button><button id="import-progress" type="button" aria-label="Import progress">Import</button><button id="reset" type="button">Reset</button><input id="import-progress-file" type="file" accept="application/json,.json" hidden></div></div>
+          <p id="undo-status" class="visually-hidden" role="status"></p>
+          <p id="backup-status" class="fine" role="status" hidden></p>
+          <div id="nodes" class="node-list"></div>
+          <div id="stat-heading" class="group-label" hidden>HEXA Stat</div>
+          <div class="stat-list"></div>
         </section>
       </aside>
 
       <div class="results">
         <section class="panel priority-panel">
-          <div class="panel-head"><h2>Skill priority</h2></div>
-          <div class="priority-controls"><span id="progress" class="quiet"></span><label class="toggle"><input id="hideDone" type="checkbox" checked> Hide completed</label></div>
+          <div class="panel-head"><h2>Upgrade Priority</h2><span id="version-name" class="priority-context">Select a saved priority</span></div>
+          <div id="next-upgrade" class="next-upgrade"></div>
+          <div class="priority-controls"><span id="progress" class="visually-hidden"></span><label class="toggle"><input id="hideDone" type="checkbox" checked> Hide completed</label></div>
           <div class="table-wrap">
             <table class="priority-table">
-              <thead><tr><th>#</th><th>Node</th><th>Target</th><th>Sol Erda</th><th>Fragments</th></tr></thead>
+              <thead><tr><th>Node</th><th>Target Lv.</th><th><span class="material-heading"><img src="assets/sol-erda.png" alt=""><span class="visually-hidden">Sol Erda</span><span class="material-fallback" aria-hidden="true">Sol Erda</span></span></th><th><span class="material-heading"><img src="assets/sol-erda-fragment.png" alt=""><span class="visually-hidden">Fragments</span><span class="material-fallback" aria-hidden="true">Fragments</span></span></th><th>FD gain</th></tr></thead>
               <tbody id="priority"></tbody>
             </table>
           </div>
@@ -51,19 +70,40 @@
       </div>
 
       <aside class="quickstats">
-        <section class="panel">
-          <h2>Quick Stats</h2>
+        <section class="panel calculator-panel">
+          <h2 class="calculator-title"><img src="assets/sol-erda-fragment.png" alt="">Fragment Calculator</h2>
           <div class="resources">
             <label>Fragments owned <input id="owned" type="number" min="0" value="0"></label>
             <label>Fragments per day <input id="perday" type="number" min="0" value="0"></label>
           </div>
-          <div id="quick" class="quick"></div>
-          <div class="include-option"><label class="toggle"><input id="includeJanus" type="checkbox"> Include Sol Janus in completion and spent totals</label></div>
-          <div class="totals" id="totals"></div>
+          <div class="weekly-income">
+<label>Erda's Request<select id="erdaRequest"><option value="none">None</option><option value="yes">Yes, 90 Fragments per week</option></select></label>
+            <label>Epic Dungeon<select id="epicDungeon"><option value="none">None</option><option value="highMountain">High Mountain, 40 per week</option><option value="anglerCompany">Angler Company, 55 per week</option><option value="nightmareParadise">Nightmare Paradise, 70 per week</option></select></label>
+          </div>
+          <div id="time-estimate" class="time-estimate" hidden></div>
         </section>
       </aside>
+      <section class="panel infographic-panel" hidden>
+        <div class="panel-head"><h2>HEXA Upgrade Priority</h2><div class="infographic-controls"><label class="toggle helper-control"><input id="infographic-helper" type="checkbox" disabled> Helper <span id="helper-support" class="fine"></span></label><label class="toggle"><input id="infographic-hide" type="checkbox"> Hide completed</label></div></div>
+        <p id="infographic-context" class="fine"></p>
+        <div id="infographic-grid" class="infographic-grid"></div>
+        <p id="infographic-message" class="fine" role="status"></p>
+      </section>
     </div>
+    <footer class="creator-footer">
+      <span class="priority-credit">Data sourced from MapleScouter and community resources on Inven and Naver.</span>
+      <span class="creator-credit">A project by Soushi</span>
+      <a class="kofi-link" href="https://ko-fi.com/hoyoung" target="_blank" rel="noopener noreferrer" aria-label="Support Soushi on Ko-fi, opens in a new tab">
+        <img src="https://cdn.prod.website-files.com/5c14e387dab576fe667689cf/670f5a02fcf48af59c591185_support_me_on_kofi_dark.avif" alt="Support me on Ko-fi" width="160" height="32" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </footer>
   </main>
-  <script type="module" src="app.js"></script>
+  <section id="helper-panel" class="helper-panel" role="tooltip" aria-label="Infographic Helper" hidden></section>
+  <dialog id="fd-explanation" aria-labelledby="fd-explanation-title" aria-describedby="fd-explanation-text">
+    <h2 id="fd-explanation-title">FD explanation</h2>
+    <p id="fd-explanation-text"></p>
+    <button type="button" id="fd-explanation-close" autofocus>Close</button>
+  </dialog>
+  <script type="module" src="matrix-app.js?v=matrix-grid-2"></script>
 </body>
 </html>

@@ -28,6 +28,7 @@ replaceLiteral('export const NODES=', ';\nconst mk=', nodes => {
   }
   return updated;
 });
+replaceLiteral('export const STAT_ICONS=', ';', icons => ({ ...icons, ...draft.statIcons }));
 replaceLiteral('const rawPriorities=', ';\nexport const PRIORITIES=', priorities => {
   priorities[draft.mode] = draft.steps.map(({ skill, level }) => [skill, level]);
   return priorities;

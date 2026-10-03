@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1790779213927,
+      "tag": "0000_priority_preview",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1790779231436,
+      "tag": "0001_admin_skills",
+      "breakpoints": true
+    }
+  ]
+}

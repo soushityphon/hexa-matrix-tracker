@@ -1,0 +1,68 @@
+/* Root stacking: page, decoration 0, panels 1, petals 2, toolbar 3.
+   Native select menus and modal dialogs use the browser top layer. */
+body { isolation: isolate; }
+.shell { position: relative; }
+.shell .panel, #priority-sync { position: relative; z-index: 1; }
+.shell .masthead, .shell .toolbar { position: relative; z-index: 3; }
+.header-actions { display: grid; justify-items: end; gap: 8px; align-self: start; margin-left: auto; }
+.header-controls { display: flex; align-items: center; gap: 12px; }
+.music-control { display: flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; }
+.music-control[hidden] { display: none; }
+.music-control input { width: 90px; min-height: 34px; margin: 0; padding: 0; accent-color: var(--ui-accent); }
+.music-control output { min-width: 36px; }
+@media (max-width: 640px) {
+  .masthead { flex-wrap: wrap; }
+  .header-actions { max-width: 100%; }
+  .header-controls { gap: 8px; }
+  .music-control input { min-height: 44px; width: 80px; }
+}
+/* Background fills are 80% opaque; text and controls keep their full opacity. */
+.shell .panel, .shell .next-upgrade, .shell .stat-selector,
+.shell .priority-table tr:nth-child(even), .shell .priority-table th { background: var(--ui-panel-surface); }
+.shell .node-row.next-skill, .shell .stat-list .stat-row.next-skill,
+.shell .priority-table tr.next, .shell .stat-selector.selected { background: color-mix(in srgb, color-mix(in srgb, var(--skill-accent, var(--ui-accent)) 17%, var(--ui-panel)) 80%, transparent); }
+.shell .node-row:hover, .shell .stat-list label:hover { background: rgb(255 255 255 / 4%); }
+@media (max-width: 450px) { .masthead { gap: 10px; } #animations { padding-inline: 6px; font-size: 11px; } }
+.decoration-layer { position: fixed; inset: 0; overflow: hidden; pointer-events: none; user-select: none; z-index: 0; contain: strict; }
+.decoration-foreground { z-index: 2; }
+.decoration-layer * { pointer-events: none; }
+.decoration-particle { position: absolute; display: block; width: var(--size); opacity: 0; animation-duration: var(--duration); animation-delay: var(--delay); animation-timing-function: linear; animation-iteration-count: infinite; }
+.decoration-particle img { display: block; width: 100%; height: auto; }
+.decoration-particle.is-loaded { opacity: var(--alpha); }
+.cloud { top: var(--top); left: 0; animation-name: cloud-drift; }
+.petal { top: 0; left: 0; animation-name: petal-drift; }
+.petal img { filter: blur(var(--blur, 0px)); animation: petal-turn var(--sway-duration) var(--sway-delay) ease-in-out infinite alternate; }
+.petal-front { animation-name: foreground-drift; }
+.decoration-layer.is-paused .decoration-particle, .decoration-layer.is-paused img { animation-play-state: paused; }
+@keyframes cloud-drift {
+  from { transform: translate3d(calc(-1 * var(--size)), 0, 0); }
+  to { transform: translate3d(100vw, 0, 0); }
+}
+@keyframes petal-drift {
+  0% { transform: translate3d(var(--start-x), -15vh, 0); opacity: 0; }
+  10% { opacity: var(--alpha); }
+  30% { transform: translate3d(var(--x1), var(--y1), 0); opacity: var(--alpha); }
+  60% { transform: translate3d(var(--x2), var(--y2), 0); opacity: var(--alpha-low); }
+  90% { opacity: var(--alpha); }
+  100% { transform: translate3d(var(--end-x), 115vh, 0); opacity: 0; }
+}
+@keyframes petal-turn {
+  from { transform: translateX(calc(-1 * var(--sway))) rotate(calc(var(--base-turn) - var(--turn))); }
+  to { transform: translateX(var(--sway)) rotate(calc(var(--base-turn) + var(--turn))); }
+}
+/* Each front petal is visible for part of its long cycle, then has a quiet gap. */
+@keyframes foreground-drift {
+  0%, 10% { transform: translate3d(var(--start-x), -15vh, 0); opacity: 0; }
+  15% { opacity: var(--alpha); }
+  35% { transform: translate3d(var(--x1), var(--y1), 0); opacity: var(--alpha-low); }
+  55% { transform: translate3d(var(--x2), var(--y2), 0); opacity: var(--alpha); }
+  65%, 100% { transform: translate3d(var(--end-x), 115vh, 0); opacity: 0; }
+}
+.petal:not(.is-loaded) { visibility: hidden; }
+/* CSS backs up lifecycle handling, including before JavaScript starts. */
+@media (prefers-reduced-motion: reduce) {
+  .decoration-layer { display: none; }
+  .decoration-particle, .decoration-particle img { animation: none; }
+}
+#animations { min-height: 34px; white-space: nowrap; }
+@media (max-width: 640px) { #animations { min-height: 44px; } }
