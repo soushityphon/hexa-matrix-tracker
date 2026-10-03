@@ -13,7 +13,7 @@ const assets = JSON.parse(firstLine.slice('const ASSETS = '.length, -1));
 const groups = new Map();
 const media = [];
 for (const [path, value] of Object.entries(assets)) {
-  const binary = ['.png', '.mp3'].includes(extname(path));
+  const binary = ['.png', '.ico', '.mp3'].includes(extname(path));
   const original = readFileSync(resolve(root, path.slice(1)));
   const decoded = Buffer.from(value, binary ? 'base64' : 'utf8');
   assert.deepEqual(decoded, original, path);
