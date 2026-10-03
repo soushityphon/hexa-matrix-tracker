@@ -1,303 +1,170 @@
-## Current UI batch: Compact Tracker priority table
-
-Tracker hides the visual step count, removes the #/number-position column, labels the target column Target Lv. and right-aligns the existing resource header icons with their numbers. Node, Target Lv., Sol Erda, Fragments and FD gain keep their relative order. The existing internal progress and accessible count remain; Hide completed stays on the right. Only table markup and styles change. Source order, cost/FD calculations, progress actions, saves and Infographic remain. Existing browser scenarios verify both classes, full/hidden orders and both worlds at desktop and two emulated phone widths, including measured resource alignment. A 4px header-only visual offset compensates for transparent/faint-glow space inside the unchanged resource PNGs; the image boxes extend 4px beyond the numbers while remaining inside their header cells. Owner reported version 129 still looked left-aligned, so the optical refinement awaits a fresh visual check. Owner visual acceptance and deployment are recorded in Issue #30.
-
-PR #22 stays draft/unmerged; eventual release is unapproved. The hosting identity review below remains partial and is not resolved by this presentation batch. No identity/access/binding/secret/schema change is included.
-
-## Previous audit batch: Hosting identity verification
-
-Twelve read-only anonymous checks on test version 128 refuse supplied owner identity headers at both the admin API and page. New isolated Worker regressions cover protected routes, guard-before-storage/upstream behaviour and service-token scope. The full hosting verification remains partial: signed-in identity injection, non-owner spoof replacement and direct-origin assurance still need evidence. See [hosting identity review](docs/hosting-identity-review.md) for measured results, limits and remaining checks. No app or hosting change is included; version 128 remains deployed. PR #22 stays draft/unmerged and eventual release remains unapproved.
-
-## Previous UI follow-up: Thin Stat bars with side-by-side number entry
-
-Following the owner's version 127 functional acceptance, Stat editor bars now show 10px segments within 28px-tall buttons, with the existing 54px number field on the right. Number entry, 0–10 rejection, direct segment levels, validation, save/Undo and paused/conflict guards are unchanged. The compact segments remain centre-hit tested at desktop/390px/320px; narrow widths use a 16px minimum segment width, with numeric entry retained as the larger alternative. Native phone ergonomics and this visual refinement remain owner review. No data, calculation, storage or server change is included.
-
-## Historical audit batch: Safe diagnostics and owner-requested numeric entry
-
-Server diagnostics for stored priorities/Skills and D1 reads, writes and batches contain only fixed event, route, operation and category labels plus a count. Invalid priority counts are aggregated by category per read. Logs contain no record IDs/content, names, identities, request/header/body values, SQL/bound parameters or exception messages/stacks. Successful requests, input validation refusals and expected revision/insert conflicts are quiet. A failed logging sink cannot interrupt recovery. Storage failures inside admin validation return the existing safe 503 response rather than exposing a backend exception as a 400. Damaged raw records, insert-only restore rollback and revision guards remain intact. Fault injection uses isolated SQLite; live records and server secrets are untouched.
-
-The footer now says “A project by Soushi”. Individual Stat line entries outside 0–10 revert to the previous draft value; blank/in-range drafts retain existing integer and total validation. Each editor bar has ten full-width-row buttons for direct levels 1–10, with keyboard activation and pressed-state feedback; numeric entry remains available, including zero. Segment edits use the same validation, protected save, pause/conflict and ordinary Undo paths. Relevant skill/Stat level and resource numeric inputs select their existing value on focus/click/tap. Source calculations, per-class save format, manual-only backups and infographic history are unchanged. Rendered tests cover both classes at desktop and two emulated phone widths. Actual phone/owner acceptance remains separate in Issue #30.
-
-PR #22 stays draft/unmerged and eventual release remains unapproved. Next in the documented audit order is verification of the hosting identity trust boundary before any hosting change. This batch does not change hosting access, identity handling, bindings or schema.
-
-## Historical batch: Remaining admin write protection
-
-Legacy `/api/priority-preview` PUT/DELETE now require a row revision. An authenticated GET with `?record=<mode>` returns the reviewed raw draft and its revision, including a distinct missing-record revision for safe creation. Anonymous record reads are refused; normal public catalogue reads retain their format. Missing revisions receive 428, stale revisions receive 409, and atomic raw-row/timestamp predicates preserve interleaved writes. A missing-row insert cannot replace a peer's first insert. The app has no active legacy editor; its Admin Panel continues to use the Skills/group protocol from versions 124/125.
-
-Snapshot restore remains insert-only and transactional. Duplicate skill identities are rejected before writes; a peer priority/skills insert during restore returns 409 after rolling back the whole backup batch. Storage errors return a safe 503. Empty restores do not issue an empty D1 batch. Maintenance keeps its existing backed-up-row comparison and exact delete predicates, preserves peer edits/additions, and reports actual D1 deletion counts rather than subtracting the final row count. An empty reset is a no-op.
-
-Together with versions 124/125, this completes the implemented admin revision item in Issue #30, subject to final test/deployment evidence and separate owner acceptance. Tests use isolated SQLite and cross-route races; no live record restore/reset/edit, schema migration, source/calculation/player-save change, new UI or automatic backup is part of this batch. PR #22 stays draft/unmerged and eventual release is unapproved. Next in the documented order is safe server diagnostics.
-
-## Current audit batch: Saved priority revisions
-
-Saved priority Rename, availability and Delete carry the group's loaded revision. Missing revisions receive 428; stale or deleted groups receive 409. Each action changes all its usable orders in one SQL statement, guarded by group membership and every original raw row/timestamp. An interleaved peer edit, addition or deletion leaves the remaining saved group intact. Unrelated priority edits do not invalidate this group's revision. New pairs use one insert without upsert, so an ID collision rolls back both variants and preserves the peer record.
-
-Load latest priorities refreshes the saved list while keeping dirty Skills fields, their original revision, captured orders, the pair-name draft and entered rename text. After a conflict, Rename offers the entered name again, including after loading latest records; the owner can review and confirm it. Registered actions pause during a request. Older admin tabs must refresh before using the revised protocol.
-
-This continues Issue #30's admin revision item, which remains partial. The remaining legacy write/restore concurrency work is covered by the batch above. Skills revision protection from version 124 remains. No schema migration, live data/source/calculation change or player storage change is part of this batch. SQLite and actual admin DOM regressions cover interleaved writes, partial/malformed groups, conflict recovery and retained drafts. CI/deployment and owner acceptance are recorded in Issue #30. PR #22 remains draft/unmerged; eventual release is unapproved.
-
-## Current audit batch: Skills save revisions
-
-The admin Skills panel carries a class-specific revision with its loaded rows. Save skills rejects missing revisions (428) and stale revisions (409), including a peer write between the server read and atomic SQL update/insert. Successful identical saves advance the revision too. No database migration is needed; existing raw JSON and ISO update timestamps provide the comparison.
-
-A conflict keeps the unsaved fields. Load latest skills asks before discarding dirty edits; Cancel or a failed request retains them. Switching classes or refreshing priority records cannot silently replace a dirty Skills draft's revision. Skill fields pause while a save is pending. Older admin tabs must refresh to use the new protocol.
-
-This is a partial implementation of Issue #30's admin revision item. The saved-priority batch above covers rename, availability and delete; the remaining legacy write/restore work is covered above. Existing restoration collision protection and maintenance exact-row guards remain. Tests use isolated SQLite and the actual admin DOM; deployment and owner acceptance are recorded separately in Issue #30. PR #22 remains draft/unmerged and eventual release is unapproved.
-
-## Input, Stat and Summary retention, Issue #30, 3 October 2026
-
-An unchanged verified class refresh retains its input nodes, unfinished Stat drafts and validation messages. Editing still pauses while data loads; focus returns to the retained editor after success unless the player moved focus. Changed source still follows the existing input/migration/reconciliation path. Stable FD keys return modal focus to the matching replacement in the same class, order and view; a removed or unavailable value returns focus to the current view button.
-
-Unrelated input/change events no longer render the tracker. Unchanged version options, Stat FD markup and Summary sections retain their nodes; text and Stat icon sources update only when needed. Real settings/progress changes still update calculations and save through the existing protected paths. Dates are recalculated so a day change is reflected. Original source data, calculations, layout/copy, save/backup format and manual-only backups remain.
-
-The isolated version 122 baseline replaced Completion, totals and a Stat FD button 100 times each for 100 no-op setting inputs; the final app retains them. The prior 122 batch records priority/save improvements below. This follow-up completes the planned redraw/save/focus implementation, subject to final test/deployment evidence and separate owner acceptance in Issue #30. Browser measurements cover 100 no-op setting inputs, with zero player writes and zero replacements for priority, Next Upgrade, Summary, input/version containers and Stat FD. Further browser cases cover invalid draft/native input focus through delayed unchanged refresh, retained Stat FD after a settings change, and changed-source replacement/removal focus in both classes and all three widths. The following Skills batch starts the documented stale admin edit revision checks.
-
-## Redraw and save reduction, Issue #30, 3 October 2026
-
-Priority and Next Upgrade markup is retained when the generated content and mounted children match. Image fallbacks stay intact and error handlers bind once per image. Changed content still renders, and tracker-cleared regions are rebuilt. Identical player saves skip localStorage writes only after validation and the existing conflict check inside the shared Web Lock. Changed values, failed-write retries, damaged-record protection and explicit conflict/import choices retain their existing paths. Save format, source data, calculations and manual-only backups are unchanged.
-
-The isolated app measurement for 100 unrelated input events falls from 100 player writes and repeated priority/Next Upgrade replacements to zero writes and zero replacements. Chromium repeats that measurement for both classes at all three widths, and checks priority FD focus return after an unchanged expired-cache browser-chrome refresh. That version 122 batch left input/Stat/Summary and changed-source focus work open; the follow-up above addresses those remaining parts. CI evidence, deployment and owner acceptance are recorded separately in Issue #30.
-
-## Matrix rendering module, Issue #30, 3 October 2026
-
-`matrix-renderer.js` now builds the skill/Stat inputs and updates Stat previews, names/tags, next-skill highlights and the shared Summary. It receives current state from the tracker; the existing Stat-line migration runs through a tracker callback at the same point in input construction. Save protection, validation, selected Stat state, class/order selection, loading/paused controls, progress actions, Undo and infographic history keep their existing owners. Summary calculations, material/FD amounts and calendar-date rules use the same existing functions. The Worker serves the new module. Layout, wording, source data, calculations and save/backup format are unchanged. Together with the previous loading/save/priority modules, this completes the planned small module split; owner acceptance is recorded separately in Issue #30. The next item is measured redundant redraw/save reduction and the known expired-cache FD focus-return fix. Neither is claimed by this extraction.
-
-## Priority rendering module, Issue #30, 3 October 2026
-
-`priority-renderer.js` owns the existing Next Upgrade and priority-table markup, material amounts and FD display helpers. It receives the current verified selection, levels and estimates from the tracker after the existing pause/save guards. Calculation modules, selection/loading, saves, progress actions, Stat input/editor state, Summary, infographic history and the FD dialog lifecycle retain their existing owners. The module is bundled and served by the Worker. No wording, layout, source data, calculation or save/backup format changes are included. The remaining input/Stat and Summary rendering is now extracted as described above. The six known expired-cache FD focus failures remain for the subsequent rendering/focus improvement item.
-
-## Manual player backups, Issue #30, 3 October 2026
-
-Player Import now asks whether to replace the included classes' saved progress. Choose OK to continue without an automatic backup, or Cancel and use Export first. Export remains the manual all-class JSON download. This owner decision supersedes the earlier automatic safety-export requirement. Validation, save locks, cross-tab conflicts, class/refresh guards, replacement scope, backup format and agreed Undo clearing remain. Cancel and confirmed import create no downloads; browser tests cover both classes at all three widths.
-
-## Import and focus refresh follow-up, Issue #30
-
-Returning from the file picker no longer starts a priority refresh while selection is being read and validated. Cross-tab save checks still run on focus; existing confirmations, lock checks and class/sequence guards remain. Cancelling the picker or finishing validation restores normal focus handling. Fresh verified source data uses the existing 30-second cache without network reads, paused edits or DOM rebuilding. Expired data still refreshes with edits paused, and Retry always forces a request. Loading/refresh/error status and Retry now sit in a fixed bottom notice, outside layout flow, so they do not shift the toolbar or panels. Browser tests cover both classes at desktop and two phone widths, picker focus/cancel/restore without automatic downloads, cache expiry and stable panel positions. The six known FD focus failures remain scoped to an expired-cache refresh; this batch does not fix that rendering defect.
-
-## Save actions module, Issue #30
-
-`save-actions.js` owns the existing Export/Import, Reset and Load latest save/Continue this save handlers. It reads current class, refresh sequence, pending action and valid progress through the tracker boundary at every existing guard, including inside save locks and after awaits. Rendering, selected Stat state, paused controls and ordinary Undo stay in `matrix-app.js`; protected writes and the backup format stay in their existing modules. Import uses a confirmation with a manual Export option, with no automatic backup download. Confirmations, invalid drafts, save/backup format, source data, calculations, copy and layout remain unchanged. The wider refactor stays open for rendering extraction. Soushi accepted the supplied version 116 retention check, with existing progress/settings and no new warnings.
-
-## Save UI module, Issue #30
-
-`save-ui.js` now owns the existing save warning text, conflict display, Web Locks wiring and checks before input/change/click and storage events. It uses the same protected `player-storage.js` implementation and reads the active class/loading/action state from the tracker. Ordinary actions, adoption/continuation confirmation, backup/import, Reset, unfinished inputs and paused controls retain their current owners and behaviour. No save format, source data, calculation, copy or layout changes are included. This is another small step in the open storage/UI/rendering refactor; it does not complete the whole item.
-
-## Class loading module, Issue #30
-
-`class-loader.js` now owns the existing source-only class request cache, coalesced requests and 15-second deadline across responses and bodies. It keeps the same 30-second cache lifetime, Janus input identity and numbered Stat icons. The UI still owns selected-class/sequence guards, retained views, paused controls and Retry. Export still requests both catalogues through the same loader. Save protection stays in `player-storage.js`; this small extraction changes no progress format, costs, FD, completion, source data or visible behaviour. Storage/UI and rendering extraction remain later parts of the open refactor item.
-
-All audio checks are owner-reported accepted on 2 October. The browser signal tests below remain separate evidence, with their stated emulation and listening limits.
-
-## Browser music checks, Issue #30
-
-The isolated Chromium suite now uses the original compiled MP3 and real media/Web Audio APIs to check gesture-only loading, decoded playback and output signal, gain mute/resume, native looping after seeking near the end, class-switch silence/rewind and muted reload. Both class saves must remain unchanged. Tests run at desktop and both emulated phone widths. These checks do not prove speaker output, a full-duration audible loop or physical Android/iOS behaviour. Audio, the supplied phone check, moving-background readability, reduced motion and Animations Off are owner-reported accepted. No particular device/browser is claimed. The earlier audio batch changed only tests and documentation and needed no Site deployment.
-
-## Compact touch controls, Issue #30
-
-The Stat cancel cross retains its small icon within a 32px target, without increasing the Stat card size. Coarse-pointer inputs, selection controls, checkbox labels and Animations use a 28px minimum where needed for the scaled narrow-phone layout. Rendered tests cover both classes, four cancel corners, editor separation, exact Undo and scaled target sizes. The supplied phone check is owner-reported accepted, with no particular device/browser claimed. Audible music playback is owner-confirmed; separate mute/loop/class-switch owner scenarios are not inferred.
-
-## Automated development checks, Issue #30
-
-Use Node 24.19.0, pinned in `.node-version`. Run `npm ci --ignore-scripts` and `npm run check` from the repository root. The check command runs the existing 27-file regression suite, builds the Worker, checks source/test/compiled JavaScript syntax, then tests compiled asset delivery. Dependencies, including development-only Playwright, remain locked in `package-lock.json`.
-
-GitHub's **Tracker checks** workflow runs on pushes and pull requests, including draft PR #22. The **Tests, Worker build and asset delivery** job uses the same commands, read-only repository access, pinned action commits and a ten-minute limit. It needs no application secrets, live D1 database or Scouter calls. New runs cancel older runs for the same ref.
-
-`tests/compiled-assets.test.mjs` checks exact GET bytes, empty HEAD bodies, MIME types and existing cache headers for the real HTML/module/style dependency graph, resource/Stat/background PNGs and Ren music. It also checks anonymous admin-page sign-in, root/query routes and that server-only files, source evidence, manifests and development files remain unavailable. Identity tests use a synthetic header in the isolated handler; they do not verify the hosting gateway's trust boundary. Existing music tests separately cover byte ranges. These are offline compiled-handler checks, not rendered browser, audible playback or live hosting acceptance.
-
-This workflow only validates source. It does not publish, migrate data, change hosting or approve a release. Continue to deploy authorised app changes through the existing test Site workflow. PR #22 must remain draft and unmerged until the owner approves eventual release. Record checks and remaining owner/device acceptance in Issue #30.
-
-## Rendered desktop and phone checks, Issue #30
-
-The GitHub workflow also runs Chromium at desktop, phone and narrow-phone sizes using isolated fixtures. Run `npm run build`, `npx playwright install --with-deps chromium` and `npm run test:browser` after installing locked dependencies. It retains reports, screenshots and failure traces for seven days. See [rendered QA](docs/rendered-qa.md) for the exact coverage, fixture limits and remaining owner/device checks. The browser dependency is development-only and is not bundled into the Worker.
-
-## Current Matrix and priority UI, Issue #30
-
-Sol Janus is always editable in Current HEXA Matrix and is permanently excluded from Upgrade Priority. The shared Summary checkbox optionally includes it in completion and material totals in both views. Its level uses existing per-class progress and backup identity `generalCore1`. Where Janus has no captured schedule, use the selected priority's captured Sol Hecate (`generalCore2`) schedule, following the owner's confirmation that their material requirements are equal. Missing Hecate costs disable inclusion rather than inventing costs. Source captures and priority data are unchanged.
-
-The owner-supplied original numbered HEXA Stat I/II/III PNGs are bundled locally with their faded locked variants. Visible duplicate headings are removed; accessible names and line editing remain. Next Upgrade uses current-to-target level labels, Add 1 Level / Add to checkpoint actions and existing inventory shortfall amounts without the repeated shortfall caption. The proposed FD formula display was declined; existing explanations/calculations remain.
-
-## FD explanation access, Issue #30
-
-Tap or activate an underlined FD value in Next Upgrade, the priority table or a completed Stat square to open its explanation. Native buttons support Enter/Space, the modal dialog supports Close/Escape and returns focus to the value. Stat explanation access is separate from its line editor. Explanations remain available in a paused retained view; opening them does not edit or save progress.
-
-The existing hover notes and numbers remain. Source checkpoint gains use rounded Scouter values and compound combined transitions. Partial-step explanations identify the Fragment-cost-share estimate. Stat values use the approved general-average table, only with valid line levels totalling 20. Missing gains and invalid/incomplete Stat lines remain blank. No completion/material notes or formula changes are added. DOM regression evidence is separate from phone/native-browser acceptance in #30.
-
-## Cross-tab player save protection, Issue #30
-
-If another tab changes a class save, this tab keeps its current view and pauses edits for that class. The choices are **Load latest save** and **Continue this save**, following the owner's version 108 refinement. The conflict-specific export action from version 107 is removed. The ordinary Export/Import controls remain.
-
-Load latest save validates the newest record, asks before replacing differing progress or unfinished inputs, clears ordinary Undo and resumes editing. Continue this save confirms that this tab's valid saved progress will replace the newer save for that class, then writes it under the shared Web Lock. It keeps this tab's fields, unfinished input drafts and matching Undo. Invalid drafts are not written as progress. The other tab detects that replacement as a new conflict. Neither choice merges progress or downloads a backup. The player chooses which copy to keep. A removed save can be loaded as the existing baseline or explicitly replaced by this tab's progress; malformed/unreadable newer records and original damaged-record protection remain protected.
-
-Checks run on storage events, focus, class returns and before mutation. A shared Web Lock serialises progress writes, Reset, import and both conflict choices across tabs. Each operation checks the stored record while holding that lock. Import retains the existing all-class preflight and lock checks before replacing the included classes. It does not download a backup. Identical JSON content with different property order does not create a conflict. Cached changes to the other class do not pause the active class, but must be resolved when returning to the affected class or before an all-class export/import. Refresh all open tracker tabs after this update so they use the guarded save code.
-
-Browsers without the Web Locks API, or where acquiring a lock fails, keep edits in memory under the unsaved warning and do not attempt unsafe writes. Keep the tab open and use ordinary Export for valid progress when no save conflict blocks it. Existing v1 per-class saves, backup identities, Stat migration, captured data and calculations are unchanged.
-
-`tests/cross-tab-storage.test.mjs` checks simultaneous stale writes, cancellation and both conflict choices, failed writes, removal, malformed records, class isolation, import races and rejected locks. Actual-app tests check paused controls, explicit continuation without downloads, adoption, class returns, invalid Stat drafts, missing events, Reset baseline and late import conflicts. DOM tests do not establish real-browser multi-tab or phone layout acceptance.
-
-## Ordinary progress Undo, Issue #30
-
-The Current HEXA Matrix actions include **Undo** for the last ordinary skill or Stat progress edit in this tab. It covers manual levels, Next level, To checkpoint, Stat unlock/cancel and valid line edits. Typing within one field edit is grouped into one action; invalid Stat drafts and unchanged values create no action. Undo restores only that skill's actual former level or full Stat state. Resources, calculator settings and other skills retain their current values.
-
-Undo also restores that skill's prior infographic click history when its exact source context and restored progress still validate. Existing infographic reverse-per-skill Undo remains. Ordinary Undo is session-only and is cleared by reload, class/selected-order changes, successful import, Reset or an infographic progress/Undo action. Refresh/failure pauses it; identical Retry data can retain it, while changed order/catalogue identity or bounds invalidate it. No save format, source data or calculation changes are introduced. Storage warnings still apply when a restored edit cannot be persisted.
-
-`tests/progress-undo.test.mjs` checks the actual app across typed edits, actions, Stat state/legacy totals, unrelated resources, infographic history, both classes, order changes, Reset/import, source refresh and damaged/blocked saves. Rendered phone layout and live interaction remain owner review.
-
-## Admin priority record protection, Issue #30
-
-The Admin Panel validates saved priority rows one at a time. A damaged JSON record, unsupported shape, invalid checkpoint or mismatched storage ID no longer blocks valid priorities or the other class. Saved priorities shows a separate Damaged records list across all classes, with the stored ID, validation reason and an owner-only Download raw record action. The download wraps the exact original `draft_json` string in a `hexa-invalid-priority-record` envelope. It is recovery evidence, not a normal importable priority backup. Unknown class identity is not guessed.
-
-Damaged rows remain untouched and are omitted from usable priorities. Existing IDs remain reserved, including damaged records, so pair saves, legacy imports and tracker backup restoration cannot overwrite them. The older priority-preview write/delete route also refuses damaged targets. Valid priorities retain rename, availability, download and deletion; Skills saves and unrelated class management continue. This does not add automatic repair, replacement or deletion of damaged rows. Keep the raw download and review a separate recovery change before altering those records. Database access failures still return a storage error, rather than claiming the data loaded.
-
-`tests/invalid-priorities.test.mjs` uses an isolated SQLite database and the actual admin UI to cover row isolation, exact raw downloads, owner access, collisions, legacy route protection, both classes, valid management and safe text rendering. Existing priority snapshots, schedules, source FD and player progress are unchanged.
-
-## Player save protection, Issue #30
-
-`player-storage.js` owns tracker progress reads, writes and removal, plus class/view preferences. Storage exceptions do not propagate into priority loading. A separate live save-status message states when changes are unsaved, when saved progress cannot be read, or when a record is damaged. Session copies retain edits across class switches; closing or reloading the tab cannot preserve edits that failed to reach browser storage. Successful later writes clear the unsaved warning.
-
-The existing per-class v1 format remains. Validation accepts legacy saves without Stat lines, completion marks or infographic history. Existing migration keeps legacy Stat totals without inferring line splits. Supported levels, partial/full Stat lines, unlocks, completion marks, inventory, weekly calculator choices, hidden-skill levels and undo records pass through unchanged. Catalogue bounds and existing history reconciliation still apply in the renderer. No calculation or source data changes are made.
-
-Invalid JSON or unsupported field shapes protect the original storage entry from writes and Reset. The UI can run with defaults and session edits, with a warning; it does not replace the damaged raw record. An unreadable entry also stays protected for that session because its prior contents are unknown. Reload after storage access is restored to recover persisted progress. This batch does not add player import/export, cross-tab conflict handling or an automatic repair/replacement flow. Malformed admin priority isolation is the next item in #30.
-
-`tests/player-storage.test.mjs` exercises shape validation, legacy/current preservation, quota/blocked reads, failed removal, raw-record protection and session switching. `tests/player-storage-ui.test.mjs` reproduces blocked writes and malformed records through the actual app, including Reset and both classes. Existing Stat and infographic tests cover detailed migration/history restoration. Rendered warning layout and normal saved-progress checks remain owner review.
-
-## Infographic view, Issue #29
-
-The toolbar offers Tracker and Infographic. A first visit starts in Tracker; `hexa-tracker-view-v1` remembers the last view. Infographic contains two full-width sections, the existing Summary followed by the icon guide. Its Summary places the completion bar and both material blocks on one row on desktop: the bar uses half the width and each material block uses a quarter. Phones stack both material blocks below the bar. The regular tracker layout and material/completion calculations are unchanged.
-
-`infographic-progress.js` prepares checkpoints from the exact selected source sequence and catalogue metadata. It keeps the complete source sequence and stable endpoint identities for actions and undo. The displayed guide uses the same remaining-run grouping as the tracker: consecutive upgrades for one skill show only the final target, and completed steps do not split a remaining run. Saved/manual levels can therefore change the displayed checkpoints. Adjacent pre-existing completed levels collapse to their final endpoint, while every recorded infographic click remains as a faded checkpoint for reverse-order undo. Each combined checkpoint appears at its final target’s original source position, so a late MAX does not jump ahead of faded completed skills. Grouping changes presentation only; the exact source sequence still scopes saved history. Each Stat has one combined unlock/max tile at its first source position. Level-30 skills and level-20 Stats show MAX. Missing icons use a letter fallback; unusable skill metadata gives an empty state. No new class data or mechanics are sourced. One renderer uses existing class theme and skill accent variables for current and future catalogues.
-
-Both views use the existing per-class saved progress and Origin baseline. Completed icons fade and remain visible. Infographic Hide completed starts off and saves separately in `hexa-tracker-infographic-hide-v1`, independent of the list setting. Click an unmet checkpoint to raise only its skill, then click again to restore that skill's pre-click state. Repeated clicks for the same skill undo in reverse order. Tracker/pre-existing completion has no recorded undo. `infographicUndo` lives in each class save, scoped to priority mode, exact sequence, catalogue bounds and stable skill/checkpoint IDs. Records survive reload but are discarded when a skill's current state or priority sequence no longer matches. Valid tracker progress edits invalidate that skill's records across priorities; other skills remain independent. Reset clears only the current class's progress/history and retains view preferences.
-
-`statCompleted` records an infographic Stat mark alongside unchanged actual `statLines`, total and unlock state. It supplies level 20 for shared priority progress and fixed unlock accounting, without fabricating any line distribution or RNG costs. FD stays blank unless the saved valid lines themselves total 20. Undo restores the previous lines, total, unlock and completion state. A valid full split entered in Tracker replaces the explicit completion mark with its real sum. Partial entries retain the mark and blank FD until a complete valid split exists. Invalid drafts change neither saved state nor undo history. Returning to Tracker leaves Stat editors closed; Enter line levels remains available.
-
-`infographic.js` owns accessible checkpoint buttons and measured SVG connectors. Checkpoints are borderless 40px icons with compact 56px by 64px buttons and 20px row gaps. Arrows are grey; the arrow entering the first unmet checkpoint uses the selected class accent, including a short leading arrow when that checkpoint is first. Every row reads left to right; a row break routes through the gap back to the left edge of the next row. Connectors measure the current DOM order rather than retained-button insertion order, and replace the route layer on every redraw, preventing crossed/stale arrows after priority changes. ResizeObserver and a resize fallback refresh connectors after resizing, view changes and hidden-checkpoint reflow. Connector layers ignore pointers; buttons retain keyboard focus and respect reduced motion. Preferences and actions do not change the player's Fragments owned, weekly settings, captured costs/FD, shared priorities, D1 or music/animation controls.
-
-`npm test` includes focused checkpoint/action and Happy DOM checks for both classes, all four verified Ren captures, future catalogue fixtures, saved progress, reverse undo, stale history, Stat reconciliation, class/world/update isolation, missing icons and responsive connector geometry. DOM/style/geometry checks do not replace a rendered phone and desktop review. This plain HTML/Worker project has no supported browser preview in the managed environment; live visual/touch acceptance remains owner review.
-
-## Ren background music
-
-Ren has a Music volume slider immediately left of Animations. Every page load starts muted, with no audio element or audio request until a positive volume gesture. The supplied MP3 loops; zero pauses it, and switching class pauses, rewinds and resets to muted. Returning to Ren stays muted. Music is independent of Animations and reduced motion. Volume is not saved. Page navigation stops playback; errors reset the slider to zero with Retry shown. The slider uses Web Audio gain so mobile volume is controlled consistently. It does not trigger tracker renders or write progress.
-
-`assets/music/manifest.json` records the unchanged supplied MP3 filename, retrieval IDs, size, duration and SHA-256. The Worker bundles the original bytes with audio/mpeg, GET/HEAD and single byte-range responses for browser streaming and looping. The provenance manifest is not served. `tests/music.test.mjs` checks gesture-only playback, gain, muting, class changes, failures, cleanup, unchanged storage and compiled Worker byte delivery/ranges. Audible playback, loop transition and phone layout remain owner review on the test Site.
-
 # HEXA Matrix Tracker
 
-Asset delivery measurements and the decision to retain current caching/media
-delivery are in [the asset review](docs/asset-delivery-review.md). Re-run its
-offline inventory after a media/build change. Hosting identity verification
-remains partial in [the identity review](docs/hosting-identity-review.md).
+A browser-based MapleStory HEXA Matrix tracker for Hoyoung and Ren. It shows
+MapleScouter upgrade priorities, captured material costs and approximate FD,
+with separate saved progress for each class.
 
-## Class animations, Issue #28
+## Current status, 3 October 2026, Brisbane
 
-The public tracker uses the owner's original transparent PNGs for slow Hoyoung clouds travelling left to right behind panels, and Ren petals travelling top right to bottom left. Ren now uses 36 background and six foreground particles on desktop, 18 background and six smaller foreground particles on screens up to 640px, double the previous counts at unchanged artwork sizes. Independent starting phases and travel/sway durations reduce synchronised motion. Each completed pass gets new entry, exit and intermediate path positions, sway, rotation and opacity, while its duration/delay stay fixed to avoid timeline jumps. Foreground petals retain quiet gaps. A quarter of petals receive slight static blur, up to .35px for tiny background sprites or .8px for foreground detail; blur is never animated. Petal opacity is now 44–72% background and 36–60% foreground on desktop, 36–62% background and 28–48% foreground on mobile. Mid-pass fades retain 75–90% of each petal’s chosen opacity. Mobile opacity is lower. Only travel animationiteration events re-roll a pass at the clipped boundary, with no timers/frame loop. Paused, disabled, reduced-motion, removed and disposed scenes do not re-roll.
+- Development is on `restore-scouter-retrieval`. [PR #22](https://github.com/soushityphon/hexa-matrix-tracker/pull/22)
+  stays **draft and unmerged**. Main is older than the test implementation.
+- The [public test tracker](https://soushi-hexa-matrix-test.xsoushi.chatgpt.site)
+  is documented as deployed version **130**, Site source
+  `f4f6257d7402c8c9032593431509b250f5ee4393`, deployment
+  `appgdep_6abff2baf52481918069d978043a85ad`, environment revision **11**.
+  Asset checks and this documentation cleanup do not change its served build.
+  This is recorded deployment evidence, not a fresh live verification.
+- [Issue #30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
+  is the audit authority. Read its latest body and all comments before continuing.
+  [Issue #23](https://github.com/soushityphon/hexa-matrix-tracker/issues/23)
+  retains the wider product requirements and history.
+- Save recovery, manual backups, loading/Retry, Undo, FD access, module separation,
+  redraw/focus improvements and admin revisions are implemented and tested.
+  Owner acceptance is separate and partial. Version 130 icon alignment is accepted.
+- Hosting identity verification remains **blocked/partial**. Asset delivery review
+  is complete; retain current policy. Next independent task is eventual-release
+  commit/acceptance/rollback documentation. No release commit has been selected;
+  eventual release is **unapproved**.
 
-Desktop uses eight Hoyoung clouds; mobile uses five. Cloud heights and starting phases are independent random values, with two or three faster and one or two slower clouds on desktop, two faster and one slower on mobile. Hoyoung motion remains unchanged. These are visual tuning choices for owner review.
+See the [backlog index](docs/backlog.md) for old issues, acceptance and deferred
+work. [Historical notes](docs/development-history.md) preserve the previous README.
+Its old plans, blockers and deployment states are not current requirements.
 
-`decorations.js` owns only the decorative layers and their lifecycle. It uses transform animations, with no frame loop, timers, data requests or animation dependency. Layers are viewport-clipped, hidden from assistive technology and ignore pointer events. Panels sit above the background; the toolbar sits above the foreground. Native menus and modal dialogs retain the browser top layer.
+## Tracker behaviour
 
-Public section and nested-card background fills share --ui-panel-surface at 80% opacity, including an explicit infographic-panel rule and transparent inner infographic grid, with class/skill-coloured active tints at the same opacity. Only the backgrounds use alpha; text and controls retain full opacity. The Animations button sits in the header at the top right above the Update/World toolbar, and saves one browser-wide preference in `hexa-tracker-animations-v1`, separately from progress. It defaults on when reduced motion is absent. Reduced motion hides both layers and disables the control without overwriting the saved choice; session changes are honoured. Hidden tabs pause both travel and rotation. Off pauses and hides the layers, and an initially saved Off or reduced-motion state does not request artwork. Image/storage failures stay within decoration. Class switching replaces the scene immediately, independently of data loading; focus/world/update changes reuse it. Reset does not change the preference. Admin pages do not load this feature.
+Both classes support Tracker and Infographic. Update labels are saved pair names,
+identified by pair ID, not fixed patch selectors. Heroic uses Fragment priorities;
+Interactive uses Sol Erda priorities within that pair. Only available reviewed
+priorities appear. Switching class/order/world retains hidden levels; Reset
+changes only the selected class.
 
-`assets/backgrounds/manifest.json` records original filenames, retrieval IDs, dimensions, stable paths and SHA-256 hashes for all 23 unchanged PNGs. `decoration-assets.js` exposes only rendering metadata. The Worker build bundles the PNGs as base64 and serves decoded binary with `image/png`, plus the new scripts and stylesheet. The provenance manifest is not a public route. `tests/decorations.test.mjs` verifies preferences, media/visibility handling, bounded nodes, cleanup, broken images, original hashes and GET/HEAD delivery from the actual compiled Worker. Existing tracker DOM checks verify toggle and Reset independence. Live desktop/mobile motion, density and controls remain owner review when a rendered preview is unavailable.
+Origin starts at its captured free level-one baseline. Ordinary skills allow
+integer levels up to 30. Stat lines allow 0–10 each, combined maximum 20. Missing
+legacy splits are never invented. Stat unlock and completion state stay distinct.
+The approved general-average FD table applies only to valid line totals of 20.
+Random Stat levelling costs and combined personal FD are not calculated. Completion
+retains the agreed Fragment-spending formula and display, without extra RNG notes.
 
-A browser-based MapleStory HEXA Matrix priority and material tracker. The first milestone replaces the Hoyoung spreadsheet workflow with a small calculation engine and Scouter checkpoint data.
+Sol Janus stays editable in Current HEXA Matrix and is always excluded from
+Upgrade Priority. Optional Summary inclusion works in both views. It uses the
+selected capture's Janus schedule, or its Hecate schedule under the owner's equal-
+materials decision. Missing schedules disable inclusion rather than invent costs.
 
-## Current scope
+Tracker hides the visual step count and numbering column, uses **Target Lv.**
+and right-aligns resource headings. A 4px header-only offset aligns visible art
+within the unchanged PNGs. Next Upgrade uses current-to-target labels, **Add 1
+Level** and **Add to checkpoint**. Inventory shortfall amounts remain without the
+repeated caption. Upgrade actions never spend inventory. Stat editors have thin
+clickable bars with numbers on the right. Numeric inputs select the whole value.
 
-- Hoyoung
-- Hecate and Lotus patch selections, with the GMS Lotus Heroic order captured from Maple Scouter
-- Normal KMS Taotie skills and captured priority steps
-- Current HEXA level inputs saved in the browser
-- Compact priority checkpoints
-- Live remaining upgrade order that skips completed checkpoints even when levels were raised out of order
-- Intermediate level material costs calculated automatically
-- Quick Stats with next level, next checkpoint, completion and spent materials
-- Optional Sol Janus inclusion in completion and spent material totals
+Infographic shares progress and Summary with Tracker. Grouped checkpoints retain
+source endpoint positions; completed icons fade. Hide completed saves separately.
+Recorded checkpoint clicks support reverse-order undo per skill. Pre-existing
+completion has no invented undo. Ordinary Undo restores the last affected skill/
+Stat state without changing resources. Export/print is undecided and unimplemented.
 
-The earlier captured Maple Scouter orders do not contain HEXA Stat checkpoints. Live orders can include `hexastat1`, `hexastat2` or `hexastat3`. The importer treats each as a level 20 HEXA Stat checkpoint and carries its Nexon icon through the reviewed draft to the tracker. Each Stat has a fixed unlock cost and a separate Unlocked control because level 0 may already be unlocked. Later levelling uses variable Fragments, so a priority shows the unlock Fragment cost with `+` while it is locked, or RNG after unlock. Fixed unlocks for Stats present in the saved order are included in material totals; variable levelling is excluded. The skill node completion and material totals include Taotie only in the future planning view. Sol Janus is an editable level but is excluded from those totals unless selected. Ren is planned for a later milestone.
+The Heroic-only Fragment Calculator uses inventory, daily farming and owner-supplied
+weekly rewards: Erda's Request 90, High Mountain 40, Angler Company 55 or Nightmare
+Paradise 70. Weekly income is averaged over seven days without rate rounding.
+Weekly-only estimates use approximate weeks; positive daily farming uses decimal
+days. Summary dates use the player's local date/locale, rounding up only for calendar
+addition. Zero income hides estimates. Inventory affects estimates, not full costs
+or completion.
 
-## Data model
+FD controls support hover, tap and keyboard explanations with modal focus return.
+Full transitions compound multiplicatively; partial transitions retain the approved
+Fragment-cost-share estimate. Missing source FD stays blank. The shared footer
+says **All priority data from MapleScouter** and **A project by Soushi**, with the
+existing Ko-fi link. Detailed source dialogs are declined.
 
-The reusable isolated Scouter acquisition and 30 September investigation are documented in [docs/scouter-discovery.md](docs/scouter-discovery.md). The new commands discover a candidate job catalogue from current public frontend files and reconstruct a validated response without importing the reviewed tracker catalogue or changing live data. Source identity, exact level schedules and display overrides remain separate; candidates are not publishable automatically. The independent review overlay helper stores job/core names and exact-candidate visibility choices without changing source checkpoints, costs or FD. It is offline groundwork, with no admin persistence, migration or promotion connected yet.
+Hoyoung clouds and Ren petals use original local artwork. Animations honours
+reduced motion and a saved browser preference; panels retain 80% fills. Ren music
+loads only after a positive volume gesture, loops and starts muted on page load.
+Class switches rewind/mute it. Volume is not saved. Supplied audio, motion and
+version 114 phone checks are owner-reported accepted, without a specific device
+or exhaustive coverage claim.
 
-`data.js` contains node metadata, level-by-level HEXA material costs, and directly captured Maple Scouter orders. `data/scouter-gms-2026-09-28.json` is the GMS Hoyoung Lotus Heroic order supplied from Maple Scouter's HEXA API. The source response includes 화중군자 VI (Lotus), Sol Hecate, and no Taotie. `data/scouter-kms-2026-09-28.json` contains Taotie Piece and Erda efficiency orders from a reset baseline on a public KMS profile. These are dated benchmarks, not personal optimisations. Hecate Heroic/Interactive and Lotus Interactive remain empty pending verified source data. Hecate omits Lotus and Taotie from completion; Lotus omits Taotie. Taotie has no extra catch-up box or special calculation. If a checkpoint says Harmony 1 to 6, the calculator sums levels 2 through 6 itself.
+## Player saves and loading
 
-## Hosting
+Progress stays local under `hexa-tracker-hoyoung-v1` and `hexa-tracker-ren-v1`.
+Storage failures retain session edits with an unsaved warning. Malformed raw
+records stay protected. Web Locks and baseline checks prevent silent stale writes.
+Conflicts pause edits and offer **Load latest save** or confirmed **Continue this
+save**. Neither choice downloads a file.
 
-The source pages are plain HTML and JavaScript. `node scripts/build-worker.mjs` bundles them in a Cloudflare Worker for the private Sites deployment.
+Manual Export contains all existing per-class saves, using Hoyeong/Len and Scouter
+core IDs independently of display names. Import validates before confirmation,
+replaces only included classes and clears imported infographic undo history.
+It never downloads an automatic backup. Cancel preserves progress so the player
+can Export first. Damaged/unreadable records cannot be exported as defaults.
 
-## Priority review
+Source reads share a 15-second full-response deadline and a 30-second in-memory
+cache. Fresh focus returns reuse verified data; expired views refresh. Same-class
+failures retain the view with edits paused and Retry available. Initial/class-switch
+failures do not borrow another class's view. Picker focus cannot interrupt import.
+Unchanged refreshes retain drafts, validation and focus; changed source follows
+existing guarded rebuild rules. Loading/error notices do not shift panels.
 
-Open `priority-review.html` as the site owner. The **Admin Panel** has **Skills** and **Priorities** tabs. Choose the Hoyoung tab and GMS/KMS, then **Grab Scouter info** retrieves the public source catalogue and the selected region's two priority orders sequentially. Successful requests are cached for five minutes; the first failure stops the remaining calls, and 429/430 pauses further checks. No import automatically changes a saved priority's availability.
+## Source data and administration
 
-Skills holds independent per-class long/short names, category and tag fields. Source names, icons and exact detected costs remain separate. Later captures preserve owner fields and append new source skills with blank fields. Conflicting names across old versions are shown for the owner to choose, rather than silently picking one. **Add standard tags** fills only empty tags. **Save skills** writes a separate D1 record and overlays complete known-skill labels on the test tracker without rewriting any saved order. Unknown skills can be named in this list, but their tracker support remains pending.
+The owner-only Admin Panel has class tabs, Skills and Priorities. Grab Scouter info
+retrieves a catalogue and the selected region's two orders for review. First failure
+stops remaining calls; 429/430 pauses checks. Background priority detection and
+automatic promotion are not connected. New named pairs start unavailable.
+Skills reviews own long/short names, categories and editable tags; saved empty tags
+remain empty. They cannot rewrite captured order, cost or FD values.
 
-Priorities shows both captured orders, exact-order matches across saved versions of the same world, checkpoint counts and source FD. A match is a comparison result and always allows a new named pair. Enter a name and click **Save priority** to save **Heroic** and **Interactive** together in a D1 transaction. New priorities start unavailable; use **Make available** in Saved priorities when ready. Pair IDs are opaque and independent of region; region remains capture provenance. The tracker shows only skills in the selected priority order and calculates with that priority’s captured schedules. Hidden skills keep their browser progress. The newest-first saved list supports availability, rename, download/upload backups, and confirmed deletion. Older individual versions remain intact and can also be downloaded/restored. Restored priorities start unavailable. No backup import overwrites class skill names. Advanced response-file import remains a fallback. The diagnostics and cost-table sections are removed from this panel.
+Each priority owns its exact captured per-level schedules and transition FD.
+Later refreshes do not backfill missing historic costs/gains. Old records remain
+downloadable; missing schedules show unavailable calculations. Advanced response
+import requires the response and its own catalogue. Dated `data/` files are source/
+regression evidence, not a claim about live priorities or universal optimal orders.
 
-Viewing the test tracker is public, with owner-only admin actions and Scouter order requests. Save affects this live testing tracker; the eventual release remains separate. Ren has its own Admin tab with GMS/KMS capture, named pair saving, availability and backups. The tracker class selector loads only that class’s saved priorities and uses separate progress storage. This deploy connects the approved admin design to the existing Hoyoung retrieval/import validations. It does not claim the newer isolated semantic-evidence policy or universal reconstruction workflow is complete. All four Ren captures have passed exact source/cost/FD and all-three-Stat checks using the rank 1 KMS Ren benchmark and explicit GMS/KMS selectors. Development checks make no live calculation calls.
+Four genuine Ren captures were verified in the 1 October investigation: KMS
+Heroic/Interactive 211/93 checkpoints and GMS Heroic/Interactive 191/85. They use
+the verified rank 1 KMS all-world HEXA converted-strength benchmark. GMS is an
+explicit calculation selector, not the benchmark character's origin. Reusable
+acquisition/semantic-review tools remain separate offline groundwork, not an
+approved universal class importer. See [source investigation](docs/scouter-discovery.md).
 
-The Sites Worker requires a D1 binding named `DB` configured as `"d1": "DB"` in `.openai/hosting.json`; `drizzle/0000_priority_preview.sql` creates the preview table. Set a secret `ADMIN_EMAIL` to the site owner's authenticated email. The site-scoped user ID is not the workspace account ID. Only that identity may open the admin review page or change shared priorities. The GET route is available to viewers of the private site. Progress levels and resources remain in each browser.
+Damaged admin rows are isolated with owner-only raw recovery downloads and never
+silently repaired/overwritten. Skills, priority groups and legacy row writes use
+revisions and atomic guards. Restore stays insert-only and transactional;
+maintenance preserves peer changes. Safe diagnostics log fixed labels/counts only.
+Development tests use isolated data, never live resets.
 
-The private Worker uses `MAPLE_SCOUTER_API_KEY` and two server secrets, `MAPLE_SCOUTER_REQUEST_PART_1` and `MAPLE_SCOUTER_REQUEST_PART_2`, for the supplied GMS Hoyoung request body. KMS Taotie uses `MAPLE_SCOUTER_KMS_REQUEST_PART_1` and `MAPLE_SCOUTER_KMS_REQUEST_PART_2`; configure those once with the complete fixed-profile KMS request. Neither template belongs in the public repository. The Worker validates the KMS template's unopened HEXA Stats, level-one Origin and all other skills at zero, then sets `sole: false` for Fragments or `sole: true` for Sol Erda. GMS retrieval has been verified on the private preview. The KMS fixed-profile template is configured privately. Both GMS request copies have HEXA Stat set to zero before sending. Historical Hecate cannot be retrieved from the current endpoint. The check never publishes an order. You can also upload or paste a Maple Scouter response.
+## Development checks and hosting
 
-For a repeatable source audit, run `node scripts/extract-scouter-order.mjs response.json taotie_heroic --out extracted.json`. It extracts ordered checkpoints, icons, source material columns and the first difference from the saved order without copying the character profile. It checks cumulative material arithmetic and each fixed-cost skill checkpoint against the app's level table; HEXA Stat material figures are identified as Scouter estimates because their upgrades are random. The attached 206-row Taotie Fragment response passes these checks. Ascent uses the Skill cost schedule (5 Sol Erda and 100 Fragments at unlock), while Taotie uses Skill II.
+Use Node **24.19.0**, pinned in `.node-version`, and locked dependencies:
 
-Reviewed imports retain the exact Scouter `sourceCost` for each fixed-cost checkpoint as `{ from, erda, frags }` on that step. A multi-level checkpoint stores its total for that transition, not per-level values. Older saved orders without this field remain valid. New grabs retain the exact per-level Scouter catalogue schedules and their public-source hashes with each priority. Transition checks and tracker calculations use that snapshot. Mismatches block the fresh import. HEXA Stat Scouter estimates are not stored as fixed transition costs.
+```sh
+npm ci --ignore-scripts
+npm run check
+node scripts/review-asset-delivery.mjs
+```
 
-The Admin Panel keeps cost schedules in source snapshots and omits diagnostic cost tables. A matched response may be saved as a new named pair. Unknown skills still require verified tracker support before promotion.
+`check` runs 28 regression files, builds the Worker, checks JavaScript syntax and
+verifies compiled asset delivery/private exclusions. GitHub Tracker checks runs
+this work, offline inventory and Chromium on pushes/PRs. Last recorded asset-review
+CI has 75 ordinary browser passes and zero expected failures. Counts are checkpoint
+evidence, not verification of a new commit. [Rendered QA](docs/rendered-qa.md)
+documents browser commands, fixtures, emulation and device limits.
 
-The first Apotheosis transition starts at level 1, its free Origin baseline. Fresh Scouter FD annotations record that start as 1. Older saved/captured annotations with `fdFrom: 0` remain readable; partial FD estimates treat their effective start as 1 so the free unlock is not counted in the Fragment-cost share.
+`scripts/build-worker.mjs` packages plain HTML/JS/CSS and original media for the
+existing Sites Cloudflare Worker. Test viewing is public; admin stays owner-only.
+The Site's private hosting setup has existing D1 `DB` and server-only secrets.
+Hosting configuration is not committed here. Do not create a second Cloudflare
+host or change audience, bindings, secrets or schema as cleanup.
 
-Background Maple Scouter priority detection is not connected. The observed HEXA endpoint is undocumented and may change. The image URLs are sourced from Maple Scouter, with the Sol Janus URL corrected to its working Maple Scouter image. Browser progress is saved locally; Discord login and cross-device sync are future work. To remove remote image dependencies, save and review image assets in the repository when a reliable retrieval workflow is available.
+Use the documented Sites route for authorised, tested app increments. Compare
+checked GitHub source/assets with Site source, record saved version, source/
+deployment IDs and successful status in #30, and retain a known saved rollback.
+Documentation-only changes need no Site deployment. Preserve browser saves and
+D1. Test deployment does not approve merge or eventual release. Obtain remaining
+identity/origin evidence before any hosting change; isolated matching headers
+are not live authentication proof.
 
-The tracker uses only the saved Admin Panel Skills catalogue. An empty catalogue produces an empty skill list. Reviewed names, short names, categories, tags, icons and detected level costs are shared across priority versions. Incomplete or unsupported rows remain pending. Priorities cannot be made available until all their skills have been reviewed and saved.
-
-The complete tracker backup can be uploaded through the Admin Panel backup control. Restoration refuses existing IDs and skill catalogues, and starts restored priorities as unavailable. The maintenance export/reset route requires the owner identity or a temporary ADMIN_MAINTENANCE_TOKEN; reset deletes only the exact backed-up priority rows. Remove the temporary token after maintenance.
-
-Tags are owned by Admin Panel Skills. Newly discovered Origin, Ascent and Mastery skills receive editable standard tags in their admin fields. Saving an empty tag removes it from the matrix, Next Upgrade and priority list. Source refresh preserves a saved empty tag; Add standard tags can refill it when requested. The tracker has no stylesheet tag fallback.
-
-## Capture-specific materials and FD, 1 October
-
-New Admin Panel grabs snapshot the Scouter catalogue’s exact per-level costs and source hashes alongside each world’s response. Cached responses retain their own catalogue snapshot, even if a newer catalogue is fetched. Save, rename, availability and backups preserve these fields. Independent skill reviews continue to control names, categories and editable tags, while later source refreshes cannot replace a saved priority’s cost or FD values.
-
-The tracker uses the selected priority’s schedules for next levels, jumps, totals and partial-transition FD cost shares. It does not attach historic FD to a matching order. Missing FD stays blank. `source-gains.js` remains dated regression evidence, but is neither loaded by the tracker nor included as a public Worker asset.
-
-Older priorities that lack captured per-level schedules remain stored, readable and downloadable. Their material calculations show an unavailable message until the owner makes a fresh grab and saves a new pair. No missing historical schedules are filled from today’s Skills record or fixed Hoyoung tables. Legacy fixed tables remain only for dated offline regression/extraction tools that have no supplied catalogue. HEXA Stat unlocks retain the existing separate unlock schedule and RNG treatment; Scouter’s aggregate Stat figures are not converted into exact level costs.
-
-Advanced response-file import requires an envelope containing `response` and its own `catalogue`; a bare response cannot establish capture-specific per-level costs. Normal owner workflow remains Grab Scouter info. No saved data migration, reset or player-progress change is required.
-
-Ren support uses the verified rank 1 KMS all-world HEXA converted-strength profile, 하람, source character level 295 at the investigation. GMS is an explicit Scouter calculation selector, not a claim that the character comes from GMS. Fresh grabs validate the current rank 1 profile, source inventory and separate HEXA reset fields. The four verified captures contain KMS 211/93 and GMS 191/85 checkpoints. Exact source evidence is retained in the dated Ren files and Issue #23.
-
-Ren priorities use stable class/core IDs rather than edited names. Each saved world retains its own exact source skills, level schedules, transition costs, FD and provenance. Scouter names display until the owner saves custom names; reviewed names, categories and tags remain separate. Missing FD stays blank. Stat observations remain RNG estimates. Saving creates an unavailable pair, and availability is managed in Saved priorities. Rename, downloads and restores preserve the capture; restores start unavailable.
-
-Ren progress uses `hexa-tracker-ren-v1`; existing Hoyoung progress keeps `hexa-tracker-hoyoung-v1`. World/update switching retains hidden skills’ levels, while the visible matrix and calculations use only the selected order. Ren Origin starts at level 1 from its captured free baseline. Class switching and Reset affect only the selected class.
-
-## HEXA Stat line levels, 1 October 2026
-
-Each visible Stat node has Primary, 2nd and 3rd integer inputs, each 0–10 with a combined maximum of 20. A complete set of inputs supplies the total used by existing priority progress. At total 20, `hexa-stat.js` looks up the owner's exact 36-row general-average FD table from issue #23, sourced from hexastat-0 columns A/B/C/E. Values are stored as percentage points, so 6/8/6 shows Approx. FD 3.295%. Additional lines are interchangeable for lookup; entered order is retained. Below total 20, FD is blank. This table is shared by both classes and all three Stats; it does not change Scouter skill FD.
-
-The existing class-specific storage keys gain a separate `statLines` map. Legacy totals and unlock flags remain intact. A legacy non-zero total starts with blank line inputs; no split is invented. Partly entered details are saved, but the last total stays in use until all three inputs contain valid levels. Invalid bounds, fractions or combined totals show an error and do not change saved progress or adjust another line. FD stays blank while line details are missing or invalid. Clearing a line retains the last total until a full replacement split is entered.
-
-Mark unlocked retains its existing behaviour. Enter line levels replaces Mark complete and focuses Primary without changing progress. Hidden nodes retain their lines and unlocks through update/world/class changes and reloads. Reset clears only the selected class. Fixed unlock costs, RNG material presentation and the skill Fragment-based completion formula stay intact. There is no stat-type selection, RNG simulation, roll-cost estimate or combined FD total.
-
-The Stat UI uses three read-only preview squares and one editing panel. Click anywhere on a square to open or close its editor, or select another square to switch. Icons are faded when locked, with no independent click-to-unlock action. Mark unlocked or entering any valid numeric line level, including zero, restores the icon colour. When unlocked with three known zero lines, a small × cancels unlock without changing editor selection. Positive or unknown line levels cannot be cancelled. Each square shows three mini bars and entered levels; missing legacy details remain blank. Below 20, the summary is total / 20; at 20, only ~ FD appears, with no tick. All tracker FD values follow the selected job colour. Level validation, source FD, averages, totals and class-specific storage remain intact.
-
-Run `npm ci` then `npm test` with Node 24 for calculation, route and DOM checks. The new tests verify the 36 exact averages, all 66 ordered level-20 distributions, validation, legacy/partial migration, both classes' storage, hidden nodes, next-priority changes, unlock controls and unchanged skill costs/FD/completion. Happy DOM is a development dependency only and is not bundled into the Worker.
-
-Tracker Update choices use saved priority pair IDs and the owner’s pair names. A pair named Lotus appears as Lotus regardless of GMS/KMS provenance. Heroic/Interactive switches within that selected pair. Separate pairs with the same name remain separate by ID. Source region/patch remain internal capture metadata, and renaming a saved pair updates the dropdown label without changing order, costs, FD or player levels.
-
-
-Class loading shows Loading... while data is pending, rather than the empty-catalogue message. Catalogue and saved-priority reads run in parallel. Successful class data is cached in memory for 30 seconds, so a return switch can render at once; concurrent requests for the same class are coalesced. Focus returns reuse a fresh verified view within the existing 30-second cache; expired views refresh, and explicit Retry bypasses the cache. Failures clear the failed class cache. A same-class refresh keeps the last successfully loaded view read-only; initial loads and class switches have no retained view until that class loads successfully. Only source/catalogue data is cached, with player progress still read from the existing class-specific storage. No permanent browser or server cache is added.
-
-Class loads have a 15-second deadline covering both requests and their response bodies. A timeout or failure aborts the remaining work and shows Retry loading. During a same-class refresh and after failure, a status identifies the last loaded view and paused edits. Retry fetches the selected class again without using the cache. Rapid switches coalesce pending requests for each class; only the latest selected view can render. Late timed-out results cannot populate the cache. This also bounds catalogue reads used by player export/import. Saved player progress remains intact. Under the confirmed #30 decision, levels, Stat actions, resources, calculator settings, Update/World, Reset and Import pause until loading succeeds. Tracker/Infographic viewing, infographic Hide completed, class switching, music/animations and Export remain available. Switching views while paused does not write player progress or reconcile undo. Retry success replaces the old data, including a changed or empty order, before re-enabling edits. Retention is in this tab only, with no persistent source cache. Imports already in flight refuse replacement if class loading or the selected class changes before applying.
-
-## Fragment Calculator
-
-Summary sits above the left-column matrix and retains the Fragment-spending completion formula and full material totals. Include Sol Janus remains available in either world when Janus belongs to the selected order. The Fragment Calculator is Heroic-only; its per-class inventory, daily farming and weekly selections stay saved while hidden.
-
-Next Upgrade shows Fragments still needed after inventory, clamped to zero, for each alternative target. Upgrade actions never change inventory. Captured costs, priority-table amounts, Sol Erda and Summary totals remain full costs. Stat levelling stays RNG, with no inventory deduction or duration for unknown amounts; fixed unlocks can use the known cost.
-
-`fragment-calculator.js` keeps owner-supplied weekly rewards separate from Scouter: Erda's Request 90, and one Epic Dungeon, None 0, High Mountain 40, Angler Company 55 or Nightmare Paradise 70. Estimates use daily farming plus weekly rewards divided by seven, without rounding the rate, and show the existing decimal days. Weekly-only income works; zero income hides estimates. These are average pace estimates, not claim/reset schedules. New weekly settings default to unchecked/None.
-
-Owner refinements, 2 October: the Summary completion bar spans the full left section, with spent and remaining totals underneath in two columns. Remaining materials hide at actual 100% completion and return below 100%. Grid gaps replace the matrix panel's extra bottom margin so calculator and Summary spacing both use 12px. Erda's Request now uses None/Yes in a dropdown, retaining the existing saved boolean and reward calculation. The visible averaging note is removed. Weekly-only estimates use ~2 weeks or ~3.5 weeks, with one decimal place when needed. Estimates with positive daily farming retain decimal days. The underlying unrounded average-income calculation is unchanged.
-
-The remaining-Fragment estimate also shows an estimated finish date in the player's browser locale format alongside its duration. It starts from the player's local browser date and rounds the duration up for calendar-day addition, using the same average pace and owned-inventory shortfall. Next Upgrade durations keep their existing format. Zero income hides the whole estimate; covered costs show today and zero duration. Weekly-only dates reflect average reward pace, not a tracked claim/reset schedule.
+See [hosting identity evidence](docs/hosting-identity-review.md) and
+[asset delivery review](docs/asset-delivery-review.md). Retain cache lifetimes,
+base64 packaging and external skill icons. Offline sizes do not establish live
+performance or platform limits.
