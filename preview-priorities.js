@@ -23,7 +23,13 @@ export function previewCatalog(drafts) {
   const labels = {};
   const settings = {};
   const sources = {};
-  for (const draft of Object.values(drafts)) {
+  // Database row order is not guaranteed, especially after a host/data transfer.
+  // Use the same saved creation date as Admin, in the public oldest-first order.
+  const createdAt = draft => draft.createdAt || draft.source?.match(/\d{4}-\d{2}-\d{2}/)?.[0] || '';
+  const ordered = Object.values(drafts).sort((a,b) =>
+    createdAt(a).localeCompare(createdAt(b)) ||
+    (a.pairId || a.mode).localeCompare(b.pairId || b.mode) || a.mode.localeCompare(b.mode));
+  for (const draft of ordered) {
     const base = draftSettings(draft);
     priorities[draft.mode] = draft.steps;
     labels[draft.mode] = draft.name;
