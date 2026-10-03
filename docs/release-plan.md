@@ -171,8 +171,11 @@ needed. No Site rollback or player/D1 restore is required.
 
 ## Work still outside this batch
 
-Hosting evidence stays blocked. Infographic export/print needs format and full-
-guide/current-progress decisions. Choose a target, budget planning, snapshots,
+Hosting evidence stays blocked. All infographic export/print work is deferred by
+owner decision on 3 October: expected use is low and it is not considered necessary.
+It is not a release requirement or an active format/scope question. Revisit only
+on a new owner request. This does not defer player backup Export/Import or the
+existing interactive Infographic. Choose a target, budget planning, snapshots,
 multiple characters, personal FD optimisation, invented RNG costs and combined FD
 remain excluded/deferred. Further classes and optional sync remain later work.
 This plan adds no export, legend, login, migration, calculation or release feature.

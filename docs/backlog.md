@@ -17,8 +17,11 @@ eventual release is unapproved.
 4. [Release plan](release-plan.md): acceptance, commit selection procedure and
    rollback documentation complete. Actual release SHA/destination/approval remain
    pending; documentation does not select or approve them.
-5. Infographic export/print: owner must decide format and full-guide/current-
-   progress scope before implementation.
+5. Infographic export/print: **deferred by owner decision, 3 October**. The owner
+   expects little use and does not consider it necessary. Remove all export/print
+   planning, format/scope questions and implementation from active work and release
+   requirements. Revisit only if the owner requests it. Existing player backup
+   Export/Import and the interactive Infographic remain unchanged.
 6. Further classes and optional Discord sync: later review only, with verified
    data and material account/storage decisions first.
 

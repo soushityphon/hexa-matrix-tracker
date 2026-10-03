@@ -25,8 +25,9 @@ with separate saved progress for each class.
 - Hosting identity verification remains **blocked/partial**. Asset delivery review
   is complete; retain current policy. [Release planning](docs/release-plan.md) now
   records acceptance, publication and rollback. No release commit is selected;
-  eventual release is **unapproved**. Next feature decision is infographic export
-  format/scope, with hosting evidence still open.
+  eventual release is **unapproved**. All infographic export/print work is deferred
+  by the owner on 3 October. Continue hosting evidence and existing acceptance
+  checks; export is not a release requirement.
 
 See the [backlog index](docs/backlog.md) for old issues, acceptance and deferred
 work. [Historical notes](docs/development-history.md) preserve the previous README.
@@ -63,7 +64,8 @@ Infographic shares progress and Summary with Tracker. Grouped checkpoints retain
 source endpoint positions; completed icons fade. Hide completed saves separately.
 Recorded checkpoint clicks support reverse-order undo per skill. Pre-existing
 completion has no invented undo. Ordinary Undo restores the last affected skill/
-Stat state without changing resources. Export/print is undecided and unimplemented.
+Stat state without changing resources. All infographic export/print work is deferred
+by owner decision, not required for release. Revisit only if the owner requests it.
 
 The Heroic-only Fragment Calculator uses inventory, daily farming and owner-supplied
 weekly rewards: Erda's Request 90, High Mountain 40, Angler Company 55 or Nightmare
