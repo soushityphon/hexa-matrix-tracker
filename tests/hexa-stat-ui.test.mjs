@@ -69,6 +69,8 @@ assert.equal(row(stats[1]).hidden,true);
 assert.equal(row(stats[0]).querySelector('[data-stat-unlocked]').hidden,true);
 assert.deepEqual([...row(stats[0]).querySelectorAll('.stat-line-heading')].map(el=>el.textContent),['Main Stat','Additional Stats']);
 assert.equal(row(stats[0]).querySelectorAll('[data-stat-segment]').length,30);
+assert.ok([...document.querySelectorAll('[data-stat-segment]')].every(button=>button.tabIndex===-1));
+assert.ok([...document.querySelectorAll('[data-stat-line]')].every(input=>input.tabIndex===0));
 const selector=skill=>[...document.querySelectorAll('[data-stat-selector]')].find(el=>el.dataset.statSelector===skill);
 assert.equal(selector(stats[2]).querySelector('[data-stat-cancel]').hidden,false);
 selector(stats[2]).querySelector('[data-stat-cancel]').click();
