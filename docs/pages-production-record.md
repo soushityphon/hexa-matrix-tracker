@@ -7,14 +7,15 @@
 | Public URL | https://hexa-matrix-tracker.pages.dev |
 | Production branch | pages-production |
 | Deployed app commit | 6ab7c1cc189a34c563d956f52870b8640f44fd4e |
-| Documentation baseline at review | bc3bca2c40e149209d3feae4c7f3a388edcff1e6, app code unchanged |
+| Reviewed PR head | 0f3385c016dcc51fa13107b5c9c8ba2e8330f6c6, app code unchanged |
 | Cloudflare deployment | 5f2637eb-952b-4ede-9332-0cce5d88143a, successful GitHub Pages check |
 | Exact-source push CI | 37129772888, success |
 | Exact-source PR CI | 37129775164, success |
 | Production push CI | 37130001670, success |
 | Documentation baseline push/PR CI | 37130906148 / 37130908427, success |
-| Main | 590915dbf63e8f294f7048030fb1ec095002e397, older implementation |
-| PR22 | Draft, open, unmerged |
+| Release merge into main | 53541a4fc1599ed34a516ffb42cc677780a091bf |
+| PR22 | Merged, 4 October 2026 Brisbane |
+| Reviewed PR-head push/PR CI | 37133071291 / 37133074885, success |
 
 GitHub branches, checks and workflow results were re-read for this record.
 The Cloudflare dashboard/configuration evidence remains owner-supplied:
@@ -30,6 +31,9 @@ or Cloudflare account/API access is claimed.
 - Oldest-first public Update dropdown is accepted on 6ab7c1c.
 - Real alt-account Discord refusal on Pages is accepted, reported 4 October.
 - Owner Sign out then reopen Admin returns Sign in on Pages, accepted 4 October.
+- Owner reports Chrome cookie fields match: Secure/HttpOnly, SameSite=Lax,
+  Path=/ and scheduled expiry about eight hours after fresh login, accepted4October.
+  This is owner-reported metadata, not an elapsed eight-hour expiry test.
 - On 4 October Soushi reports the final Admin data check is fine after testing
   since the move to pages.dev. Mark functional Admin-data acceptance complete.
   Do not repeat this check without a change affecting the data.
@@ -82,18 +86,22 @@ Recheck the actual current production head and target compatibility when rollbac
 is needed. A future schema or data-format change needs its own compatibility plan.
 No rollback was executed or live data written during this documentation batch.
 
-## Remaining release verification
+## Release completion and evidence limits
 
-- Signed-in browser session cookie attributes/storage and 8-hour expiry remain
-  unverified live. Expected cookie is __Host-hexa-admin, Secure, HttpOnly,
-  SameSite=Lax, Path=/ and no Domain, Max-Age=28800 at issuance.
-- Owner-browser logout/revisit and real non-owner OAuth refusal on Pages are
-  owner-reported accepted. Do not repeat without an affecting change.
-  Anonymous HTTP evidence above retains its narrower scope.
-- Complete the final release acceptance record and PR22 merge readiness after
-  remaining auth checks. Do not merge merely because production is deployed.
-- Old Sites header trust-boundary evidence stays separately blocked/historical;
-  Pages enforces verified Discord identity, not that header.
+The owner accepts the deployed app and all requested functional/auth/session checks.
+PR22 merged at53541a4fc1599ed34a516ffb42cc677780a091bf after exact-head CI passed
+and no unresolved reviews/threads were found. GitHub comparison shows no file
+changes between the reviewed PR head and merge commit. Deployed app6ab7c1c differs
+from reviewed head only by six Markdown files, so no new app deployment is required.
+
+Current Admin-data acceptance is functional owner testing plus the earlier exact
+preparation-transfer evidence, not a new final raw snapshot or atomic cutover audit.
+The cookie report covers stored attributes and scheduled expiry, not observed
+expiration after an eight-hour wait. Preserve both distinctions in future work.
+No rollback rehearsal, preview-binding inspection or Cloudflare account/API access
+is claimed. Old Sites identity-header evidence remains separately blocked/historical
+and is not authentication for Pages. Do not repeat accepted owner checks unless
+a later change affects them.
 
 Optional player sync, more classes, multiple characters and infographic export/
 print remain deferred. No browser-save migration is required.
@@ -101,7 +109,8 @@ print remain deferred. No browser-save migration is required.
 ## Owner browser session check
 
 The exposed browser APIs cannot read cookie metadata. Use Chrome on the owner's
-PC for this remaining check; no credentials or cookie values need to be shared.
+PC when this check is needed after an affected auth change. The initial release
+check is now owner-reported accepted; no repeat is required.
 
 1. Sign in to Admin on https://hexa-matrix-tracker.pages.dev with the owner account.
 2. Press F12, open Application, expand Storage > Cookies and select the Pages origin.
@@ -114,5 +123,4 @@ PC for this remaining check; no credentials or cookie values need to be shared.
 
 This verifies stored attributes and scheduled expiry. It does not claim an
 observed eight-hour wait or broaden prior device/security evidence. No fresh
-login-flow acceptance is requested, only this missing metadata. Leave PR22 draft
-until this evidence is recorded and final release readiness is reviewed.
+login-flow acceptance is requested, only this missing metadata. PR22 is merged; the initial release's evidence and readiness are recorded above.

@@ -1,15 +1,24 @@
 # Eventual release and rollback plan
 
-## Current Pages status, 4 October 2026, Brisbane
+## Release complete, 4 October 2026, Brisbane
 
-The tracker is live at https://hexa-matrix-tracker.pages.dev on app commit
-6ab7c1cc189a34c563d956f52870b8640f44fd4e. Exact-source and production CI passed;
-Cloudflare reports deployment 5f2637eb-952b-4ede-9332-0cce5d88143a successful.
-Owner login, dropdown ordering and functional Admin data are accepted.
-See [current production record](pages-production-record.md) for evidence,
-same-database Pages rollback and remaining signed-in session/logout/non-owner checks.
-PR22 remains draft/unmerged. Older preparation-only statements below are historical
-where superseded by this record. Never reimport stale data to repeat acceptance.
+The tracker is live at https://hexa-matrix-tracker.pages.dev on tested app commit
+6ab7c1cc189a34c563d956f52870b8640f44fd4e, Cloudflare deployment
+5f2637eb-952b-4ede-9332-0cce5d88143a successful.
+PR22 merged into main at53541a4fc1599ed34a516ffb42cc677780a091bf.
+Reviewed head0f3385c had successful push CI37133071291 and PR CI37133074885;
+the merge has the same file tree. Six Markdown files are the only differences
+between deployed app and reviewed PR head, so no app redeployment is required.
+
+Owner sign-in/logout, real alt-account refusal, functional Admin data, dropdown
+sorting and stored session-cookie attributes/scheduled eight-hour expiry are
+accepted. Cookie evidence is owner-reported, not an elapsed eight-hour expiry test.
+Admin-data acceptance is functional testing plus earlier preparation-transfer
+comparison, not a new final raw-data export. See
+[production record](pages-production-record.md) for current evidence and
+same-database rollback. Old preparation-only/pending/draft statements below are
+historical where superseded here. Old Sites identity evidence remains separately
+blocked. Optional sync, more classes, multiple characters and export/print stay deferred.
 
 ## Independent Pages preparation, 3 October 2026, Brisbane
 

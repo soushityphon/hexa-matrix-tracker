@@ -1,25 +1,23 @@
 # Backlog index, 4 October 2026, Brisbane
 
-## Current next work
+## Current release status
 
-The app is live on Pages. Owner Discord sign-in, functional Admin-data testing,
-public dropdown ordering, existing app/audit work and the Infographic Helper are
-accepted. Do not repeat these checks without a relevant later change.
+Pages release #32 is complete. Owner app/audit/Helper, owner login/logout,
+real non-owner refusal, functional Admin-data, dropdown and stored session-cookie
+attributes/scheduled expiry checks are accepted. PR22 merged at53541a4 after
+exact-head0f3385c push/PR CI passed. The merge tree matches the reviewed head.
+Production remains app6ab7c1c; only repository documentation differs.
 
-1. Verify signed-in session-cookie metadata/storage and expiry using the Chrome
-   steps in the production record. Pages owner logout/revisit and real non-owner
-   OAuth refusal are now owner-reported accepted, no repeat needed. Anonymous live
-   guards/state-cookie/logout response checks retain their narrower evidence.
-2. Finalise release acceptance and PR22 merge readiness. Current deployed app
-   commit is 6ab7c1cc189a34c563d956f52870b8640f44fd4e; exact-source/production CI
-   and Cloudflare deployment succeeded. PR22 stays draft/unmerged for now.
+The [production record](pages-production-record.md) preserves exact evidence,
+limits and a Pages code rollback that retains current DB/settings/secrets.
+No elapsed eight-hour test, new final raw export, rollback rehearsal or independent
+Cloudflare preview-binding inspection is inferred from owner acceptance.
+Old Sites identity proof is separately blocked/historical.
 
-The [production record](pages-production-record.md) identifies the same-database
-Pages code rollback. Keep newer Admin edits; do not return to a stale Sites database.
-Final Admin-data acceptance is owner-reported functional testing, not new exact
-raw-export evidence. Old Sites identity proof remains separately blocked.
-No browser-save migration is required. Sync, further classes, multiple characters
-and export/print remain deferred.
+No active release implementation remains. Further work requires a new confirmed
+scope. Optional Discord player sync, further classes, multiple characters,
+background Scouter change detection/local icon retrieval and export/print are
+deferred. Existing browser-save migration is not required.
 
 ## Historical issue index
 

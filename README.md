@@ -4,39 +4,35 @@ A browser-based MapleStory HEXA Matrix tracker for Hoyoung and Ren. It shows
 MapleScouter upgrade priorities, captured material costs and approximate FD,
 with separate saved progress for each class.
 
-## Current status, 4 October 2026, Brisbane
+## Current release, 4 October 2026, Brisbane
 
 The [public tracker](https://hexa-matrix-tracker.pages.dev) runs app commit
-6ab7c1cc189a34c563d956f52870b8640f44fd4e. GitHub CI and Cloudflare deployment passed.
-Owner Discord Admin sign-in, current Admin data and public dropdown ordering are
-accepted. Existing app/audit work and the desktop hover Helper are accepted.
+6ab7c1cc189a34c563d956f52870b8640f44fd4e, with successful CI and Cloudflare deployment.
+[PR22](https://github.com/soushityphon/hexa-matrix-tracker/pull/22) is merged into
+main at53541a4fc1599ed34a516ffb42cc677780a091bf. Its reviewed head0f3385c passed
+push/PR CI; merge tree is identical. Only repository documentation differs from
+the deployed app. Use main as the current implementation baseline.
 
-Development uses restore-scouter-retrieval. The checked production branch is
-pages-production. [PR22](https://github.com/soushityphon/hexa-matrix-tracker/pull/22)
-is draft/unmerged; main is older. [Issue30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
-is the current progress authority. Issue23 retains product history.
+Existing app/audit/Helper and Pages owner login/logout, alt-account refusal,
+functional Admin data, public dropdown sorting and stored session-cookie settings/
+scheduled expiry are owner-accepted. No repeat is needed without an affecting change.
+Cookie evidence does not claim an observed eight-hour wait. Admin-data acceptance
+is functional testing plus prior exact preparation transfer, not a new final raw audit.
 
-Owner Pages logout/revisit and real non-owner OAuth refusal are now accepted.
-Next: signed-in browser session-cookie verification, then final release acceptance
-and merge readiness. The production record has a short Chrome check that shares
-only cookie attributes, never cookie values.
-Anonymous live state-cookie/access/logout checks passed; they are separate from
-signed-in browser evidence. Functional Admin-data testing is owner-accepted,
-not a new exact final raw-data export comparison.
+[Issue30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30) retains audit
+history; Issue23 retains product scope. [Production record](docs/pages-production-record.md)
+has exact CI/deployment/merge evidence, limits and rollback preserving current
+Pages data. Production deploys through the checked pages-production branch.
+Do not change its DB/settings/secrets or restore stale old-host data as cleanup.
 
-[Production record](docs/pages-production-record.md) contains the exact app SHA,
-CI/deployment IDs, evidence limits and a code rollback that keeps the current
-Pages database and newer Admin edits. Do not roll back to a stale old-host database.
 [Pages guide](docs/pages-release.md), [release plan](docs/release-plan.md) and
 [Discord session policy](docs/discord-admin-login.md) retain setup/history.
+Old Sites header-identity proof stays separately blocked and is not Pages Admin
+authentication. Optional player sync, further classes, multiple characters and
+infographic export/print remain deferred. Existing browser saves need no migration.
 
-The old Sites test remains a historical test host, last recorded version142/env14.
-Its identity-header proof is separately blocked; Pages Admin uses Discord identity.
-Optional player progress sync, further classes, multiple characters and infographic
-export/print remain deferred. Existing browser saves need no migration.
-
-See the [backlog index](docs/backlog.md) and [development history](docs/development-history.md).
-Older plans and checkpoint notes do not authorise repeating completed work.
+See [backlog](docs/backlog.md) and [development history](docs/development-history.md).
+Older checkpoint tasks and draft/preparation status are historical.
 
 ## Tracker behaviour
 
