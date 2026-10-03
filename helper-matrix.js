@@ -36,7 +36,7 @@ export function renderMatrixLocation(container, slots, target) {
   for(const slot of slots) {
     const selected=slot.available && slot.skill?.short===target?.short;
     const group=element('g',{'data-location':slot.id,'data-available':slot.available,'data-target':selected,class:selected?'matrix-target':slot.available?'matrix-other':'matrix-locked'});
-    group.append(element('polygon',{points:hex(slot.x,slot.y,32),class:['Skill','Mastery'].includes(slot.category)?'matrix-upper':'matrix-lower'}));
+    group.append(element('polygon',{points:hex(slot.x,slot.y,32),class:'matrix-'+quadrants[slot.category].key}));
     if(slot.available) {
       const image=element('image',{x:slot.x-16,y:slot.y-16,width:32,height:32,href:slot.skill.icon || ''});
       image.addEventListener('error',()=>{image.remove();});group.append(image);

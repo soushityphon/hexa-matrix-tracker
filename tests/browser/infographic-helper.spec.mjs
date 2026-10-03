@@ -35,6 +35,8 @@ for(const job of ['hoyoung','ren'])test(job+' desktop hover Helper and no-hover 
   await expect(grid.locator('.skill-hover')).toHaveCount(await tiles.count());
   await expect(panel.locator('.helper-explanation strong')).toHaveText('detail');await expect(panel.locator('script')).toHaveCount(0);
   await expect(panel.locator('[data-location]')).toHaveCount(18);await expect(panel.locator('[data-target="true"]')).toHaveCount(1);
+  const quadrantFills=await panel.evaluate(node=>['skill','mastery','enhancement','common'].map(category=>getComputedStyle(node.querySelector('.matrix-'+category)).fill));
+  expect(quadrantFills).toEqual(['rgb(85, 34, 204)','rgb(136, 34, 102)','rgb(51, 102, 153)','rgb(102, 102, 153)']);
   expect(await geometry()).toEqual(summary);
   const bounds=await panel.evaluate(node=>{const p=node.getBoundingClientRect(),l=node.querySelector('.helper-location').getBoundingClientRect(),h=node.querySelector('.helper-heading').getBoundingClientRect(),t=node.querySelector('.helper-explanation').getBoundingClientRect();return {left:p.left,top:p.top,right:p.right,bottom:p.bottom,width:innerWidth,height:innerHeight,order:l.bottom<=h.top && h.bottom<=t.top};});
   expect(bounds.right-bounds.left).toBeCloseTo(460,0);expect(bounds.order).toBe(true);expect(bounds.left).toBeGreaterThanOrEqual(0);expect(bounds.top).toBeGreaterThanOrEqual(0);expect(bounds.right).toBeLessThanOrEqual(bounds.width);expect(bounds.bottom).toBeLessThanOrEqual(bounds.height);

@@ -41,8 +41,10 @@
 .helper-explanation{margin-top:16px;font-size:13px;line-height:1.6;max-height:240px;overflow:auto;overflow-wrap:anywhere}
 .helper-location[hidden]{display:none}
 .helper-location[hidden]+.helper-heading{margin-top:0}
-.matrix-upper{fill:#3d2e57;stroke:#9682b5;stroke-width:1.5}
-.matrix-lower{fill:#2a3b4b;stroke:#8296a7;stroke-width:1.5}
+.matrix-skill{fill:#5522cc;stroke:#9674e8;stroke-width:1.5}
+.matrix-mastery{fill:#882266;stroke:#c06b9f;stroke-width:1.5}
+.matrix-enhancement{fill:#336699;stroke:#78aacc;stroke-width:1.5}
+.matrix-common{fill:#666699;stroke:#a3adc8;stroke-width:1.5}
 .matrix-other{opacity:.4}.matrix-locked{opacity:.2}
 .matrix-target polygon{stroke:var(--helper-accent);stroke-width:4;filter:drop-shadow(0 0 3px var(--helper-accent))}
 .matrix-lock{fill:#6a6376}.matrix-lock-loop{fill:none;stroke:#6a6376;stroke-width:3}

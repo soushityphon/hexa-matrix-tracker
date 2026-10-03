@@ -24,15 +24,15 @@ The owner accepts all previously pending app/audit checks and version132 Admin
 content/preview. Do not repeat old Import, audio, Stat, focus or Admin checks unless
 later changes affect them. Earlier device-specific evidence remains limited.
 
-Version136 hover behaviour is owner-reported accepted. The affected check for the
-new adjustment is the larger viewport-bounded popup, no competing native tooltip,
-and Stat heading with just its small icon/name, followed by optional text. Skill
-popups retain Matrix, icon/tag/name and optional text. No repeat progress, preference,
-Admin or phone Helper check is needed from the owner for this visual batch.
+Version137's larger popup, absent native tooltip and compact Stat heading are
+owner-reported accepted. Only the new quadrant palette needs visual review:
+purple Skill/top-left, dark pink Mastery/top-right, blue Enhancement/bottom-left,
+blue-grey Common/bottom-right, retaining the faded nodes and target highlight.
+No repeat hover/progress/preference/Admin or phone acceptance check is needed.
 
 Chromium uses isolated catalogue data and external-image stubs across both classes
 and all three widths. Desktop native pointer/wheel checks cover popup reading, safe long
-text, viewport fit, 460px desktop width, absent native tooltip with accessible labels retained, unchanged Summary geometry, compact Stat heading with no duplicate large icon, click/reverse Undo and saved
+text, computed four-category fills, viewport fit, 460px desktop width, absent native tooltip with accessible labels retained, unchanged Summary geometry, compact Stat heading with no duplicate large icon, click/reverse Undo and saved
 preference. Phone cases verify the owner-requested Helper exclusion: hidden
 control, no popup/glow activation and untouched preference/progress. Fixture checks do not prove live icons, physical devices or hosting
 identity. Record implementation/tests/deployment/acceptance separately in #30/#31.

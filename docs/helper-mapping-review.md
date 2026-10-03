@@ -1,5 +1,18 @@
 # Helper mapping and visual checkpoint, 3 October 2026
 
+## New quadrant palette, 3 October 2026, Brisbane
+
+Soushi accepts version137's size, tooltip removal and compact Stat heading.
+The new colour request supersedes the two-tone upper/lower Matrix palette.
+Use separate category colours based on the supplied in-game colour samples:
+Skill/top-left purple #5522cc, Mastery/top-right dark pink #882266,
+Enhancement/bottom-left blue #336699 and Common/bottom-right blue-grey #666699.
+These are flat fills inspired by the samples, not copies of the game's gradients.
+Retain faded other/locked nodes and the existing skill-colour target border/glow.
+Geometry, availability, completion-independent mapping and data are unchanged.
+Only the new quadrant colours require affected visual acceptance after deployment.
+
+
 ## Current owner UI decision
 
 The owner supersedes the initial Summary split and automatic next guide. Restore

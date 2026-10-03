@@ -1,5 +1,18 @@
 # Hover-only Infographic Helper, 3 October 2026, Brisbane
 
+## New quadrant palette, 3 October 2026, Brisbane
+
+Soushi accepts version137's size, tooltip removal and compact Stat heading.
+The new colour request supersedes the two-tone upper/lower Matrix palette.
+Use separate category colours based on the supplied in-game colour samples:
+Skill/top-left purple #5522cc, Mastery/top-right dark pink #882266,
+Enhancement/bottom-left blue #336699 and Common/bottom-right blue-grey #666699.
+These are flat fills inspired by the samples, not copies of the game's gradients.
+Retain faded other/locked nodes and the existing skill-colour target border/glow.
+Geometry, availability, completion-independent mapping and data are unchanged.
+Only the new quadrant colours require affected visual acceptance after deployment.
+
+
 ## Owner adjustment, 3 October 2026, Brisbane
 
 Soushi reports version136 works. Its hover behaviour is owner-reported accepted;
@@ -271,4 +284,3 @@ skill, expect all occurrences to glow and its guide/explanation to preview; exit
 restores next. Hover a Stat to see its matching numbered icon. Existing completion
 and reverse Undo should move/restore next. Turn Helper off and reload: preference
 persists, old Summary layout returns and hover highlight still works.
-

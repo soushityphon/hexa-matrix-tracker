@@ -44,6 +44,9 @@ const first=q('[data-checkpoint][aria-current="step"]'),skill=first.dataset.skil
 await hover(first);
 assert.equal(q('#helper-panel').dataset.skill,skill);assert.equal(q('.helper-explanation').hidden,true,'blank content omitted');
 assert.equal(all('[data-location]').length,18);
+for(const [category,count] of [['skill',6],['mastery',4],['enhancement',4],['common',4]]){
+ assert.equal(all('[data-location^="'+category+'_"] polygon.matrix-'+category).length,count,'each slot keeps its own category colour');
+}
 assert.deepEqual([...q('#helper-panel').children].map(n=>n.className),['helper-location','helper-heading','helper-explanation']);
 await leave();assert.equal(q('#helper-panel').hidden,true);assert.equal(all('.skill-hover').length,0);
 const target=all('[data-checkpoint]').find(tile=>tile.dataset.skill==='Ascent');
