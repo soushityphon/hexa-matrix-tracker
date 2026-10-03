@@ -1,5 +1,36 @@
 # Cloudflare Pages preparation, Issue #32
 
+## Scouter runtime configuration restored, 4 October 2026 Brisbane
+
+Ren and Hoyoung fresh acquisition failed after cutover because five runtime
+secrets had not moved to Pages. The owner completed a direct server-to-server
+transfer of the existing values. Production redeploy3ff955e passed full
+CI37142215408 and Cloudflare deploymentc6ffa328-0a27-4503-8d66-3077c893d6e9;
+its app tree is unchanged from6ab7c1c. The owner reports retrieval works and the
+temporary Cloudflare transfer token is revoked. The temporary old-host bridge
+was removed by redeploying the original archive-backed Sites version142 with
+unchanged environment14 and existing DB; no data snapshot was restored.
+
+Pages Production needs all five original values as encrypted runtime secrets:
+
+- `MAPLE_SCOUTER_API_KEY`
+- `MAPLE_SCOUTER_REQUEST_PART_1`
+- `MAPLE_SCOUTER_REQUEST_PART_2`
+- `MAPLE_SCOUTER_KMS_REQUEST_PART_1`
+- `MAPLE_SCOUTER_KMS_REQUEST_PART_2`
+
+Ren uses the shared API key. Hoyoung also uses the GMS and KMS template parts.
+Preserve their original genuine request values; regression fixtures are not
+replacement private templates. Configuration changes require a production
+redeploy. Verify fresh acquisition separately from login and existing saved
+records, stopping on the first error or rate limit. Never put secret values in
+chat, GitHub, public assets or logs. Cloudflare token dashboard TTL dates start
+at midnight UTC; omit the start date for immediate activation.
+
+Owner acceptance is the response to the requested Ren/Hoyoung GMS/KMS Grab
+checks, not agent-observed upstream captures. See Issue33 for transfer, deployment
+and cleanup evidence. The older release record below remains historical.
+
 ## Release complete, 4 October 2026, Brisbane
 
 The tracker is live at https://hexa-matrix-tracker.pages.dev on tested app commit
