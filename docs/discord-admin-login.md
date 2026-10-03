@@ -1,6 +1,46 @@
 # Discord Admin login, Issue #15
 
-## Current Discord runtime correction, version141
+## Current denial copy and non-owner acceptance, version142
+
+Soushi confirms the alt account displayed deliberate non-owner refusal on141.
+Real owner sign-in/logout/revisit, signed-out public access and real non-owner
+refusal are now owner-reported accepted. Do not repeat these checks for this
+wording-only change. Browser-cookie/security verification remains unresolved.
+
+[Implementation 1cefd68](https://github.com/soushityphon/hexa-matrix-tracker/commit/1cefd68b3853ce6b7be7b7b801e591ce1138d922)
+removes only the second sentence. Exact new response:
+**This Discord account is not authorised for Admin.**
+Status403, owner allowlist and state/session clearing remain. No flow/layout/
+style, calculation/capture/priority/progress/player-save or Admin-data change.
+No runtime secrets/bindings/schema/audience/source acquisition change.
+
+Focused auth suite, exact compiled-response copy check, hosted full31 regression
+files/build/99syntax/70asset checks and whitespace pass. All199 local source files
+match repo/hosted checkout before this docs-only record.
+[CI37110963821](https://github.com/soushityphon/hexa-matrix-tracker/actions/runs/37110963821)
+is still running at this record; no new browser-pass count is claimed.
+Prior141 CI remains dated evidence for its own source only. No new live test or
+cookie/security proof is inferred. Do not repeat accepted manual checks.
+
+**Deployed142 succeeded**, unchanged environment **14**:
+- Saved version: `appgprj_6aba0413861881918dc7fe10da066627~appgver_03c4c626f194819188e6fe821e5ae1b7`.
+- Source: `6614a0f81c6b5ac92906b2e5a388f41533d9e6e3`.
+- Deployment: `appgdep_6ac0c1cfeba881918776288b6a031870`.
+- Archive: `sha256:fc7f205820889878079db69284da263b2515605b4203ad7133e14e0d7ac257da`.
+- URL: https://soushi-hexa-matrix-test.xsoushi.chatgpt.site.
+- Compatible rollback: saved141/source69634124b4a19e35522259bb9c9c145d27cb7525 with Discord env14 and current data.
+
+No main/Pages release; PR22 draft/unmerged. Docs-only record needs no deployment.
+Next: remaining browser-cookie/security verification, then Pages32. Old-host
+identity proof stays separately blocked. Optional player sync is later; Helper
+complete. All current/future Helper explanations and Admin data preserved.
+
+- [x] Shorter refusal wording implemented/tested/deployed.
+- [x] Real non-owner OAuth refusal, owner-reported accepted on141.
+- [ ] Browser-cookie/security verification.
+
+
+## Historical Discord runtime correction, version141
 
 Soushi reports140 still fails, not accepted. Recent native fixed diagnostics:
 `Admin sign-in failed token request 0`, before any Discord HTTP response.

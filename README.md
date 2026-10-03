@@ -9,13 +9,12 @@ with separate saved progress for each class.
 - Development is on `restore-scouter-retrieval`. [PR #22](https://github.com/soushityphon/hexa-matrix-tracker/pull/22)
   stays **draft and unmerged**. Main is older than the test implementation.
 - The [public test tracker](https://soushi-hexa-matrix-test.xsoushi.chatgpt.site)
-  is deployed version **141**, Site source
-  `69634124b4a19e35522259bb9c9c145d27cb7525`, deployment
-  `appgdep_6ac0b966fd908191879233621f149ee3`, environment revision **14**.
+  is deployed version **142**, Site source
+  `6614a0f81c6b5ac92906b2e5a388f41533d9e6e3`, deployment
+  `appgdep_6ac0c1cfeba881918776288b6a031870`, environment revision **14**.
   Helper through version138 is complete and owner-accepted, including quadrant
-  colours. Discord Admin is activated. The reported sign-in failure remains unresolved;
-  version141 corrects the unsupported Cloudflare redirect mode and refuses redirects.
-  Real sign-in verification remains pending; neutral login copy and private diagnostics remain. Existing desktop
+  colours. Discord Admin is activated. Owner sign-in/logout/public and alt-account refusal are accepted.
+  Version142 shortens the refusal message. Browser-cookie/security verification remains. Existing desktop
   hover behaviour and phone exclusion remain. Prototype/docs are not served.
   Deployment succeeded; no signed-in requests or hosting proof are inferred.
 - [Issue #30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
@@ -42,9 +41,9 @@ with separate saved progress for each class.
   Hover-only integration is implemented, tested and deployed in version136;
   version136 behaviour is owner-reported accepted. The 460px popup, absent native tooltip and compact Stat heading are owner-reported accepted in version137. Four category colours are implemented, tested and deployed in version138; their visual acceptance is owner-reported complete in #30/#31.
   See [integration review](docs/helper-integration-review.md).
-- Discord Admin authentication is implemented/tested and activated in version141,
-  environment14. App/callback/secret setup is complete; real owner/non-owner,
-  cookie/logout checks and acceptance remain pending. Sites header access no longer grants Admin. Optional player sync is not implemented.
+- Discord Admin authentication is implemented/tested and activated in version142,
+  environment14. App/callback/secret setup is complete; owner sign-in/logout/public/non-owner checks are owner-accepted.
+  Browser-cookie/security verification remains pending. Sites header access no longer grants Admin. Optional player sync is not implemented.
   See [setup and session policy](docs/discord-admin-login.md).
 - Existing browser saves do not require migration. Preserve all Admin-managed
   server data at cutover, including intervening edits and future Helper content.
