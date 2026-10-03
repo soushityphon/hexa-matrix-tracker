@@ -1,5 +1,38 @@
 # Pages production record, 4 October 2026, Brisbane
 
+## Current production update, 4 October 2026 Brisbane
+
+- Deployed commit:80abdf46e0ecd690cee64b61df3c2771126542e5.
+- Cloudflare deployment:5e7e3984-d732-4487-8df3-68428c224aca, successful.
+- Literal production URL:https://hexa-matrix-tracker.pages.dev/.
+- Stat navigation PR34: reviewed head9bdfa9bb536978d4893b0c5bafc2713ec8608ffb;
+  full push37142950660 and PR37142952705 CI success; merge677246c.
+- Favicon PR35: reviewed head80abdf4; full push37143279861 and PR37143283144 CI
+  success; merged63dd856. Initial favicon CI failed because the offline asset
+  inventory did not decode ICO; fixed before final CI/deployment.
+- Release follows reviewed exact-head CI then non-forced pages-production fast-forward.
+  Merge63dd856 differs from deployed head only in docs/pages-release.md.
+- Local npm run check and offline inventory pass. Supplied source PNG is retained
+  byte-for-byte at assets/favicon/hexa-flower-source.png; downsized PNGs retain
+  alpha, ICO has16/32/48 px images. Only the small favicon assets are bundled.
+- Live HTML declares ICO and32/48/96 px PNG links. Public GET bytes for all four
+  match the local build, with correct image/png or image/x-icon HEAD types.
+  Deployed matrix-renderer.js includes tabindex=-1 on Stat segment buttons.
+- Browser CI verifies real Tab/Shift+Tab focus order between the three numeric Stat
+  fields for both classes and existing desktop/touch click/limits/persistence.
+  Owner visual/favicon-cache and live keyboard acceptance are not yet reported.
+- No D1 writes, Scouter calls, calculations, styling, saves, auth or runtime settings
+  were changed by these PRs. Source code/asset paths only; source PNG remains in
+  repository without adding its large bytes to Worker delivery.
+
+Scouter incident33 is resolved by owner acceptance ("works and revoked") after
+restoring the original five runtime secrets and config redeploy3ff955e. Temporary
+old-host transfer bridge removed by native deployment of original archive-backed
+version142/source6614a0f/env14, deploymentappgdep_6ac144e17908819190e13e37ad03c248
+successful. No data snapshot was restored. The earlier release evidence below
+remains historical; preserve current Pages DB/settings/secrets for rollback.
+
+
 ## Current deployment
 
 | Item | Verified value |

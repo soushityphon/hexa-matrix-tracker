@@ -4,7 +4,23 @@ A browser-based MapleStory HEXA Matrix tracker for Hoyoung and Ren. It shows
 MapleScouter upgrade priorities, captured material costs and approximate FD,
 with separate saved progress for each class.
 
-## Current release, 4 October 2026, Brisbane
+## Current production update, 4 October 2026 Brisbane
+
+The tracker runs checked commit80abdf46e0ecd690cee64b61df3c2771126542e5,
+Cloudflare deployment5e7e3984-d732-4487-8df3-68428c224aca successful.
+PR34 adds native Tab/Shift+Tab navigation between HEXA Stat numeric fields;
+bar segments retain mouse/touch edits with tabindex=-1. PR35 adds the supplied
+transparent purple HEXA flower favicon, with unchanged source PNG and 32/48/96 px
+PNG plus 16/32/48 px ICO delivery. No other tracker UI, calculations or save changes.
+Full push/PR CI passed on each reviewed head; live favicon links and all four
+image byte hashes/MIME types were verified. Main merge63dd856 preserves these
+changes plus documentation only. Scouter acquisition recovery is owner-accepted;
+the temporary transfer bridge is removed and transfer token revoked.
+
+The earlier release record below is historical. See the production record for
+current evidence and remaining owner visual/keyboard acceptance.
+
+## Earlier release, 4 October 2026, Brisbane
 
 The [public tracker](https://hexa-matrix-tracker.pages.dev) runs app commit
 6ab7c1cc189a34c563d956f52870b8640f44fd4e, with successful CI and Cloudflare deployment.
