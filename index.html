@@ -37,12 +37,14 @@
     <div class="workspace" data-view="tracker">
       <aside class="inputs">
         <section class="panel summary-panel">
-          <h2>HEXA Matrix Summary</h2>
+          <div class="summary-heading"><h2>HEXA Matrix Summary</h2><label class="toggle helper-control"><input id="infographic-helper" type="checkbox" disabled> Helper <span id="helper-support" class="fine"></span></label></div>
+          <div class="summary-body"><section id="helper-panel" class="helper-panel" aria-label="Infographic Helper" hidden></section><div class="summary-content">
           <div class="summary-metrics">
             <div id="completion" class="completion"></div>
             <div class="totals" id="totals"></div>
           </div>
           <div class="include-option"><label class="toggle"><input id="includeJanus" type="checkbox"> Include Sol Janus in completion and spent totals</label></div>
+          </div></div>
         </section>
 
         <section class="panel matrix-panel">

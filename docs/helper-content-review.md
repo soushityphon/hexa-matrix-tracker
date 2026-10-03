@@ -29,7 +29,7 @@ renderer that the live Helper can reuse. A generated Matrix/Stat-location previe
 is deferred until the live shared location renderer exists, to avoid two competing
 renderers. It remains optional and does not block full Helper work.
 
-No Helper control, default/preference, class support, progression, hover or click
+Historical scope of this content batch: no Helper control, default/preference, class support, progression, hover or click
 integration is added here. The player views remain as before. Next is that live
 integration under the accepted Matrix/50:50 direction and Stat-icon exception.
 New field/preview owner acceptance is separate from existing app acceptance.
@@ -49,7 +49,9 @@ Test version 132 deployment succeeded, environment revision 11. Site source
 0dd6709bafcd57ff10d42d6004e0fc7267bef4b6, saved version appgprj_6aba0413861881918dc7fe10da066627~appgver_049078bf01ec8191a4675b5a8805c315,
 deployment appgdep_6ac0795db9ac81918b4464b442f4d3f3. No live data writes, schema,
 binding, secret, audience, auth or source/cost/FD/progress/save change. New field
-and preview owner acceptance remain pending. No full Helper deployment is claimed.
+and preview owner acceptance is now complete, owner-reported on 3 October. No full
+Helper deployment is claimed by this historical content batch. Subsequent live
+integration is documented in [integration review](helper-integration-review.md).
 
 ## Verification and rollback
 

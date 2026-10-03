@@ -35,7 +35,9 @@ with separate saved progress for each class.
 - Helper mapping/prototype direction is owner-accepted. HEXA Stat steps will show
   their matching Stat icon in place of the regular location diagram. Full Helper
   Admin content editing and safe line-break/bold preview are now implemented;
-  live Helper availability/preference/progression/hover remains next. See
+  live Helper availability/preference/progression/hover is now implemented under
+  the approved layout and existing click/undo behaviour. New live-feature owner
+  acceptance remains separate. See [integration review](docs/helper-integration-review.md),
   [mapping review](docs/helper-mapping-review.md) and [content review](docs/helper-content-review.md).
 - Existing browser saves do not require migration. Preserve all Admin-managed
   server data at cutover, including intervening edits and future Helper content.
@@ -162,7 +164,7 @@ npm run check
 node scripts/review-asset-delivery.mjs
 ```
 
-`check` runs 29 regression files, builds the Worker, checks JavaScript syntax and
+`check` runs 30 regression files, builds the Worker, checks JavaScript syntax and
 verifies compiled asset delivery/private exclusions. GitHub Tracker checks runs
 this work, offline inventory and Chromium on pushes/PRs. Last recorded asset-review
 CI has 75 ordinary browser passes and zero expected failures. Counts are checkpoint

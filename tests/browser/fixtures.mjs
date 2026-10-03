@@ -31,7 +31,8 @@ Object.assign(hy, pair('호영', 'qa_hidden', {
   heroic: { ...hyBase, steps: hyBase.steps.filter(step => !['Tiger', 'Apparition'].includes(step.skill)) },
   interactive: hyBase
 }));
-const sourceKeys = ['skillCore1', 'skillCore10', 'skillCore12', 'masteryCore1', 'masteryCore2', 'masteryCore3', 'masteryCore4', 'reinCore1', 'reinCore2', 'reinCore3', 'reinCore4', 'generalCore1', 'generalCore2', 'generalCore3'];
+// Verified semantic ordinals, independent of icon filename suffixes 10/12.
+const sourceKeys = ['skillCore1', 'skillCore2', 'skillCore3', 'masteryCore1', 'masteryCore2', 'masteryCore3', 'masteryCore4', 'reinCore1', 'reinCore2', 'reinCore3', 'reinCore4', 'generalCore1', 'generalCore2', 'generalCore3'];
 const hyModel = {
   nodes: NODES.map((node, i) => ({ ...node, costs: COSTS[node.type], initialLevel: node.short === 'Apotheosis' ? 1 : 0, sourceKey: sourceKeys[i] })),
   stats: stats.map((short, i) => ({ short, name: short, icon: STAT_ICONS[short], sourceKey: 'hexaStat' + (i + 1) }))

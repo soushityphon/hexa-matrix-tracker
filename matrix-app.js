@@ -10,6 +10,7 @@ import { restoreStatLines, statProgress, validateStatLines } from './hexa-stat.j
 import { createDecorations } from './decorations.js';
 import { createMusic } from './music.js';
 import { createInfographic } from './infographic.js';
+import { createInfographicHelper } from './infographic-helper.js';
 import { infographicCheckpoints, infographicDisplayCheckpoints, infographicContext, clickInfographicCheckpoint, reconcileInfographicUndo, invalidateInfographicUndo, reconcileStatCompletion } from './infographic-progress.js';
 
 import { captureSkillProgress, createProgressUndo, restoreProgressHistory } from './progress-undo.js';
@@ -177,6 +178,13 @@ syncView();
 const {renderPriority, checkMaterialIcons}=createPriorityRenderer({document});
 const statImageHandlers=new WeakSet();
 const matrixRenderer=createMatrixRenderer({document, checkMaterialIcons});
+const helper=createInfographicHelper({document,grid:$('#infographic-grid'),control:$('#infographic-helper'),panel:$('#helper-panel'),summary:$('.summary-panel'),
+  readPreference:key=>playerStorage.readPreference(key),writePreference:(key,value)=>playerStorage.writePreference(key,value)});
+function syncHelper() {
+  helper.update({nodes:NODES,stats:statNodes,saved,entries:infographicScope ? infographicDisplayCheckpoints(infographicEntries,saved,infographicScope) : [],
+    available:new Set(infographicEntries.map(entry=>entry.skill)),visible:view==='infographic' && !!infographicScope,
+    context:JSON.stringify([activeClass,infographicScope])});
+}
 
 function clamp(value, max, min = 0) {
   const number = Number(value);
@@ -290,6 +298,7 @@ function render(allowConflict=false) {
   // View/visibility preferences can still change without writing progress.
   if((playerStorage.conflict(storageKey) && !allowConflict) || (sourcePaused() && verifiedClass===activeClass)) {
     if(view==='infographic' && infographicScope)infographic.render(infographicDisplayCheckpoints(infographicEntries,saved,infographicScope),saved,infographicScope,$('#infographic-hide').checked);
+    syncHelper();
     syncPausedControls();
     return;
   }
@@ -324,6 +333,7 @@ function render(allowConflict=false) {
     $('#completion').replaceChildren();
     $('#time-estimate').hidden = true;
     infographicEntries=[];infographicScope=null;infographic.clear();
+    helper.clear();
     $('#infographic-context').textContent='';
     $('#infographic-message').textContent=classLoading?'Loading...':classLoadFailed?'Priorities could not be loaded.':'No saved priority is available for this selection.';
     checkMaterialIcons();
@@ -336,6 +346,7 @@ function render(allowConflict=false) {
     $('#priority').replaceChildren(); $('#totals').replaceChildren(); $('#completion').replaceChildren();
     $('#time-estimate').hidden = true; highlightCurrentSkill(null);
     infographic.clear();$('#infographic-message').textContent='Captured level costs unavailable. Grab Scouter info and save a new priority pair in the Admin Panel.';
+    helper.clear();
     return;
   }
   // Owner-confirmed Janus costs equal Hecate. Use this selection's captured
@@ -388,6 +399,7 @@ function render(allowConflict=false) {
   $('#infographic-context').textContent=`${$('#class').selectedOptions[0]?.textContent || activeClass} / ${$('#version-name').textContent}`;
   $('#infographic-message').textContent=infographicEntries.length ? '' : 'No checkpoints are available for this priority.';
   if(view==='infographic')infographic.render(infographicDisplayCheckpoints(infographicEntries,saved,infographicScope),saved,infographicScope,$('#infographic-hide').checked);
+  syncHelper();
   if(!playerStorage.conflict(storageKey))playerStorage.write(storageKey,saved);
   syncPausedControls();
 }
