@@ -9,11 +9,12 @@ with separate saved progress for each class.
 - Development is on `restore-scouter-retrieval`. [PR #22](https://github.com/soushityphon/hexa-matrix-tracker/pull/22)
   stays **draft and unmerged**. Main is older than the test implementation.
 - The [public test tracker](https://soushi-hexa-matrix-test.xsoushi.chatgpt.site)
-  is deployed version **139**, Site source
-  `2ee2fbc8bf64e6c1683e24894c10c042080ea3ba`, deployment
-  `appgdep_6ac0ab0b971481919e2cad5d2667d1a1`, environment revision **14**.
+  is deployed version **140**, Site source
+  `68043cb11ad96d4f0b2e570b607be65564058480`, deployment
+  `appgdep_6ac0ae2cfc7481918b313bfad72d516d`, environment revision **14**.
   Helper through version138 is complete and owner-accepted, including quadrant
-  colours. Version139 now has Discord Admin login activated, with live verification pending. Existing desktop
+  colours. Discord Admin is activated. The reported sign-in failure remains unresolved;
+  version140 adds the required API header and private diagnostics, plus neutral login copy. Existing desktop
   hover behaviour and phone exclusion remain. Prototype/docs are not served.
   Deployment succeeded; no signed-in requests or hosting proof are inferred.
 - [Issue #30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
@@ -40,7 +41,7 @@ with separate saved progress for each class.
   Hover-only integration is implemented, tested and deployed in version136;
   version136 behaviour is owner-reported accepted. The 460px popup, absent native tooltip and compact Stat heading are owner-reported accepted in version137. Four category colours are implemented, tested and deployed in version138; their visual acceptance is owner-reported complete in #30/#31.
   See [integration review](docs/helper-integration-review.md).
-- Discord Admin authentication is implemented/tested and activated in version139,
+- Discord Admin authentication is implemented/tested and activated in version140,
   environment14. App/callback/secret setup is complete; real owner/non-owner,
   cookie/logout checks and acceptance remain pending. Sites header access no longer grants Admin. Optional player sync is not implemented.
   See [setup and session policy](docs/discord-admin-login.md).

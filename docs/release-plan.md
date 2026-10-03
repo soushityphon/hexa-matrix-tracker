@@ -1,5 +1,52 @@
 # Eventual release and rollback plan
 
+## Current sign-in failure follow-up, version140
+
+Soushi reports activated139 sign-in failed, not accepted. Native callback logs
+confirm502 after state validation, without a reason for exchange/identity failure.
+No root cause is claimed. [Implementation 7820a91](https://github.com/soushityphon/hexa-matrix-tracker/commit/7820a91e3955147e78ffa5eaad12f2f8aebace4d)
+adds Discord's required application User-Agent to both API requests and fixed
+server-only diagnostics: stage/reason/numeric HTTP status. No codes, tokens,
+secrets, IDs, URLs, provider body or raw exception are logged. Logging failure
+keeps safe refusal. This is API compliance plus a new diagnostic approach,
+not a verified cure. Owner's new login copy is implemented: **Admin Panel**
+and **Sign in** only, no provider explanation or Back to tracker link.
+Discord authentication/allowlist/cookies/origin/deadlines remain unchanged.
+
+Local31 regression files, build,99syntax/70compiled-asset checks and offline
+inventory/whitespace pass; focused auth/sink tests rerun after final logging guard.
+[CI37106161207](https://github.com/soushityphon/hexa-matrix-tracker/actions/runs/37106161207)
+succeeds on7820a91, with84 ordinary Chromium passes. Browser coverage exercises the default build, not real OAuth.
+All199 local source files matched between repo and hosted checkout before the
+docs-only final record. No fresh screenshot/physical device/owner-access proof.
+
+**Deployed140 succeeded**, environment **14**, configuration unchanged:
+- Saved version: `appgprj_6aba0413861881918dc7fe10da066627~appgver_6975a99a22f88191967969a32fd0774c`.
+- Source: `68043cb11ad96d4f0b2e570b607be65564058480`.
+- Deployment: `appgdep_6ac0ae2cfc7481918b313bfad72d516d`.
+- Archive: `sha256:ce94be99085529b8059b9c66bffbd083d3d98f9fe4e44fbcca9c8f1850b434f3`.
+- URL: https://soushi-hexa-matrix-test.xsoushi.chatgpt.site.
+- Compatible rollback: saved139/source2ee2fbc8bf64e6c1683e24894c10c042080ea3ba with Discord env14 and current data. No header-trusting138 rollback while activated.
+
+No live Admin read/write, source acquisition, D1/schema/binding/secret/audience,
+calculation/capture/priority/progress/player-save change. All Admin data and
+Helper text remain intact. No credentials re-entry required without new evidence.
+PR22 remains draft/unmerged, no main/Pages release.
+
+- [x] Neutral login copy implemented/tested/deployed.
+- [x] Required API User-Agent and fixed private diagnostics implemented/tested/deployed.
+- [ ] Real owner sign-in and supplied ID verification.
+- [ ] Real non-owner refusal/cookie/logout/public checks.
+- [ ] Owner acceptance of activated Admin login.
+
+Next: start a fresh sign-in from /priority-review.html, not reload an old callback.
+Expect Admin Panel → Sign in → provider consent → unchanged current Admin data.
+If it fails, use the new fixed diagnostic to identify the stage/status before
+asking for any configuration change. Login/security/acceptance stay unresolved.
+Old-host identity proof remains separately blocked; Helper is complete. After
+verified Admin login, continue pages.dev32; optional player sync remains later.
+
+
 ## Discord Admin activation, 3 October 2026, Brisbane
 
 **Configured and deployed, live verification pending.** Soushi created the dedicated
