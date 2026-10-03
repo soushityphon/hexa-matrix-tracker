@@ -1,6 +1,55 @@
 # Discord Admin login, Issue #15
 
-## Deployed Discord Admin preparation, version 139
+## Discord Admin activation, 3 October 2026, Brisbane
+
+**Configured and deployed, live verification pending.** Soushi created the dedicated
+application, supplied Client ID `1555838379550056469` and proposed owner User ID
+`98039332970975232`, and reports the exact test callback saved. Soushi entered
+`DISCORD_CLIENT_SECRET` through ChatGPT Sites settings as a secret. Connector
+metadata confirms its presence/type at environment revision13; its value was not
+read or printed. The agent generated a fresh random32byte session key and stored
+it as a runtime secret, set the exact test origin/client/owner and
+`ADMIN_AUTH_MODE=discord`. All existing runtime keys were preserved.
+
+The unchanged, archive-backed **saved version139** was redeployed successfully:
+deployment `appgdep_6ac0ab0b971481919e2cad5d2667d1a1`, environment revision **14**,
+URL https://soushi-hexa-matrix-test.xsoushi.chatgpt.site.
+Saved version `appgprj_6aba0413861881918dc7fe10da066627~appgver_f69cf1a76cc48191847d71055cef2433`, source
+`2ee2fbc8bf64e6c1683e24894c10c042080ea3ba`, archive
+`sha256:a65d2fb4eb5455d079153fe0b93abc13afefa43b6d5a5d2ddc8b80fa61636875`.
+This is configuration-only activation, no new app code/build/archive/version.
+Implementation692fa21 and its recorded31 regression/99syntax/70asset/84browser
+passes remain the automated evidence for this unchanged source, not live OAuth
+or cookie proof. No extra tests or public/Signed-in request probes were run.
+This documentation update needs no deployment. PR #22 stays draft/unmerged.
+
+- [x] Dedicated app IDs/callback supplied and secret saved securely.
+- [x] Discord mode/session key/origin/allowlist configured, env14 deployment succeeded.
+- [ ] Verify the supplied owner ID via a real successful Discord OAuth exchange.
+- [ ] Real owner/non-owner refusal, cookies/logout and public tracker verified.
+- [ ] Owner acceptance of activated Discord Admin login.
+
+Next owner check: open `/priority-review.html`, choose Continue with Discord,
+and sign in as the supplied owner. Expect current Skills, explanations and
+priorities unchanged. Sign out, then revisit Admin, expect the sign-in page.
+Public tracker should still work signed out. No edits/reset/save-clear required.
+Separate non-owner OAuth/refusal and browser-cookie/security verification remain
+unresolved until actual evidence exists; owner success alone cannot complete them.
+Old Sites header authentication is no longer Admin authority in Discord mode.
+
+Preserve all Admin data and current/future explanations. No D1/schema/binding,
+source/capture/calculation/progress/save/audience change. Rollback must retain a
+Discord-aware backend and Discord mode with current data. Version138 is no longer
+a compatible auth rollback while activated. Version139/source above with env14 is
+the current compatible baseline; do not restore an older header-trusting Worker.
+Old hosting identity proof stays separately blocked, optional player sync awaits
+material decisions, and pages.dev release #32 follows verified Admin login.
+When changing origins, add its exact callback to this same Discord application
+and configure the new origin in #32; do not migrate/reset Admin data by assumption.
+Older dormant/configuration-blocker statements below are historical.
+
+
+## Historical dormant Discord Admin preparation, version 139
 
 Implementation [692fa21](https://github.com/soushityphon/hexa-matrix-tracker/commit/692fa21b8f5640383fee2d28b3d975382c256f76), draft/unmerged PR #22.
 Server-side code exchange and Discord identity lookup, exact owner allowlist,

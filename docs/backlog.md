@@ -20,8 +20,8 @@ pages.dev release is authorised after the documented preceding work.
    Version138 quadrant colours are owner-reported accepted; Helper is complete. Helper is excluded on phones
    and other devices without a fine pointer that can hover.
 3. Discord login #15, Admin identity/owner authorisation first. Configuration-gated
-   code/tests are deployed dormant in version139; actual app/owner/secret setup and live verification remain
-   blocked. See [setup](discord-admin-login.md). Optional player
+   code/tests are activated in version139/environment14; app/callback/secret setup is complete.
+   Real owner identity, non-owner/cookie/logout checks and acceptance remain pending. See [setup](discord-admin-login.md). Optional player
    cross-device saves remain a later goal with separate data/conflict decisions.
 4. Cloudflare Pages/pages.dev #32. Final release SHA, checks, URL/deployment and
    merge status belong here, after Helper/login, not as a Helper prerequisite.
@@ -68,7 +68,7 @@ Helper prototype direction and version 131 footer appearance are owner-accepted.
 Admin explanation editing/preview is owner-reported accepted. Live Helper
 integration through version136 is owner-reported accepted. Version137 size, native-tooltip removal and compact Stat heading are owner-
 reported accepted. Version138 quadrant palette is owner-reported accepted. Helper is complete;
-Discord Admin preparation is deployed dormant in version139; live setup is next and blocked. See
+Discord Admin is activated in version139/environment14; live verification is next and pending. See
 [review](helper-integration-review.md) and #30/#31 for tests/deployment. Discord
 Admin login follows Helper acceptance; later login/release checks remain separate
 from acceptance of the old deployed app.

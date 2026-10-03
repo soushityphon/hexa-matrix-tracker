@@ -11,9 +11,9 @@ with separate saved progress for each class.
 - The [public test tracker](https://soushi-hexa-matrix-test.xsoushi.chatgpt.site)
   is deployed version **139**, Site source
   `2ee2fbc8bf64e6c1683e24894c10c042080ea3ba`, deployment
-  `appgdep_6ac098ab710081919d0940ce9d02b4f2`, environment revision **11**.
+  `appgdep_6ac0ab0b971481919e2cad5d2667d1a1`, environment revision **14**.
   Helper through version138 is complete and owner-accepted, including quadrant
-  colours. Version139 adds dormant Discord Admin preparation. Existing desktop
+  colours. Version139 now has Discord Admin login activated, with live verification pending. Existing desktop
   hover behaviour and phone exclusion remain. Prototype/docs are not served.
   Deployment succeeded; no signed-in requests or hosting proof are inferred.
 - [Issue #30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
@@ -40,9 +40,9 @@ with separate saved progress for each class.
   Hover-only integration is implemented, tested and deployed in version136;
   version136 behaviour is owner-reported accepted. The 460px popup, absent native tooltip and compact Stat heading are owner-reported accepted in version137. Four category colours are implemented, tested and deployed in version138; their visual acceptance is owner-reported complete in #30/#31.
   See [integration review](docs/helper-integration-review.md).
-- Discord Admin authentication is implemented/tested and deployed behind runtime configuration, disabled in version139. Live
-  activation needs the dedicated OAuth app, verified owner ID and server secrets.
-  Current Sites access is preserved. Optional player sync is not implemented.
+- Discord Admin authentication is implemented/tested and activated in version139,
+  environment14. App/callback/secret setup is complete; real owner/non-owner,
+  cookie/logout checks and acceptance remain pending. Sites header access no longer grants Admin. Optional player sync is not implemented.
   See [setup and session policy](docs/discord-admin-login.md).
 - Existing browser saves do not require migration. Preserve all Admin-managed
   server data at cutover, including intervening edits and future Helper content.
