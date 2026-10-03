@@ -1,43 +1,32 @@
-# Backlog index, 3 October 2026, Brisbane
+# Backlog index, 4 October 2026, Brisbane
 
-This index reconciles older plans with the latest Issue #30 and Helper batch.
-It changes no feature, data or acceptance requirement. Read current issue bodies
-and comments before acting. PR #22 stays draft/unmerged; main is older and
-pages.dev release is authorised after the documented preceding work.
+## Current next work
 
-## Current owner order
+The app is live on Pages. Owner Discord sign-in, functional Admin-data testing,
+public dropdown ordering, existing app/audit work and the Infographic Helper are
+accepted. Do not repeat these checks without a relevant later change.
 
-1. Remaining hosting evidence plus [release preparation](release-plan.md), together
-   where independent. Signed-in spoof replacement/direct-origin proof remains
-   blocked. Asset review and documentation cleanup are already complete.
-2. Infographic Helper #31: category/order mapping is verified, Admin content
-   accepted. The owner's newer decision replaces the Summary split/next guide
-   with a hover-only popup. Restore Summary, retain full-width priority icons,
-   show Matrix then icon/tag/name then optional text. Stats start with their small
-   icon/name heading, with no large duplicate icon. Permanent implementation is authorised without another prototype
-   gate. Version136 hover behaviour is owner-reported accepted. Version137
-   popup/tooltip-removal/compact-Stat visuals are owner-reported accepted.
-   Version138 quadrant colours are owner-reported accepted; Helper is complete. Helper is excluded on phones
-   and other devices without a fine pointer that can hover.
-3. Discord login #15, Admin identity/owner authorisation first. Configuration-gated
-   code/tests are activated in version142/environment14; app/callback/secret setup is complete.
-   Owner reported139/140 login failure. Version141 corrects unsupported Cloudflare redirect mode and refuses redirects;
-   owner sign-in/logout/public/non-owner refusal are owner-reported accepted;
-   browser-cookie/security verification remains pending. See [setup](discord-admin-login.md). Optional player
-   cross-device saves remain a later goal with separate data/conflict decisions.
-4. Cloudflare Pages/pages.dev #32. Final release SHA, checks, URL/deployment and
-   merge status belong here, after Helper/login, not as a Helper prerequisite.
-   Independent preparation now includes the Pages Function adapter/private output
-   and read-only snapshot comparison. [Guide](pages-release.md) records remaining
-   Cloudflare access/runtime/current-data/rollback gates. No Pages deployment.
+1. Verify signed-in session-cookie metadata/storage and expiry, owner logout/revisit
+   and real non-owner OAuth refusal on Pages. Anonymous live guards/state-cookie/
+   logout response checks have passed with the limits in the production record.
+2. Finalise release acceptance and PR22 merge readiness. Current deployed app
+   commit is 6ab7c1cc189a34c563d956f52870b8640f44fd4e; exact-source/production CI
+   and Cloudflare deployment succeeded. PR22 stays draft/unmerged for now.
 
-Existing deployed app/audit owner acceptance is complete by Soushi's blanket
-3 October report. This is not new device/fault testing or hosting security proof.
-PR #22 stays draft/unmerged during preparation. No existing browser-save migration
-is required. Preserve current Admin data, including all edits up to cutover.
-Export/print and multiple-character work stay deferred.
+The [production record](pages-production-record.md) identifies the same-database
+Pages code rollback. Keep newer Admin edits; do not return to a stale Sites database.
+Final Admin-data acceptance is owner-reported functional testing, not new exact
+raw-export evidence. Old Sites identity proof remains separately blocked.
+No browser-save migration is required. Sync, further classes, multiple characters
+and export/print remain deferred.
 
-## Issue reconciliation
+## Historical issue index
+
+The following 3 October reconciliation retains historical issue states and scope.
+Its older next-task/deployment statements are superseded by the current block above,
+Issue30 and the production record.
+
+### Issue reconciliation
 
 States were read from GitHub on 3 October. This index does not close issues or
 silently complete historical acceptance checkboxes.

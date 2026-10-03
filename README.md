@@ -4,59 +4,37 @@ A browser-based MapleStory HEXA Matrix tracker for Hoyoung and Ren. It shows
 MapleScouter upgrade priorities, captured material costs and approximate FD,
 with separate saved progress for each class.
 
-## Current status, 3 October 2026, Brisbane
+## Current status, 4 October 2026, Brisbane
 
-- Pages preparation is implemented with an all-route Function adapter, private
-  build output and a read-only raw Admin snapshot comparator. See
-  [Pages release guide](docs/pages-release.md). Local preparation checks pass;
-  Cloudflare compilation/account access, current-data cutover, live cookie
-  verification and release remain pending. No live deployment/data change.
-- Development is on `restore-scouter-retrieval`. [PR #22](https://github.com/soushityphon/hexa-matrix-tracker/pull/22)
-  stays **draft and unmerged**. Main is older than the test implementation.
-- The [public test tracker](https://soushi-hexa-matrix-test.xsoushi.chatgpt.site)
-  is deployed version **142**, Site source
-  `6614a0f81c6b5ac92906b2e5a388f41533d9e6e3`, deployment
-  `appgdep_6ac0c1cfeba881918776288b6a031870`, environment revision **14**.
-  Helper through version138 is complete and owner-accepted, including quadrant
-  colours. Discord Admin is activated. Owner sign-in/logout/public and alt-account refusal are accepted.
-  Version142 shortens the refusal message. Browser-cookie/security verification remains. Existing desktop
-  hover behaviour and phone exclusion remain. Prototype/docs are not served.
-  Deployment succeeded; no agent-observed signed-in requests or hosting proof are inferred.
-- [Issue #30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
-  is the audit authority. Read its latest body and all comments before continuing.
-  [Issue #23](https://github.com/soushityphon/hexa-matrix-tracker/issues/23)
-  retains the wider product requirements and history.
-- Existing app/audit work is implemented, tested and deployed through version 130.
-  Soushi accepted all previously pending app checks on 3 October. This is owner-
-  reported acceptance, not new device, fault-injection or hosting proof.
-- Current order under #30: remaining hosting evidence and release preparation
-  together, Helper [#31](https://github.com/soushityphon/hexa-matrix-tracker/issues/31),
-  Discord Admin login [#15](https://github.com/soushityphon/hexa-matrix-tracker/issues/15),
-  then Cloudflare Pages release [#32](https://github.com/soushityphon/hexa-matrix-tracker/issues/32).
-- Hosting proof remains blocked/partial. No repeat investigation without new
-  evidence or an authorised non-owner session/verified origin. This does not block
-  independent Helper mapping/prototype work after release preparation.
-- [Release plan](docs/release-plan.md) separates preparation from the final immutable
-  commit/deployment record in step 4. pages.dev is authorised after preceding work;
-  PR #22 remains draft/unmerged until tested release readiness is established.
-- Helper mapping and Admin content are accepted. The owner supersedes the earlier
-  Summary split: restore the old Summary and use a hover-only popup, Matrix above
-  icon/tag/name above optional text, small icon/name heading for Stats, without a large duplicate icon. No guide at rest
-  or automatic next-step preview. Helper is excluded on phones/no-hover devices.
-  Hover-only integration is implemented, tested and deployed in version136;
-  version136 behaviour is owner-reported accepted. The 460px popup, absent native tooltip and compact Stat heading are owner-reported accepted in version137. Four category colours are implemented, tested and deployed in version138; their visual acceptance is owner-reported complete in #30/#31.
-  See [integration review](docs/helper-integration-review.md).
-- Discord Admin authentication is implemented/tested and activated in version142,
-  environment14. App/callback/secret setup is complete; owner sign-in/logout/public/non-owner checks are owner-accepted.
-  Browser-cookie/security verification remains pending. Sites header access no longer grants Admin. Optional player sync is not implemented.
-  See [setup and session policy](docs/discord-admin-login.md).
-- Existing browser saves do not require migration. Preserve all Admin-managed
-  server data at cutover, including intervening edits and future Helper content.
-  Infographic export/print and multiple-character work remain deferred.
+The [public tracker](https://hexa-matrix-tracker.pages.dev) runs app commit
+6ab7c1cc189a34c563d956f52870b8640f44fd4e. GitHub CI and Cloudflare deployment passed.
+Owner Discord Admin sign-in, current Admin data and public dropdown ordering are
+accepted. Existing app/audit work and the desktop hover Helper are accepted.
 
-See the [backlog index](docs/backlog.md) for old issues, acceptance and deferred
-work. [Historical notes](docs/development-history.md) preserve the previous README.
-Its old plans, blockers and deployment states are not current requirements.
+Development uses restore-scouter-retrieval. The checked production branch is
+pages-production. [PR22](https://github.com/soushityphon/hexa-matrix-tracker/pull/22)
+is draft/unmerged; main is older. [Issue30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
+is the current progress authority. Issue23 retains product history.
+
+Next: signed-in browser session-cookie verification, Pages logout/revisit and
+real non-owner OAuth refusal, then final release acceptance and merge readiness.
+Anonymous live state-cookie/access/logout checks passed; they are separate from
+signed-in browser evidence. Functional Admin-data testing is owner-accepted,
+not a new exact final raw-data export comparison.
+
+[Production record](docs/pages-production-record.md) contains the exact app SHA,
+CI/deployment IDs, evidence limits and a code rollback that keeps the current
+Pages database and newer Admin edits. Do not roll back to a stale old-host database.
+[Pages guide](docs/pages-release.md), [release plan](docs/release-plan.md) and
+[Discord session policy](docs/discord-admin-login.md) retain setup/history.
+
+The old Sites test remains a historical test host, last recorded version142/env14.
+Its identity-header proof is separately blocked; Pages Admin uses Discord identity.
+Optional player progress sync, further classes, multiple characters and infographic
+export/print remain deferred. Existing browser saves need no migration.
+
+See the [backlog index](docs/backlog.md) and [development history](docs/development-history.md).
+Older plans and checkpoint notes do not authorise repeating completed work.
 
 ## Tracker behaviour
 
@@ -175,28 +153,23 @@ npm run check
 node scripts/review-asset-delivery.mjs
 ```
 
-`check` runs 31 regression files, builds the Worker, checks JavaScript syntax and
-verifies compiled asset delivery/private exclusions. GitHub Tracker checks runs
+`check` runs the registered regressions, Pages adapter/snapshot checks, build,
+JavaScript syntax and compiled asset delivery/private exclusions. GitHub Tracker checks runs
 this work, offline inventory and Chromium on pushes/PRs. CI on implementation commit692fa21
 has 84 ordinary browser passes and zero expected failures. Counts are checkpoint
 evidence, not verification of a new commit. [Rendered QA](docs/rendered-qa.md)
 documents browser commands, fixtures, emulation and device limits.
 
-`scripts/build-worker.mjs` packages plain HTML/JS/CSS and original media for the
-existing Sites Cloudflare Worker. Test viewing is public; admin stays owner-only.
-The Site's private hosting setup has existing D1 `DB` and server-only secrets.
-Hosting configuration is not committed here. Do not create a second Cloudflare
-host or change audience, bindings, secrets or schema as cleanup.
+Use the Pages Git workflow for this live tracker: implement on the development
+branch, validate the exact commit and CI, then fast-forward pages-production.
+Verify the Cloudflare deployment check and affected live behaviour before recording
+success. Preserve DB, secrets, captured schedules and player saves.
+Documentation-only changes need no production deployment.
 
-Use the documented Sites route for authorised, tested app increments. Compare
-checked GitHub source/assets with Site source, record saved version, source/
-deployment IDs and successful status in #30, and retain a known saved rollback.
-Documentation-only changes need no Site deployment. Preserve browser saves and
-D1. Test deployment does not approve merge or eventual release. Obtain remaining
-identity/origin evidence before any hosting change; isolated matching headers
-are not live authentication proof.
-
-See [hosting identity evidence](docs/hosting-identity-review.md) and
-[asset delivery review](docs/asset-delivery-review.md). Retain cache lifetimes,
-base64 packaging and external skill icons. Offline sizes do not establish live
-performance or platform limits.
+The Worker build remains shared with Pages. The old Sites source/hosting workflow
+is relevant only for explicitly requested work on that old Site.
+See [production record](docs/pages-production-record.md),
+[hosting identity evidence](docs/hosting-identity-review.md) and
+[asset delivery review](docs/asset-delivery-review.md). Keep existing cache,
+asset packaging and external skill-icon behaviour. Offline checks do not establish
+live performance or platform limits.

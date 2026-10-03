@@ -1,6 +1,17 @@
 # Cloudflare Pages preparation, Issue #32
 
-## Current status, 3 October 2026, Brisbane
+## Current Pages status, 4 October 2026, Brisbane
+
+The tracker is live at https://hexa-matrix-tracker.pages.dev on app commit
+6ab7c1cc189a34c563d956f52870b8640f44fd4e. Exact-source and production CI passed;
+Cloudflare reports deployment 5f2637eb-952b-4ede-9332-0cce5d88143a successful.
+Owner login, dropdown ordering and functional Admin data are accepted.
+See [current production record](pages-production-record.md) for evidence,
+same-database Pages rollback and remaining signed-in session/logout/non-owner checks.
+PR22 remains draft/unmerged. Older preparation-only statements below are historical
+where superseded by this record. Never reimport stale data to repeat acceptance.
+
+## Historical preparation status, 3 October 2026, Brisbane
 
 Preparation only. No Cloudflare account/project, binding, current-data transfer,
 runtime compilation, deployment or final URL has been verified. The test Site
