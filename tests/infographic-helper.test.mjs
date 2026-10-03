@@ -12,11 +12,12 @@ const slots=catalogueLocations(model.nodes,new Set(['Harmony']));
 assert.equal(slots.length,18);assert(slots.find(s=>s.id==='mastery_1').available);
 assert.equal(slots.find(s=>s.id==='skill_3').available,false);
 assert.throws(()=>catalogueLocations([{...model.nodes[0],group:'Mastery Nodes'}],new Set()));
-let win;
+let win,media,mediaChange;
 const tick=()=>new Promise(resolve=>setTimeout(resolve,30));
 async function boot(pref,unsupportedRen=true) {
   if(win)await win.happyDOM.abort();
   win=new Window({url:'https://test.example/'});
+  media={matches:true,addEventListener:(_event,callback)=>{mediaChange=callback;}};win.matchMedia=()=>media;
   Object.defineProperty(win.navigator,'locks',{value:{request:(_key,run)=>run()}});
   win.document.write(readFileSync(new URL('../index.html',import.meta.url),'utf8').replace(/<script[^>]*>[\s\S]*?<\/script>/g,''));
   for(const key of ['window','document','location','localStorage','Event'])globalThis[key]=key==='window'?win:win[key];
@@ -54,7 +55,8 @@ assert.equal(localStorage.getItem('hexa-tracker-hoyoung-v1'),initialSave,'hover 
 target.dispatchEvent(new win.PointerEvent('pointerout',{bubbles:true,relatedTarget:q('#helper-panel')}));
 q('#helper-panel').dispatchEvent(new win.PointerEvent('pointerenter'));await dwell();
 assert.equal(q('#helper-panel').hidden,false,'popup remains readable when entered');
-q('#helper-panel').dispatchEvent(new win.PointerEvent('pointerleave'));await dwell();assert.equal(q('#helper-panel').hidden,true);
+q('.helper-explanation').dispatchEvent(new win.Event('scroll',{bubbles:true}));assert.equal(q('#helper-panel').hidden,false,'popup scroll does not dismiss or reposition');
+win.dispatchEvent(new win.Event('scroll'));assert.equal(q('#helper-panel').hidden,true,'page scrolling dismisses stale hover');
 // A pending dwell is cancelled when leaving before it opens.
 target.dispatchEvent(new win.PointerEvent('pointerover',{bubbles:true}));await leave();assert.equal(q('#helper-panel').hidden,true);
 await hover(first);first.click();await tick();
@@ -76,5 +78,10 @@ q('#class').value='ren';q('#class').dispatchEvent(new Event('change'));await tic
 await boot('true');const touch=all('[data-checkpoint]')[0];touch.dispatchEvent(new win.PointerEvent('pointerover',{bubbles:true,pointerType:'touch'}));await dwell();assert.equal(q('#helper-panel').hidden,true,'touch does not pin a guide');
 await hover(touch);q('#view-tracker').click();await tick();assert.equal(q('#helper-panel').hidden,true,'view switch clears popup');
 q('#view-infographic').click();await tick();assert.equal(q('#helper-panel').hidden,true);
+await hover(all('[data-checkpoint]')[0]);
+media.matches=false;mediaChange();assert(q('.helper-control').hidden);assert(q('#infographic-helper').disabled);assert(q('#helper-panel').hidden);
+assert.equal(localStorage.getItem(HELPER_PREFERENCE),'true','losing hover capability preserves preference');
+await hover(all('[data-checkpoint]')[0]);assert(q('#helper-panel').hidden);assert.equal(all('.skill-hover').length,0);
+media.matches=true;mediaChange();assert(!q('.helper-control').hidden);assert(q('#infographic-helper').checked);assert(q('#helper-panel').hidden,'regaining hover does not open a guide');
 await win.happyDOM.abort();
 console.log('Hover Helper: dwell/exit/popup reading, safe content, Stats, no rest guide, click/Undo, preference/classes/touch/view switches and unchanged progress pass');

@@ -16,12 +16,16 @@ Admin content, class support and explicit browser preference are unchanged.
 No guide at rest. Mouse/pen hover dwells 150ms before opening. Same-skill glow is
 immediate and works with Helper off. A 180ms exit grace lets the pointer cross into
 the popup; it stays open for reading/scrolling and closes after leaving both.
-Escape/blur, view/class/scope changes and completion close it without pinning or
-opening a next guide. Touch does not open a hover guide or repurpose completion.
+Escape/blur, page scrolling/resizing, view/class/scope changes and completion close it without pinning or
+opening a next guide. The owner explicitly excludes Helper from phones. Devices without a primary fine
+pointer that can hover hide the control and disable popup/highlighting activation.
+Their stored preference stays intact. Pointer capability changes dismiss the popup
+and update availability without writing a preference. Touch never repurposes completion.
 
 Fixed popup stays inside viewport bounds. Prefer beside the source icon, otherwise
 above/below with bounded height so the source stays clickable. Text and popup scroll
-when needed. Existing checkpoint handler runs unchanged; hover/control/read actions
+when needed. Scrolling inside the popup never repositions it or resets its scroll.
+Page scrolling dismisses stale hover. Existing checkpoint handler runs unchanged; hover/control/read actions
 never write progress or Admin data. No schema/binding/auth/source/calculation change.
 
 Meaningful app and Chromium checks cover no-rest display, dwell/exit/reading,

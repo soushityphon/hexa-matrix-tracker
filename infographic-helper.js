@@ -7,6 +7,8 @@ export const helperSupported=nodes=>nodes.some(node=>typeof node.helperExplanati
 
 export function createInfographicHelper({document,grid,control,panel,readPreference,writePreference}) {
   const window=document.defaultView;
+  const hoverMedia=window.matchMedia('(hover: hover) and (pointer: fine)');
+  const canHover=()=>hoverMedia.matches;
   let preference;try{const stored=readPreference(HELPER_PREFERENCE);if(stored==='true' || stored==='false')preference=stored==='true';}catch{}
   let state=null,hovered=null,anchor=null,context=null,openTimer=null,closeTimer=null;
   const location=document.createElement('div');location.className='helper-location';
@@ -41,12 +43,13 @@ export function createInfographicHelper({document,grid,control,panel,readPrefere
   function draw(){
     if(!state)return;
     const all=[...state.nodes,...state.stats],supported=helperSupported(all);
-    control.disabled=!supported;control.checked=supported && (preference ?? true);
+    control.closest('.helper-control').hidden=!canHover();
+    control.disabled=!supported || !canHover();control.checked=supported && canHover() && (preference ?? true);
     control.title=supported?'Show a Helper guide when hovering a priority icon':'Helper is not supported for this class yet';
     document.querySelector('#helper-support').textContent=supported?'':'Not supported for this class';
     highlight();
     const target=all.find(node=>node.short===hovered);
-    if(!state.visible || !control.checked || !target || !anchor?.isConnected){hide();return;}
+    if(!canHover() || !state.visible || !control.checked || !target || !anchor?.isConnected){hide();return;}
     panel.dataset.skill=target.short;
     name.textContent=[target.tag,target.name || target.short].filter(Boolean).join(' · ');
     image.hidden=!target.icon;if(target.icon && image.getAttribute('src')!==target.icon){image.hidden=false;image.src=target.icon;}
@@ -62,6 +65,7 @@ export function createInfographicHelper({document,grid,control,panel,readPrefere
     panel.hidden=false;anchor.setAttribute('aria-describedby',panel.id);position();
   }
   function preview(tile){
+    if(!canHover())return;
     window.clearTimeout(closeTimer);closeTimer=null;
     if(anchor===tile && hovered===tile.dataset.skill)return;
     cancelTimers();hide();anchor=tile;hovered=tile.dataset.skill;highlight();
@@ -83,15 +87,19 @@ export function createInfographicHelper({document,grid,control,panel,readPrefere
   grid.addEventListener('click',stop);
   document.addEventListener('keydown',event=>{if(event.key==='Escape')stop();});
   window.addEventListener('blur',stop);
-  window.addEventListener('resize',position);
-  window.addEventListener('scroll',position,true);
+  hoverMedia.addEventListener('change',()=>{stop();if(state)draw();});
+  window.addEventListener('resize',stop);
+  // Popup scrolling must not resize/reposition it and reset its scroll position.
+  // Scrolling the page ends the pointer's relationship with the source icon.
+  window.addEventListener('scroll',event=>{if(!panel.contains(event.target))stop();},true);
   control.addEventListener('change',()=>{if(control.disabled)return;preference=control.checked;try{writePreference(HELPER_PREFERENCE,String(preference));}catch{}stop();draw();});
   return {update(value){
     if(context!==value.context || !value.visible || (anchor && (!anchor.isConnected || anchor.hidden)))stop();
     state=value;context=value.context;
     // State refresh never opens a guide without a pointer dwell.
     if(!panel.hidden)draw();else{
-      const supported=helperSupported([...state.nodes,...state.stats]);control.disabled=!supported;control.checked=supported && (preference ?? true);
+      const supported=helperSupported([...state.nodes,...state.stats]);control.closest('.helper-control').hidden=!canHover();
+      control.disabled=!supported || !canHover();control.checked=supported && canHover() && (preference ?? true);
       control.title=supported?'Show a Helper guide when hovering a priority icon':'Helper is not supported for this class yet';
       document.querySelector('#helper-support').textContent=supported?'':'Not supported for this class';highlight();
     }

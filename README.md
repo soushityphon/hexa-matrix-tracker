@@ -36,7 +36,8 @@ with separate saved progress for each class.
 - Helper mapping and Admin content are accepted. The owner supersedes the earlier
   Summary split: restore the old Summary and use a hover-only popup, Matrix above
   icon/tag/name above optional text, matching Stat icon for Stats. No guide at rest
-  or automatic next-step preview. Hover-only integration is implemented; tests,
+  or automatic next-step preview. Helper is excluded on phones/no-hover devices.
+  Hover-only integration is implemented; tests,
   deployment and new owner acceptance are recorded separately in #30/#31.
   See [integration review](docs/helper-integration-review.md).
 - Existing browser saves do not require migration. Preserve all Admin-managed

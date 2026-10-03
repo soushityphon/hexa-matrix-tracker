@@ -15,7 +15,8 @@ pages.dev release is authorised after the documented preceding work.
    with a hover-only popup. Restore Summary, retain full-width priority icons,
    show Matrix then icon/tag/name then optional text. Stats use their matching
    numbered icon. Permanent implementation is authorised without another prototype
-   gate; new feature acceptance remains separate.
+   gate; new feature acceptance remains separate. Helper is excluded on phones
+   and other devices without a fine pointer that can hover.
 3. Discord login #15, Admin identity/owner authorisation first. Optional player
    cross-device saves remain a later goal with separate data/conflict decisions.
 4. Cloudflare Pages/pages.dev #32. Final release SHA, checks, URL/deployment and

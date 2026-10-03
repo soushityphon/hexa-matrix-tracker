@@ -33,9 +33,10 @@ retains existing progress behaviour. Helper Off persists after reload, with hove
 highlighting but no popup. This is the only new owner UI check.
 
 Chromium uses isolated catalogue data and external-image stubs across both classes
-and all three widths. Native pointer/wheel checks cover popup reading, safe long
+and all three widths. Desktop native pointer/wheel checks cover popup reading, safe long
 text, viewport fit, unchanged Summary geometry, Stats, click/reverse Undo and saved
-preference. Fixture checks do not prove live icons, physical devices or hosting
+preference. Phone cases verify the owner-requested Helper exclusion: hidden
+control, no popup/glow activation and untouched preference/progress. Fixture checks do not prove live icons, physical devices or hosting
 identity. Record implementation/tests/deployment/acceptance separately in #30/#31.
 
 ## Priority redraw and focus measurements

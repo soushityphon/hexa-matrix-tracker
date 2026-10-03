@@ -48,3 +48,5 @@
 .matrix-centre{fill:#302738;stroke:#776581;stroke-width:2}
 .checkpoint.skill-hover .checkpoint-icon{filter:drop-shadow(0 0 5px var(--skill-accent))}
 .checkpoint.completed.skill-hover{opacity:.65}
+
+@media(hover:none),(pointer:coarse){.helper-control{display:none}}

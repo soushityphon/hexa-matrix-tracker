@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
 import {fixtures,progress} from './fixtures.mjs';
 const icon=readFileSync(new URL('../../assets/sol-erda.png',import.meta.url));
-for(const job of ['hoyoung','ren'])test(job+' hover Helper popup, unchanged Summary, reading, completion and preference',async({page},info)=>{
+for(const job of ['hoyoung','ren'])test(job+' desktop hover Helper and no-hover phone exclusion',async({page},info)=>{
   await page.route('https://**/*',route=>route.fulfill({contentType:'image/png',body:icon}));
   const data=structuredClone(fixtures);
   data[job].model.nodes[1].helperExplanation='Helpful **detail**\nText <script>stays text</script>\n'+('Long readable explanation line.\n'.repeat(70));
@@ -14,6 +14,15 @@ for(const job of ['hoyoung','ren'])test(job+' hover Helper popup, unchanged Summ
   await page.goto('/');await page.locator('#class').selectOption(job);
   await expect(page.locator('[data-node]:visible').first()).toBeVisible();await page.locator('#view-infographic').click();
   const control=page.locator('#infographic-helper'),panel=page.locator('#helper-panel'),grid=page.locator('#infographic-grid');
+  if(info.project.name!=='desktop'){
+    await expect(page.locator('.helper-control')).toBeHidden();await expect(control).toBeDisabled();await expect(panel).toBeHidden();
+    const beforeTouch=await page.evaluate(job=>localStorage.getItem('hexa-tracker-'+job+'-v1'),job);
+    await grid.locator('[data-checkpoint]').first().hover();await expect(panel).toBeHidden();await expect(grid.locator('.skill-hover')).toHaveCount(0);
+    expect(await page.evaluate(()=>localStorage.getItem('hexa-tracker-helper-v1'))).toBeNull();
+    expect(await page.evaluate(job=>localStorage.getItem('hexa-tracker-'+job+'-v1'),job)).toBe(beforeTouch);
+    await page.locator('#class').selectOption(job==='hoyoung'?'ren':'hoyoung');await expect(page.locator('.helper-control')).toBeHidden();
+    await page.screenshot({path:info.outputPath('helper-excluded-phone.png'),fullPage:true});return;
+  }
   await expect(control).toBeChecked();await expect(panel).toBeHidden();
   expect(await page.locator('.summary-panel #helper-panel').count()).toBe(0);
   const geometry=()=>page.locator('.summary-panel').evaluate(node=>({height:node.getBoundingClientRect().height,columns:getComputedStyle(node.querySelector('.summary-metrics')).gridTemplateColumns}));
@@ -30,7 +39,7 @@ for(const job of ['hoyoung','ren'])test(job+' hover Helper popup, unchanged Summ
   // Real pointer transfer across the small gap, then wheel scrolling inside text.
   const box=await panel.boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
   await expect(panel).toBeVisible();await panel.locator('.helper-explanation').hover();await page.mouse.wheel(0,150);
-  await expect.poll(()=>panel.locator('.helper-explanation').evaluate(node=>node.scrollTop)).toBeGreaterThan(0);
+  await expect.poll(()=>panel.evaluate(node=>node.scrollTop+node.querySelector('.helper-explanation').scrollTop)).toBeGreaterThan(0);
   expect(await page.evaluate(job=>localStorage.getItem('hexa-tracker-'+job+'-v1'),job)).toBe(before);
   await page.screenshot({path:info.outputPath('helper-popup.png'),fullPage:true});
   await page.locator('.summary-panel h2').hover();await expect(panel).toBeHidden();await expect(grid.locator('.skill-hover')).toHaveCount(0);
@@ -45,8 +54,9 @@ for(const job of ['hoyoung','ren'])test(job+' hover Helper popup, unchanged Summ
   expect(restoredProgress).toEqual(originalProgress);
   // Existing Undo keeps empty source-scoped bookkeeping after restoring the save.
   expect(Object.values(restoredUndo || {}).flatMap(history=>Object.values(history.skills || {})).flat()).toHaveLength(0);
-  await control.uncheck();await tiles.first().hover();await expect(grid.locator('.skill-hover')).toHaveCount(await tiles.count());await expect(panel).toBeHidden();expect(await geometry()).toEqual(summary);
-  await page.reload();await expect(control).not.toBeChecked();await expect(panel).toBeHidden();expect(await geometry()).toEqual(summary);
+  const restoredSummary=await geometry();
+  await control.uncheck();await tiles.first().hover();await expect(grid.locator('.skill-hover')).toHaveCount(await tiles.count());await expect(panel).toBeHidden();expect(await geometry()).toEqual(restoredSummary);
+  await page.reload();await expect(control).not.toBeChecked();await expect(panel).toBeHidden();expect(await geometry()).toEqual(restoredSummary);
   await page.locator('#class').selectOption(job==='hoyoung'?'ren':'hoyoung');await expect(control).toBeDisabled();await expect(page.locator('#helper-support')).toContainText('Not supported');expect(await page.evaluate(()=>localStorage.getItem('hexa-tracker-helper-v1'))).toBe('false');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
 });
