@@ -72,6 +72,12 @@ for (const job of ['hoyoung', 'ren']) {
     const field=page.locator('[data-stat-line="HEXA Stat I"][data-line-index="0"]');
     const line=field.locator('..');
     const segment=level=>line.locator(`[data-stat-segment="${level}"]`);
+    const fields=page.locator('[data-stat-line="HEXA Stat I"]');
+    await field.focus();
+    await page.keyboard.press('Tab');await expect(fields.nth(1)).toBeFocused();
+    await page.keyboard.press('Tab');await expect(fields.nth(2)).toBeFocused();
+    await page.keyboard.press('Shift+Tab');await expect(fields.nth(1)).toBeFocused();
+    await page.keyboard.press('Shift+Tab');await expect(field).toBeFocused();
     await activate(segment(7));await expect(field).toHaveValue('7');
     await expect.poll(async()=> (await saved()).statLines['HEXA Stat I']).toEqual([7,0,0]);
     await expect(segment(7)).toHaveAttribute('aria-pressed','true');
