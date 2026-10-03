@@ -20,6 +20,7 @@ const types = {
   '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.png': 'image/png',
+  '.ico': 'image/x-icon',
   '.mp3': 'audio/mpeg'
 };
 const delivered = new Set();

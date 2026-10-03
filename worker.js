@@ -6,7 +6,7 @@ import {renCatalogueFromDrafts} from './ren-priority.js';
 import { cachedRenPreview } from './ren-preview.js';
 import { scouterRequestContext } from './scouter-request-context.js';
 import { acquireScouterCatalogue, catalogueSelection } from './scouter-catalogue-acquisition.js';
-const mimeTypes = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png' };
+const mimeTypes = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.ico': 'image/x-icon' };
 const scouterUrl = 'https://api.maplescouter.com/api/calc/hexa-order?class=%ED%98%B8%EC%98%81';
 const noStore = { 'Cache-Control': 'no-store' };
 // Only code-owned labels and aggregate counts reach the server log. Never pass
@@ -506,7 +506,7 @@ export default {
       return new Response(bytes, { headers });
     }
     const text = path==='/priority-review.html' ? decorateAdmin(ASSETS[path],env) : ASSETS[path];
-    const body = ext === '.png' && request.method !== 'HEAD' ? Uint8Array.from(atob(ASSETS[path]), char => char.charCodeAt(0)) : text;
+    const body = ['.png','.ico'].includes(ext) && request.method !== 'HEAD' ? Uint8Array.from(atob(ASSETS[path]), char => char.charCodeAt(0)) : text;
     return new Response(request.method === 'HEAD' ? null : body, { headers: { 'Content-Type': mimeTypes[ext] || 'application/octet-stream', 'Cache-Control': ['.html', '.js', '.css'].includes(ext) ? 'no-store' : 'public, max-age=60' } });
   }
 };
