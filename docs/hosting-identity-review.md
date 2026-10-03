@@ -9,10 +9,20 @@ checkbox open. No live access vulnerability was established.
 
 This is a test/documentation batch. It changes no Worker, browser UI, captured
 data, calculations, player saves, schema, bindings, secrets or hosting policy.
-PR #22 remains draft and unmerged; eventual release is unapproved. Test version
-128 remains deployed, with Site source
-`25cef1102011fd122a3e15316c1e759395a38c06` and deployment
-`appgdep_6abfe9e9dcc08191a570f9aa235b9912`. No deployment is needed for these files.
+PR #22 remains draft and unmerged; eventual release is unapproved. The original
+anonymous checks below used version 128. Current test version 130 retains the
+same identity handler and hosting configuration, with Site source
+`f4f6257d7402c8c9032593431509b250f5ee4393` and deployment
+`appgdep_6abff2baf52481918069d978043a85ad`. No new live identity check or deployment
+is claimed for the asset-review follow-up.
+
+The 3 October continuation re-read the current Sites Authentication guidance and
+the native Site state: active, public, version 130, same owner. The guidance still
+does not explicitly guarantee inbound-header replacement or direct-origin
+isolation. No authorised signed-in non-owner session or verified alternate origin
+is available for those tests. Keep this item blocked; do not use a service bypass
+credential as evidence of a signed-in identity or probe guessed origin URLs.
+The independent [asset review](asset-delivery-review.md) changes no hosting policy.
 
 ## App boundary and platform contract
 

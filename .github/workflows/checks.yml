@@ -36,6 +36,8 @@ jobs:
         run: npm run check:syntax
       - name: Check compiled asset delivery
         run: npm run test:assets
+      - name: Measure compiled asset inventory without network requests
+        run: node scripts/review-asset-delivery.mjs
       - name: Install Chromium for rendered checks
         run: npx playwright install --with-deps chromium
       - name: Run isolated desktop and phone browser checks

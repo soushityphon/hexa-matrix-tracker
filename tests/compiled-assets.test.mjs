@@ -60,7 +60,9 @@ async function verify(path, owner = false) {
   }
 }
 
-for (const path of ['/index.html', '/app.js', '/priority-review.html', '/scouter-request-diagnostic.html']) {
+// skill-cost-review is currently bundled but is not reached by browser imports.
+// Keep its delivered bytes/cache policy covered without changing that allowlist.
+for (const path of ['/index.html', '/app.js', '/priority-review.html', '/scouter-request-diagnostic.html', '/skill-cost-review.js']) {
   await verify(path, path.includes('review') || path.includes('diagnostic'));
 }
 const decorations = JSON.parse(readFileSync(resolve(root, 'assets/backgrounds/manifest.json')));
@@ -71,6 +73,36 @@ const images = [
   '/assets/music/ren-login-theme.mp3'
 ];
 for (const path of images) await verify(path);
+// Exercise range delivery in the packaged handler, not just worker.js fixtures.
+// Seeking/looping needs the exact original MP3 bytes and consistent lengths.
+const audioPath = '/assets/music/ren-login-theme.mp3';
+const audioBytes = readFileSync(resolve(root, audioPath.slice(1)));
+for (const [range, start, end] of [
+  ['bytes=0-99', 0, 99],
+  ['bytes=100-', 100, audioBytes.length - 1],
+  ['bytes=-100', audioBytes.length - 100, audioBytes.length - 1],
+  [`bytes=${audioBytes.length - 10}-${audioBytes.length + 100}`, audioBytes.length - 10, audioBytes.length - 1]
+]) {
+  const response = await worker.fetch(new Request(origin + audioPath, { headers: { Range: range } }), env);
+  assert.equal(response.status, 206, range);
+  assert.equal(response.headers.get('content-range'), `bytes ${start}-${end}/${audioBytes.length}`, range);
+  assert.equal(response.headers.get('content-length'), String(end - start + 1), range);
+  assert.equal(response.headers.get('accept-ranges'), 'bytes', range);
+  assert.equal(response.headers.get('cache-control'), 'public, max-age=60', range);
+  assert.equal(response.headers.get('content-type'), 'audio/mpeg', range);
+  assert.deepEqual(Buffer.from(await response.arrayBuffer()), audioBytes.subarray(start, end + 1), range);
+}
+for (const range of [`bytes=${audioBytes.length}-`, 'bytes=10-1', 'bytes=-0', 'bytes=0-1,4-5', 'invalid']) {
+  const response = await worker.fetch(new Request(origin + audioPath, { headers: { Range: range } }), env);
+  assert.equal(response.status, 416, range);
+  assert.equal(response.headers.get('content-range'), `bytes */${audioBytes.length}`, range);
+  assert.equal((await response.arrayBuffer()).byteLength, 0, range);
+}
+const audioHead = await worker.fetch(new Request(origin + audioPath, { method: 'HEAD', headers: { Range: 'bytes=0-99' } }), env);
+assert.equal(audioHead.status, 200);
+assert.equal(audioHead.headers.get('content-length'), String(audioBytes.length));
+assert.equal(audioHead.headers.get('accept-ranges'), 'bytes');
+assert.equal((await audioHead.arrayBuffer()).byteLength, 0);
 assert.deepEqual(Buffer.from(await (await request('/')).arrayBuffer()),
   readFileSync(resolve(root, 'index.html')));
 assert.equal((await request('/', 'HEAD')).status, 200);

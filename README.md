@@ -182,6 +182,11 @@ Ren has a Music volume slider immediately left of Animations. Every page load st
 
 # HEXA Matrix Tracker
 
+Asset delivery measurements and the decision to retain current caching/media
+delivery are in [the asset review](docs/asset-delivery-review.md). Re-run its
+offline inventory after a media/build change. Hosting identity verification
+remains partial in [the identity review](docs/hosting-identity-review.md).
+
 ## Class animations, Issue #28
 
 The public tracker uses the owner's original transparent PNGs for slow Hoyoung clouds travelling left to right behind panels, and Ren petals travelling top right to bottom left. Ren now uses 36 background and six foreground particles on desktop, 18 background and six smaller foreground particles on screens up to 640px, double the previous counts at unchanged artwork sizes. Independent starting phases and travel/sway durations reduce synchronised motion. Each completed pass gets new entry, exit and intermediate path positions, sway, rotation and opacity, while its duration/delay stay fixed to avoid timeline jumps. Foreground petals retain quiet gaps. A quarter of petals receive slight static blur, up to .35px for tiny background sprites or .8px for foreground detail; blur is never animated. Petal opacity is now 44–72% background and 36–60% foreground on desktop, 36–62% background and 28–48% foreground on mobile. Mid-pass fades retain 75–90% of each petal’s chosen opacity. Mobile opacity is lower. Only travel animationiteration events re-roll a pass at the clipped boundary, with no timers/frame loop. Paused, disabled, reduced-motion, removed and disposed scenes do not re-roll.
