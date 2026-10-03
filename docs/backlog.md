@@ -1,6 +1,6 @@
 # Backlog index, 3 October 2026, Brisbane
 
-This index reconciles older plans with head b8ee32a and the latest Issue #30.
+This index reconciles older plans with the latest Issue #30 and Helper batch.
 It changes no feature, data or acceptance requirement. Read current issue bodies
 and comments before acting. PR #22 stays draft/unmerged; main is older and
 pages.dev release is authorised after the documented preceding work.
@@ -13,7 +13,8 @@ pages.dev release is authorised after the documented preceding work.
 2. Infographic Helper #31: verify category/order mapping, then show the Matrix and
    50/50 layout prototype before making subjective details permanent. This
    checkpoint is now owner-accepted; matching Stat icon replaces the diagram
-   for Stat steps. Next is Admin content and full integration.
+   for Stat steps. Admin content is owner-accepted; live integration is implemented,
+   with final checks/deployment and new live-feature acceptance recorded separately.
 3. Discord login #15, Admin identity/owner authorisation first. Optional player
    cross-device saves remain a later goal with separate data/conflict decisions.
 4. Cloudflare Pages/pages.dev #32. Final release SHA, checks, URL/deployment and
@@ -57,9 +58,11 @@ its recorded date and scope.
 Hosting signed-in identity/origin evidence remains open. Ordinary owner access
 alone cannot prove signed-in non-owner header replacement or direct-origin isolation.
 Helper prototype direction and version 131 footer appearance are owner-accepted.
-New Admin explanation editing/preview is implemented, with acceptance/deployment
-recorded separately in #30/#31. Live Helper integration and later login/release
-checks remain separate from acceptance of the old deployed app.
+Admin explanation editing/preview is owner-reported accepted. Live Helper
+integration is implemented; its new acceptance remains pending. See
+[review](helper-integration-review.md) and #30/#31 for tests/deployment. Discord
+Admin login follows Helper acceptance; later login/release checks remain separate
+from acceptance of the old deployed app.
 
 ## Exclusions and later work
 
