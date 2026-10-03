@@ -21,7 +21,7 @@ for(const job of ['hoyoung','ren'])test(job+' desktop hover Helper and no-hover 
     expect(await page.evaluate(()=>localStorage.getItem('hexa-tracker-helper-v1'))).toBeNull();
     expect(await page.evaluate(job=>localStorage.getItem('hexa-tracker-'+job+'-v1'),job)).toBe(beforeTouch);
     await page.locator('#class').selectOption(job==='hoyoung'?'ren':'hoyoung');await expect(page.locator('.helper-control')).toBeHidden();
-    await page.screenshot({path:info.outputPath('helper-excluded-phone.png'),fullPage:true});return;
+    await page.screenshot({path:info.outputPath('helper-excluded-phone.png'),fullPage:false});await expect(page.locator('.helper-control')).toBeHidden();return;
   }
   await expect(control).toBeChecked();await expect(panel).toBeHidden();
   expect(await page.locator('.summary-panel #helper-panel').count()).toBe(0);
@@ -41,7 +41,7 @@ for(const job of ['hoyoung','ren'])test(job+' desktop hover Helper and no-hover 
   await expect(panel).toBeVisible();await panel.locator('.helper-explanation').hover();await page.mouse.wheel(0,150);
   await expect.poll(()=>panel.evaluate(node=>node.scrollTop+node.querySelector('.helper-explanation').scrollTop)).toBeGreaterThan(0);
   expect(await page.evaluate(job=>localStorage.getItem('hexa-tracker-'+job+'-v1'),job)).toBe(before);
-  await page.screenshot({path:info.outputPath('helper-popup.png'),fullPage:true});
+  await page.screenshot({path:info.outputPath('helper-popup.png'),fullPage:false});await expect(panel).toBeVisible();
   await page.locator('.summary-panel h2').hover();await expect(panel).toBeHidden();await expect(grid.locator('.skill-hover')).toHaveCount(0);
   // A Stat uses its existing numbered icon, with no guessed Matrix coordinates.
   const stat=grid.locator('[data-skill="HEXA Stat II"]').first();await stat.hover();await expect(panel.locator('.helper-stat-icon')).toHaveAttribute('src','assets/hexa-stats/stat-2-unlocked.png');await expect(panel.locator('[data-location]')).toHaveCount(0);
