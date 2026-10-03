@@ -9,4 +9,8 @@
 .admin-shell button,.upload-button{white-space:normal;overflow-wrap:anywhere;line-height:1.4}
 .admin-shell .panel-head>h2,.registered-details small,.order-card{overflow-wrap:anywhere}
 .registered-actions{flex-shrink:0}
+.skill-helper{grid-column:1/-1;min-width:0}
+.skill-helper textarea{display:block;width:100%;box-sizing:border-box;min-height:74px;resize:vertical;background:#202020;border:1px solid #444;color:#eee;padding:8px;font:inherit;line-height:1.5}
+.helper-content-preview{margin-top:10px;padding:10px;border:1px solid #444;overflow-wrap:anywhere}
+.helper-content-preview>div:last-child{margin-top:8px;max-height:160px;overflow:auto;line-height:1.5}
 @media(max-width:520px){.admin-shell .actions{width:100%}.registered-actions{width:100%}.registered-actions button{flex:0 1 auto}}

@@ -4,6 +4,7 @@ import { inspectScouterResponse } from './scouter-import.js';
 import { extractScouterOrder } from './scouter-extract.js';
 import { capturedCatalogueCosts, categories, defaultTags, trackerSkill, mergeSkills, validateSkills, validatePair, priorityGroups, orderMatches } from './admin-panel-model.js';
 import { skillAccent } from './skill-colours.js';
+import { HELPER_EXPLANATION_LIMIT, renderHelperExplanation } from './helper-content.js';
 
 const $ = selector => document.querySelector(selector);
 const el = (tag, text, className) => { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; };
@@ -38,7 +39,7 @@ function controls() {
   for(const button of document.querySelectorAll('.registered-actions button'))button.disabled=busy;
   $('#add-tags').disabled = !loaded || busy || !rows.length;
   $('#save-pair').disabled = !loaded || busy || !orders.heroic || !orders.interactive || captureRegion !== $('#region').value;
-  for(const input of document.querySelectorAll('#skills input, #skills select'))input.disabled=busy;
+  for(const input of document.querySelectorAll('#skills input, #skills select, #skills textarea'))input.disabled=busy;
   $('#job').disabled = busy; $('#region').disabled = busy;
   $('#hoyoung-tab').disabled=busy;$('#ren-tab').disabled=busy;
   $('#response-file').disabled=isRen()||busy;$('#backup').disabled=busy;
@@ -71,6 +72,13 @@ function renderSkills() {
     const card=el('div',undefined,'skill-row');card.style.setProperty('--skill-accent',skillAccent(trackerSkill(row.source)?.short || row.coreId));
     const identity=el('div',undefined,'skill-identity'), text=el('span');text.append(el('strong',row.source.sourceName),el('small',row.coreId));identity.append(icon(row.source),text);
     card.append(identity,field('Long name',row,'name'),field('Short name',row,'shortName'),field('Category',row,'category',row.coreId.startsWith('hexastat') ? ['HEXA Stat'] : categories.filter(category=>category!=='HEXA Stat')),field('Tag',row,'tag'));
+    const helper=el('div',undefined,'skill-helper'),label=el('label','Helper explanation'),input=el('textarea');
+    input.rows=3;input.maxLength=HELPER_EXPLANATION_LIMIT;input.value=row.helperExplanation || '';
+    label.append(input);helper.append(label,el('small','Optional. Use line breaks and **bold** text. Leave blank for no explanation. Up to 4000 characters.','fine'));
+    const preview=el('div',undefined,'helper-content-preview'),heading=el('div',undefined,'skill-identity'),name=el('strong'),body=el('div');
+    heading.append(icon(row.source),name);preview.append(heading,body);helper.append(preview);card.append(helper);
+    const updatePreview=()=>{name.textContent=[row.tag,row.name || row.source.sourceName].filter(Boolean).join(' · ');renderHelperExplanation(body,input.value);preview.hidden=!input.value.trim();};
+    input.addEventListener('input',()=>{row.helperExplanation=input.value;skillDirty=true;});card.addEventListener('input',updatePreview);updatePreview();
     if (row.conflicts?.length) {
       const conflict=el('label','Saved versions use different names. Choose one or enter your own.','skill-conflict'), select=el('select');select.append(new Option('Choose saved names',''));
       row.conflicts.forEach((value,i)=>select.append(new Option(`${value.name} / ${value.shortName}`,String(i))));

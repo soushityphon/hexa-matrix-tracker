@@ -56,8 +56,10 @@ its recorded date and scope.
 
 Hosting signed-in identity/origin evidence remains open. Ordinary owner access
 alone cannot prove signed-in non-owner header replacement or direct-origin isolation.
-Helper prototype review, new footer copy and later login/release checks are separate
-from acceptance of the old deployed app.
+Helper prototype direction and version 131 footer appearance are owner-accepted.
+New Admin explanation editing/preview is implemented, with acceptance/deployment
+recorded separately in #30/#31. Live Helper integration and later login/release
+checks remain separate from acceptance of the old deployed app.
 
 ## Exclusions and later work
 

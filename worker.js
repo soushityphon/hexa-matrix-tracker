@@ -213,11 +213,16 @@ async function adminPanel(request, env) {
     const conflict=()=>new Response('Priority changed in another tab. Nothing was changed by this action. Load latest priorities and review before trying again.',{status:409,headers:noStore});
     try {
       if (request.method === 'PUT') {
-        const review = validateSkills(value);
+        let review = validateSkills(value);
         if(typeof value.skillsRevision!=='string' || !/^[a-f0-9]{64}$/.test(value.skillsRevision)) return new Response('Load the latest skills before saving. Your edits have not been saved.',{status:428,headers:noStore});
         const conflict=()=>new Response('Skills changed in another tab. Your edits are still here. Load latest skills to review the saved version.',{status:409,headers:noStore});
         const previous=await storageOperation('admin-panel','read',()=>env.DB.prepare('SELECT review_json, updated_at FROM admin_skills WHERE job = ?').bind(review.job).first());
         if(value.skillsRevision!==await skillsRevision(review.job,previous))return conflict();
+        // Older clients may omit the new optional field. Only explicit text,
+        // including an empty string, may replace a saved explanation.
+        const savedRows = new Map((previous ? readStoredSkills(previous,'admin-panel').rows : []).map(row=>[row.coreId,row]));
+        review = validateSkills({...review,rows:review.rows.map(row=>Object.hasOwn(row,'helperExplanation') ? row : {...row,
+          ...(Object.hasOwn(savedRows.get(row.coreId) || {},'helperExplanation') ? {helperExplanation:savedRows.get(row.coreId).helperExplanation} : {})})});
         const previousTime=Date.parse(previous?.updated_at);
         const next={review_json:JSON.stringify(review),updated_at:new Date(Math.max(Date.now(),Number.isFinite(previousTime)?previousTime+1:0)).toISOString()};
         // The SQL predicate also rejects an edit arriving after the revision read.

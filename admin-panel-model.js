@@ -1,6 +1,7 @@
 import { NODES, STAT_ICONS, PRIORITY_SETTINGS } from './data.js';
 import {renNode,renCatalogueFromDrafts} from './ren-priority.js';
 import { validateDraft, draftSettings } from './priority-draft.js';
+import { helperExplanation } from './helper-content.js';
 
 export const categories = ['Skill', 'Mastery', 'Enhancement', 'Common', 'HEXA Stat'];
 export const defaultTags = { Apotheosis:'Origin', Ascent:'Ascent', Harmony:'M1', Basics:'M2', Talisman:'M3', Scroll:'M4' };
@@ -39,7 +40,8 @@ export function validateSkills(value) {
     // Retain every detected level cost for the reviewed catalogue.
     if (source.effectiveIcon && !/^https:\/\/maplescouter\.com\/hexaskill\/[\w/.-]+\.png$/.test(source.effectiveIcon)) throw new Error('Invalid source icon override');
     if (source.costs && (source.costs.levels?.length !== 30 || source.costs.levels.some((cost,i) => cost.level !== i+1 || !Number.isSafeInteger(cost.erda) || cost.erda < 0 || !Number.isSafeInteger(cost.frags) || cost.frags < 0))) throw new Error('Invalid source level costs');
-    return {coreId:row.coreId, source, name:row.name.trim(), shortName:row.shortName.trim(), tag:row.tag.trim(), category:row.category};
+    return {coreId:row.coreId, source, name:row.name.trim(), shortName:row.shortName.trim(), tag:row.tag.trim(), category:row.category,
+      ...(Object.hasOwn(row,'helperExplanation') ? {helperExplanation:helperExplanation(row.helperExplanation)} : {})};
   });
   return {schema:1, job:value.job, rows};
 }
@@ -89,10 +91,10 @@ export function trackerCatalogue(review) {
     const known = trackerSkill(row.source,review.job);
     if (!known || !row.name || !row.shortName || !row.category) {result.pending++; continue;}
     if (row.category === 'HEXA Stat') {
-      result.stats.push({short:known.short,name:row.name,shortName:row.shortName,icon:row.source.icon,tag:row.tag,sourceKey:playerSourceKey(row.source)}); continue;
+      result.stats.push({short:known.short,name:row.name,shortName:row.shortName,icon:row.source.icon,tag:row.tag,sourceKey:playerSourceKey(row.source),helperExplanation:row.helperExplanation || ''}); continue;
     }
     if (!row.source.costs?.levels?.length) {result.pending++; continue;}
-    result.nodes.push({...known,name:row.name,shortName:row.shortName,icon:row.source.effectiveIcon || row.source.icon,tag:row.tag,sourceKey:playerSourceKey(row.source),
+    result.nodes.push({...known,name:row.name,shortName:row.shortName,icon:row.source.effectiveIcon || row.source.icon,tag:row.tag,sourceKey:playerSourceKey(row.source),helperExplanation:row.helperExplanation || '',
       group:{Skill:'Skill Nodes',Mastery:'Mastery Nodes',Enhancement:'Enhancement Nodes',Common:'Common Nodes'}[row.category],
       costs:row.source.costs.levels.map(({erda,frags})=>({erda,frags})),initialLevel:row.source.costs.freeBaseLevel});
   }

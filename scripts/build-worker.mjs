@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const files = ['scouter-request-diagnostic.html', 'index.html', 'app.js', 'matrix-app.js', 'matrix-renderer.js', 'priority-renderer.js', 'class-loader.js', 'player-storage.js', 'save-ui.js', 'save-actions.js', 'player-backup.js', 'progress-undo.js', 'hexa-stat.js', 'infographic.js', 'infographic-progress.js', 'infographic.css', 'fragment-calculator.js', 'planner.js', 'styles.css', 'data.js', 'skill-colours.js', 'priority-review.html', 'priority-review.css', 'priority-review.js', 'admin-panel-model.js', 'priority-draft.js', 'preview-priorities.js', 'scouter-import.js', 'scouter-extract.js', 'skill-cost-review.js', 'ren-priority.js'];
+files.push('helper-content.js');
 const assets = Object.fromEntries(files.map(file => [`/${file}`, readFileSync(resolve(root, file), 'utf8')]));
 for (const file of ['decorations.js', 'decoration-assets.js', 'decorations.css', 'music.js']) assets[`/${file}`] = readFileSync(resolve(root, file), 'utf8');
 const decorations = JSON.parse(readFileSync(resolve(root, 'assets/backgrounds/manifest.json'), 'utf8'));
@@ -15,3 +16,4 @@ mkdirSync(outDir, { recursive: true });
 writeFileSync(resolve(outDir, 'index.js'), output);
 for (const file of ['data.js', 'priority-draft.js', 'admin-panel-model.js', 'scouter-request-context.js', 'scouter-profile-request.js', 'ren-preview.js', 'ren-priority.js', 'scouter-request-policy.js', 'scouter-discovery.js', 'scouter-catalogue-acquisition.js', 'scouter-order-acquisition.js', 'scouter-review-overlays.js']) copyFileSync(resolve(root, file), resolve(outDir, file));
 console.log(`Bundled ${files.length} assets and HEXA route`);
+copyFileSync(resolve(root, 'helper-content.js'), resolve(outDir, 'helper-content.js'));

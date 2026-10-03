@@ -7,7 +7,9 @@ For HEXA Stat steps, Soushi chose **Show matching icon**: replace the location
 diagram with the existing matching Stat icon, retaining the heading and optional
 explanation. This resolves the missing Stat geometry decision without inventing
 regular Matrix coordinates. Mapping/prototype review is complete; full Helper
-integration, Admin content and Stat rendering are not yet implemented/deployed.
+integration and Stat rendering remain incomplete. Admin explanation editing and
+safe content preview are implemented in the next batch; see [content review](helper-content-review.md)
+for scope, verification, preview assessment and data-preserving rollback.
 The checkpoint below preserves the evidence and initial proposal.
 
 Priority 1 release preparation is reconciled with the latest #30 owner decisions.

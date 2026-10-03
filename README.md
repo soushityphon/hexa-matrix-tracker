@@ -33,7 +33,9 @@ with separate saved progress for each class.
   PR #22 remains draft/unmerged until tested release readiness is established.
 - Helper mapping/prototype direction is owner-accepted. HEXA Stat steps will show
   their matching Stat icon in place of the regular location diagram. Full Helper
-  Admin content/progression remains next; see [review](docs/helper-mapping-review.md).
+  Admin content editing and safe line-break/bold preview are now implemented;
+  live Helper availability/preference/progression/hover remains next. See
+  [mapping review](docs/helper-mapping-review.md) and [content review](docs/helper-content-review.md).
 - Existing browser saves do not require migration. Preserve all Admin-managed
   server data at cutover, including intervening edits and future Helper content.
   Infographic export/print and multiple-character work remain deferred.
@@ -125,7 +127,9 @@ The owner-only Admin Panel has class tabs, Skills and Priorities. Grab Scouter i
 retrieves a catalogue and the selected region's two orders for review. First failure
 stops remaining calls; 429/430 pauses checks. Background priority detection and
 automatic promotion are not connected. New named pairs start unavailable.
-Skills reviews own long/short names, categories and editable tags; saved empty tags
+Skills reviews own long/short names, categories, editable tags and optional Helper
+explanations (4000 characters, line breaks and **bold**, with a safe content preview).
+Saved empty tags
 remain empty. They cannot rewrite captured order, cost or FD values.
 
 Each priority owns its exact captured per-level schedules and transition FD.
@@ -157,7 +161,7 @@ npm run check
 node scripts/review-asset-delivery.mjs
 ```
 
-`check` runs 28 regression files, builds the Worker, checks JavaScript syntax and
+`check` runs 29 regression files, builds the Worker, checks JavaScript syntax and
 verifies compiled asset delivery/private exclusions. GitHub Tracker checks runs
 this work, offline inventory and Chromium on pushes/PRs. Last recorded asset-review
 CI has 75 ordinary browser passes and zero expected failures. Counts are checkpoint

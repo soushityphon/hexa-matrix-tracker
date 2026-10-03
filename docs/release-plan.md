@@ -62,6 +62,11 @@ Discord identity server-side and authorise the owner. OAuth application/callback
 credentials and verified owner Discord ID must be established under #15. Server
 secrets remain server-only. Public local use remains available without login.
 
+For Helper-content rollback, retain the explanation-aware backend even if the new
+UI is reverted. Version 131's older writable Skills backend can drop explanations;
+do not use it for a normal writable rollback once such content exists. See
+[content review](helper-content-review.md). Never reset/restore stale Admin data.
+
 Preserve all Admin-managed data: Skills/names/tags, priority pairs, captures,
 cost/FD schedules, availability/settings, revisions and Helper explanations.
 Use current data at cutover, not fixtures or this preparation snapshot. Verify
