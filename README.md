@@ -6,6 +6,11 @@ with separate saved progress for each class.
 
 ## Current status, 3 October 2026, Brisbane
 
+- Pages preparation is implemented with an all-route Function adapter, private
+  build output and a read-only raw Admin snapshot comparator. See
+  [Pages release guide](docs/pages-release.md). Local preparation checks pass;
+  Cloudflare compilation/account access, current-data cutover, live cookie
+  verification and release remain pending. No live deployment/data change.
 - Development is on `restore-scouter-retrieval`. [PR #22](https://github.com/soushityphon/hexa-matrix-tracker/pull/22)
   stays **draft and unmerged**. Main is older than the test implementation.
 - The [public test tracker](https://soushi-hexa-matrix-test.xsoushi.chatgpt.site)
@@ -16,7 +21,7 @@ with separate saved progress for each class.
   colours. Discord Admin is activated. Owner sign-in/logout/public and alt-account refusal are accepted.
   Version142 shortens the refusal message. Browser-cookie/security verification remains. Existing desktop
   hover behaviour and phone exclusion remain. Prototype/docs are not served.
-  Deployment succeeded; no signed-in requests or hosting proof are inferred.
+  Deployment succeeded; no agent-observed signed-in requests or hosting proof are inferred.
 - [Issue #30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
   is the audit authority. Read its latest body and all comments before continuing.
   [Issue #23](https://github.com/soushityphon/hexa-matrix-tracker/issues/23)

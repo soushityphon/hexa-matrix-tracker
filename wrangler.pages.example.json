@@ -1,0 +1,25 @@
+{
+  "name": "REPLACE_WITH_VERIFIED_PAGES_PROJECT",
+  "pages_build_output_dir": "./dist/pages",
+  "compatibility_date": "2026-10-03",
+  "vars": {
+    "ADMIN_AUTH_MODE": "discord",
+    "ADMIN_AUTH_ORIGIN": "https://REPLACE_WITH_VERIFIED_PROJECT.pages.dev",
+    "DISCORD_CLIENT_ID": "1555838379550056469"
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "REPLACE_WITH_VERIFIED_CURRENT_DATA_DATABASE",
+    "database_id": "REPLACE_WITH_VERIFIED_DATABASE_ID"
+  }],
+  "env": {
+    "preview": {
+      "vars": { "ADMIN_AUTH_MODE": "discord" },
+      "d1_databases": [{
+        "binding": "DB",
+        "database_name": "REPLACE_WITH_ISOLATED_PREVIEW_DATABASE",
+        "database_id": "REPLACE_WITH_ISOLATED_PREVIEW_DATABASE_ID"
+      }]
+    }
+  }
+}

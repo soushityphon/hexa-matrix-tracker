@@ -1,6 +1,37 @@
 # Eventual release and rollback plan
 
-## Current denial copy and non-owner acceptance, version142
+## Independent Pages preparation, 3 October 2026, Brisbane
+
+The test Site remains142/env14, no new deployment or live data/configuration change.
+Helper and real owner/non-owner/logout/public acceptance remain complete.
+Live browser-cookie attributes cannot be inspected through the available connector;
+that check remains pending, not inferred from owner login or isolated tests.
+Cloudflare plugin discovery returned no connector; no authorised account route,
+actual project/bindings, current-data cutover or Cloudflare compilation is verified.
+Continue independent preparation while retaining these release gates.
+
+Pages preparation adds an all-route Function adapter that enforces Discord mode,
+private output and a read-only raw Admin snapshot comparator. The adapter reuses
+the existing Worker and does not change the deployed Sites app. No public Admin
+HTML/server files are static fallbacks. Preview uses isolated data, not live D1.
+See [Pages guide](pages-release.md) for secure setup, exact raw-data/revision
+comparison, final-write handling and rollback after target writes.
+
+Local31 existing regression files plus2 new preparation suites, build,
+104 syntax files,70 compiled assets, offline inventory and whitespace pass.
+These are isolated Node tests, not Cloudflare compiler/runtime/live OAuth proof.
+The old142 implementation CI37110963821 was cancelled; superseding docs-head
+CI37111097574 on e81d0a6 completed successfully. No new browser count is inferred.
+CI for this new preparation batch is recorded in #30/#32 when returned.
+PR22 stays draft/unmerged, final release SHA and deployment belong to #32.
+
+- [x] Pages adapter/private output and exact snapshot comparator prepared/tested locally.
+- [ ] Live browser-cookie verification.
+- [ ] Cloudflare access/compiler/runtime/bindings verification.
+- [ ] Actual current Admin-data cutover and compatible rollback.
+- [ ] Final Pages release and new-origin verification.
+
+## Historical denial copy and non-owner acceptance, version142
 
 Soushi confirms the alt account displayed deliberate non-owner refusal on141.
 Real owner sign-in/logout/revisit, signed-out public access and real non-owner
@@ -549,10 +580,11 @@ Do not repeat them unless a later change affects them. No specific device/browse
 live destructive fault test or signed-in hosting proof is inferred. Helper visual
 review and new login/release verification remain separate.
 
-The current Worker trusts Sites identity headers. pages.dev must instead verify
-Discord identity server-side and authorise the owner. OAuth application/callback,
-credentials and verified owner Discord ID must be established under #15. Server
-secrets remain server-only. Public local use remains available without login.
+The current version142 Worker uses activated Discord authentication; Sites headers
+no longer grant Admin. Owner sign-in/logout/public/non-owner refusal are accepted.
+Browser-cookie verification remains pending. Pages enforces Discord mode and must
+verify its actual origin/callback/secrets/bindings under #32. Server secrets remain
+server-only. Public local use remains available without login.
 
 For Helper-content rollback, retain the explanation-aware backend even if the new
 UI is reverted. Version 131's older writable Skills backend can drop explanations;
@@ -583,8 +615,9 @@ Future optional Discord player sync is separate from Admin login/release.
    `npm run check` and `node scripts/review-asset-delivery.mjs`. The existing
    GitHub Tracker checks must pass on that exact SHA, including ordinary browser
    tests without hiding failures. Use `docs/rendered-qa.md` for local Chromium setup.
-   Current counts are 30 regression files, 96 syntax files, 70 assets and 84 browser
-   cases; report actual results for the chosen SHA, not these counts by assumption.
+   Report actual counts/results for the chosen SHA; historical counts below are
+   dated evidence, not an assumed result for a future release. Include Pages
+   adapter/private-output and raw Admin snapshot checks.
 4. Record acceptance results and remaining explicit decisions against that scope.
    Do not claim live source/icon/device/gateway evidence from fixture screenshots.
 5. For an authorised Sites increment, re-read the existing project/access state
@@ -609,11 +642,12 @@ Future optional Discord player sync is separate from Admin login/release.
 
 No previously pending app/audit owner check needs repeating. The old hosting
 proof remains blocked as documented. The #31 prototype direction and matching-Stat-icon decision are now owner-accepted.
-The owner supersedes the Summary split with a permanent hover-only popup.
-Only the new hover UI acceptance check remains after tested deployment.
-Establish missing OAuth/owner identity and Cloudflare deployment
-access when the documented steps reach #15/#32. Later changes need only affected
-checks. Final post-Helper/login smoke tests belong to the step 4 release record.
+The owner supersedes the Summary split with a permanent hover-only popup, fully
+accepted through138. OAuth setup and owner/non-owner/logout/public checks are
+accepted. Remaining live cookie metadata verification is separate. Establish
+Cloudflare access and actual runtime/current-data/rollback verification under #32.
+Later changes need only affected checks. Final new-origin smoke tests belong to
+the step4 release record. No old Helper or login acceptance repeat is needed.
 
 ## Rollback without losing data
 

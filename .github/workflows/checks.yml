@@ -32,6 +32,8 @@ jobs:
         run: npm test
       - name: Build Worker
         run: npm run build
+      - name: Check Pages adapter, private output and Admin snapshot preservation
+        run: npm run check:pages
       - name: Check source and compiled JavaScript syntax
         run: npm run check:syntax
       - name: Check compiled asset delivery

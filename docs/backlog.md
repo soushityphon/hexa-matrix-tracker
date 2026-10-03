@@ -27,6 +27,9 @@ pages.dev release is authorised after the documented preceding work.
    cross-device saves remain a later goal with separate data/conflict decisions.
 4. Cloudflare Pages/pages.dev #32. Final release SHA, checks, URL/deployment and
    merge status belong here, after Helper/login, not as a Helper prerequisite.
+   Independent preparation now includes the Pages Function adapter/private output
+   and read-only snapshot comparison. [Guide](pages-release.md) records remaining
+   Cloudflare access/runtime/current-data/rollback gates. No Pages deployment.
 
 Existing deployed app/audit owner acceptance is complete by Soushi's blanket
 3 October report. This is not new device/fault testing or hosting security proof.

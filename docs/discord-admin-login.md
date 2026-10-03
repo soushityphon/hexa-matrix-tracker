@@ -1,6 +1,24 @@
 # Discord Admin login, Issue #15
 
-## Current denial copy and non-owner acceptance, version142
+## Remaining verification and Pages preparation, 3 October 2026, Brisbane
+
+Owner sign-in/logout/revisit, signed-out public use and real non-owner refusal
+are accepted on141;142 changes only refusal wording. Do not repeat those checks.
+Live browser-cookie/security verification remains pending: the available connector
+does not expose owner-browser cookie metadata. Secure/HttpOnly/SameSite/host/path/
+lifetime assertions in isolated tests do not establish actual browser storage.
+No OAuth code, token or cookie value should be requested in chat or GitHub.
+
+Independent Pages preparation enforces Discord mode on every Pages/custom-host
+route, keeps server files/private Admin HTML out of static fallbacks and compares
+raw Admin data/revisions read-only. [Pages guide](pages-release.md) records remaining
+access, compilation, new-origin callback, data-cutover and rollback requirements.
+No actual Cloudflare account/binding/runtime/data transfer or deployment is claimed.
+Current Site142/env14 and all accepted Helper/app work remain unchanged.
+Old142 CI37110963821 was cancelled; superseding e81d0a6 CI37111097574 succeeded.
+New preparation CI is recorded separately in #30/#32.
+
+## Historical denial copy and non-owner acceptance, version142
 
 Soushi confirms the alt account displayed deliberate non-owner refusal on141.
 Real owner sign-in/logout/revisit, signed-out public access and real non-owner

@@ -1,6 +1,19 @@
 # Hosting identity review, Issue #30
 
-## Status, 3 October 2026, Brisbane
+## Current status, 3 October 2026, Brisbane
+
+Version142/environment14 uses activated Discord identity and exact owner
+authorisation. Sites identity headers no longer grant Admin in that mode.
+Owner sign-in/logout/public/non-owner refusal are owner-reported accepted;
+browser-cookie metadata verification remains pending. The Pages adapter also
+enforces Discord mode on custom hosts, without inheriting Sites trust.
+
+Old-host strip/replacement/direct-origin evidence below remains separately blocked
+and historical. No repeat investigation or new platform guarantee is claimed.
+The historical boundary description is not the current Admin authority.
+See [Discord policy](discord-admin-login.md) and [Pages preparation](pages-release.md).
+
+## Historical Sites-header status and evidence, through version130
 
 Partial verification. Anonymous spoof attempts are refused on the current public
 test Site. Trusted signed-in identity injection and spoof replacement for a

@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 
 const root = resolve(import.meta.dirname, '..');
 const files = readdirSync(root).filter(file => extname(file) === '.js');
-for (const directory of ['scripts', 'tests', 'dist/server']) {
+for (const directory of ['scripts', 'tests', 'functions', 'dist/server']) {
   for (const file of readdirSync(resolve(root, directory))) {
     if (['.js', '.mjs'].includes(extname(file))) files.push(directory + '/' + file);
   }
