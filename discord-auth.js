@@ -97,7 +97,7 @@ export async function discordRoute(request,env){
   if(value.has('error'))return failure('Discord sign-in was cancelled. Saved data is unchanged.',400);
   const code=value.get('code');if(value.getAll('code').length!==1 || !code || code.length>2048 || [...value.keys()].some(k=>!['state','code'].includes(k)))return failure('Invalid Discord callback.',400);
   try {
-    const uid=await discordIdentity(config,code);if(uid!==config.owner)return response('This Discord account is not authorised for Admin. Saved data is unchanged.',403,{},[clearState(),clearSession()]);
+    const uid=await discordIdentity(config,code);if(uid!==config.owner)return response('This Discord account is not authorised for Admin.',403,{},[clearState(),clearSession()]);
     const token=await sign(config,'session',SESSION_SECONDS,{uid});return response(null,303,{Location:'/priority-review.html'},[clearState(),setCookie(SESSION_COOKIE,token,SESSION_SECONDS)]);
   }catch(error){
     const failureInfo=error instanceof AuthFailure?error:new AuthFailure('session','sign');
