@@ -54,8 +54,9 @@ async function discordIdentity(config,code){
   const controller=new AbortController();let timer,reader,stage='token';
   const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reader?.cancel().catch(()=>{});reject(new AuthFailure(stage,'timeout'));},8000);});
   async function json(url,options){
-    let result;try {result=await fetch(url,{...options,headers:{...options.headers,'User-Agent':userAgent},redirect:'error',signal:controller.signal});}
+    let result;try {result=await fetch(url,{...options,headers:{...options.headers,'User-Agent':userAgent},redirect:'manual',signal:controller.signal});}
     catch {throw new AuthFailure(stage,'request');}
+    if(result.status>=300 && result.status<400)throw new AuthFailure(stage,'redirect',result.status);
     if(!result.ok)throw new AuthFailure(stage,'http',result.status);
     if(Number(result.headers.get('Content-Length'))>16384)throw new AuthFailure(stage,'body-limit');
     reader=result.body?.getReader();if(!reader)throw new AuthFailure(stage,'missing-body');let body='',size=0;const decoder=new TextDecoder();

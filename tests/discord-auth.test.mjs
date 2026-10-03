@@ -7,7 +7,7 @@ const env={ADMIN_AUTH_MODE:'discord',ADMIN_AUTH_ORIGIN:origin,DISCORD_CLIENT_ID:
   DISCORD_CLIENT_SECRET:'isolated-discord-secret-value',ADMIN_SESSION_SECRET:'isolated-random-session-secret-more-than-43-chars',ADMIN_EMAIL:'legacy@example.test'};
 const originalFetch=globalThis.fetch,originalNow=Date.now,originalTimeout=globalThis.setTimeout,originalError=console.error;
 let diagnostics=[];console.error=(...args)=>diagnostics.push(args);
-let calls=[],userId=owner,fixtureFailure=null,storage=0;
+let calls=[],userId=owner,fixtureFailure=null,fixtureRedirect=null,storage=0;
 env.DB={prepare(){storage++;throw Error('Denied request reached storage');}};
 const request=(path,options={},config=env)=>worker.fetch(new Request(origin+path,options),config);
 const firstCookie=response=>response.headers.getSetCookie().map(value=>value.split(';')[0]);
@@ -18,7 +18,8 @@ async function begin(config=env){const start=await request('/auth/discord/login'
 async function callback(flow,query='',options={}){return request('/auth/discord/callback?state='+flow.state+'&code=isolated-code'+query,{headers:{Cookie:flow.cookie},...options});}
 try {
   globalThis.fetch=async(url,options)=>{
-    calls.push({url,options});assert.equal(options.redirect,'error');assert.equal(options.headers['User-Agent'],'DiscordBot (https://github.com/soushityphon/hexa-matrix-tracker, 1.0)');assert(options.signal instanceof AbortSignal);
+    calls.push({url,options});assert.notEqual(options.redirect,'error','Cloudflare runtime refuses error redirect mode');assert.equal(options.redirect,'manual');assert.equal(options.headers['User-Agent'],'DiscordBot (https://github.com/soushityphon/hexa-matrix-tracker, 1.0)');assert(options.signal instanceof AbortSignal);
+    if(fixtureRedirect && (fixtureRedirect.stage==='token'?url.endsWith('/oauth2/token'):url.endsWith('/users/@me')))return new Response(null,{status:fixtureRedirect.status,headers:{Location:'https://attacker.example/token-theft'}});
     if(fixtureFailure==='request')throw Error('private exception '+env.DISCORD_CLIENT_SECRET);
     if(fixtureFailure==='upstream')return new Response('private provider details',{status:500});
     if(fixtureFailure==='body')return new Response('x'.repeat(16385));
@@ -82,6 +83,12 @@ try {
     const last=diagnostics.at(-1);assert.equal(last[0],'Admin sign-in failed');assert.equal(last[1],'token');assert.equal(last[2],({upstream:'http',body:'body-limit',stall:'timeout',request:'request'})[failure]);assert.equal(last[3],failure==='upstream'?500:0);
     globalThis.setTimeout=originalTimeout;
   }
+  fixtureFailure=null;
+  for(const stage of ['token','identity'])for(const status of [301,302,303,307,308]){
+    fixtureRedirect={stage,status};const callCount=calls.length;const rejected=await callback(await begin());assert.equal(rejected.status,502);assert(!firstCookie(rejected).some(c=>c.startsWith('__Host-hexa-admin=')));
+    assert.equal(calls.length-callCount,stage==='token'?1:2,'Redirect refusal makes no follow-up request');assert(calls.every(c=>new URL(c.url).origin==='https://discord.com'));assert.deepEqual(diagnostics.at(-1),['Admin sign-in failed',stage,'redirect',status]);
+  }
+  fixtureRedirect=null;fixtureFailure='request';
   console.error=()=>{throw Error('isolated logging sink');};assert.equal((await callback(await begin())).status,502);console.error=(...args)=>diagnostics.push(args);
   assert(!JSON.stringify(diagnostics).includes(env.DISCORD_CLIENT_SECRET));assert(!JSON.stringify(diagnostics).includes('isolated-code'));assert(!JSON.stringify(diagnostics).includes('isolated-token'));assert(!JSON.stringify(diagnostics).includes('private'));
   assert.equal(storage,0);

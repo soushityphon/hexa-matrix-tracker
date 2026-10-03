@@ -1,5 +1,23 @@
 # Discord Admin login, Issue #15
 
+## Cloudflare redirect compatibility correction
+
+Owner reports140 sign-in still fails. Native fixed logs show
+`Admin sign-in failed token request 0`, before any provider HTTP response.
+Cloudflare's workerd source explicitly rejects RequestInit redirect:error, despite
+the request documentation listing it. Node/fake-fetch tests previously accepted
+that setting and did not reveal the deployed-runtime mismatch.
+Use redirect:manual on both Discord calls, and refuse every3xx response before
+reading a body or granting a session. Redirects are never followed, so credentials
+stay on the fixed Discord destinations. Tests cover301/302/303/307/308 at token
+and identity stages, no follow-up request, no session and fixed safe diagnostics.
+No secret/runtime/access/data changes; neutral login copy and all auth safeguards
+remain. Actual owner sign-in, non-owner/cookies/logout and acceptance are pending
+until a real retry, not inferred from this correction.
+
+Primary source: https://github.com/cloudflare/workerd/blob/main/src/workerd/api/http.c%2B%2B
+
+
 ## Current sign-in failure follow-up, version140
 
 Soushi reports activated139 sign-in failed, not accepted. Native callback logs
