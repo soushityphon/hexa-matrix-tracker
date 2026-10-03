@@ -1,5 +1,14 @@
 # Hover-only Infographic Helper, 3 October 2026, Brisbane
 
+## Owner acceptance update, 3 October 2026, Brisbane
+
+Soushi reports version138 quadrant colours checked. Helper mapping, Admin content,
+hover behaviour, larger popup, tooltip removal, compact Stat heading and quadrant
+colours are owner-reported accepted. No Helper manual check remains. Older pending
+notes below describe their historical checkpoints. Continue Discord Admin #15;
+see [Discord login preparation](discord-admin-login.md). Hosting proof stays blocked.
+
+
 ## New quadrant palette, 3 October 2026, Brisbane
 
 Soushi accepts version137's size, tooltip removal and compact Stat heading.

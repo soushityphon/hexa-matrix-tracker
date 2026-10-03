@@ -14,7 +14,7 @@ with separate saved progress for each class.
   `appgdep_6ac092a96e408191838a59040562103b`, environment revision **11**.
   This increment restores Summary and adds the owner-requested desktop hover
   popup. Helper is excluded on phones/no-hover devices. Admin content is accepted;
-  version137's larger popup, tooltip removal and compact Stat heading are owner-reported accepted. This increment gives each Matrix quadrant its own colour; only its colour review remains pending. Prototype/docs are not served.
+  version137's larger popup, tooltip removal and compact Stat heading are owner-reported accepted. This increment gives each Matrix quadrant its own colour; its colour review is now owner-reported accepted. Discord Admin preparation is the next batch. Prototype/docs are not served.
   Deployment succeeded; no signed-in requests or hosting proof are inferred.
 - [Issue #30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
   is the audit authority. Read its latest body and all comments before continuing.
@@ -38,8 +38,12 @@ with separate saved progress for each class.
   icon/tag/name above optional text, small icon/name heading for Stats, without a large duplicate icon. No guide at rest
   or automatic next-step preview. Helper is excluded on phones/no-hover devices.
   Hover-only integration is implemented, tested and deployed in version136;
-  version136 behaviour is owner-reported accepted. The 460px popup, absent native tooltip and compact Stat heading are owner-reported accepted in version137. Four category colours are implemented, tested and deployed in version138; only their visual acceptance remains pending in #30/#31.
+  version136 behaviour is owner-reported accepted. The 460px popup, absent native tooltip and compact Stat heading are owner-reported accepted in version137. Four category colours are implemented, tested and deployed in version138; their visual acceptance is owner-reported complete in #30/#31.
   See [integration review](docs/helper-integration-review.md).
+- Discord Admin authentication is implemented behind runtime configuration. Live
+  activation needs the dedicated OAuth app, verified owner ID and server secrets.
+  Current Sites access is preserved. Optional player sync is not implemented.
+  See [setup and session policy](docs/discord-admin-login.md).
 - Existing browser saves do not require migration. Preserve all Admin-managed
   server data at cutover, including intervening edits and future Helper content.
   Infographic export/print and multiple-character work remain deferred.

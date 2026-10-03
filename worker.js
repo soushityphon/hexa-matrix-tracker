@@ -1,3 +1,4 @@
+import {adminAllowed as isAdmin, discordRoute, adminSignIn, decorateAdmin} from './discord-auth.js';
 // Bundled with the static files by scripts/build-worker.mjs.
 import { validateSkills, validatePair, applySkills, trackerCatalogue, requireOrderSkills } from './admin-panel-model.js';
 import { validateDraft } from './priority-draft.js';
@@ -8,9 +9,6 @@ import { acquireScouterCatalogue, catalogueSelection } from './scouter-catalogue
 const mimeTypes = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png' };
 const scouterUrl = 'https://api.maplescouter.com/api/calc/hexa-order?class=%ED%98%B8%EC%98%81';
 const noStore = { 'Cache-Control': 'no-store' };
-function isAdmin(request, env) {
-  return !!env?.ADMIN_EMAIL && request.headers.get('oai-authenticated-user-email')?.toLowerCase() === env.ADMIN_EMAIL.toLowerCase();
-}
 // Only code-owned labels and aggregate counts reach the server log. Never pass
 // records, request values or exception objects to this helper.
 function serverDiagnostic(route,event,operation,category,count=1) {
@@ -62,7 +60,7 @@ async function priorityPreview(request, env) {
     if (request.method === 'GET') {
       const mode=new URL(request.url).searchParams.get('record');
       if(mode!==null) {
-        if(!isAdmin(request,env))return new Response('Admin access required',{status:403,headers:noStore});
+        if(!(await isAdmin(request,env)))return new Response('Admin access required',{status:403,headers:noStore});
         if(!/^[a-z0-9_]+$/.test(mode))return new Response('Invalid priority ID',{status:400,headers:noStore});
         const row=await storageOperation('priority-preview','read',()=>env.DB.prepare('SELECT mode, draft_json, updated_at FROM priority_preview WHERE mode = ?').bind(mode).first());
         if(row && readPriorityRows([row],'priority-preview').invalidRecords.length)return new Response('Damaged priority is preserved. Download its raw record from the Admin Panel.',{status:409,headers:noStore});
@@ -84,7 +82,7 @@ async function priorityPreview(request, env) {
       return Response.json({ drafts:visible }, { headers:noStore });
     }
     if (!['PUT', 'DELETE'].includes(request.method)) return new Response('Method not allowed', { status: 405 });
-    if (!isAdmin(request, env)) return new Response('Admin access required', { status: 403 });
+    if (!(await isAdmin(request,env))) return new Response('Admin access required', { status: 403 });
     if (Number(request.headers.get('content-length')) > 100_000) return new Response('Payload too large', { status: 413 });
     const body = await request.text();
     if (body.length > 100_000) return new Response('Payload too large', { status: 413 });
@@ -139,7 +137,7 @@ async function trackerSkills(request, env) {
 // saved priority rows. It never grants access to upstream requests or owner edits.
 async function adminMaintenance(request, env) {
   const token=env?.ADMIN_MAINTENANCE_TOKEN;
-  if (!isAdmin(request,env) && !(typeof token==='string' && token.length>=32 && request.headers.get('Authorization')===`Bearer ${token}`)) return new Response('Admin access required',{status:403});
+  if (!(await isAdmin(request,env)) && !(typeof token==='string' && token.length>=32 && request.headers.get('Authorization')===`Bearer ${token}`)) return new Response('Admin access required',{status:403});
   if (!['GET','POST'].includes(request.method)) return new Response('Method not allowed',{status:405});
   try {
     const priorities=(await storageOperation('admin-maintenance','read',()=>env.DB.prepare('SELECT mode, draft_json, updated_at FROM priority_preview ORDER BY mode').all())).results || [];
@@ -181,7 +179,7 @@ function priorityGuard(id,rows) {
   return {sql,values:[id,id,rows.length,JSON.stringify(rows),rows.length]};
 }
 async function adminPanel(request, env) {
-  if (!isAdmin(request, env)) return new Response('Admin access required', {status:403,headers:noStore});
+  if (!(await isAdmin(request,env))) return new Response('Admin access required', {status:403,headers:noStore});
   if (!env?.DB) {serverDiagnostic('admin-panel','storage_failure','binding','missing');return new Response('Admin storage is unavailable', {status:503,headers:noStore});}
   try {
     const rows = await storageOperation('admin-panel','read',()=>env.DB.prepare('SELECT mode, draft_json, updated_at FROM priority_preview').all());
@@ -400,7 +398,7 @@ export function inspectScouterRequest(payload) {
 async function requestDiagnostic(request, env) {
   const serviceToken = env?.SCOUTER_DIAGNOSTIC_TOKEN;
   const ownerService = typeof serviceToken === 'string' && serviceToken.length >= 32 && request.headers.get('Authorization') === `Bearer ${serviceToken}`;
-  if (!isAdmin(request, env) && !ownerService) return new Response('Admin access required', {status:403, headers:noStore});
+  if (!(await isAdmin(request,env)) && !ownerService) return new Response('Admin access required', {status:403, headers:noStore});
   if (request.method !== 'GET') return new Response('Method not allowed', {status:405, headers:noStore});
   const requests = await Promise.all(['lotus_heroic','lotus_interactive','taotie_heroic','taotie_interactive'].map(async mode => {
     try {
@@ -415,8 +413,9 @@ async function requestDiagnostic(request, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const auth=await discordRoute(request,env);if(auth)return auth;
     if (url.pathname === '/api/ren-capture') {
-      if(!isAdmin(request,env))return new Response('Admin access required',{status:403,headers:noStore});
+      if(!(await isAdmin(request,env)))return new Response('Admin access required',{status:403,headers:noStore});
       if(request.method!=='POST')return new Response('Method not allowed',{status:405,headers:noStore});
       const body=await request.text();
       if(body.length>1000)return new Response('Payload too large',{status:413});
@@ -430,7 +429,7 @@ export default {
     if (url.pathname === '/api/admin-maintenance') return adminMaintenance(request, env);
     if (url.pathname === '/api/admin-panel') return adminPanel(request, env);
     if (url.pathname === '/api/scouter-catalogue') {
-      if (!isAdmin(request, env)) return new Response('Admin access required', {status:403, headers:noStore});
+      if (!(await isAdmin(request,env))) return new Response('Admin access required', {status:403, headers:noStore});
       if (request.method !== 'GET') return new Response('Method not allowed', {status:405, headers:noStore});
       const keys = ['job','region','world'];
       if ([...url.searchParams.keys()].some(key => !keys.includes(key)) || keys.some(key => url.searchParams.getAll(key).length !== 1)) return new Response('Choose one job, region and world', {status:400, headers:noStore});
@@ -442,11 +441,12 @@ export default {
     }
     if (url.pathname === '/api/scouter-request-diagnostic') return requestDiagnostic(request, env);
     if (url.pathname === '/api/priority-preview') return priorityPreview(request, env);
-    if (['/priority-review.html', '/scouter-request-diagnostic.html'].includes(url.pathname) && !isAdmin(request, env)) {
+    if (['/priority-review.html', '/scouter-request-diagnostic.html'].includes(url.pathname) && !(await isAdmin(request,env))) {
+      const discord=adminSignIn(env);if(discord)return discord;
       return new Response('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Panel sign-in</title><main style="font:1rem system-ui;max-width:32rem;margin:12vh auto;padding:1.5rem"><h1>Admin Panel</h1><p>Sign in as the site owner to edit priorities.</p><p><a href="/signin-with-chatgpt?return_to=%2Fpriority-review.html">Continue with ChatGPT</a></p><p><a href="/">Back to tracker</a></p></main></html>', { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
     }
     if (url.pathname === '/api/hexa-order') {
-      if (!isAdmin(request, env)) return new Response('Admin access required', {status:403,headers:noStore});
+      if (!(await isAdmin(request,env))) return new Response('Admin access required', {status:403,headers:noStore});
       if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
       if (Number(request.headers.get('content-length')) > 1_000) return new Response('Payload too large', { status: 413 });
       let selection, payload;
@@ -505,7 +505,8 @@ export default {
       }
       return new Response(bytes, { headers });
     }
-    const body = ext === '.png' && request.method !== 'HEAD' ? Uint8Array.from(atob(ASSETS[path]), char => char.charCodeAt(0)) : ASSETS[path];
+    const text = path==='/priority-review.html' ? decorateAdmin(ASSETS[path],env) : ASSETS[path];
+    const body = ext === '.png' && request.method !== 'HEAD' ? Uint8Array.from(atob(ASSETS[path]), char => char.charCodeAt(0)) : text;
     return new Response(request.method === 'HEAD' ? null : body, { headers: { 'Content-Type': mimeTypes[ext] || 'application/octet-stream', 'Cache-Control': ['.html', '.js', '.css'].includes(ext) ? 'no-store' : 'public, max-age=60' } });
   }
 };

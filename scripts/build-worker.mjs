@@ -17,3 +17,5 @@ writeFileSync(resolve(outDir, 'index.js'), output);
 for (const file of ['data.js', 'priority-draft.js', 'admin-panel-model.js', 'scouter-request-context.js', 'scouter-profile-request.js', 'ren-preview.js', 'ren-priority.js', 'scouter-request-policy.js', 'scouter-discovery.js', 'scouter-catalogue-acquisition.js', 'scouter-order-acquisition.js', 'scouter-review-overlays.js']) copyFileSync(resolve(root, file), resolve(outDir, file));
 console.log(`Bundled ${files.length} assets and HEXA route`);
 copyFileSync(resolve(root, 'helper-content.js'), resolve(outDir, 'helper-content.js'));
+
+copyFileSync(resolve(root, 'discord-auth.js'), resolve(outDir, 'discord-auth.js'));

@@ -25,7 +25,7 @@ content/preview. Do not repeat old Import, audio, Stat, focus or Admin checks un
 later changes affect them. Earlier device-specific evidence remains limited.
 
 Version137's larger popup, absent native tooltip and compact Stat heading are
-owner-reported accepted. Only the new quadrant palette needs visual review:
+owner-reported accepted. The version138 quadrant palette is now owner-reported accepted:
 purple Skill/top-left, dark pink Mastery/top-right, blue Enhancement/bottom-left,
 blue-grey Common/bottom-right, retaining the faded nodes and target highlight.
 No repeat hover/progress/preference/Admin or phone acceptance check is needed.
@@ -50,3 +50,11 @@ Changed class/order/source inputs retain the existing rebuilding and validation/
 Both classes run the owner-requested entry checks at all three widths. Segment 7 directly enters 7; keyboard activation enters 10; ordinary Undo restores 7. Native insertion after click/tap replaces an existing Stat, skill, owned-inventory or daily-income value without a manual selection command. Whole-value insertion of 999 or -1 retains the previous Stat draft; sequential typing cannot exceed 10. The persisted record, unchanged other Stat lines/class progress and reload restoration are checked. Each of the ten segment targets is measured for width/height and centre hits. The owner-requested side-by-side layout shows 10px bars inside 28px-tall buttons, with a 54px number field aligned on the right. Compact segments have a 16px width floor at the tested phone widths; the number field remains a larger alternative. The previous version 127 full-width targets met a scaled 24px floor. Read-only tile previews remain unchanged. The footer reads “A project by Soushi”.
 
 Phone emulation and native Chromium insertion do not establish physical mobile keyboard/clipboard ergonomics. On the test Site, tap a numeric input and type a replacement, paste 11 into a Stat line and expect the prior value, then tap a segment and use Undo to restore progress. Existing total/integer validation remains, so a line edit that makes the three-line total exceed 20 remains an unsaved draft. Do not clear saved progress for these checks. Record owner acceptance separately.
+
+## Discord Admin preparation
+
+Isolated server tests cover the OAuth code/state/session/owner/CSRF/logout flow.
+The existing browser suite still exercises the current dormant Sites-mode build;
+no live Discord consent, browser cookie or gateway pass is claimed. Activate only
+after [runtime setup](discord-admin-login.md), then verify owner/non-owner/logout
+and preserved read-only Admin data. No Helper manual check remains.

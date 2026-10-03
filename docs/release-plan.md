@@ -1,5 +1,14 @@
 # Eventual release and rollback plan
 
+## Owner acceptance update, 3 October 2026, Brisbane
+
+Soushi reports version138 quadrant colours checked. Helper mapping, Admin content,
+hover behaviour, larger popup, tooltip removal, compact Stat heading and quadrant
+colours are owner-reported accepted. No Helper manual check remains. Older pending
+notes below describe their historical checkpoints. Continue Discord Admin #15;
+see [Discord login preparation](discord-admin-login.md). Hosting proof stays blocked.
+
+
 ## Owner adjustment, 3 October 2026, Brisbane
 
 Soushi reports version136 works. Its hover behaviour is owner-reported accepted;
