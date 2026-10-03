@@ -39,6 +39,53 @@ Preparation is complete as a scope/acceptance/target/rollback record. Hosting pr
 is explicitly blocked, not complete. Independent Helper mapping/prototype work may
 continue with no hosting/access change. Preserve the existing test Site for rollback.
 
+## Current tested visual refinement, version 137
+
+Implemented in [b014bd2](https://github.com/soushityphon/hexa-matrix-tracker/commit/b014bd20cbcdc216ffb6a3f488228957059c57a4), draft/unmerged PR #22.
+Removed Infographic checkpoint native title tooltips while retaining accessible
+level/action labels. Helper width is 460px versus 280px, about 1.6 times wider,
+with a larger Matrix, heading and text. Viewport limits and scroll behaviour remain.
+Stats omit the location area and start with their small existing icon/name heading,
+followed by optional explanation. No duplicate large Stat image.
+
+Full local checks pass: 30 regression files, Worker build, 96 syntax files,
+70 compiled asset checks, offline inventory and affected links/whitespace.
+All 167 authoritative files match the saved Site source before this docs-only record.
+[PR CI 37098973723](https://github.com/soushityphon/hexa-matrix-tracker/actions/runs/37098973723) and
+[push CI 37098971137](https://github.com/soushityphon/hexa-matrix-tracker/actions/runs/37098971137) both succeed on b014bd2.
+Logs confirm **84 ordinary Chromium passes, zero expected failures**.
+Two enlarged Matrix and two compact Stat viewport screenshots inspected.
+Tests assert absent title attributes with accessible labels retained, actual 460px
+desktop width, viewport bounds, small Stat heading/no location and prior interaction
+safety. Existing phone-exclusion checks pass. Isolated fixtures are not live art,
+physical-device or hosting-identity evidence; no repeat owner/device checks inferred.
+
+| Field | Current test value |
+| --- | --- |
+| Saved version | appgprj_6aba0413861881918dc7fe10da066627~appgver_67335935fda88191bea5fad2fdb7b4cc |
+| Site source | 68f37c513a1177871e389ce327fa585b36a0a22b |
+| Deployment | appgdep_6ac08f7a43848191a2e3c4977a8596f2, succeeded |
+| Archive | sha256:eeb9b46cdf60e07a7d3caa8196c3bf1f13ea36cb94fbd0f0420b7e4610494273 |
+| Environment revision | 11 |
+| URL | https://soushi-hexa-matrix-test.xsoushi.chatgpt.site |
+| Compatible code rollback | Saved version136, source 2c132ae636ca3a9e871c07d17ff8b9792f0890c3, explanation-aware backend |
+
+No live Admin edits, source acquisition, calculations, priorities, captures,
+progress/player-save, schema, D1, binding, secret, auth or audience change.
+Code rollback preserves all current Admin/player data; never restore stale data.
+This documentation record does not require another app deployment.
+
+Soushi's “it works” accepts version136 hover behaviour. Prior app/footer/Admin
+acceptance remains complete. **Only this size/tooltip/compact-Stat visual refinement
+has pending owner acceptance.** Refresh without clearing storage, hover a regular
+skill and expect the larger Matrix popup with no competing plain-text tooltip;
+hover a Stat and expect small icon/name plus optional text, without a large icon.
+No repeat progress/Undo/preference/Admin or phone Helper acceptance check.
+Next after this affected visual check is Discord Admin #15, then pages.dev #32.
+Hosting identity evidence stays separately blocked; release preparation is complete.
+Final release SHA/publication remains step4; export/print and multiple characters deferred.
+
+
 ## Historical accepted hover test deployment, version 136
 
 Owner-authorised permanent hover-only Helper replaces the rejected version133

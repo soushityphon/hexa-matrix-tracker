@@ -13,9 +13,10 @@ pages.dev release is authorised after the documented preceding work.
 2. Infographic Helper #31: category/order mapping is verified, Admin content
    accepted. The owner's newer decision replaces the Summary split/next guide
    with a hover-only popup. Restore Summary, retain full-width priority icons,
-   show Matrix then icon/tag/name then optional text. Stats use their matching
-   numbered icon. Permanent implementation is authorised without another prototype
-   gate; new feature acceptance remains separate. Helper is excluded on phones
+   show Matrix then icon/tag/name then optional text. Stats start with their small
+   icon/name heading, with no large duplicate icon. Permanent implementation is authorised without another prototype
+   gate. Version136 hover behaviour is owner-reported accepted. New larger
+   popup/tooltip-removal/compact-Stat acceptance remains separate. Helper is excluded on phones
    and other devices without a fine pointer that can hover.
 3. Discord login #15, Admin identity/owner authorisation first. Optional player
    cross-device saves remain a later goal with separate data/conflict decisions.
@@ -61,7 +62,8 @@ Hosting signed-in identity/origin evidence remains open. Ordinary owner access
 alone cannot prove signed-in non-owner header replacement or direct-origin isolation.
 Helper prototype direction and version 131 footer appearance are owner-accepted.
 Admin explanation editing/preview is owner-reported accepted. Live Helper
-integration is implemented; its new acceptance remains pending. See
+integration through version136 is owner-reported accepted. The new visual
+refinement has separate acceptance after deployment. See
 [review](helper-integration-review.md) and #30/#31 for tests/deployment. Discord
 Admin login follows Helper acceptance; later login/release checks remain separate
 from acceptance of the old deployed app.

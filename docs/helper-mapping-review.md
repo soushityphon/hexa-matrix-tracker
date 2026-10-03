@@ -4,9 +4,11 @@
 
 The owner supersedes the initial Summary split and automatic next guide. Restore
 Summary and use a hover-only popup: Matrix, then icon/tag/name, then optional text.
-Stats use the matching numbered icon. Helper is excluded on phones/no-hover devices.
+Stats start with the small matching icon/name heading, without a large duplicate
+icon or Matrix. Helper is excluded on phones/no-hover devices.
 Permanent implementation is authorised without another visual prototype checkpoint.
-Mapping and Admin content acceptance remain; new hover UI acceptance is separate.
+Mapping and Admin content acceptance remain. Version136 hover behaviour is owner-
+reported accepted; new popup size/tooltip/Stat visual acceptance is separate.
 See [current integration review](helper-integration-review.md).
 
 ## Historical prototype owner review

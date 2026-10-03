@@ -9,12 +9,12 @@ with separate saved progress for each class.
 - Development is on `restore-scouter-retrieval`. [PR #22](https://github.com/soushityphon/hexa-matrix-tracker/pull/22)
   stays **draft and unmerged**. Main is older than the test implementation.
 - The [public test tracker](https://soushi-hexa-matrix-test.xsoushi.chatgpt.site)
-  is deployed version **136**, Site source
-  `2c132ae636ca3a9e871c07d17ff8b9792f0890c3`, deployment
-  `appgdep_6ac08b8a78bc81918d52f739b1f2e85c`, environment revision **11**.
+  is deployed version **137**, Site source
+  `68f37c513a1177871e389ce327fa585b36a0a22b`, deployment
+  `appgdep_6ac08f7a43848191a2e3c4977a8596f2`, environment revision **11**.
   This increment restores Summary and adds the owner-requested desktop hover
   popup. Helper is excluded on phones/no-hover devices. Admin content is accepted;
-  version136 hover behaviour is owner-reported accepted. The new popup size, tooltip removal and compact Stat heading remain pending deployment/review. Prototype/docs are not served.
+  version136 hover behaviour is owner-reported accepted. The new larger popup, tooltip removal and compact Stat heading are deployed; their affected visual acceptance remains pending. Prototype/docs are not served.
   Deployment succeeded; no signed-in requests or hosting proof are inferred.
 - [Issue #30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
   is the audit authority. Read its latest body and all comments before continuing.
@@ -38,7 +38,7 @@ with separate saved progress for each class.
   icon/tag/name above optional text, small icon/name heading for Stats, without a large duplicate icon. No guide at rest
   or automatic next-step preview. Helper is excluded on phones/no-hover devices.
   Hover-only integration is implemented, tested and deployed in version136;
-  version136 behaviour is owner-reported accepted. A 460px popup and compact Stat heading are implemented in the current batch, pending deployment and affected visual acceptance in #30/#31.
+  version136 behaviour is owner-reported accepted. A 460px popup, absent native tooltip and compact Stat heading are implemented, tested and deployed in version137; affected visual acceptance remains pending in #30/#31.
   See [integration review](docs/helper-integration-review.md).
 - Existing browser saves do not require migration. Preserve all Admin-managed
   server data at cutover, including intervening edits and future Helper content.
