@@ -1,5 +1,64 @@
 # Discord Admin login, Issue #15
 
+## Deployed Discord Admin preparation, version 139
+
+Implementation [692fa21](https://github.com/soushityphon/hexa-matrix-tracker/commit/692fa21b8f5640383fee2d28b3d975382c256f76), draft/unmerged PR #22.
+Server-side code exchange and Discord identity lookup, exact owner allowlist,
+signed browser-bound state, eight-hour signed host-only session, origin/JSON write
+guards, logout and failure deadlines are implemented. The server module is private.
+Pages/Workers development hostnames cannot inherit Sites-header access.
+
+**Discord is not activated.** Environment revision11 has no Discord configuration.
+No runtime variables/secrets were changed. Existing Sites Admin access remains.
+Verified owner ID, dedicated application/client secret/registered callback, live
+OAuth/cookie/non-owner/logout tests and owner acceptance remain unresolved.
+Soushi selected a dedicated tracker application; it has not been created by this batch.
+
+Local full checks pass:31 regression files, Worker build,99 syntax files,
+70 compiled asset checks, offline inventory and affected links/whitespace.
+[PR CI 37101106002](https://github.com/soushityphon/hexa-matrix-tracker/actions/runs/37101106002) and
+[push CI 37101103221](https://github.com/soushityphon/hexa-matrix-tracker/actions/runs/37101103221) succeeded on692fa21.
+Logs confirm **84 ordinary Chromium passes, zero expected failures**, exercising
+the current dormant/default build. New isolated server tests use fake Discord
+responses and exercise owner/anonymous/non-owner refusal, signed-state/session
+binding/expiry/tampering/duplicates, origin/key/application/allowlist changes,
+CSRF guards, body limits/header-and-body deadline and logout.
+These are not live OAuth, browser-cookie or hosting-gateway proof.
+All170 authoritative files matched the saved Site source before this docs-only record.
+
+| Field | Current test value |
+| --- | --- |
+| Saved version | appgprj_6aba0413861881918dc7fe10da066627~appgver_f69cf1a76cc48191847d71055cef2433 |
+| Site source | 2ee2fbc8bf64e6c1683e24894c10c042080ea3ba |
+| Deployment | appgdep_6ac098ab710081919d0940ce9d02b4f2, succeeded |
+| Archive | sha256:a65d2fb4eb5455d079153fe0b93abc13afefa43b6d5a5d2ddc8b80fa61636875 |
+| Environment revision | 11, unchanged |
+| URL | https://soushi-hexa-matrix-test.xsoushi.chatgpt.site |
+| Compatible rollback now | Saved138/source9ae921369177401e85695b5edfeb2be801ff5c32, only while Discord remains disabled |
+
+No auth activation, live Admin reads/writes, schema/table/migration, D1/binding,
+source acquisition, calculations/captures/priorities/player saves or audience change.
+All current/future Helper explanations and Admin data remain preserved.
+After activation, rollback must retain a Discord-aware backend and Discord mode,
+not an older header-trusting Worker. This final docs record needs no redeployment.
+
+Helper through138 is owner-reported accepted via “checked”; #31 is complete.
+No Helper or old Admin/player check remains. Only live Discord setup/verification
+is blocked: create the dedicated developer application, register the exact callback
+in the setup guide, provide the public Client ID and numeric owner User ID, and
+establish secure client-secret/session-key runtime entry. Do not post secrets in chat
+or GitHub. Configure/activate only after those exist, then verify owner/non-owner/
+logout/public access with read-only current Admin data. Optional player sync is
+not implemented and awaits separate storage/privacy/conflict decisions.
+
+Next is that #15 setup and live verification, then #32 pages.dev, with actual
+Cloudflare access/data-cutover/release-SHA/URL/rollback verification there.
+Old-host identity proof stays separately blocked; no repeat probes. Release
+preparation remains complete. PR #22 stays draft/unmerged. Export/print and
+multiple characters remain deferred.
+
+
+
 ## Current batch and activation boundary
 
 Helper through version138 is owner-reported accepted, including its quadrant

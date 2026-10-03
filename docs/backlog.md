@@ -20,7 +20,7 @@ pages.dev release is authorised after the documented preceding work.
    Version138 quadrant colours are owner-reported accepted; Helper is complete. Helper is excluded on phones
    and other devices without a fine pointer that can hover.
 3. Discord login #15, Admin identity/owner authorisation first. Configuration-gated
-   code/tests are prepared; actual app/owner/secret setup and live verification remain
+   code/tests are deployed dormant in version139; actual app/owner/secret setup and live verification remain
    blocked. See [setup](discord-admin-login.md). Optional player
    cross-device saves remain a later goal with separate data/conflict decisions.
 4. Cloudflare Pages/pages.dev #32. Final release SHA, checks, URL/deployment and
@@ -46,6 +46,7 @@ silently complete historical acceptance checkboxes.
 | [#5](https://github.com/soushityphon/hexa-matrix-tracker/issues/5), preview | Open | Preview fulfilled through Sites Worker hosting. Its old after-merge/static-site plan must not trigger a second host or merge. |
 | [#7](https://github.com/soushityphon/hexa-matrix-tracker/issues/7), patch priorities | Open | Named pairs, retained hidden levels and capture-owned schedules supersede fixed patch/catch-up assumptions. #30 declines detailed source UI in favour of one footer credit. Dated snapshots are evidence. |
 | [#12](https://github.com/soushityphon/hexa-matrix-tracker/issues/12), detection/drafts | Open | Manual capture/review, source FD and saved-pair workflow exist. Background detection, automatic PR promotion and local skill-icon retrieval remain unconnected/deferred. September no-FD statements are historical. |
+| [#31](https://github.com/soushityphon/hexa-matrix-tracker/issues/31), Helper | Closed | Implemented/tested/deployed through138, all owner-reported acceptance complete; no manual Helper checks remain. |
 | [#15](https://github.com/soushityphon/hexa-matrix-tracker/issues/15), sync | Open | Priority 3, Discord Admin identity first; optional player sync needs separate decisions. |
 | [#24](https://github.com/soushityphon/hexa-matrix-tracker/issues/24), [#25](https://github.com/soushityphon/hexa-matrix-tracker/issues/25), [#26](https://github.com/soushityphon/hexa-matrix-tracker/issues/26), levels/names/tags | Closed | Owner-accepted at version 75. Later Stat line-entry/presentation refinements remain separate #30 work. |
 | [#27](https://github.com/soushityphon/hexa-matrix-tracker/issues/27), calculator/Summary | Closed | Version 83 refinements accepted. Older checkbox/days-only/no-date copy is superseded; later Janus scope/Next Upgrade copy follows #30. |
@@ -67,7 +68,7 @@ Helper prototype direction and version 131 footer appearance are owner-accepted.
 Admin explanation editing/preview is owner-reported accepted. Live Helper
 integration through version136 is owner-reported accepted. Version137 size, native-tooltip removal and compact Stat heading are owner-
 reported accepted. Version138 quadrant palette is owner-reported accepted. Helper is complete;
-Discord Admin preparation is the next batch, with live setup blocked. See
+Discord Admin preparation is deployed dormant in version139; live setup is next and blocked. See
 [review](helper-integration-review.md) and #30/#31 for tests/deployment. Discord
 Admin login follows Helper acceptance; later login/release checks remain separate
 from acceptance of the old deployed app.

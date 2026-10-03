@@ -9,12 +9,12 @@ with separate saved progress for each class.
 - Development is on `restore-scouter-retrieval`. [PR #22](https://github.com/soushityphon/hexa-matrix-tracker/pull/22)
   stays **draft and unmerged**. Main is older than the test implementation.
 - The [public test tracker](https://soushi-hexa-matrix-test.xsoushi.chatgpt.site)
-  is deployed version **138**, Site source
-  `9ae921369177401e85695b5edfeb2be801ff5c32`, deployment
-  `appgdep_6ac092a96e408191838a59040562103b`, environment revision **11**.
-  This increment restores Summary and adds the owner-requested desktop hover
-  popup. Helper is excluded on phones/no-hover devices. Admin content is accepted;
-  version137's larger popup, tooltip removal and compact Stat heading are owner-reported accepted. This increment gives each Matrix quadrant its own colour; its colour review is now owner-reported accepted. Discord Admin preparation is the next batch. Prototype/docs are not served.
+  is deployed version **139**, Site source
+  `2ee2fbc8bf64e6c1683e24894c10c042080ea3ba`, deployment
+  `appgdep_6ac098ab710081919d0940ce9d02b4f2`, environment revision **11**.
+  Helper through version138 is complete and owner-accepted, including quadrant
+  colours. Version139 adds dormant Discord Admin preparation. Existing desktop
+  hover behaviour and phone exclusion remain. Prototype/docs are not served.
   Deployment succeeded; no signed-in requests or hosting proof are inferred.
 - [Issue #30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
   is the audit authority. Read its latest body and all comments before continuing.
@@ -40,7 +40,7 @@ with separate saved progress for each class.
   Hover-only integration is implemented, tested and deployed in version136;
   version136 behaviour is owner-reported accepted. The 460px popup, absent native tooltip and compact Stat heading are owner-reported accepted in version137. Four category colours are implemented, tested and deployed in version138; their visual acceptance is owner-reported complete in #30/#31.
   See [integration review](docs/helper-integration-review.md).
-- Discord Admin authentication is implemented behind runtime configuration. Live
+- Discord Admin authentication is implemented/tested and deployed behind runtime configuration, disabled in version139. Live
   activation needs the dedicated OAuth app, verified owner ID and server secrets.
   Current Sites access is preserved. Optional player sync is not implemented.
   See [setup and session policy](docs/discord-admin-login.md).
@@ -169,10 +169,10 @@ npm run check
 node scripts/review-asset-delivery.mjs
 ```
 
-`check` runs 30 regression files, builds the Worker, checks JavaScript syntax and
+`check` runs 31 regression files, builds the Worker, checks JavaScript syntax and
 verifies compiled asset delivery/private exclusions. GitHub Tracker checks runs
-this work, offline inventory and Chromium on pushes/PRs. Last recorded asset-review
-CI has 75 ordinary browser passes and zero expected failures. Counts are checkpoint
+this work, offline inventory and Chromium on pushes/PRs. CI on implementation commit692fa21
+has 84 ordinary browser passes and zero expected failures. Counts are checkpoint
 evidence, not verification of a new commit. [Rendered QA](docs/rendered-qa.md)
 documents browser commands, fixtures, emulation and device limits.
 
