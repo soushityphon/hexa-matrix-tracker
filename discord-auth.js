@@ -8,12 +8,21 @@ class AuthFailure extends Error {constructor(stage,reason,status=0){super('Admin
 const snowflake=value=>typeof value==='string' && /^[1-9]\d{16,19}$/.test(value);
 const mode=env=>env?.ADMIN_AUTH_MODE ?? 'sites';
 function configuration(env) {
-  if(mode(env)!=='discord' || !snowflake(env.DISCORD_CLIENT_ID) || !snowflake(env.DISCORD_ADMIN_ID) ||
-    typeof env.DISCORD_CLIENT_SECRET!=='string' || env.DISCORD_CLIENT_SECRET.length<16 ||
-    typeof env.ADMIN_SESSION_SECRET!=='string' || env.ADMIN_SESSION_SECRET.length<43)return null;
-  try {const origin=new URL(env.ADMIN_AUTH_ORIGIN);if(origin.protocol!=='https:' || origin.origin!==env.ADMIN_AUTH_ORIGIN)return null;
-    return {origin:origin.origin,client:env.DISCORD_CLIENT_ID,owner:env.DISCORD_ADMIN_ID,secret:env.ADMIN_SESSION_SECRET,clientSecret:env.DISCORD_CLIENT_SECRET};
-  }catch{return null;}
+  const failures=[];
+  if(mode(env)!=='discord')failures.push('ADMIN_AUTH_MODE');
+  if(!snowflake(env.DISCORD_CLIENT_ID))failures.push('DISCORD_CLIENT_ID');
+  if(!snowflake(env.DISCORD_ADMIN_ID))failures.push('DISCORD_ADMIN_ID');
+  if(typeof env.DISCORD_CLIENT_SECRET!=='string' || env.DISCORD_CLIENT_SECRET.length<16)failures.push('DISCORD_CLIENT_SECRET');
+  if(typeof env.ADMIN_SESSION_SECRET!=='string' || env.ADMIN_SESSION_SECRET.length<43)failures.push('ADMIN_SESSION_SECRET');
+  let origin;
+  try {origin=new URL(env.ADMIN_AUTH_ORIGIN);if(origin.protocol!=='https:' || origin.origin!==env.ADMIN_AUTH_ORIGIN)failures.push('ADMIN_AUTH_ORIGIN');}
+  catch {failures.push('ADMIN_AUTH_ORIGIN');}
+  if(failures.length){
+    // Fixed setting names only, never values, lengths, tokens or request data.
+    try {console.error('Admin configuration invalid',failures.join(','));}catch {}
+    return null;
+  }
+  return {origin:origin.origin,client:env.DISCORD_CLIENT_ID,owner:env.DISCORD_ADMIN_ID,secret:env.ADMIN_SESSION_SECRET,clientSecret:env.DISCORD_CLIENT_SECRET};
 }
 function encode(bytes){return btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 function decode(text){if(!/^[A-Za-z0-9_-]+$/.test(text))throw Error('Invalid encoding');return Uint8Array.from(atob(text.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));}
