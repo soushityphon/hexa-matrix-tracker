@@ -11,7 +11,9 @@ pages.dev release is authorised after the documented preceding work.
    where independent. Signed-in spoof replacement/direct-origin proof remains
    blocked. Asset review and documentation cleanup are already complete.
 2. Infographic Helper #31: verify category/order mapping, then show the Matrix and
-   50/50 layout prototype before making subjective details permanent.
+   50/50 layout prototype before making subjective details permanent. This
+   checkpoint is now owner-accepted; matching Stat icon replaces the diagram
+   for Stat steps. Next is Admin content and full integration.
 3. Discord login #15, Admin identity/owner authorisation first. Optional player
    cross-device saves remain a later goal with separate data/conflict decisions.
 4. Cloudflare Pages/pages.dev #32. Final release SHA, checks, URL/deployment and

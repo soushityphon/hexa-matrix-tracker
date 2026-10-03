@@ -9,12 +9,11 @@ with separate saved progress for each class.
 - Development is on `restore-scouter-retrieval`. [PR #22](https://github.com/soushityphon/hexa-matrix-tracker/pull/22)
   stays **draft and unmerged**. Main is older than the test implementation.
 - The [public test tracker](https://soushi-hexa-matrix-test.xsoushi.chatgpt.site)
-  is documented as deployed version **130**, Site source
-  `f4f6257d7402c8c9032593431509b250f5ee4393`, deployment
-  `appgdep_6abff2baf52481918069d978043a85ad`, environment revision **11**.
-  Asset checks and this documentation cleanup do not change its served build.
-  Native Sites metadata was rechecked for the release plan; this does not verify
-  signed-in requests or live app behaviour.
+  is deployed version **131**, Site source
+  `549f4a3ab8c9854d4ec44daf1a36bc11b9e0c688`, deployment
+  `appgdep_6ac074cf086081918968afaccb72b447`, environment revision **11**.
+  This increment changes only footer wording. Prototype/docs are not served.
+  Deployment succeeded; no signed-in requests or hosting proof are inferred.
 - [Issue #30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
   is the audit authority. Read its latest body and all comments before continuing.
   [Issue #23](https://github.com/soushityphon/hexa-matrix-tracker/issues/23)
@@ -32,6 +31,9 @@ with separate saved progress for each class.
 - [Release plan](docs/release-plan.md) separates preparation from the final immutable
   commit/deployment record in step 4. pages.dev is authorised after preceding work;
   PR #22 remains draft/unmerged until tested release readiness is established.
+- Helper mapping/prototype direction is owner-accepted. HEXA Stat steps will show
+  their matching Stat icon in place of the regular location diagram. Full Helper
+  Admin content/progression remains next; see [review](docs/helper-mapping-review.md).
 - Existing browser saves do not require migration. Preserve all Admin-managed
   server data at cutover, including intervening edits and future Helper content.
   Infographic export/print and multiple-character work remain deferred.

@@ -11,7 +11,7 @@ readiness. No extra generic permission round is required for authorised work.
 
 | Item | Prepared state |
 | --- | --- |
-| Reviewed GitHub baseline | `e86caf02ecd4b95c8561f38a72f524f8f1769c46`, `restore-scouter-retrieval`, draft PR #22 |
+| Reviewed GitHub baseline | `34ef8abcfe11510c7181f5a6208853eca947e4fb`, `restore-scouter-retrieval`, draft PR #22 |
 | Existing app acceptance | Complete, owner-reported 3 October; not new device/fault/security evidence |
 | Release scope | Current supported tracker plus Helper and verified Discord Admin login; exports/print and multiple characters deferred |
 | Target | Cloudflare Pages, pages.dev; account/project/runtime route not yet verified |
@@ -27,23 +27,25 @@ continue with no hosting/access change. Preserve the existing test Site for roll
 
 ## Verified current test deployment
 
-Native read-only Sites calls on 3 October confirm active/public owner access
-configuration, latest version 130 and this deployment's successful state. That
-metadata does not test signed-in admin requests, live assets or gateway security.
+Version 131 deployment succeeded on 3 October, preserving the public test
+audience and environment revision 11. It changes only the footer copy; prototype
+and documentation remain outside the Worker allowlist. This is native deployment
+status, not signed-in app/gateway verification.
 
 | Field | Current test value |
 | --- | --- |
 | Project | `appgprj_6aba0413861881918dc7fe10da066627` |
 | URL | https://soushi-hexa-matrix-test.xsoushi.chatgpt.site |
-| Saved version | `appgprj_6aba0413861881918dc7fe10da066627~appgver_1302fe0b04848191ae8c4014872154c7` |
-| Version number | 130 |
-| Site source SHA | `f4f6257d7402c8c9032593431509b250f5ee4393` |
-| Deployment | `appgdep_6abff2baf52481918069d978043a85ad`, succeeded |
+| Saved version | `appgprj_6aba0413861881918dc7fe10da066627~appgver_88b3d380663c8191940a826d95862db6` |
+| Version number | 131 |
+| Site source SHA | `549f4a3ab8c9854d4ec44daf1a36bc11b9e0c688` |
+| Deployment | `appgdep_6ac074cf086081918968afaccb72b447`, succeeded |
 | Environment revision | 11 |
-| Saved archive hash | `sha256:6cdfe776186dc1f388d8ce5f117d142a062c13d35ab80585ad887150b9eaf21b` |
+| Saved archive hash | `sha256:953abea33889184efc6b1385e58c0dbda5b5885ee0281d73bd563d87adc99443` |
 
-The saved archive exists. No deployment, rollback rehearsal, binding/secret
-change, live D1 read/write or source calculation was performed for this plan.
+The saved archive exists. No rollback rehearsal, binding/secret change, live D1
+read/write or source calculation was performed. Code rollback from 131 uses
+verified saved version 130, preserving Admin data and player saves.
 Do not redeploy unchanged app output just to publish repository documentation.
 
 ## Acceptance and data preservation
@@ -109,8 +111,8 @@ Future optional Discord player sync is separate from Admin login/release.
 ## Manual steps remaining
 
 No previously pending app/audit owner check needs repeating. The old hosting
-proof remains blocked as documented. Review the #31 prototype before full visual
-implementation. Establish missing OAuth/owner identity and Cloudflare deployment
+proof remains blocked as documented. The #31 prototype direction and matching-Stat-icon decision are now owner-accepted.
+Full Helper integration remains next. Establish missing OAuth/owner identity and Cloudflare deployment
 access when the documented steps reach #15/#32. Later changes need only affected
 checks. Final post-Helper/login smoke tests belong to the step 4 release record.
 

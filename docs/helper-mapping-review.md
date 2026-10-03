@@ -1,5 +1,15 @@
 # Helper mapping and visual checkpoint, 3 October 2026
 
+## Current owner review
+
+Soushi chose **Keep this layout** after seeing the Matrix/50/50 prototype.
+For HEXA Stat steps, Soushi chose **Show matching icon**: replace the location
+diagram with the existing matching Stat icon, retaining the heading and optional
+explanation. This resolves the missing Stat geometry decision without inventing
+regular Matrix coordinates. Mapping/prototype review is complete; full Helper
+integration, Admin content and Stat rendering are not yet implemented/deployed.
+The checkpoint below preserves the evidence and initial proposal.
+
 Priority 1 release preparation is reconciled with the latest #30 owner decisions.
 The old hosting identity investigation remains explicitly blocked, not completed.
 No new session/origin evidence is available; no repeat probes or access change.
@@ -43,7 +53,7 @@ HEXA Stat I, II and III appear in both classes' orders but are not any of the ag
 18 regular Matrix positions. No Stat coordinates or behaviour are invented.
 Owner decision needed: how should Helper display a next/hovered HEXA Stat step?
 One possible choice is its existing matching Stat icon outside the 18-node diagram;
-this is a proposal only. Full mapping sufficiency remains open until resolved.
+this is a proposal only. That decision was subsequently resolved in the current owner review above.
 A conflicting Admin category/core identity must be reported, not silently positioned.
 
 ## Prototype scope
@@ -65,10 +75,11 @@ is illustrative, not proof that the live app's unchanged layout is preserved.
 Static 1200px preview was rendered and visually inspected. Script syntax and pure
 class/Helper-off render paths pass. Native hover, responsive layout, real progression,
 preference/availability, Admin content and click preservation are not implemented
-or claimed tested. No Helper deployment or visual owner acceptance yet.
+or claimed tested. No Helper deployment. The shown visual direction is now owner-accepted; native
+interaction/responsive/full-feature acceptance remains separate.
 
-Show the prototype to Soushi before making subjective details permanent. Current
-checkpoint is visual review plus HEXA Stat location decision. Do not advance login
+Show the prototype to Soushi before making subjective details permanent. The visual/Stat decisions above are complete; next is data-backed Admin
+explanations and integration using existing revision safety. Do not advance login
 or release ahead of Helper unless the owner changes sequencing.
 
 ## Reproduce the prototype
