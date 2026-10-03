@@ -1,29 +1,29 @@
 # Eventual release and rollback plan
 
-## Status, 3 October 2026, Brisbane
+## Current preparation, 3 October 2026, Brisbane
 
-This is a planning/documentation result under Issue #30, not a release approval.
-PR #22 must stay **draft and unmerged**. The existing public test Site remains
-separate from eventual release even though Sites calls its deployment production.
-No release commit, release destination or migration is selected by this plan.
+Latest owner decisions in #30 supersede historical release/acceptance notes.
+Current order: hosting evidence and release preparation together, Helper #31,
+Discord login #15 with Admin first, then Cloudflare Pages/pages.dev #32.
+The owner has authorised that release after its prerequisites. PR #22 stays draft
+and unmerged during preparation until the tested release workflow establishes
+readiness. No extra generic permission round is required for authorised work.
 
-| Item | Evidence or state |
+| Item | Prepared state |
 | --- | --- |
-| Reviewed development baseline | `b2ff5bc49803ae9b26687bf5c7f165e20e198578`, `restore-scouter-retrieval`; not an approved release SHA |
-| Last app change | `dd490f685cf65f2229e543d52acde8a6f192b996`, resource icon refinement |
-| Subsequent changes | b8ee32a adds asset tests/docs; b2ff5bc cleans docs; neither changes build inputs |
-| Eventual release commit | **Not selected.** Record the full immutable GitHub SHA after scope/approval and any final fixes |
-| Eventual release destination | **Not approved in this audit.** Do not infer it from an old issue or brainstorming |
-| PR state | #22 open, draft, unmerged |
-| Owner acceptance | Partial, as indexed below; no blanket acceptance |
-| Hosting identity evidence | Partial/blocked; not an established live vulnerability |
+| Reviewed GitHub baseline | `e86caf02ecd4b95c8561f38a72f524f8f1769c46`, `restore-scouter-retrieval`, draft PR #22 |
+| Existing app acceptance | Complete, owner-reported 3 October; not new device/fault/security evidence |
+| Release scope | Current supported tracker plus Helper and verified Discord Admin login; exports/print and multiple characters deferred |
+| Target | Cloudflare Pages, pages.dev; account/project/runtime route not yet verified |
+| Final immutable release SHA | Record in priority 4 after Helper/login, with exact successful CI; not a Helper prerequisite |
+| Final URL/deployment/merge | Record actual successful results in priority 4; none claimed yet |
+| Hosting evidence | Partial/blocked, exact missing evidence in hosting-identity-review.md |
+| Browser-save migration | Not required; existing current-site saves/local backup behaviour remain intact |
+| Admin data | Preserve actual current data at cutover, including new edits and future Helper explanations |
 
-Before an eventual release, record its full GitHub SHA, branch/PR, included scope,
-exact CI runs, acceptance results or explicit owner deferrals, target host/audience,
-Site source SHA and saved/deployed version if using Sites, environment revision,
-known rollback and owner release/merge authorisation in #30. A GitHub SHA and a
-Site source SHA are different repositories' identifiers; do not substitute them.
-Any code/data/build-input change after validation needs appropriate new checks.
+Preparation is complete as a scope/acceptance/target/rollback record. Hosting proof
+is explicitly blocked, not complete. Independent Helper mapping/prototype work may
+continue with no hosting/access change. Preserve the existing test Site for rollback.
 
 ## Verified current test deployment
 
@@ -46,42 +46,40 @@ The saved archive exists. No deployment, rollback rehearsal, binding/secret
 change, live D1 read/write or source calculation was performed for this plan.
 Do not redeploy unchanged app output just to publish repository documentation.
 
-## Acceptance before release selection
+## Acceptance and data preservation
 
-Reconcile the latest #30 comments against this table before acting. Owner reports
-must remain separate from isolated tests and phone emulation. The owner decides
-whether remaining manual checks are completed or explicitly deferred for the
-chosen release scope; this plan cannot silently waive them or require new product
-features. Already accepted checks need no repeat unless a later change affects them.
+All previously pending existing app/audit acceptance is complete by Soushi's
+3 October report: visuals, native Import/no automatic downloads, progress/focus/
+refactors, Admin recovery/revisions/diagnostics and earlier motion/audio checks.
+Do not repeat them unless a later change affects them. No specific device/browser,
+live destructive fault test or signed-in hosting proof is inferred. Helper visual
+review and new login/release verification remain separate.
 
-| Area | Existing evidence | Remaining acceptance/evidence |
-| --- | --- | --- |
-| Saves, Retry, retained view, Undo, conflict choices, FD access | Owner reports for 99/101/103–106/108/109; regression and Chromium coverage | Later native picker/manual-only import flow (118/119), refactor/unchanged-refresh draft/focus behaviour (120–123) remains unaccepted |
-| Janus, Stat artwork, source/footer copy | Implemented/tested/deployed; 127 footer/entry functionality accepted | 110 attribution, 111 Janus/numbered Stats/Next Upgrade, 113 single source credit and Ko-fi image/wrapping checks remain |
-| Stat entry and priority headings | 127 entry and 130 optical icon refinement owner-accepted; automated geometry/interaction checks | 128 thin bars/numbers visual check; wider class/world scenarios not implied by one report. No extra physical-phone check required for these PC-focused refinements |
-| Admin recovery, revisions and diagnostics | Isolated SQLite/API/admin DOM fault/conflict/privacy tests pass | Ordinary owner read-only access, 100 recovery layout when present, 124–126 draft/conflict behaviour and 127 diagnostics acceptance remain separate; no live corruption/reset/restore needed |
-| Motion, audio and compact touch controls | Supplied phone/motion/reduced-motion/Off/audio checks owner-accepted; Chromium media mechanics pass | Remaining #28/#29 layout/interaction coverage is not inferred from those reports |
-| Hosting | Twelve historical anonymous app refusals; isolated guards and current native metadata | Trusted signed-in injection, authorised non-owner spoof replacement and direct-origin assurance remain open before any hosting change |
+The current Worker trusts Sites identity headers. pages.dev must instead verify
+Discord identity server-side and authorise the owner. OAuth application/callback,
+credentials and verified owner Discord ID must be established under #15. Server
+secrets remain server-only. Public local use remains available without login.
 
-No known calculation/data-integrity problem may be deployed merely to make a
-release available. Use [hosting evidence](hosting-identity-review.md),
-[rendered QA](rendered-qa.md) and [backlog](backlog.md) for exact limits. Generic
-403s, service bypass tokens, metadata and synthetic trusted headers cannot prove
-the signed-in gateway boundary.
+Preserve all Admin-managed data: Skills/names/tags, priority pairs, captures,
+cost/FD schedules, availability/settings, revisions and Helper explanations.
+Use current data at cutover, not fixtures or this preparation snapshot. Verify
+source/target identities, record counts/content and revisions, concurrent-edit
+handling and compatible rollback before switching. If binding the same database
+is unsupported, resolve the actual transfer and final-edit plan before proceeding.
+Do not reset/replace data as a shortcut. Actual Cloudflare account, supported Pages
+server/API/D1 route and secure credentials remain step 4 access prerequisites.
 
-A different host/domain needs its own reviewed authentication, D1/data preservation
-and rollback plan before implementation. The current handler trusts the Sites
-identity header and must not be copied to an untrusted origin unchanged. Existing
-local progress belongs to the browser's current origin; a host move must not promise
-that it transfers itself. The existing manual Export/Import is available, but no
-host migration, Discord authentication or account sync is approved here.
+Old browser/player saves need no migration or transfer gate. Do not delete them.
+Optional manual Export/Import stays available; do not require it for release.
+Future optional Discord player sync is separate from Admin login/release.
 
 ## Validation and publication sequence
 
 1. Re-read #30, #23, linked requirements, current PR/head and this plan. Record
    changes since the reviewed baseline; keep captures, calculations and saves intact.
-2. Freeze the chosen scope and full GitHub SHA after the required owner decisions.
-   Keep #22 draft/unmerged until explicit authorisation changes that restriction.
+2. Freeze the chosen scope and full GitHub SHA after Helper/login and unresolved material decisions.
+   This is priority 4 after Helper/login; keep #22 draft/unmerged until tested
+   release readiness establishes the documented merge path.
 3. With Node 24.19.0 and locked dependencies, run `npm ci --ignore-scripts`,
    `npm run check` and `node scripts/review-asset-delivery.mjs`. The existing
    GitHub Tracker checks must pass on that exact SHA, including ordinary browser
@@ -105,40 +103,16 @@ host migration, Discord authentication or account sync is approved here.
    in #30. A saved version or source push alone is not a successful deployment.
 8. Refresh existing tracker/admin tabs without clearing storage. Apply the relevant
    short smoke checks below, record owner acceptance separately and retain the
-   preceding known saved version. A test deployment does not approve eventual
-   release, PR merge or a new host.
+   preceding known saved version. A test deployment is separate from the later authorised pages.dev release
+   and its actual merge/deployment record.
 
-## Short owner checks for the current pending work
+## Manual steps remaining
 
-These combine existing checks without creating a new mandatory destructive test.
-Keep current storage. Restore any voluntary temporary progress edit with Undo.
-
-1. Refresh, switch Hoyoung/Ren and Tracker/Infographic, then refresh again. Expect
-   each class's levels, Stat lines/unlocks, resources/settings and figures to remain.
-   Open a Stat editor without changing it: thin bars and numbers share a row.
-   Check Janus in Tracker and optional Summary inclusion in both views; priority
-   order/FD must not change when the Summary option changes.
-2. Scroll to each view's footer. Expect one MapleScouter credit, A project by Soushi
-   and the original Ko-fi button. Open an existing completed Stat FD explanation
-   and expect the Inven general-average wording. No progress edits are needed.
-3. Export current progress manually; choose that valid file through Import. Expect
-   the overwrite confirmation. Cancel must preserve progress and download nothing.
-   Confirming the freshly exported unchanged file is optional: included classes
-   should restore without another download. It intentionally clears their previous
-   infographic undo history, so skip confirmation if that history must be kept.
-4. Focus an existing Stat input, switch away for over 30 seconds, return and wait
-   for an unchanged successful refresh. Expect editor/input focus retained and the
-   bottom notice to leave panels in place. Open/close an FD dialog and expect focus
-   back on its value. Source changes are tested in isolated fixtures, not live edits.
-5. Open Admin Panel via normal sign-in; switch class and Skills/Priorities read-only.
-   Expect existing names, availability and records. A damaged section, if present,
-   should coexist with valid records and offer its raw download. Do not Save, Grab,
-   Delete, Restore or Reset for this check. Admin conflicts use isolated tests or
-   the earlier optional #30 owner steps, not a required live race here.
-
-None of these steps establishes signed-in non-owner spoof replacement or origin
-isolation. Record which steps were actually checked, and any existing-state checks
-that were unavailable, rather than a blanket “all accepted”.
+No previously pending app/audit owner check needs repeating. The old hosting
+proof remains blocked as documented. Review the #31 prototype before full visual
+implementation. Establish missing OAuth/owner identity and Cloudflare deployment
+access when the documented steps reach #15/#32. Later changes need only affected
+checks. Final post-Helper/login smoke tests belong to the step 4 release record.
 
 ## Rollback without losing data
 
@@ -177,5 +151,6 @@ It is not a release requirement or an active format/scope question. Revisit only
 on a new owner request. This does not defer player backup Export/Import or the
 existing interactive Infographic. Choose a target, budget planning, snapshots,
 multiple characters, personal FD optimisation, invented RNG costs and combined FD
-remain excluded/deferred. Further classes and optional sync remain later work.
+remain excluded/deferred. Further classes and optional player sync remain later work. Discord Admin login
+is priority 3, and pages.dev release priority 4.
 This plan adds no export, legend, login, migration, calculation or release feature.

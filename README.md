@@ -19,15 +19,22 @@ with separate saved progress for each class.
   is the audit authority. Read its latest body and all comments before continuing.
   [Issue #23](https://github.com/soushityphon/hexa-matrix-tracker/issues/23)
   retains the wider product requirements and history.
-- Save recovery, manual backups, loading/Retry, Undo, FD access, module separation,
-  redraw/focus improvements and admin revisions are implemented and tested.
-  Owner acceptance is separate and partial. Version 130 icon alignment is accepted.
-- Hosting identity verification remains **blocked/partial**. Asset delivery review
-  is complete; retain current policy. [Release planning](docs/release-plan.md) now
-  records acceptance, publication and rollback. No release commit is selected;
-  eventual release is **unapproved**. All infographic export/print work is deferred
-  by the owner on 3 October. Continue hosting evidence and existing acceptance
-  checks; export is not a release requirement.
+- Existing app/audit work is implemented, tested and deployed through version 130.
+  Soushi accepted all previously pending app checks on 3 October. This is owner-
+  reported acceptance, not new device, fault-injection or hosting proof.
+- Current order under #30: remaining hosting evidence and release preparation
+  together, Helper [#31](https://github.com/soushityphon/hexa-matrix-tracker/issues/31),
+  Discord Admin login [#15](https://github.com/soushityphon/hexa-matrix-tracker/issues/15),
+  then Cloudflare Pages release [#32](https://github.com/soushityphon/hexa-matrix-tracker/issues/32).
+- Hosting proof remains blocked/partial. No repeat investigation without new
+  evidence or an authorised non-owner session/verified origin. This does not block
+  independent Helper mapping/prototype work after release preparation.
+- [Release plan](docs/release-plan.md) separates preparation from the final immutable
+  commit/deployment record in step 4. pages.dev is authorised after preceding work;
+  PR #22 remains draft/unmerged until tested release readiness is established.
+- Existing browser saves do not require migration. Preserve all Admin-managed
+  server data at cutover, including intervening edits and future Helper content.
+  Infographic export/print and multiple-character work remain deferred.
 
 See the [backlog index](docs/backlog.md) for old issues, acceptance and deferred
 work. [Historical notes](docs/development-history.md) preserve the previous README.
@@ -78,7 +85,8 @@ or completion.
 FD controls support hover, tap and keyboard explanations with modal focus return.
 Full transitions compound multiplicatively; partial transitions retain the approved
 Fragment-cost-share estimate. Missing source FD stays blank. The shared footer
-says **All priority data from MapleScouter** and **A project by Soushi**, with the
+says **Data sourced from MapleScouter and community resources on Inven and Naver.**
+and **A project by Soushi**, with the
 existing Ko-fi link. Detailed source dialogs are declined.
 
 Hoyoung clouds and Ren petals use original local artwork. Animations honours

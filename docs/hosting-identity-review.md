@@ -9,7 +9,8 @@ checkbox open. No live access vulnerability was established.
 
 This is a test/documentation batch. It changes no Worker, browser UI, captured
 data, calculations, player saves, schema, bindings, secrets or hosting policy.
-PR #22 remains draft and unmerged; eventual release is unapproved. The original
+PR #22 remains draft and unmerged. The owner authorises pages.dev after Helper
+and Discord Admin login, under the latest #30 order. The original
 anonymous checks below used version 128. Current test version 130 retains the
 same identity handler and hosting configuration, with Site source
 `f4f6257d7402c8c9032593431509b250f5ee4393` and deployment
@@ -83,23 +84,23 @@ Existing compiled delivery checks continue to verify that private source,
 manifests and development files are not public assets. This report and the new
 test are not added to the Worker asset list.
 
-## Remaining checks before a hosting change
+## Remaining hosting proof and sequencing
 
-1. Owner: open Admin Panel on the existing test Site and sign in through its
-   normal ChatGPT link if needed. Expect saved Skills and Priorities to load.
-   Do not save, delete, restore, reset or Grab Scouter info for this check.
-   Record the result as owner-reported acceptance, not an automated gateway pass.
-2. Obtain supported platform evidence that dispatch strips/replaces inbound
-   identity headers for anonymous and authenticated requests, and that the
-   deployed Worker cannot be reached by an untrusted direct origin. Alternatively,
-   use an authorised signed-in non-owner session to repeat a read-only owner-email
-   spoof and confirm the app still denies it. Never reuse or disclose owner cookies.
-3. Keep the full verification item open until its signed-in and origin evidence
-   is recorded. Do not make a hosting/access/authentication change based on the
-   anonymous checks alone. If a different host is proposed, review its supported
-   identity mechanism before implementation.
+The owner accepted all pending existing app/audit checks on 3 October, including
+ordinary Admin access. That does not prove signed-in non-owner spoof replacement
+or direct-origin isolation. Do not ask for the accepted app check again.
 
-After this item, continue the documented asset-delivery review, documentation
-cleanup and eventual-release/acceptance/rollback review. Infographic export still
-needs the owner's format/scope decision; multiple characters and optional sync
-remain deferred.
+Exact blocker: no supported guarantee of inbound-header stripping/replacement or
+origin isolation, no authorised signed-in non-owner session and no verified
+alternate origin. The 3 October guidance/state review adds no such guarantee.
+Do not repeat the same probes without new evidence or a new approach; never guess
+origin URLs, reuse owner cookies or count service bypass credentials as user proof.
+
+The full hosting check remains open. After independent release-record preparation,
+continue Helper mapping/prototype work under #31. This introduces no authentication
+or hosting change. Resolve the old-host boundary with supported evidence or a
+reviewed replacement before changing access/hosting. #15 must establish verified
+Discord identity and owner authorisation for pages.dev, without trusting Sites
+headers there. #32 verifies Cloudflare access and current Admin-data preservation.
+The final release SHA/deployment record belongs to priority 4, not before Helper.
+Export/print stays deferred. Existing browser saves do not require migration.
