@@ -10,11 +10,12 @@ pages.dev release is authorised after the documented preceding work.
 1. Remaining hosting evidence plus [release preparation](release-plan.md), together
    where independent. Signed-in spoof replacement/direct-origin proof remains
    blocked. Asset review and documentation cleanup are already complete.
-2. Infographic Helper #31: verify category/order mapping, then show the Matrix and
-   50/50 layout prototype before making subjective details permanent. This
-   checkpoint is now owner-accepted; matching Stat icon replaces the diagram
-   for Stat steps. Admin content is owner-accepted; live integration is implemented,
-   with final checks/deployment and new live-feature acceptance recorded separately.
+2. Infographic Helper #31: category/order mapping is verified, Admin content
+   accepted. The owner's newer decision replaces the Summary split/next guide
+   with a hover-only popup. Restore Summary, retain full-width priority icons,
+   show Matrix then icon/tag/name then optional text. Stats use their matching
+   numbered icon. Permanent implementation is authorised without another prototype
+   gate; new feature acceptance remains separate.
 3. Discord login #15, Admin identity/owner authorisation first. Optional player
    cross-device saves remain a later goal with separate data/conflict decisions.
 4. Cloudflare Pages/pages.dev #32. Final release SHA, checks, URL/deployment and

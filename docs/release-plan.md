@@ -25,7 +25,7 @@ Preparation is complete as a scope/acceptance/target/rollback record. Hosting pr
 is explicitly blocked, not complete. Independent Helper mapping/prototype work may
 continue with no hosting/access change. Preserve the existing test Site for rollback.
 
-## Verified current test deployment, version 133
+## Historical test deployment, version 133, Summary layout superseded
 
 Live Infographic Helper is implemented in 468a4d9, with geometry/overflow fixes
 in c70bf03e316ca7a196f86490e25130b929e745d4. PR CI 37095867355 and push CI
@@ -173,7 +173,8 @@ Future optional Discord player sync is separate from Admin login/release.
 
 No previously pending app/audit owner check needs repeating. The old hosting
 proof remains blocked as documented. The #31 prototype direction and matching-Stat-icon decision are now owner-accepted.
-Live Helper integration is implemented; only its new owner smoke check remains.
+The owner supersedes the Summary split with a permanent hover-only popup.
+Only the new hover UI acceptance check remains after tested deployment.
 Establish missing OAuth/owner identity and Cloudflare deployment
 access when the documented steps reach #15/#32. Later changes need only affected
 checks. Final post-Helper/login smoke tests belong to the step 4 release record.

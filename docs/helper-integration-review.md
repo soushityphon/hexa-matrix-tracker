@@ -1,4 +1,46 @@
-# Live Infographic Helper, 3 October 2026, Brisbane
+# Hover-only Infographic Helper, 3 October 2026, Brisbane
+
+## New owner decision and implementation
+
+Soushi rejects version133's Summary split and authorises a permanent hover-only
+popup without another prototype gate. This replaces the 50/50 Summary and automatic
+next-step guide. The pre-Helper Summary structure/metrics and full-width priority
+grid are restored. The control sits beside Hide completed in Upgrade Priority.
+
+Popup order: Matrix with verified target at top, existing icon/tag/name below,
+optional Admin text below that. Stats use the matching existing numbered icon.
+Blank text is omitted; paired bold/lines retain the safe renderer. Existing Matrix
+mapping, source icons, locks/availability and completion-independent geometry stay.
+Admin content, class support and explicit browser preference are unchanged.
+
+No guide at rest. Mouse/pen hover dwells 150ms before opening. Same-skill glow is
+immediate and works with Helper off. A 180ms exit grace lets the pointer cross into
+the popup; it stays open for reading/scrolling and closes after leaving both.
+Escape/blur, view/class/scope changes and completion close it without pinning or
+opening a next guide. Touch does not open a hover guide or repurpose completion.
+
+Fixed popup stays inside viewport bounds. Prefer beside the source icon, otherwise
+above/below with bounded height so the source stays clickable. Text and popup scroll
+when needed. Existing checkpoint handler runs unchanged; hover/control/read actions
+never write progress or Admin data. No schema/binding/auth/source/calculation change.
+
+Meaningful app and Chromium checks cover no-rest display, dwell/exit/reading,
+content order/safe formatting, long-text wheel scrolling, viewport bounds, original
+Summary geometry with on/off, same-skill glow, Stat icons, native completion/reverse
+Undo, preference reload, unsupported class, touch/view dismissal and progress safety.
+Record actual CI/deployment/new owner acceptance separately in #30/#31.
+
+Rollback is saved version133 with the explanation-aware backend; it restores the
+rejected Summary layout but preserves current Admin explanations/data. Do not use
+version131's older writable backend once explanations exist or restore stale data.
+Admin editing and prior app/footer acceptance are complete. New hover UI acceptance
+remains pending. Next is that affected check, then Discord Admin login #15 and
+pages.dev #32. Hosting proof remains separately blocked. Export/print and multiple
+characters stay deferred.
+
+## Historical version133 evidence, superseded UI
+
+# Historical Summary Helper, version 133
 
 ## Behaviour and scope
 

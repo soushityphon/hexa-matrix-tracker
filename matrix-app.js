@@ -178,10 +178,10 @@ syncView();
 const {renderPriority, checkMaterialIcons}=createPriorityRenderer({document});
 const statImageHandlers=new WeakSet();
 const matrixRenderer=createMatrixRenderer({document, checkMaterialIcons});
-const helper=createInfographicHelper({document,grid:$('#infographic-grid'),control:$('#infographic-helper'),panel:$('#helper-panel'),summary:$('.summary-panel'),
+const helper=createInfographicHelper({document,grid:$('#infographic-grid'),control:$('#infographic-helper'),panel:$('#helper-panel'),
   readPreference:key=>playerStorage.readPreference(key),writePreference:(key,value)=>playerStorage.writePreference(key,value)});
 function syncHelper() {
-  helper.update({nodes:NODES,stats:statNodes,saved,entries:infographicScope ? infographicDisplayCheckpoints(infographicEntries,saved,infographicScope) : [],
+  helper.update({nodes:NODES,stats:statNodes,
     available:new Set(infographicEntries.map(entry=>entry.skill)),visible:view==='infographic' && !!infographicScope,
     context:JSON.stringify([activeClass,infographicScope])});
 }

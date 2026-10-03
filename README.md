@@ -33,13 +33,12 @@ with separate saved progress for each class.
 - [Release plan](docs/release-plan.md) separates preparation from the final immutable
   commit/deployment record in step 4. pages.dev is authorised after preceding work;
   PR #22 remains draft/unmerged until tested release readiness is established.
-- Helper mapping/prototype direction is owner-accepted. HEXA Stat steps will show
-  their matching Stat icon in place of the regular location diagram. Full Helper
-  Admin content editing and safe line-break/bold preview are now implemented;
-  live Helper availability/preference/progression/hover is now implemented under
-  the approved layout and existing click/undo behaviour. New live-feature owner
-  acceptance remains separate. See [integration review](docs/helper-integration-review.md),
-  [mapping review](docs/helper-mapping-review.md) and [content review](docs/helper-content-review.md).
+- Helper mapping and Admin content are accepted. The owner supersedes the earlier
+  Summary split: restore the old Summary and use a hover-only popup, Matrix above
+  icon/tag/name above optional text, matching Stat icon for Stats. No guide at rest
+  or automatic next-step preview. Hover-only integration is implemented; tests,
+  deployment and new owner acceptance are recorded separately in #30/#31.
+  See [integration review](docs/helper-integration-review.md).
 - Existing browser saves do not require migration. Preserve all Admin-managed
   server data at cutover, including intervening edits and future Helper content.
   Infographic export/print and multiple-character work remain deferred.
