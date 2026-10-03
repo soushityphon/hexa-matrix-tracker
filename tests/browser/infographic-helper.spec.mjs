@@ -36,9 +36,11 @@ for(const job of ['hoyoung','ren'])test(job+' live Helper location, hover, click
   await grid.locator('[data-checkpoint='+JSON.stringify(checkpoint)+']').click();
   await page.locator('.summary-heading h2').hover();
   await expect(panel).toHaveAttribute('data-skill',nextSkill);
+  const gridTop=await grid.evaluate(node=>node.getBoundingClientRect().top+scrollY);
   await grid.locator('[data-skill="HEXA Stat II"]').first().hover();
   await expect(panel.locator('.helper-stat-icon')).toHaveAttribute('src','assets/hexa-stats/stat-2-unlocked.png');
   await expect(panel.locator('[data-location]')).toHaveCount(0);
+  expect(await grid.evaluate(node=>node.getBoundingClientRect().top+scrollY)).toBe(gridTop);
   await page.locator('.summary-heading h2').hover();
   const geometry=await page.locator('.summary-body').evaluate(node=>({columns:getComputedStyle(node).gridTemplateColumns.split(' ').map(Number.parseFloat),width:document.documentElement.clientWidth,overflow:document.documentElement.scrollWidth}));
   expect(geometry.overflow).toBeLessThanOrEqual(geometry.width);

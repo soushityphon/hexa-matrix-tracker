@@ -98,3 +98,5 @@ input[type="checkbox"]{accent-color:var(--ui-accent)}
 
 /* Align resource heading boxes, then offset their padded/glowing artwork optically. */
 .priority-table .material-heading{display:flex;width:100%;justify-content:flex-end}.priority-table .material-heading img{display:block;transform:translateX(4px)}
+
+@media(max-width:380px){.world-picker label{min-width:0}.world-picker span{white-space:normal}}
