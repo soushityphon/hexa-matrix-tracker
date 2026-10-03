@@ -7,7 +7,10 @@ The tracker is live at https://hexa-matrix-tracker.pages.dev on app commit
 Cloudflare reports deployment 5f2637eb-952b-4ede-9332-0cce5d88143a successful.
 Owner login, dropdown ordering and functional Admin data are accepted.
 See [current production record](pages-production-record.md) for evidence,
-same-database Pages rollback and remaining signed-in session/logout/non-owner checks.
+same-database Pages rollback and remaining signed-in session-cookie check.
+Owner Pages logout/revisit and real non-owner OAuth refusal are accepted.
+The production record includes Chrome steps for cookie attributes and expiry;
+never share cookie values. bc3bca2 push/PR CI37130906148/37130908427 passed.
 PR22 remains draft/unmerged. Older preparation-only statements below are historical
 where superseded by this record. Never reimport stale data to repeat acceptance.
 

@@ -16,8 +16,10 @@ pages-production. [PR22](https://github.com/soushityphon/hexa-matrix-tracker/pul
 is draft/unmerged; main is older. [Issue30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
 is the current progress authority. Issue23 retains product history.
 
-Next: signed-in browser session-cookie verification, Pages logout/revisit and
-real non-owner OAuth refusal, then final release acceptance and merge readiness.
+Owner Pages logout/revisit and real non-owner OAuth refusal are now accepted.
+Next: signed-in browser session-cookie verification, then final release acceptance
+and merge readiness. The production record has a short Chrome check that shares
+only cookie attributes, never cookie values.
 Anonymous live state-cookie/access/logout checks passed; they are separate from
 signed-in browser evidence. Functional Admin-data testing is owner-accepted,
 not a new exact final raw-data export comparison.

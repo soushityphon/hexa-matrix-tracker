@@ -6,9 +6,10 @@ The app is live on Pages. Owner Discord sign-in, functional Admin-data testing,
 public dropdown ordering, existing app/audit work and the Infographic Helper are
 accepted. Do not repeat these checks without a relevant later change.
 
-1. Verify signed-in session-cookie metadata/storage and expiry, owner logout/revisit
-   and real non-owner OAuth refusal on Pages. Anonymous live guards/state-cookie/
-   logout response checks have passed with the limits in the production record.
+1. Verify signed-in session-cookie metadata/storage and expiry using the Chrome
+   steps in the production record. Pages owner logout/revisit and real non-owner
+   OAuth refusal are now owner-reported accepted, no repeat needed. Anonymous live
+   guards/state-cookie/logout response checks retain their narrower evidence.
 2. Finalise release acceptance and PR22 merge readiness. Current deployed app
    commit is 6ab7c1cc189a34c563d956f52870b8640f44fd4e; exact-source/production CI
    and Cloudflare deployment succeeded. PR22 stays draft/unmerged for now.
