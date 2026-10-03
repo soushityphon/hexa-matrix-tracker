@@ -56,9 +56,9 @@ export function createInfographicHelper({document,grid,control,panel,readPrefere
     renderHelperExplanation(explanation,target.helperExplanation || '');
     panel.style.setProperty('--helper-accent',skillAccent(target.short));
     if(state.stats.some(node=>node.short===target.short)){
-      const stat=document.createElement('img');stat.className='helper-stat-icon';stat.src=target.icon;stat.alt=target.name || target.short;
-      stat.addEventListener('error',()=>{stat.hidden=true;});location.replaceChildren(stat);
+      location.hidden=true;location.replaceChildren();
     }else{
+      location.hidden=false;
       try{renderMatrixLocation(location,catalogueLocations(state.nodes,state.available),target);}
       catch{location.textContent='Matrix location unavailable. The saved category and core order need review.';}
     }

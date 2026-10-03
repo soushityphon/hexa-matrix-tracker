@@ -23,6 +23,8 @@ for(const job of ['hoyoung','ren'])test(job+' desktop hover Helper and no-hover 
     await page.locator('#class').selectOption(job==='hoyoung'?'ren':'hoyoung');await expect(page.locator('.helper-control')).toBeHidden();
     await page.screenshot({path:info.outputPath('helper-excluded-phone.png'),fullPage:false});await expect(page.locator('.helper-control')).toBeHidden();return;
   }
+  expect(await grid.locator('[data-checkpoint][title]').count()).toBe(0);
+  await expect(grid.locator('[data-checkpoint]').first()).toHaveAttribute('aria-label',/level.*complete/i);
   await expect(control).toBeChecked();await expect(panel).toBeHidden();
   expect(await page.locator('.summary-panel #helper-panel').count()).toBe(0);
   const geometry=()=>page.locator('.summary-panel').evaluate(node=>({height:node.getBoundingClientRect().height,columns:getComputedStyle(node.querySelector('.summary-metrics')).gridTemplateColumns}));
@@ -35,7 +37,7 @@ for(const job of ['hoyoung','ren'])test(job+' desktop hover Helper and no-hover 
   await expect(panel.locator('[data-location]')).toHaveCount(18);await expect(panel.locator('[data-target="true"]')).toHaveCount(1);
   expect(await geometry()).toEqual(summary);
   const bounds=await panel.evaluate(node=>{const p=node.getBoundingClientRect(),l=node.querySelector('.helper-location').getBoundingClientRect(),h=node.querySelector('.helper-heading').getBoundingClientRect(),t=node.querySelector('.helper-explanation').getBoundingClientRect();return {left:p.left,top:p.top,right:p.right,bottom:p.bottom,width:innerWidth,height:innerHeight,order:l.bottom<=h.top && h.bottom<=t.top};});
-  expect(bounds.order).toBe(true);expect(bounds.left).toBeGreaterThanOrEqual(0);expect(bounds.top).toBeGreaterThanOrEqual(0);expect(bounds.right).toBeLessThanOrEqual(bounds.width);expect(bounds.bottom).toBeLessThanOrEqual(bounds.height);
+  expect(bounds.right-bounds.left).toBeCloseTo(460,0);expect(bounds.order).toBe(true);expect(bounds.left).toBeGreaterThanOrEqual(0);expect(bounds.top).toBeGreaterThanOrEqual(0);expect(bounds.right).toBeLessThanOrEqual(bounds.width);expect(bounds.bottom).toBeLessThanOrEqual(bounds.height);
   // Real pointer transfer across the small gap, then wheel scrolling inside text.
   const box=await panel.boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
   await expect(panel).toBeVisible();await panel.locator('.helper-explanation').hover();await page.mouse.wheel(0,150);
@@ -44,7 +46,7 @@ for(const job of ['hoyoung','ren'])test(job+' desktop hover Helper and no-hover 
   await page.screenshot({path:info.outputPath('helper-popup.png'),fullPage:false});await expect(panel).toBeVisible();
   await page.locator('.summary-panel h2').hover();await expect(panel).toBeHidden();await expect(grid.locator('.skill-hover')).toHaveCount(0);
   // A Stat uses its existing numbered icon, with no guessed Matrix coordinates.
-  const stat=grid.locator('[data-skill="HEXA Stat II"]').first();await stat.hover();await expect(panel.locator('.helper-stat-icon')).toHaveAttribute('src','assets/hexa-stats/stat-2-unlocked.png');await expect(panel.locator('[data-location]')).toHaveCount(0);
+  const stat=grid.locator('[data-skill="HEXA Stat II"]').first();await stat.hover();await expect(panel).toBeVisible();await expect(panel.locator('.helper-location')).toBeHidden();await expect(panel.locator('.helper-stat-icon')).toHaveCount(0);await expect(panel.locator('.helper-heading img')).toHaveAttribute('src','assets/hexa-stats/stat-2-unlocked.png');await expect(panel.locator('.helper-heading')).toContainText('HEXA Stat II');await page.screenshot({path:info.outputPath('helper-stat-compact.png'),fullPage:false});await expect(panel).toBeVisible();await expect(panel.locator('[data-location]')).toHaveCount(0);
   await page.keyboard.press('Escape');await expect(panel).toBeHidden();
   // Use the actual next checkpoint and existing reverse Undo, with no automatic guide.
   const first=grid.locator('[aria-current="step"]'),checkpoint=await first.getAttribute('data-checkpoint');

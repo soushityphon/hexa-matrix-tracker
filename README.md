@@ -14,7 +14,7 @@ with separate saved progress for each class.
   `appgdep_6ac08b8a78bc81918d52f739b1f2e85c`, environment revision **11**.
   This increment restores Summary and adds the owner-requested desktop hover
   popup. Helper is excluded on phones/no-hover devices. Admin content is accepted;
-  new live Helper acceptance remains pending. Prototype/docs are not served.
+  version136 hover behaviour is owner-reported accepted. The new popup size, tooltip removal and compact Stat heading remain pending deployment/review. Prototype/docs are not served.
   Deployment succeeded; no signed-in requests or hosting proof are inferred.
 - [Issue #30](https://github.com/soushityphon/hexa-matrix-tracker/issues/30)
   is the audit authority. Read its latest body and all comments before continuing.
@@ -35,10 +35,10 @@ with separate saved progress for each class.
   PR #22 remains draft/unmerged until tested release readiness is established.
 - Helper mapping and Admin content are accepted. The owner supersedes the earlier
   Summary split: restore the old Summary and use a hover-only popup, Matrix above
-  icon/tag/name above optional text, matching Stat icon for Stats. No guide at rest
+  icon/tag/name above optional text, small icon/name heading for Stats, without a large duplicate icon. No guide at rest
   or automatic next-step preview. Helper is excluded on phones/no-hover devices.
   Hover-only integration is implemented, tested and deployed in version136;
-  new desktop UI acceptance remains pending in #30/#31.
+  version136 behaviour is owner-reported accepted. A 460px popup and compact Stat heading are implemented in the current batch, pending deployment and affected visual acceptance in #30/#31.
   See [integration review](docs/helper-integration-review.md).
 - Existing browser saves do not require migration. Preserve all Admin-managed
   server data at cutover, including intervening edits and future Helper content.

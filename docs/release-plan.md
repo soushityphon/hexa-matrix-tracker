@@ -1,5 +1,19 @@
 # Eventual release and rollback plan
 
+## Owner adjustment, 3 October 2026, Brisbane
+
+Soushi reports version136 works. Its hover behaviour is owner-reported accepted;
+the new visual changes below have separate acceptance after deployment.
+Remove native title tooltips from Infographic checkpoint buttons while retaining
+their accessible level/action labels. Use a 460px popup, about 1.6 times the prior
+280px width, with a larger Matrix, heading and readable text, bounded to the viewport.
+For Stats hide the location area and start with the small existing icon/name
+heading, then optional explanation. No duplicate large Stat icon.
+Hover-only behaviour, phone exclusion, preference, completion/reverse Undo,
+verified geometry and all progress/Admin data remain unchanged. Only the changed
+size, absence of competing tooltip and compact Stat presentation need owner review.
+
+
 ## Current preparation, 3 October 2026, Brisbane
 
 Latest owner decisions in #30 supersede historical release/acceptance notes.
@@ -25,7 +39,7 @@ Preparation is complete as a scope/acceptance/target/rollback record. Hosting pr
 is explicitly blocked, not complete. Independent Helper mapping/prototype work may
 continue with no hosting/access change. Preserve the existing test Site for rollback.
 
-## Verified current test deployment, version 136
+## Historical accepted hover test deployment, version 136
 
 Owner-authorised permanent hover-only Helper replaces the rejected version133
 Summary split and next-guide presentation. Summary and priority width are restored.

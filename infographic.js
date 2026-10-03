@@ -106,7 +106,8 @@ export function createInfographic({document,window,grid,onClick}) {
         if(entry.key===next)tile.setAttribute('aria-current','step');else tile.removeAttribute('aria-current');
         const action=done ? undo ? 'Undo completion' : 'Complete. Edit progress in Tracker' : 'Mark complete';
         tile.setAttribute('aria-label',`${entry.name}, ${entry.label === 'MAX'?'maximum level '+entry.target:'level '+entry.target}. ${action}.`);
-        tile.title=tile.getAttribute('aria-label');
+        // Accessible action label stays available without a competing native tooltip.
+        tile.removeAttribute('title');
         // Keep existing DOM nodes so completion opacity can fade after a click.
         const at=grid.children[position + 1];
         if(at!==tile)grid.insertBefore(tile,at || null);

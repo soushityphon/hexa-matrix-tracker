@@ -1,5 +1,19 @@
 # Hover-only Infographic Helper, 3 October 2026, Brisbane
 
+## Owner adjustment, 3 October 2026, Brisbane
+
+Soushi reports version136 works. Its hover behaviour is owner-reported accepted;
+the new visual changes below have separate acceptance after deployment.
+Remove native title tooltips from Infographic checkpoint buttons while retaining
+their accessible level/action labels. Use a 460px popup, about 1.6 times the prior
+280px width, with a larger Matrix, heading and readable text, bounded to the viewport.
+For Stats hide the location area and start with the small existing icon/name
+heading, then optional explanation. No duplicate large Stat icon.
+Hover-only behaviour, phone exclusion, preference, completion/reverse Undo,
+verified geometry and all progress/Admin data remain unchanged. Only the changed
+size, absence of competing tooltip and compact Stat presentation need owner review.
+
+
 ## New owner decision and implementation
 
 Soushi rejects version133's Summary split and authorises a permanent hover-only
@@ -8,7 +22,7 @@ next-step guide. The pre-Helper Summary structure/metrics and full-width priorit
 grid are restored. The control sits beside Hide completed in Upgrade Priority.
 
 Popup order: Matrix with verified target at top, existing icon/tag/name below,
-optional Admin text below that. Stats use the matching existing numbered icon.
+optional Admin text below that. Stats omit the location area and start with the small existing icon/name heading.
 Blank text is omitted; paired bold/lines retain the safe renderer. Existing Matrix
 mapping, source icons, locks/availability and completion-independent geometry stay.
 Admin content, class support and explicit browser preference are unchanged.
@@ -42,7 +56,7 @@ remains pending. Next is that affected check, then Discord Admin login #15 and
 pages.dev #32. Hosting proof remains separately blocked. Export/print and multiple
 characters stay deferred.
 
-## Verified current test deployment, version 136
+## Historical accepted hover test deployment, version 136
 
 Owner-authorised permanent hover-only Helper replaces the rejected version133
 Summary split and next-guide presentation. Summary and priority width are restored.

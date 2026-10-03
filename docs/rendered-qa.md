@@ -24,17 +24,15 @@ The owner accepts all previously pending app/audit checks and version132 Admin
 content/preview. Do not repeat old Import, audio, Stat, focus or Admin checks unless
 later changes affect them. Earlier device-specific evidence remains limited.
 
-The new hover popup replaces version133's rejected Summary layout. Refresh without
-clearing saves and open Infographic for a class with saved content. At rest, expect
-the original Summary and no popup. Hover an icon: expect Matrix, icon/tag/name and
-optional text in that order; Stats use matching numbered icons. Move into the popup
-and scroll long text; expect it to stay readable. Exit closes. Click/reverse Undo
-retains existing progress behaviour. Helper Off persists after reload, with hover
-highlighting but no popup. This is the only new owner UI check.
+Version136 hover behaviour is owner-reported accepted. The affected check for the
+new adjustment is the larger viewport-bounded popup, no competing native tooltip,
+and Stat heading with just its small icon/name, followed by optional text. Skill
+popups retain Matrix, icon/tag/name and optional text. No repeat progress, preference,
+Admin or phone Helper check is needed from the owner for this visual batch.
 
 Chromium uses isolated catalogue data and external-image stubs across both classes
 and all three widths. Desktop native pointer/wheel checks cover popup reading, safe long
-text, viewport fit, unchanged Summary geometry, Stats, click/reverse Undo and saved
+text, viewport fit, 460px desktop width, absent native tooltip with accessible labels retained, unchanged Summary geometry, compact Stat heading with no duplicate large icon, click/reverse Undo and saved
 preference. Phone cases verify the owner-requested Helper exclusion: hidden
 control, no popup/glow activation and untouched preference/progress. Fixture checks do not prove live icons, physical devices or hosting
 identity. Record implementation/tests/deployment/acceptance separately in #30/#31.

@@ -36,6 +36,7 @@ const q=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)];
 const dwell=()=>new Promise(resolve=>setTimeout(resolve,210));
 const hover=async tile=>{tile.dispatchEvent(new win.PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));await dwell();};
 const leave=async()=>{q('#infographic-grid').dispatchEvent(new win.PointerEvent('pointerleave'));await dwell();};
+assert(all('[data-checkpoint]').every(tile=>!tile.hasAttribute('title') && tile.getAttribute('aria-label').includes('level')),'native tooltip removed, accessible level/action retained');
 assert.equal(q('#infographic-helper').checked,true);assert.equal(q('#helper-panel').hidden,true,'no guide at rest');
 assert.equal(localStorage.getItem(HELPER_PREFERENCE),null,'default on must not write preference');
 assert.equal(q('.summary-body'),null,'old Summary structure restored');
@@ -64,7 +65,7 @@ assert.equal(q('#helper-panel').hidden,true,'click closes without following next
 assert.equal(JSON.parse(localStorage.getItem('hexa-tracker-hoyoung-v1')).levels[skill],Number(first.querySelector('.checkpoint-level').textContent));
 first.click();await tick();assert.equal(JSON.parse(localStorage.getItem('hexa-tracker-hoyoung-v1')).levels[skill],JSON.parse(initialSave).levels[skill],'reverse Undo preserved');
 const stat=all('[data-checkpoint]').find(tile=>tile.dataset.skill==='HEXA Stat II');await hover(stat);
-assert(q('.helper-stat-icon').getAttribute('src').endsWith('stat-2-unlocked.png'));assert.equal(all('#helper-panel [data-location]').length,0);
+assert.equal(q('.helper-location').hidden,true);assert.equal(q('.helper-stat-icon'),null);assert(q('.helper-heading img').getAttribute('src').endsWith('stat-2-unlocked.png'));assert.match(q('.helper-heading').textContent,/HEXA Stat II/);assert.equal(all('#helper-panel [data-location]').length,0);
 document.dispatchEvent(new win.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(q('#helper-panel').hidden,true);
 const beforeOff=localStorage.getItem('hexa-tracker-hoyoung-v1');
 q('#infographic-helper').checked=false;q('#infographic-helper').dispatchEvent(new Event('change',{bubbles:true}));
