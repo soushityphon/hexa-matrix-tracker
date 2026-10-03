@@ -5,7 +5,8 @@ import {adminAllowed,discordRoute,decorateAdmin} from '../discord-auth.js';
 const origin='https://tracker.pages.dev',owner='123456789012345678',visitor='234567890123456789';
 const env={ADMIN_AUTH_MODE:'discord',ADMIN_AUTH_ORIGIN:origin,DISCORD_CLIENT_ID:'345678901234567890',DISCORD_ADMIN_ID:owner,
   DISCORD_CLIENT_SECRET:'isolated-discord-secret-value',ADMIN_SESSION_SECRET:'isolated-random-session-secret-more-than-43-chars',ADMIN_EMAIL:'legacy@example.test'};
-const originalFetch=globalThis.fetch,originalNow=Date.now,originalTimeout=globalThis.setTimeout;
+const originalFetch=globalThis.fetch,originalNow=Date.now,originalTimeout=globalThis.setTimeout,originalError=console.error;
+let diagnostics=[];console.error=(...args)=>diagnostics.push(args);
 let calls=[],userId=owner,fixtureFailure=null,storage=0;
 env.DB={prepare(){storage++;throw Error('Denied request reached storage');}};
 const request=(path,options={},config=env)=>worker.fetch(new Request(origin+path,options),config);
@@ -17,7 +18,8 @@ async function begin(config=env){const start=await request('/auth/discord/login'
 async function callback(flow,query='',options={}){return request('/auth/discord/callback?state='+flow.state+'&code=isolated-code'+query,{headers:{Cookie:flow.cookie},...options});}
 try {
   globalThis.fetch=async(url,options)=>{
-    calls.push({url,options});assert.equal(options.redirect,'error');assert(options.signal instanceof AbortSignal);
+    calls.push({url,options});assert.equal(options.redirect,'error');assert.equal(options.headers['User-Agent'],'DiscordBot (https://github.com/soushityphon/hexa-matrix-tracker, 1.0)');assert(options.signal instanceof AbortSignal);
+    if(fixtureFailure==='request')throw Error('private exception '+env.DISCORD_CLIENT_SECRET);
     if(fixtureFailure==='upstream')return new Response('private provider details',{status:500});
     if(fixtureFailure==='body')return new Response('x'.repeat(16385));
     if(fixtureFailure==='stall')return new Response(new ReadableStream({start(){}}));
@@ -29,7 +31,7 @@ try {
   const paths=['/api/admin-panel','/api/admin-maintenance','/api/scouter-request-diagnostic','/api/scouter-catalogue','/api/hexa-order','/api/ren-capture','/api/priority-preview?record=lotus_heroic'];
   for(const path of paths)for(const method of path.startsWith('/api/priority-preview')?['GET','PUT','DELETE']:['GET','POST','PUT','PATCH','DELETE'])assert.equal((await request(path,{method,headers:publicHeaders})).status,403);
   assert.equal(storage,0);assert.equal(calls.length,0);
-  assert.match(await (await request('/priority-review.html')).text(),/Continue with Discord/);
+  const login=await (await request('/priority-review.html')).text();assert.match(login,/<h1>Admin Panel<\/h1>/);assert.match(login,/>Sign in<\/a>/);assert(!login.includes('Discord'));assert(!login.includes('Back to tracker')); 
   for(const name of ['DISCORD_CLIENT_ID','DISCORD_ADMIN_ID','DISCORD_CLIENT_SECRET','ADMIN_SESSION_SECRET','ADMIN_AUTH_ORIGIN']){
     const broken={...env};delete broken[name];assert.equal((await request('/auth/discord/login',{},broken)).status,503);assert.equal(await adminAllowed(new Request(origin+'/api/admin-panel',{headers:publicHeaders}),broken),false);
   }
@@ -74,11 +76,14 @@ try {
   assert.equal((await request('/auth/discord/logout')).status,405);assert.equal((await request('/auth/discord/logout',{method:'POST',headers:{Origin:'https://evil.example'}})).status,403);
   const logout=await request('/auth/discord/logout',{method:'POST',headers:{Origin:origin,Cookie:sessionCookie}});assert.equal(logout.status,303);assert.equal(logout.headers.get('Location'),'/');assert(firstCookie(logout).every(c=>c.endsWith('=')));
   assert.equal(storage,0,'Authentication never modifies or reads Admin data');
-  for(const failure of ['upstream','body','stall']){
+  for(const failure of ['upstream','body','stall','request']){
     fixtureFailure=failure;if(failure==='stall')globalThis.setTimeout=(fn,ms,...args)=>originalTimeout(fn,ms===8000?15:ms,...args);
     const failed=await callback(await begin());assert.equal(failed.status,502);const text=await failed.text();assert(!text.includes('private provider details'));assert(!text.includes(env.DISCORD_CLIENT_SECRET));assert(!firstCookie(failed).some(c=>c.startsWith('__Host-hexa-admin=')));
+    const last=diagnostics.at(-1);assert.equal(last[0],'Admin sign-in failed');assert.equal(last[1],'token');assert.equal(last[2],({upstream:'http',body:'body-limit',stall:'timeout',request:'request'})[failure]);assert.equal(last[3],failure==='upstream'?500:0);
     globalThis.setTimeout=originalTimeout;
   }
+  console.error=()=>{throw Error('isolated logging sink');};assert.equal((await callback(await begin())).status,502);console.error=(...args)=>diagnostics.push(args);
+  assert(!JSON.stringify(diagnostics).includes(env.DISCORD_CLIENT_SECRET));assert(!JSON.stringify(diagnostics).includes('isolated-code'));assert(!JSON.stringify(diagnostics).includes('isolated-token'));assert(!JSON.stringify(diagnostics).includes('private'));
   assert.equal(storage,0);
-}finally{globalThis.fetch=originalFetch;Date.now=originalNow;globalThis.setTimeout=originalTimeout;}
+}finally{globalThis.fetch=originalFetch;Date.now=originalNow;globalThis.setTimeout=originalTimeout;console.error=originalError;}
 console.log('Discord Admin: owner-only server identity, bound/expired/tampered state and sessions, origin/CSRF checks, failure deadlines, logout and zero Admin data access pass; live setup is separate.');

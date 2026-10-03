@@ -1,5 +1,29 @@
 # Discord Admin login, Issue #15
 
+## Sign-in failure follow-up
+
+Owner reports live callback failure after env14 activation. Recent native logs
+show callback502 after state validation, but contain no exchange/identity reason.
+Owner success/identity/non-owner/logout/acceptance remain unchecked.
+New batch uses Discord's required application User-Agent on both API calls, and
+logs only fixed stage/reason and numeric HTTP status on failures. No codes,
+tokens, secrets, user IDs, request URLs or provider bodies are logged. A broken
+logging sink cannot grant access or prevent the safe error response.
+This corrects API request compliance, not a proven resolution of the reported
+live failure. A fresh real sign-in is needed to verify or diagnose the remaining
+exchange/identity failure. No credentials need re-entry unless later evidence
+shows a configuration error.
+
+Owner requests neutral login copy: only Admin Panel and Sign in, without the
+Discord explanation or Back to tracker link. Authentication remains Discord;
+Discord's own consent screen is outside the tracker. Tests assert the login copy,
+User-Agent on both requests and private-safe fixed diagnostics for HTTP/body/
+timeout/request failures and logging-sink failure. Data/storage/auth policy stays
+unchanged. Prior automated evidence is retained; new live proof is not inferred.
+
+Primary requirement: https://docs.discord.com/developers/reference#user-agent
+
+
 ## Discord Admin activation, 3 October 2026, Brisbane
 
 **Configured and deployed, live verification pending.** Soushi created the dedicated
@@ -29,7 +53,7 @@ This documentation update needs no deployment. PR #22 stays draft/unmerged.
 - [ ] Real owner/non-owner refusal, cookies/logout and public tracker verified.
 - [ ] Owner acceptance of activated Discord Admin login.
 
-Next owner check: open `/priority-review.html`, choose Continue with Discord,
+Next owner check: open `/priority-review.html`, choose Sign in,
 and sign in as the supplied owner. Expect current Skills, explanations and
 priorities unchanged. Sign out, then revisit Admin, expect the sign-in page.
 Public tracker should still work signed out. No edits/reset/save-clear required.

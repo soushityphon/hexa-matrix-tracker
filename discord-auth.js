@@ -3,6 +3,8 @@ const STATE_COOKIE='__Host-hexa-discord-state',SESSION_COOKIE='__Host-hexa-admin
 const STATE_SECONDS=600,SESSION_SECONDS=28800;
 const noStore={'Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY'};
 const encoder=new TextEncoder();
+const userAgent='DiscordBot (https://github.com/soushityphon/hexa-matrix-tracker, 1.0)';
+class AuthFailure extends Error {constructor(stage,reason,status=0){super('Admin sign-in unavailable');this.stage=stage;this.reason=reason;this.status=status;}}
 const snowflake=value=>typeof value==='string' && /^[1-9]\d{16,19}$/.test(value);
 const mode=env=>env?.ADMIN_AUTH_MODE ?? 'sites';
 function configuration(env) {
@@ -45,25 +47,27 @@ export async function adminAllowed(request,env) {
 export function adminSignIn(env){
   if(mode(env)!=='discord')return null;
   const ready=!!configuration(env);
-  return response(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Panel sign-in</title><main><h1>Admin Panel</h1><p>${ready?'Sign in with the authorised owner Discord account.':'Discord Admin sign-in is not configured yet.'}</p>${ready?'<p><a href="/auth/discord/login">Continue with Discord</a></p>':''}<p><a href="/">Back to tracker</a></p></main></html>`,ready?200:503,{'Content-Type':'text/html; charset=utf-8'});
+  return response(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Panel</title><main><h1>Admin Panel</h1>${ready?'<p><a href="/auth/discord/login">Sign in</a></p>':'<p>Sign in is unavailable. Please try again later.</p>'}</main></html>`,ready?200:503,{'Content-Type':'text/html; charset=utf-8'});
 }
 export function decorateAdmin(html,env){return mode(env)==='discord'?html.replace('</header>','<form method="post" action="/auth/discord/logout"><button type="submit">Sign out of Admin</button></form></header>'):html;}
 async function discordIdentity(config,code){
-  const controller=new AbortController();let timer,reader;
-  const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reader?.cancel().catch(()=>{});reject(Error('Discord timeout'));},8000);});
+  const controller=new AbortController();let timer,reader,stage='token';
+  const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reader?.cancel().catch(()=>{});reject(new AuthFailure(stage,'timeout'));},8000);});
   async function json(url,options){
-    const result=await fetch(url,{...options,redirect:'error',signal:controller.signal});if(!result.ok)throw Error('Discord unavailable');
-    if(Number(result.headers.get('Content-Length'))>16384)throw Error('Discord response too large');
-    reader=result.body?.getReader();if(!reader)throw Error('Missing Discord response');let body='',size=0;const decoder=new TextDecoder();
-    try {while(true){const part=await reader.read();if(part.done)break;size+=part.value.byteLength;if(size>16384){await reader.cancel();throw Error('Discord response too large');}body+=decoder.decode(part.value,{stream:true});}body+=decoder.decode();return JSON.parse(body);}
+    let result;try {result=await fetch(url,{...options,headers:{...options.headers,'User-Agent':userAgent},redirect:'error',signal:controller.signal});}
+    catch {throw new AuthFailure(stage,'request');}
+    if(!result.ok)throw new AuthFailure(stage,'http',result.status);
+    if(Number(result.headers.get('Content-Length'))>16384)throw new AuthFailure(stage,'body-limit');
+    reader=result.body?.getReader();if(!reader)throw new AuthFailure(stage,'missing-body');let body='',size=0;const decoder=new TextDecoder();
+    try {while(true){const part=await reader.read();if(part.done)break;size+=part.value.byteLength;if(size>16384){await reader.cancel();throw new AuthFailure(stage,'body-limit');}body+=decoder.decode(part.value,{stream:true});}body+=decoder.decode();return JSON.parse(body);}
     finally{reader.releaseLock();reader=null;}
   }
   try {return await Promise.race([(async()=>{
     const token=await json('https://discord.com/api/oauth2/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:config.client,client_secret:config.clientSecret,grant_type:'authorization_code',code,redirect_uri:config.origin+'/auth/discord/callback'}).toString()});
-    if(token.token_type?.toLowerCase()!=='bearer' || typeof token.access_token!=='string' || !token.access_token || token.access_token.length>4096 || !token.scope?.split(' ').includes('identify'))throw Error('Invalid Discord token');
-    const user=await json('https://discord.com/api/v10/users/@me',{headers:{Authorization:'Bearer '+token.access_token}});
-    if(!snowflake(user.id) || user.bot || user.system)throw Error('Invalid Discord identity');return user.id;
-  })(),timeout]);}finally{clearTimeout(timer);controller.abort();}
+    if(token.token_type?.toLowerCase()!=='bearer' || typeof token.access_token!=='string' || !token.access_token || token.access_token.length>4096 || !token.scope?.split(' ').includes('identify'))throw new AuthFailure(stage,'invalid-token');
+    stage='identity';const user=await json('https://discord.com/api/v10/users/@me',{headers:{Authorization:'Bearer '+token.access_token}});
+    if(!snowflake(user.id) || user.bot || user.system)throw new AuthFailure(stage,'invalid-identity');return user.id;
+  })(),timeout]);}catch(error){if(error instanceof AuthFailure)throw error;throw new AuthFailure(stage,'response');}finally{clearTimeout(timer);controller.abort();}
 }
 export async function discordRoute(request,env){
   const url=new URL(request.url),known=['/auth/discord/login','/auth/discord/callback','/auth/discord/session','/auth/discord/logout'];
@@ -94,5 +98,9 @@ export async function discordRoute(request,env){
   try {
     const uid=await discordIdentity(config,code);if(uid!==config.owner)return response('This Discord account is not authorised for Admin. Saved data is unchanged.',403,{},[clearState(),clearSession()]);
     const token=await sign(config,'session',SESSION_SECONDS,{uid});return response(null,303,{Location:'/priority-review.html'},[clearState(),setCookie(SESSION_COOKIE,token,SESSION_SECONDS)]);
-  }catch{return failure('Discord sign-in could not be completed. Saved data is unchanged. Try again from Admin.',502);}
+  }catch(error){
+    const failureInfo=error instanceof AuthFailure?error:new AuthFailure('session','sign');
+    try {console.error('Admin sign-in failed',failureInfo.stage,failureInfo.reason,failureInfo.status);}catch {}
+    return failure('Sign-in could not be completed. Saved data is unchanged. Try again from Admin.',502);
+  }
 }
