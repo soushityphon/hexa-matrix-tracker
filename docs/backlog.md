@@ -15,8 +15,9 @@ pages.dev release is authorised after the documented preceding work.
    with a hover-only popup. Restore Summary, retain full-width priority icons,
    show Matrix then icon/tag/name then optional text. Stats start with their small
    icon/name heading, with no large duplicate icon. Permanent implementation is authorised without another prototype
-   gate. Version136 hover behaviour is owner-reported accepted. New larger
-   popup/tooltip-removal/compact-Stat acceptance remains separate. Helper is excluded on phones
+   gate. Version136 hover behaviour is owner-reported accepted. Version137
+   popup/tooltip-removal/compact-Stat visuals are owner-reported accepted.
+   New four-quadrant colour acceptance remains separate. Helper is excluded on phones
    and other devices without a fine pointer that can hover.
 3. Discord login #15, Admin identity/owner authorisation first. Optional player
    cross-device saves remain a later goal with separate data/conflict decisions.
@@ -62,8 +63,8 @@ Hosting signed-in identity/origin evidence remains open. Ordinary owner access
 alone cannot prove signed-in non-owner header replacement or direct-origin isolation.
 Helper prototype direction and version 131 footer appearance are owner-accepted.
 Admin explanation editing/preview is owner-reported accepted. Live Helper
-integration through version136 is owner-reported accepted. The new visual
-refinement has separate acceptance after deployment. See
+integration through version136 is owner-reported accepted. Version137 size, native-tooltip removal and compact Stat heading are owner-
+reported accepted. Only the new quadrant palette requires affected review. See
 [review](helper-integration-review.md) and #30/#31 for tests/deployment. Discord
 Admin login follows Helper acceptance; later login/release checks remain separate
 from acceptance of the old deployed app.

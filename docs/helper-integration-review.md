@@ -65,12 +65,68 @@ Rollback is saved version133 with the explanation-aware backend; it restores the
 rejected Summary layout but preserves current Admin explanations/data. Do not use
 version131's older writable backend once explanations exist or restore stale data.
 Admin editing and prior app/footer acceptance are complete. Version136 hover behaviour
-is owner-reported accepted. Only the new size/tooltip/Stat visual acceptance remains
-pending. Next is that affected check, then Discord Admin login #15 and
+is owner-reported accepted. Version137 visuals are owner-reported accepted. Only the new quadrant palette
+requires affected visual acceptance. Next is that affected check, then Discord Admin login #15 and
 pages.dev #32. Hosting proof remains separately blocked. Export/print and multiple
 characters stay deferred.
 
-## Current tested visual refinement, version 137
+## Current quadrant colour deployment, version 138
+
+Implemented in [16cdfbc](https://github.com/soushityphon/hexa-matrix-tracker/commit/16cdfbc119dfb70b92c721608b11936dba230780), draft/unmerged PR #22.
+Each polygon takes its colour from its existing category. Positions/order,
+availability/locks, faded other nodes and the target skill-colour border/glow stay.
+
+| Quadrant | Category | Fill |
+| --- | --- | --- |
+| Top-left | Skill | Purple, #5522cc |
+| Top-right | Mastery | Dark pink, #882266 |
+| Bottom-left | Enhancement | Blue, #336699 |
+| Bottom-right | Common | Blue-grey, #666699 |
+
+The four supplied in-game colour fragments were recovered and inspected.
+These flat fills follow the samples; they do not reproduce game gradients.
+No change to the centre, popup size/behaviour, compact Stat heading or phone exclusion.
+
+Full local checks pass: 30 regression files, Worker build, 96 syntax files,
+70 compiled asset checks, offline inventory and affected links/whitespace.
+All 167 authoritative files match the saved Site source before this docs-only record.
+[PR CI 37099753829](https://github.com/soushityphon/hexa-matrix-tracker/actions/runs/37099753829) and
+[push CI 37099751209](https://github.com/soushityphon/hexa-matrix-tracker/actions/runs/37099751209) succeed on 16cdfbc.
+Logs confirm **84 ordinary Chromium passes, zero expected failures**.
+App tests assert all 18 slots retain their correct category style; browser tests
+assert the four actual computed fills in both classes. Both enlarged Matrix
+viewport screenshots inspected, including target/faded/locked treatment.
+Existing hover/Stat/preference/progress/Undo/phone-exclusion coverage still passes.
+Fixture artwork is not live game/art, physical-device or hosting-identity proof.
+
+| Field | Current test value |
+| --- | --- |
+| Saved version | appgprj_6aba0413861881918dc7fe10da066627~appgver_70d7182b89dc819197abd3904471879e |
+| Site source | 9ae921369177401e85695b5edfeb2be801ff5c32 |
+| Deployment | appgdep_6ac092a96e408191838a59040562103b, succeeded |
+| Archive | sha256:2d50e921ecc8941e9eb891890653f7a6c869a04ac746bf8e8bbc27fdea752680 |
+| Environment revision | 11 |
+| URL | https://soushi-hexa-matrix-test.xsoushi.chatgpt.site |
+| Compatible code rollback | Saved version137, source 68f37c513a1177871e389ce327fa585b36a0a22b, explanation-aware backend |
+
+No live Admin edits, source acquisition, calculation, priority, capture, progress,
+player-save, schema, D1, binding, secret, auth or audience changes.
+Rollback preserves all current Admin/player data; never restore stale data.
+This final documentation record does not require another app deployment.
+
+Soushi's “i have checked that” accepts version137's size, tooltip removal and
+compact Stat heading. Earlier app/footer/Admin/hover acceptance remains complete.
+**Only the new quadrant colours need owner visual acceptance.** Refresh without
+clearing storage, hover a regular skill, and expect purple upper-left, dark pink
+upper-right, blue lower-left and blue-grey lower-right with the target highlighted.
+No repeated behaviour, progress, preference, Admin or phone check.
+Next after this affected colour check is Discord Admin #15, then pages.dev #32.
+Hosting identity proof remains blocked without new authorised evidence; release
+preparation is complete. Final release SHA/publication stays in step4.
+Export/print and multiple characters remain deferred.
+
+
+## Historical owner-accepted visual refinement, version 137
 
 Implemented in [b014bd2](https://github.com/soushityphon/hexa-matrix-tracker/commit/b014bd20cbcdc216ffb6a3f488228957059c57a4), draft/unmerged PR #22.
 Removed Infographic checkpoint native title tooltips while retaining accessible
